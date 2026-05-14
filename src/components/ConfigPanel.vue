@@ -18,18 +18,13 @@
             <a-radio-button value="group">按分组</a-radio-button>
             <a-radio-button value="resource">按资源类型</a-radio-button>
           </a-radio-group>
-          <a-select
-            v-model:value="state.dsIndex"
+          <a-cascader
+            v-model:value="state.dsValue"
             style="width:100%"
-            :options="CASCADE[state.dsType].map((cat,i) => ({value:i, label:cat.name}))"
-            @change="onCategoryChange"
-          />
-          <a-select
-            v-if="currentCategory?.items?.length"
-            v-model:value="state.dsSubIndex"
-            style="width:100%;margin-top:6px"
-            :options="currentCategory.items.map((sub,i) => ({value:i, label:sub.name}))"
-            @change="onSubDatasetChange"
+            :options="cascaderOptions"
+            :show-search="{ filter }"
+            placeholder="搜索或选择数据集..."
+            @change="onCascaderChange"
           />
         </div>
         <div class="config-section">
@@ -214,13 +209,36 @@ const {
   state, currentChart, CASCADE, ALL_RESOURCES, GROUPS, TH_COLORS,
   currentCategory, availableMetrics, recommendedCharts,
   closeConfig, switchTab, switchDSType,
-  onCategoryChange, onSubDatasetChange,
   spinTop, pickRec,
   addThreshold, removeThreshold, updateThValue, updateThLevel,
-  toast,
+  toast, refreshChart,
 } = useEditorState()
 
+const cascaderOptions = computed(() =>
+  CASCADE[state.dsType].map((cat, i) => ({
+    value: i,
+    label: cat.name,
+    children: cat.items.length ? cat.items.map((sub, j) => ({
+      value: j,
+      label: sub.name,
+    })) : undefined,
+  }))
+)
+
+function filter(inputValue, path) {
+  return path.some(o => o.label.toLowerCase().includes(inputValue.toLowerCase()))
+}
+
+function onCascaderChange() {
+  state.selectedMetrics = []
+}
+
 function handleApply() {
+  const ch = currentChart.value
+  if (ch && state.selectedMetrics.length) {
+    ch.metrics = [...state.selectedMetrics]
+  }
+  refreshChart(state.selectedId)
   toast('图表已更新')
 }
 
@@ -233,13 +251,13 @@ const objHint = computed(() => {
 </script>
 
 <style scoped>
-.config-panel { position: absolute; top: 0; right: 0; height: 100%; width: 420px; background: var(--bg); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s var(--ease); box-shadow: -8px 0 24px rgba(0,0,0,0.04); }
+.config-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 420px; background: var(--bg); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s var(--ease); box-shadow: -8px 0 24px rgba(0,0,0,0.04); }
 .config-panel.open { transform: translateX(0); }
 .config-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .config-header h2 { font-size: 14px; font-weight: 600; color: var(--text); }
 .config-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .config-tabs .active { color: var(--brand); border-bottom: 2px solid var(--brand); }
-.config-scroll { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 24px; min-height: 0; }
+.config-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 24px; min-height: 0; }
 .config-section { display: flex; flex-direction: column; gap: 8px; }
 .config-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-ter); }
 .group-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sec); padding: 8px 0 4px; border-top: 1px solid var(--border); margin-top: 4px; }
@@ -252,7 +270,7 @@ const objHint = computed(() => {
 .rec-charts { display: flex; gap: 6px; flex-wrap: wrap; }
 .threshold-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .config-toggle { display: flex; align-items: center; justify-content: space-between; }
-.config-footer { display: flex; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.config-footer { display: flex; gap: 8px; padding: 10px 20px; border-top: 1px solid var(--border); flex-shrink: 0; }
 .config-footer button { flex: 1; }
 
 @media (max-width: 1024px) { .config-panel { width: 360px; } }

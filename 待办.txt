@@ -1,0 +1,5 @@
+title为dashboard
+
+vista和前面的log整体改为这个图片https://res-static.hc-cdn.cn/cloudbu-site/china/zh-cn/wangxue/header/logo.svg
+
+页签上logo为<link rel="icon" href="https://www.huaweicloud.com/favicon.ico">

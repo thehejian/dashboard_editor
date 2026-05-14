@@ -1,4 +1,5 @@
-import { reactive, computed, watch } from 'vue'
+import { reactive, computed } from 'vue'
+import { fetchChartData } from './usePrometheus'
 
 const METRICS_NEW = ['CPU使用率','内存使用率','网络流入速率','网络流出速率','云硬盘使用率','云硬盘I/O写入']
 
@@ -58,16 +59,16 @@ const METRIC_REC = {
 }
 
 const CHARTS_DATA = [
-  { id:1, title:'CPU 使用率',      type:'line',    color:'#007DFF', group:'计算资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
-  { id:2, title:'内存使用率',       type:'area',    color:'#07C160', group:'计算资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
-  { id:3, title:'网络流入速率',     type:'area',    color:'#06B6D4', group:'网络资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
-  { id:4, title:'网络流出速率',     type:'line',    color:'#FF7D00', group:'网络资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
-  { id:5, title:'云硬盘使用率',     type:'numeric', color:'#007DFF', group:'存储资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:true,  linkUrl:'https://example.com/dashboard/5' },
-  { id:6, title:'云硬盘 I/O 写入',  type:'bar',     color:'#F5222D', group:'默认分组',   notes:'', legendPosition:'bottom', thresholds:[{value:80,level:'warning'},{value:95,level:'danger'}], linkEnabled:false, linkUrl:'' },
+  { id:1, title:'CPU 使用率',      type:'line',    color:'#007DFF', group:'计算资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['CPU使用率'] },
+  { id:2, title:'内存使用率',       type:'area',    color:'#07C160', group:'计算资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['内存使用率'] },
+  { id:3, title:'网络流入速率',     type:'area',    color:'#06B6D4', group:'网络资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['网络流入速率'] },
+  { id:4, title:'网络流出速率',     type:'line',    color:'#FF7D00', group:'网络资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['网络流出速率'] },
+  { id:5, title:'云硬盘使用率',     type:'numeric', color:'#007DFF', group:'存储资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:true,  linkUrl:'https://example.com/dashboard/5', metrics:['云硬盘使用率'] },
+  { id:6, title:'云硬盘 I/O 写入',  type:'bar',     color:'#F5222D', group:'默认分组', notes:'', legendPosition:'bottom', thresholds:[{value:80,level:'warning'},{value:95,level:'danger'}], linkEnabled:false, linkUrl:'', metrics:['云硬盘I/O写入'] },
 ]
 
 function cloneCharts() {
-  return JSON.parse(JSON.stringify(CHARTS_DATA)).map(ch => ({ ...ch, thresholds: [...ch.thresholds] }))
+  return JSON.parse(JSON.stringify(CHARTS_DATA)).map(ch => ({ ...ch, thresholds: [...ch.thresholds], metrics: [...ch.metrics] }))
 }
 
 const state = reactive({
@@ -79,8 +80,7 @@ const state = reactive({
   selectedMetrics: [],
   selectedResources: [],
   dsType: 'group',
-  dsIndex: 0,
-  dsSubIndex: 0,
+  dsValue: [0, 0],
   objType: 'all',
   aggType: 'max',
   topN: 10,
@@ -89,15 +89,16 @@ const state = reactive({
   toast: null,
 })
 
+const chartData = reactive({})
 
 const currentChart = computed(() => state.charts.find(ch => ch.id === state.selectedId) || null)
 
-const currentCategory = computed(() => CASCADE[state.dsType]?.[state.dsIndex] || null)
+const currentCategory = computed(() => CASCADE[state.dsType]?.[state.dsValue[0]] || null)
 
 const currentSubDataset = computed(() => {
   const cat = currentCategory.value
   if (!cat || !cat.items?.length) return null
-  return cat.items[state.dsSubIndex] || null
+  return cat.items[state.dsValue[1] || 0] || null
 })
 
 const availableMetrics = computed(() => currentSubDataset.value?.metrics || [])
@@ -139,6 +140,7 @@ function addChart(type) {
     thresholds: [],
     linkEnabled: false,
     linkUrl: '',
+    metrics: [],
   }
   state.charts.push(ch)
   selectChart(ch.id)
@@ -156,7 +158,7 @@ function delChart(id) {
 function dupChart(id) {
   const ch = state.charts.find(c => c.id === id)
   if (!ch) return
-  const copy = { ...ch, id: state.nextId++, title: ch.title + ' (副本)', thresholds: [...ch.thresholds] }
+  const copy = { ...ch, id: state.nextId++, title: ch.title + ' (副本)', thresholds: [...ch.thresholds], metrics: [...ch.metrics] }
   state.charts.push(copy)
   toast('已复制图表')
 }
@@ -165,6 +167,12 @@ function selectChart(id) {
   state.selectedId = id
   state.configOpen = true
   switchTab('data')
+  const ch = state.charts.find(c => c.id === id)
+  if (ch?.metrics?.length) {
+    state.selectedMetrics = [...ch.metrics]
+  } else {
+    state.selectedMetrics = []
+  }
 }
 
 function closeConfig() {
@@ -178,8 +186,7 @@ function switchTab(tab) {
 
 function switchDSType(val) {
   state.dsType = val
-  state.dsIndex = 0
-  state.dsSubIndex = 0
+  state.dsValue = [0, 0]
   state.selectedMetrics = []
 }
 
@@ -263,20 +270,33 @@ function getCurrentThresholds() {
   return currentChart.value?.thresholds || []
 }
 
+async function refreshChart(chartId) {
+  const ch = state.charts.find(c => c.id === chartId)
+  if (!ch || !ch.metrics?.length) return
+  try {
+    const data = await fetchChartData(ch, state.period)
+    if (data) chartData[chartId] = data
+  } catch {}
+}
+
+async function refreshAllCharts() {
+  for (const ch of state.charts) {
+    await refreshChart(ch.id)
+  }
+}
+
 export function useEditorState() {
   return {
-    // data
     CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS,
-    // state
     state,
-    // computed
+    chartData,
     currentChart, currentCategory, currentSubDataset, availableMetrics, recommendedCharts,
-    // methods
     toast, addChart, delChart, dupChart,
     selectChart, closeConfig, switchTab,
     switchDSType, onCategoryChange, onSubDatasetChange,
     toggleMetric, removeMetric, toggleResource, removeResource,
     setObjType, spinTop, pickRec, addThreshold, removeThreshold,
     updateThValue, updateThLevel, toggleLink, getCurrentThresholds,
+    refreshChart, refreshAllCharts,
   }
 }
