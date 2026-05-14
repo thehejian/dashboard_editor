@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表盘编辑器 - HarmonyOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --brand: #007DFF; --brand-hover: #0066D6; --brand-subtle: #EBF4FF;
+            --bg: #FFFFFF; --bg-sec: #F2F2F7; --bg-ter: #E8E8ED;
+            --text: #182431; --text-sec: #6B7280; --text-ter: #9CA3AF;
+            --border: #E5E5EA; --border-hover: #D1D5DB;
+            --danger: #F5222D; --warn: #FF7D00; --yellow: #FADB14; --info: #007DFF;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+            --rs: 6px; --rm: 10px; --rl: 12px; --capsule: 20px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: var(--font); background: var(--bg-sec); color: var(--text); -webkit-font-smoothing: antialiased; font-size: 14px; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .app { display: flex; flex-direction: column; height: 100vh; }
+
+        .header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-logo { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text); user-select: none; }
+        .header-logo i { color: var(--brand); font-size: 18px; }
+        .header-logo .badge { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; background: var(--brand-subtle); color: var(--brand); padding: 2px 6px; border-radius: 4px; }
+        .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-ter); }
+        .breadcrumb a { color: var(--text-sec); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--text); }
+        .breadcrumb span { color: var(--text); font-weight: 500; }
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        .header-btn { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 16px; font-size: 12px; font-weight: 500; border-radius: var(--capsule); border: 1px solid var(--border); background: var(--bg); color: var(--text-sec); cursor: pointer; transition: all 0.15s; }
+        .header-btn:hover { border-color: var(--border-hover); color: var(--text); }
+        .header-btn.primary { background: var(--brand); border-color: var(--brand); color: #FFF; }
+        .header-btn.primary:hover { background: var(--brand-hover); }
+        .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #FFF; cursor: pointer; margin-left: 4px; }
+
+        .main { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+        .palette { width: 48px; background: var(--bg-sec); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 2px; flex-shrink: 0; }
+        .palette-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--rs); color: var(--text-ter); font-size: 14px; cursor: pointer; transition: all 0.15s; border: none; background: transparent; }
+        .palette-btn:hover { color: var(--brand); background: var(--brand-subtle); }
+        .palette-btn.active { color: var(--brand); background: var(--brand-subtle); }
+        .palette-divider { width: 24px; height: 1px; background: var(--border); margin: 6px 0; }
+        .palette .add-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: #FFF; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s var(--ease); display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+        .palette .add-btn:hover { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,125,255,0.3); }
+
+        .canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: radial-gradient(ellipse at 25% 20%, rgba(0,125,255,0.02) 0%, transparent 55%), var(--bg-sec); }
+        .canvas-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px 16px; flex-shrink: 0; }
+        .canvas-title { display: flex; align-items: center; gap: 10px; }
+        .canvas-title h1 { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+        .canvas-title .edit-hint { font-size: 12px; color: var(--text-ter); cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+        .canvas-title:hover .edit-hint { opacity: 1; }
+        .canvas-title .dots { font-size: 13px; color: var(--text-ter); padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+        .canvas-title .dots:hover { background: var(--bg-ter); }
+        .canvas-controls { display: flex; align-items: center; gap: 8px; }
+        .time-pills { display: flex; gap: 2px; background: var(--bg); border-radius: var(--capsule); padding: 2px; border: 1px solid var(--border); }
+        .time-pill { padding: 4px 14px; font-size: 12px; font-weight: 500; border-radius: 18px; border: none; background: transparent; color: var(--text-ter); cursor: pointer; transition: all 0.15s; }
+        .time-pill:hover { color: var(--text); }
+        .time-pill.active { background: var(--brand); color: #FFF; }
+        .canvas-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 32px 32px; }
+
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
+
+        .chart-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; cursor: pointer; transition: all 0.2s var(--ease); position: relative; min-height: 300px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); }
+        .chart-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); }
+        .chart-card.selected { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-subtle), var(--shadow-md); }
+        .chart-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 4px; flex-shrink: 0; }
+        .chart-card-header .drag-handle { color: var(--text-ter); font-size: 11px; cursor: grab; opacity: 0; transition: opacity 0.15s; margin-right: 6px; }
+        .chart-card:hover .drag-handle { opacity: 1; }
+        .chart-card-header .chart-label { display: flex; align-items: center; gap: 6px; overflow: hidden; min-width: 0; }
+        .chart-card-header .chart-label h3 { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chart-card-header .chart-label .link-icon { font-size: 10px; color: var(--brand); flex-shrink: 0; opacity: 0.7; }
+        .chart-card-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+        .chart-card:hover .chart-card-actions { opacity: 1; }
+        .chart-card-action { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: none; background: transparent; color: var(--text-ter); font-size: 12px; cursor: pointer; transition: all 0.12s; }
+        .chart-card-action:hover { background: var(--bg-sec); color: var(--text); }
+        .chart-card-action.danger:hover { background: #FEF2F2; color: var(--danger); }
+        .chart-body { flex: 1; padding: 2px 14px 14px; display: flex; align-items: stretch; }
+        .chart-body svg { width: 100%; height: 100%; min-height: 155px; }
+
+        .add-card { border: 1px dashed var(--border-hover); border-radius: var(--rl); min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s var(--ease); background: var(--bg); color: var(--text-ter); box-shadow: var(--shadow-sm); }
+        .add-card:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
+        .add-card i { font-size: 24px; }
+        .add-card span { font-size: 13px; font-weight: 500; }
+
+        .config-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.25s var(--ease); }
+        .config-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        .config-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 420px; background: var(--bg); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s var(--ease); box-shadow: -8px 0 24px rgba(0,0,0,0.04); }
+        .config-panel.open { transform: translateX(0); }
+
+        .config-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .config-header h2 { font-size: 14px; font-weight: 600; color: var(--text); }
+        .config-close { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: none; background: transparent; color: var(--text-ter); cursor: pointer; transition: all 0.12s; font-size: 14px; }
+        .config-close:hover { background: var(--bg-sec); color: var(--text); }
+
+        .config-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .config-tab { flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: var(--text-ter); border: none; background: transparent; cursor: pointer; position: relative; transition: color 0.15s; }
+        .config-tab:hover { color: var(--text); }
+        .config-tab.active { color: var(--brand); }
+        .config-tab.active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 2px; background: var(--brand); border-radius: 2px 2px 0 0; }
+        .config-tab.badge-data::after { left: 25%; right: 25%; }
+        .config-tab.badge-style::after { left: 30%; right: 30%; }
+
+        .config-scroll { flex: 1; overflow-y: auto; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 24px; }
+        .config-section { display: flex; flex-direction: column; gap: 8px; }
+        .config-section.hidden { display: none; }
+        .config-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-ter); }
+
+        .group-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sec); padding: 8px 0 4px; border-top: 1px solid var(--border); margin-top: 4px; }
+        .group-header.first { border-top: none; margin-top: 0; padding-top: 0; }
+
+        .radio-row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .radio-row label { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: var(--text-sec); cursor: pointer; }
+        .radio-row label:hover { color: var(--text); }
+        .radio-row input[type="radio"] { accent-color: var(--brand); margin: 0; }
+
+        .config-select { width: 100%; height: 36px; padding: 0 12px; font-size: 13px; font-family: var(--font); background: var(--bg-sec); border: 1px solid var(--border); border-radius: var(--rs); color: var(--text); outline: none; cursor: pointer; transition: border-color 0.15s; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%239CA3AF'%3E%3Cpath d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+        .config-select:hover { border-color: var(--border-hover); }
+        .config-select:focus { border-color: var(--brand); }
+
+        .config-input { width: 100%; height: 36px; padding: 0 12px; font-size: 13px; font-family: var(--font); background: var(--bg-sec); border: 1px solid var(--border); border-radius: var(--rs); color: var(--text); outline: none; transition: border-color 0.15s; }
+        .config-input:hover { border-color: var(--border-hover); }
+        .config-input:focus { border-color: var(--brand); }
+        .config-textarea { width: 100%; min-height: 64px; padding: 8px 12px; font-size: 13px; font-family: var(--font); background: var(--bg-sec); border: 1px solid var(--border); border-radius: var(--rs); color: var(--text); outline: none; resize: vertical; transition: border-color 0.15s; }
+        .config-textarea:hover { border-color: var(--border-hover); }
+        .config-textarea:focus { border-color: var(--brand); }
+
+        .multi-select { position: relative; z-index: 10; }
+        .multi-select-trigger { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 36px; padding: 3px 8px; cursor: pointer; background: var(--bg-sec); border: 1px solid var(--border); border-radius: var(--rs); transition: border-color 0.15s; }
+        .multi-select-trigger:hover { border-color: var(--border-hover); }
+        .multi-select-trigger.open { border-color: var(--brand); }
+        .multi-select-trigger .ms-placeholder { font-size: 12px; color: var(--text-ter); padding: 2px 4px; }
+        .ms-tag { display: flex; align-items: center; gap: 3px; padding: 2px 8px; font-size: 11px; font-weight: 500; background: var(--brand-subtle); color: var(--brand); border-radius: 12px; }
+        .ms-tag i { font-size: 8px; cursor: pointer; opacity: 0.7; }
+        .ms-tag i:hover { opacity: 1; }
+        .multi-select-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg); border: 1px solid var(--border); border-radius: var(--rs); box-shadow: var(--shadow-lg); max-height: 220px; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: all 0.15s var(--ease); }
+        .multi-select-dropdown.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .multi-select-dropdown .ms-search { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+        .multi-select-dropdown .ms-search i { font-size: 12px; color: var(--text-ter); }
+        .multi-select-dropdown .ms-search input { border: none; outline: none; font-size: 12px; font-family: var(--font); background: transparent; color: var(--text); width: 100%; }
+        .multi-select-dropdown .ms-list { overflow-y: auto; flex: 1; }
+        .multi-select-dropdown .ms-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 12px; cursor: pointer; transition: background 0.1s; }
+        .multi-select-dropdown .ms-item:hover { background: var(--bg-sec); }
+        .multi-select-dropdown .ms-item input { accent-color: var(--brand); }
+
+        .obj-radio-row { display: flex; gap: 4px; }
+        .obj-radio-row label { flex: 1; text-align: center; padding: 7px 8px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); border-radius: var(--rs); cursor: pointer; color: var(--text-sec); background: var(--bg); transition: all 0.15s; }
+        .obj-radio-row label:hover { border-color: var(--border-hover); color: var(--text); }
+        .obj-radio-row label.active { border-color: var(--brand); color: var(--brand); background: var(--brand-subtle); }
+        .obj-radio-row input { display: none; }
+        .obj-content { margin-top: 4px; display: flex; flex-direction: column; gap: 8px; }
+        .obj-content.hidden { display: none; }
+        .obj-row { display: flex; align-items: center; gap: 8px; }
+        .obj-hint { font-size: 11px; color: var(--text-sec); padding: 4px 0; }
+        .obj-hint strong { color: var(--text); font-weight: 600; }
+
+        .spinner-group { display: flex; align-items: center; gap: 4px; }
+        .spinner-group button { width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text-sec); cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
+        .spinner-group button:hover { border-color: var(--border-hover); color: var(--text); }
+        .spinner-group .spinner-value { width: 40px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text); }
+
+        .rec-charts { display: flex; gap: 6px; flex-wrap: wrap; }
+        .rec-chart { display: flex; align-items: center; gap: 4px; padding: 5px 12px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); border-radius: var(--rs); cursor: pointer; background: var(--bg); color: var(--text-sec); transition: all 0.15s; }
+        .rec-chart:hover { border-color: var(--brand); color: var(--brand); }
+        .rec-chart.active { border-color: var(--brand); color: var(--brand); background: var(--brand-subtle); }
+        .rec-chart i { font-size: 12px; }
+
+        .config-footer { display: flex; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--border); flex-shrink: 0; }
+        .config-footer button { flex: 1; height: 36px; font-size: 13px; font-weight: 600; border-radius: var(--capsule); cursor: pointer; transition: all 0.15s; }
+        .config-footer .btn-cancel { border: 1px solid var(--border); background: var(--bg); color: var(--text-sec); }
+        .config-footer .btn-cancel:hover { border-color: var(--border-hover); color: var(--text); }
+        .config-footer .btn-apply { border: none; background: var(--brand); color: #FFF; }
+        .config-footer .btn-apply:hover { background: var(--brand-hover); }
+        .config-footer .btn-apply:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .config-toggle { display: flex; align-items: center; justify-content: space-between; }
+        .toggle-track { width: 40px; height: 24px; border-radius: 12px; background: var(--bg-ter); cursor: pointer; position: relative; transition: background 0.2s; border: none; padding: 0; flex-shrink: 0; }
+        .toggle-track.on { background: var(--brand); }
+        .toggle-track .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #FFF; box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: transform 0.2s var(--ease); }
+        .toggle-track.on .knob { transform: translateX(16px); }
+
+        .color-swatches { display: flex; gap: 8px; flex-wrap: wrap; padding: 2px 0; }
+        .color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; flex-shrink: 0; }
+        .color-swatch:hover { transform: scale(1.15); }
+        .color-swatch.active { border-color: var(--brand); }
+
+        .chart-type-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .chart-type-opt { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--rs); background: var(--bg); color: var(--text-ter); font-size: 18px; cursor: pointer; transition: all 0.15s; }
+        .chart-type-opt:hover { border-color: var(--brand); color: var(--brand); }
+        .chart-type-opt.active { border-color: var(--brand); color: var(--brand); background: var(--brand-subtle); }
+
+        /* ── Threshold ── */
+        .threshold-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .threshold-row .config-input { width: 80px; flex: none; }
+        .th-color-group { display: flex; gap: 4px; }
+        .th-color { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.12s; }
+        .th-color:hover { transform: scale(1.2); }
+        .th-color.active { border-color: var(--text); box-shadow: 0 0 0 1px #FFF; }
+        .th-remove { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text-ter); cursor: pointer; font-size: 10px; transition: all 0.12s; }
+        .th-remove:hover { border-color: var(--danger); color: var(--danger); }
+        .th-add { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--brand); cursor: pointer; padding: 6px 0; font-weight: 500; transition: opacity 0.15s; border: none; background: none; }
+        .th-add:hover { opacity: 0.75; }
+        .th-add i { font-size: 10px; }
+
+        .status-bar { height: 32px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; font-size: 11px; color: var(--text-ter); }
+        .status-left, .status-right { display: flex; align-items: center; gap: 16px; }
+        .status-item { display: flex; align-items: center; gap: 4px; }
+        .status-item .dot { width: 6px; height: 6px; border-radius: 50%; }
+        .status-item .dot.green { background: #07C160; }
+
+        .toast { position: fixed; bottom: 48px; left: 50%; transform: translateX(-50%) translateY(16px); padding: 10px 24px; border-radius: var(--capsule); font-size: 13px; font-weight: 500; color: #FFF; background: #182431; z-index: 200; opacity: 0; pointer-events: none; transition: all 0.3s var(--ease); }
+        .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .chart-card { animation: fadeUp 0.35s var(--ease) both; }
+        .chart-card:nth-child(1) { animation-delay: 0.03s; }
+        .chart-card:nth-child(2) { animation-delay: 0.07s; }
+        .chart-card:nth-child(3) { animation-delay: 0.11s; }
+        .chart-card:nth-child(4) { animation-delay: 0.15s; }
+        .chart-card:nth-child(5) { animation-delay: 0.19s; }
+        .chart-card:nth-child(6) { animation-delay: 0.23s; }
+
+        @media (max-width: 1024px) { .chart-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; } .canvas-toolbar { padding: 16px 20px 12px; } .canvas-scroll { padding: 0 20px 24px; } .config-panel { width: 360px; } }
+        @media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; gap: 16px; } .palette { display: none; } .canvas-toolbar { flex-direction: column; align-items: flex-start; gap: 8px; } .config-panel { width: 100%; } .header-actions .header-btn span { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo"><i class="fa-regular fa-compass"></i><span>Vista</span><span class="badge">Editor</span></div>
+            <div class="breadcrumb"><a href="#">仪表盘</a><i class="fa-solid fa-chevron-right" style="font-size:8px"></i><span>生产环境监控</span></div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="toast('已保存到草稿')"><i class="fa-regular fa-clock"></i><span>草稿</span></button>
+            <button class="header-btn" onclick="toast('已复制分享链接')"><i class="fa-regular fa-share-from-square"></i></button>
+            <button class="header-btn primary" onclick="toast('仪表盘已保存')"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
+            <div class="avatar">A</div>
+        </div>
+    </header>
+
+    <div class="main">
+
+        <aside class="palette">
+            <button class="palette-btn active" title="选择"><i class="fa-regular fa-pointer"></i></button>
+            <button class="palette-btn" title="拖拽移动"><i class="fa-regular fa-up-down"></i></button>
+            <div class="palette-divider"></div>
+            <button class="add-btn" title="添加图表" onclick="addChart()"><i class="fa-solid fa-plus"></i></button>
+            <button class="palette-btn" title="折线图" onclick="addChart('line')" style="font-size:13px"><i class="fa-solid fa-chart-line"></i></button>
+            <button class="palette-btn" title="面积图" onclick="addChart('area')" style="font-size:13px"><i class="fa-solid fa-chart-area"></i></button>
+            <button class="palette-btn" title="柱状图" onclick="addChart('bar')" style="font-size:13px"><i class="fa-solid fa-chart-bar"></i></button>
+            <button class="palette-btn" title="数值" onclick="addChart('numeric')" style="font-size:13px"><i class="fa-solid fa-hashtag"></i></button>
+            <div class="palette-divider"></div>
+            <button class="palette-btn" title="布局设置" onclick="toast('布局设置')"><i class="fa-regular fa-grid-2"></i></button>
+            <button class="palette-btn" title="全屏预览" onclick="toast('全屏模式')"><i class="fa-regular fa-expand"></i></button>
+        </aside>
+
+        <main class="canvas" id="canvas">
+            <div class="canvas-toolbar">
+                <div class="canvas-title">
+                    <h1>生产环境 · 核心监控</h1>
+                    <span class="edit-hint"><i class="fa-regular fa-pen"></i> 编辑标题</span>
+                    <span class="dots"><i class="fa-regular fa-ellipsis"></i></span>
+                </div>
+                <div class="canvas-controls">
+                    <div class="time-pills">
+                        <button class="time-pill">1h</button>
+                        <button class="time-pill active">6h</button>
+                        <button class="time-pill">24h</button>
+                        <button class="time-pill">7d</button>
+                    </div>
+                </div>
+            </div>
+            <div class="canvas-scroll" id="canvasScroll">
+                <div class="chart-grid" id="chartGrid"></div>
+            </div>
+        </main>
+
+        <div class="config-overlay" id="configOverlay"></div>
+
+        <aside class="config-panel" id="configPanel">
+            <div class="config-header">
+                <h2 id="configTitle">配置图表</h2>
+                <button class="config-close" onclick="closeConfig()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="config-tabs">
+                <button class="config-tab active badge-data" data-tab="data" onclick="switchTab('data')">数据</button>
+                <button class="config-tab badge-style" data-tab="style" onclick="switchTab('style')">样式</button>
+            </div>
+            <div class="config-scroll" id="configScroll">
+
+                <!-- ═══ DATA ═══ -->
+                <div class="config-section" data-section="data">
+                    <span class="config-label">数据集</span>
+                    <div class="radio-row">
+                        <label><input type="radio" name="dsType" value="group" checked onchange="switchDSType('group')"> 按分组</label>
+                        <label><input type="radio" name="dsType" value="resource" onchange="switchDSType('resource')"> 按资源类型</label>
+                    </div>
+                    <select class="config-select" id="dsSelect" onchange="rebuildSubDS()"></select>
+                    <select class="config-select" id="dsSubSelect" style="margin-top:6px;display:none" onchange="rebuildMetrics()"></select>
+                </div>
+                <div class="config-section" data-section="data">
+                    <span class="config-label">统计周期</span>
+                    <select class="config-select" id="cfgPeriod" onchange="updateRec()">
+                        <option value="now">实时当前值</option>
+                        <option value="1h">最近 1 小时</option>
+                        <option value="6h">最近 6 小时</option>
+                        <option value="24h" selected>最近 24 小时</option>
+                        <option value="7d">最近 7 天</option>
+                        <option value="30d">最近 30 天</option>
+                    </select>
+                </div>
+                <div class="config-section" data-section="data">
+                    <span class="config-label">采集周期</span>
+                    <select class="config-select" id="cfgInterval">
+                        <option value="10s">10 秒</option>
+                        <option value="30s">30 秒</option>
+                        <option value="1m" selected>1 分钟</option>
+                        <option value="5m">5 分钟</option>
+                        <option value="15m">15 分钟</option>
+                        <option value="1h">1 小时</option>
+                    </select>
+                </div>
+                <div class="group-header" data-section="data">监控</div>
+                <div class="config-section" data-section="data">
+                    <span class="config-label">监控指标</span>
+                    <div class="multi-select" id="metricsSelect">
+                        <div class="multi-select-trigger" onclick="toggleMetrics(event)">
+                            <span class="ms-placeholder">点击选择指标</span>
+                        </div>
+                        <div class="multi-select-dropdown" id="metricsDropdown">
+                            <div class="ms-search"><i class="fa-solid fa-search"></i><input type="text" placeholder="搜索指标..." oninput="filterMetrics(this.value)"></div>
+                            <div class="ms-list" id="metricsList"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-section" data-section="data">
+                    <span class="config-label">监控对象</span>
+                    <div class="obj-radio-row" id="objType">
+                        <label class="active" data-value="all"><input type="radio" name="objType" value="all" checked> 全部资源</label>
+                        <label data-value="group"><input type="radio" name="objType" value="group"> 资源分组</label>
+                        <label data-value="spec"><input type="radio" name="objType" value="spec"> 指定资源</label>
+                    </div>
+                    <div class="obj-content" id="objAll">
+                        <span class="config-label" style="text-transform:none;letter-spacing:0">聚合方式</span>
+                        <div class="radio-row">
+                            <label><input type="radio" name="aggType" value="avg"> 平均值</label>
+                            <label><input type="radio" name="aggType" value="max" checked> 最大值</label>
+                            <label><input type="radio" name="aggType" value="min"> 最小值</label>
+                        </div>
+                        <div class="obj-row" style="margin-top:4px">
+                            <span class="config-label" style="text-transform:none;letter-spacing:0;white-space:nowrap">展示规则</span>
+                            <span class="spinner-group">
+                                <button onclick="spinTop(-1)">−</button>
+                                <span class="spinner-value" id="topValue">10</span>
+                                <button onclick="spinTop(1)">+</button>
+                            </span>
+                        </div>
+                        <div class="obj-hint" id="objHint">CPU使用率最大值的 Top <strong>10</strong></div>
+                    </div>
+                    <div class="obj-content hidden" id="objGroup">
+                        <select class="config-select"><option>生产环境</option><option>测试环境</option><option>预发布</option><option>容灾环境</option></select>
+                    </div>
+                    <div class="obj-content hidden" id="objSpec">
+                        <div class="multi-select" id="resourceSelect">
+                            <div class="multi-select-trigger" onclick="toggleResources(event)"><span class="ms-placeholder">选择资源实例...</span></div>
+                            <div class="multi-select-dropdown" id="resourceDropdown">
+                                <div class="ms-search"><i class="fa-solid fa-search"></i><input type="text" placeholder="搜索资源..." oninput="filterResources(this.value)"></div>
+                                <div class="ms-list" id="resourceList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-section" data-section="data">
+                    <span class="config-label">推荐图表</span>
+                    <div class="rec-charts" id="recCharts"></div>
+                </div>
+
+                <!-- ═══ STYLE ═══ -->
+                <!-- 基础信息 -->
+                <div class="group-header first" data-section="style">基础信息</div>
+                <div class="config-section hidden" data-section="style">
+                    <span class="config-label">图表名称</span>
+                    <input class="config-input" id="cfgTitle" placeholder="输入图表名称...">
+                </div>
+                <div class="config-section hidden" data-section="style">
+                    <span class="config-label">所属分组</span>
+                    <select class="config-select" id="cfgGroup">
+                        <option value="默认分组">默认分组</option>
+                        <option value="计算资源">计算资源</option>
+                        <option value="存储资源">存储资源</option>
+                        <option value="网络资源">网络资源</option>
+                        <option value="数据库">数据库</option>
+                    </select>
+                </div>
+                <div class="config-section hidden" data-section="style">
+                    <span class="config-label">备注</span>
+                    <textarea class="config-textarea" id="cfgNotes" placeholder="添加备注..."></textarea>
+                </div>
+
+                <!-- 图例 -->
+                <div class="group-header" data-section="style">图例</div>
+                <div class="config-section hidden" data-section="style">
+                    <span class="config-label">图例位置</span>
+                    <div class="radio-row" id="cfgLegend">
+                        <label><input type="radio" name="legendPos" value="none"> 不显示</label>
+                        <label><input type="radio" name="legendPos" value="top"> 顶部</label>
+                        <label><input type="radio" name="legendPos" value="bottom" checked> 底部</label>
+                        <label><input type="radio" name="legendPos" value="right"> 右侧</label>
+                    </div>
+                </div>
+
+                <!-- 阈值 -->
+                <div class="group-header" data-section="style">阈值</div>
+                <div class="config-section hidden" data-section="style">
+                    <div id="thresholdList"></div>
+                    <button class="th-add" onclick="addThreshold()"><i class="fa-solid fa-plus"></i> 添加阈值</button>
+                </div>
+
+                <!-- 链接 -->
+                <div class="group-header" data-section="style">链接</div>
+                <div class="config-section hidden" data-section="style">
+                    <div class="config-toggle">
+                        <span class="config-label">开启链接</span>
+                        <button class="toggle-track" id="cfgLinkToggle" onclick="toggleLink()"><div class="knob"></div></button>
+                    </div>
+                </div>
+                <div class="config-section hidden" data-section="style" id="linkUrlSection">
+                    <span class="config-label">链接 URL</span>
+                    <input class="config-input" id="cfgLinkUrl" placeholder="https://...">
+                </div>
+
+            </div>
+            <div class="config-footer">
+                <button class="btn-cancel" onclick="closeConfig()">取消</button>
+                <button class="btn-apply" id="btnApply" onclick="applyConfig()">更新预览</button>
+            </div>
+        </aside>
+    </div>
+
+    <footer class="status-bar">
+        <div class="status-left">
+            <span class="status-item"><span class="dot green"></span>已连接</span>
+            <span>6 个图表</span>
+            <span>自动保存</span>
+        </div>
+        <div class="status-right">
+            <span class="status-item"><i class="fa-regular fa-rotate"></i> 100%</span>
+            <span class="status-item"><i class="fa-regular fa-arrow-rotate-left"></i></span>
+            <span class="status-item"><i class="fa-regular fa-arrow-rotate-right"></i></span>
+            <span>v2.4.0</span>
+        </div>
+    </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const METRICS_NEW = ['CPU使用率','内存使用率','网络流入速率','网络流出速率','云硬盘使用率','云硬盘I/O写入'];
+    const CASCADE = {
+        group: [
+            { name: '全部',              items: [
+                { name: '宿主机性能分析 (多云)',   metrics: METRICS_NEW },
+                { name: '弹性云服务器性能分析 (多云)', metrics: METRICS_NEW },
+                { name: '云硬盘性能分析 (多云)',    metrics: METRICS_NEW },
+            ]},
+            { name: '资源性能分析',      items: [
+                { name: '弹性云服务器', metrics: METRICS_NEW },
+            ]},
+            { name: '容量分析',          items: [] },
+            { name: '资源统计',          items: [] },
+            { name: '系统级监控',        items: [] },
+            { name: '业务分析',          items: [] },
+            { name: 'AI云服务可用性状态', items: [] },
+        ],
+        resource: [
+            { name: '全部',        items: [
+                { name: '宿主机性能分析 (多云)',   metrics: METRICS_NEW },
+                { name: '弹性云服务器性能分析 (多云)', metrics: METRICS_NEW },
+                { name: '云硬盘性能分析 (多云)',    metrics: METRICS_NEW },
+            ]},
+            { name: '业务应用',    items: [] },
+            { name: '云服务',      items: [] },
+            { name: '云资源',      items: [] },
+            { name: '虚拟资源池',  items: [] },
+            { name: '物理资源',    items: [] },
+        ]
+    };
+    const ALL_RESOURCES = ['host-01.cloud','host-02.cloud','ecs-web-01','ecs-web-02','ecs-app-01','ecs-app-02','evs-data-01','evs-data-02','evs-backup-01','evs-backup-02'];
+    const TH_COLORS = [
+        { key:'danger',  label:'紧急', color:'#F5222D' },
+        { key:'warning', label:'重要', color:'#FF7D00' },
+        { key:'minor',   label:'次要', color:'#FADB14' },
+        { key:'info',    label:'提示', color:'#007DFF' },
+    ];
+    const GROUPS = ['默认分组','计算资源','存储资源','网络资源','宿主机','弹性云服务器','云硬盘'];
+
+    const CHARTS_DATA = [
+        { id:1, title:'CPU 使用率',      type:'line',    color:'#007DFF', group:'计算资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
+        { id:2, title:'内存使用率',       type:'area',    color:'#07C160', group:'计算资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
+        { id:3, title:'网络流入速率',     type:'area',    color:'#06B6D4', group:'网络资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
+        { id:4, title:'网络流出速率',     type:'line',    color:'#FF7D00', group:'网络资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'' },
+        { id:5, title:'云硬盘使用率',     type:'numeric', color:'#007DFF', group:'存储资源',   notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:true,  linkUrl:'https://example.com/dashboard/5' },
+        { id:6, title:'云硬盘 I/O 写入',  type:'bar',     color:'#F5222D', group:'默认分组',   notes:'', legendPosition:'bottom', thresholds:[{value:80,level:'warning'},{value:95,level:'danger'}], linkEnabled:false, linkUrl:'' },
+    ];
+
+    let state = {
+        charts: JSON.parse(JSON.stringify(CHARTS_DATA)),
+        selectedId: null, configTab: 'data', nextId: 7,
+        selectedMetrics: [], selectedResources: [],
+        dsType: 'group', dsIndex: 0, dsSubIndex: 0, objType: 'all',
+    };
+
+    // ── SVG Charts (same as before) ──
+    function renderChartSVG(type, color) {
+        const c = color || '#007DFF';
+        switch (type) {
+            case 'line': return `<svg viewBox="0 0 340 165" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif;font-size:9px;fill:#9CA3AF"><rect x="0" y="0" width="340" height="165" fill="#FAFBFC"/><rect x="0" y="0" width="340" height="33" fill="rgba(0,0,0,0.012)"/><rect x="0" y="66" width="340" height="33" fill="rgba(0,0,0,0.012)"/><rect x="0" y="132" width="340" height="33" fill="rgba(0,0,0,0.012)"/><text x="8" y="13">100%</text><text x="8" y="46">75%</text><text x="8" y="79">50%</text><text x="8" y="112">25%</text><text x="8" y="152">0%</text><line x1="36" y1="21" x2="334" y2="21" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="54" x2="334" y2="54" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="87" x2="334" y2="87" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="120" x2="334" y2="120" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="153" x2="334" y2="153" stroke="#E5E5EA" stroke-width="1"/><text x="56" y="163">00:00</text><text x="124" y="163">04:00</text><text x="192" y="163">08:00</text><text x="260" y="163">12:00</text><defs><linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c}" stop-opacity="0.18"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><path d="M 36,116 C 54,112 68,68 86,72 C 104,76 118,44 136,48 C 154,52 168,88 186,82 C 204,76 218,18 236,12 C 254,6 268,32 286,28 C 304,24 318,38 336,34" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M 36,116 C 54,112 68,68 86,72 C 104,76 118,44 136,48 C 154,52 168,88 186,82 C 204,76 218,18 236,12 C 254,6 268,32 286,28 C 304,24 318,38 336,34 L 336,165 L 36,165 Z" fill="url(#lg1)" opacity="0.35"/><circle cx="336" cy="34" r="3" fill="${c}" stroke="#FFF" stroke-width="1.5"/></svg>`;
+            case 'area': return `<svg viewBox="0 0 340 165" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif;font-size:9px;fill:#9CA3AF"><rect x="0" y="0" width="340" height="165" fill="#FAFBFC"/><rect x="0" y="0" width="340" height="33" fill="rgba(0,0,0,0.012)"/><rect x="0" y="66" width="340" height="33" fill="rgba(0,0,0,0.012)"/><rect x="0" y="132" width="340" height="33" fill="rgba(0,0,0,0.012)"/><text x="8" y="13">100%</text><text x="8" y="46">75%</text><text x="8" y="79">50%</text><text x="8" y="112">25%</text><text x="8" y="152">0%</text><line x1="36" y1="21" x2="334" y2="21" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="54" x2="334" y2="54" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="87" x2="334" y2="87" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="120" x2="334" y2="120" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="153" x2="334" y2="153" stroke="#E5E5EA" stroke-width="1"/><text x="56" y="163">00:00</text><text x="124" y="163">04:00</text><text x="192" y="163">08:00</text><text x="260" y="163">12:00</text><defs><linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c}" stop-opacity="0.35"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><path d="M 36,140 L 36,98 C 54,102 68,74 86,78 C 104,82 118,52 136,56 C 154,60 168,64 186,58 C 204,52 218,32 236,36 C 254,40 268,22 286,26 C 304,30 318,14 336,18 L 336,140 Z" fill="url(#lg2)"/><path d="M 36,98 C 54,102 68,74 86,78 C 104,82 118,52 136,56 C 154,60 168,64 186,58 C 204,52 218,32 236,36 C 254,40 268,22 286,26 C 304,30 318,14 336,18" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round"/></svg>`;
+            case 'bar': return `<svg viewBox="0 0 340 165" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif;font-size:9px;fill:#9CA3AF"><rect x="0" y="0" width="340" height="165" fill="#FAFBFC"/><rect x="0" y="0" width="340" height="33" fill="rgba(0,0,0,0.012)"/><rect x="0" y="66" width="340" height="33" fill="rgba(0,0,0,0.012)"/><rect x="0" y="132" width="340" height="33" fill="rgba(0,0,0,0.012)"/><text x="8" y="13">400</text><text x="8" y="46">300</text><text x="8" y="79">200</text><text x="8" y="112">100</text><text x="8" y="152">0</text><line x1="36" y1="21" x2="334" y2="21" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="54" x2="334" y2="54" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="87" x2="334" y2="87" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="120" x2="334" y2="120" stroke="#E5E5EA" stroke-width="1"/><line x1="36" y1="153" x2="334" y2="153" stroke="#E5E5EA" stroke-width="1"/><rect x="46" y="42" width="26" height="111" rx="2" fill="${c}" opacity="0.78"/><rect x="82" y="58" width="26" height="95" rx="2" fill="${c}" opacity="0.88"/><rect x="118" y="12" width="26" height="141" rx="2" fill="${c}" opacity="0.95"/><rect x="154" y="72" width="26" height="81" rx="2" fill="${c}" opacity="0.70"/><rect x="190" y="28" width="26" height="125" rx="2" fill="${c}" opacity="0.85"/><rect x="226" y="85" width="26" height="68" rx="2" fill="${c}" opacity="0.72"/><rect x="262" y="48" width="26" height="105" rx="2" fill="${c}" opacity="0.80"/><rect x="298" y="65" width="26" height="88" rx="2" fill="${c}" opacity="0.75"/></svg>`;
+            case 'numeric': return `<svg viewBox="0 0 340 165" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif"><rect x="0" y="0" width="340" height="165" fill="#FAFBFC" rx="4"/><defs><linearGradient id="lg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c}" stop-opacity="0.2"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><text x="170" y="72" text-anchor="middle" dominant-baseline="central" font-size="48" font-weight="700" fill="${c}">2,847</text><text x="170" y="106" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#9CA3AF">活跃请求数</text><path d="M 190,128 C 205,125 215,132 228,126 C 241,120 254,129 267,124 C 280,119 293,126 306,121" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/><text x="308" y="118" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="#07C160" opacity="0.8">+12.4%</text><text x="170" y="148" text-anchor="middle" font-size="9" fill="#E5E5EA">● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ●</text></svg>`;
+            default: return `<svg viewBox="0 0 340 165" xmlns="http://www.w3.org/2000/svg"><text x="170" y="82" text-anchor="middle" fill="#9CA3AF" font-family="Inter,sans-serif" font-size="13">图表</text></svg>`;
+        }
+    }
+
+    // ── Render Grid ──
+    function renderGrid() {
+        const grid = document.getElementById('chartGrid');
+        grid.innerHTML = state.charts.map(ch => {
+            const sel = state.selectedId === ch.id ? 'selected' : '';
+            const linkIcon = ch.linkEnabled ? `<i class="fa-solid fa-arrow-up-right-from-square link-icon"></i>` : '';
+            return `<div class="chart-card ${sel}" data-id="${ch.id}" onclick="selectChart(${ch.id})">
+                <div class="chart-card-header">
+                    <div class="chart-label">
+                        <span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+                        <h3>${ch.title}</h3>${linkIcon}
+                    </div>
+                    <div class="chart-card-actions">
+                        <button class="chart-card-action" onclick="event.stopPropagation();dupChart(${ch.id})"><i class="fa-regular fa-copy"></i></button>
+                        <button class="chart-card-action danger" onclick="event.stopPropagation();delChart(${ch.id})"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>
+                </div>
+                <div class="chart-body">${renderChartSVG(ch.type, ch.color)}</div>
+            </div>`;
+        }).join('');
+        const a = document.createElement('div'); a.className = 'add-card'; a.innerHTML = '<i class="fa-solid fa-plus"></i><span>添加图表</span>'; a.onclick = () => addChart();
+        grid.appendChild(a);
+    }
+
+    // ── Config Panel ──
+    function selectChart(id) { state.selectedId = id; renderGrid(); openConfig(); loadConfig(id); }
+    function openConfig() { document.getElementById('configPanel').classList.add('open'); document.getElementById('configOverlay').classList.add('visible'); switchTab('data'); rebuildDS(); rebuildSubDS(); rebuildResources(); updateRec(); }
+    function closeConfig() { document.getElementById('configPanel').classList.remove('open'); document.getElementById('configOverlay').classList.remove('visible'); state.selectedId = null; renderGrid(); }
+    function switchTab(tab) { state.configTab = tab; document.querySelectorAll('.config-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab)); document.querySelectorAll('.config-section, .group-header').forEach(s => s.classList.toggle('hidden', s.dataset.section !== tab)); }
+
+    // ── Load Config into Style tab ──
+    function loadConfig(id) {
+        const ch = state.charts.find(c => c.id === id);
+        if (!ch) return;
+        document.getElementById('configTitle').textContent = `配置 · ${ch.title}`;
+        // Chart type
+        document.querySelectorAll('#cfgChartType .chart-type-opt').forEach(b => b.classList.toggle('active', b.dataset.type === ch.type));
+        // Color
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.toggle('active', s.dataset.color === ch.color));
+        // 基础信息
+        document.getElementById('cfgTitle').value = ch.title || '';
+        document.getElementById('cfgGroup').value = ch.group || '默认分组';
+        document.getElementById('cfgNotes').value = ch.notes || '';
+        // 图例
+        document.querySelectorAll('input[name="legendPos"]').forEach(r => r.checked = r.value === (ch.legendPosition || 'bottom'));
+        // 阈值
+        renderThresholds(ch.thresholds || []);
+        // 链接
+        document.getElementById('cfgLinkToggle').classList.toggle('on', !!ch.linkEnabled);
+        document.getElementById('linkUrlSection').style.display = ch.linkEnabled ? '' : 'none';
+        document.getElementById('cfgLinkUrl').value = ch.linkUrl || '';
+    }
+
+    // ── Threshold ──
+    function renderThresholds(thresholds) {
+        const el = document.getElementById('thresholdList');
+        if (!thresholds.length) {
+            thresholds = [{value:'', level:'warning'}];
+        }
+        el.innerHTML = thresholds.map((t, i) => {
+            const opts = TH_COLORS.map(l => `
+                <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;color:${l.key === t.level ? 'var(--text)' : 'var(--text-sec)'}">
+                    ${l.label}
+                    <span style="width:10px;height:10px;border-radius:50%;background:${l.color};display:inline-block;flex-shrink:0"></span>
+                    <input type="radio" name="thLevel_${i}" value="${l.key}" ${l.key === t.level ? 'checked' : ''}
+                        onchange="updateThLevel(${i},'${l.key}')" style="margin:0;width:12px;height:12px">
+                </label>
+            `).join('');
+            return `<div class="threshold-row">
+                <input class="config-input" type="number" placeholder="阈值" value="${t.value}" style="width:70px;flex:none" onchange="updateThValue(${i},this.value)">
+                <div style="display:flex;gap:8px;flex-wrap:wrap">${opts}</div>
+                <button class="th-remove" onclick="removeThreshold(${i})"><i class="fa-solid fa-xmark"></i></button>
+            </div>`;
+        }).join('');
+        if (!thresholds.length || (thresholds.length === 1 && thresholds[0].value === '')) {
+            const first = el.querySelector('.th-remove');
+            if (first) first.style.display = 'none';
+        }
+    }
+
+    function getCurrentThresholds() {
+        const ch = state.charts.find(c => c.id === state.selectedId);
+        return ch ? ch.thresholds : [];
+    }
+
+    function updateThValue(i, val) {
+        const ch = state.charts.find(c => c.id === state.selectedId);
+        if (!ch) return;
+        if (!ch.thresholds[i]) ch.thresholds[i] = {value:'', level:'warning'};
+        ch.thresholds[i].value = val;
+    }
+
+    function updateThLevel(i, level) {
+        const ch = state.charts.find(c => c.id === state.selectedId);
+        if (!ch) return;
+        if (!ch.thresholds[i]) ch.thresholds[i] = {value:'', level:'warning'};
+        ch.thresholds[i].level = level;
+        renderThresholds(ch.thresholds);
+    }
+
+    function addThreshold() {
+        const ch = state.charts.find(c => c.id === state.selectedId);
+        if (!ch) return;
+        ch.thresholds.push({value:'', level:'warning'});
+        renderThresholds(ch.thresholds);
+    }
+
+    function removeThreshold(i) {
+        const ch = state.charts.find(c => c.id === state.selectedId);
+        if (!ch) return;
+        ch.thresholds.splice(i, 1);
+        renderThresholds(ch.thresholds);
+    }
+
+    // ── Link ──
+    function toggleLink() {
+        const t = document.getElementById('cfgLinkToggle');
+        t.classList.toggle('on');
+        document.getElementById('linkUrlSection').style.display = t.classList.contains('on') ? '' : 'none';
+        const ch = state.charts.find(c => c.id === state.selectedId);
+        if (ch) { ch.linkEnabled = t.classList.contains('on'); renderGrid(); }
+    }
+
+    // ── Apply ──
+    function applyConfig() {
+        const ch = state.charts.find(c => c.id === state.selectedId);
+        if (!ch) return;
+        // chart type
+        const a = document.querySelector('#cfgChartType .chart-type-opt.active');
+        if (a) ch.type = a.dataset.type;
+        // 基础信息
+        ch.title = document.getElementById('cfgTitle').value || ch.title;
+        ch.group = document.getElementById('cfgGroup').value;
+        ch.notes = document.getElementById('cfgNotes').value;
+        // 图例
+        const lp = document.querySelector('input[name="legendPos"]:checked');
+        if (lp) ch.legendPosition = lp.value;
+        // 链接
+        ch.linkUrl = document.getElementById('cfgLinkUrl').value;
+        ch.linkEnabled = document.getElementById('cfgLinkToggle').classList.contains('on');
+
+        const btn = document.getElementById('btnApply'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 更新中';
+        setTimeout(() => {
+            renderGrid(); selectChart(state.selectedId);
+            btn.disabled = false; btn.textContent = '更新预览';
+            toast('图表已更新');
+        }, 500);
+    }
+
+    // ── Data Tab logic (unchanged) ──
+    function switchDSType(val) { state.dsType = val; state.dsIndex = 0; state.dsSubIndex = 0; state.selectedMetrics = []; rebuildDS(); rebuildSubDS(); rebuildMetrics(); updateRec(); }
+    function rebuildDS() { const sel = document.getElementById('dsSelect'); sel.innerHTML = CASCADE[state.dsType].map((d,i) => `<option value="${i}" ${i===state.dsIndex?'selected':''}>${d.name}</option>`).join(''); state.dsIndex = +sel.value; }
+    function rebuildSubDS() { state.dsIndex = +document.getElementById('dsSelect').value; state.dsSubIndex = 0; const cat = CASCADE[state.dsType][state.dsIndex]; const sel = document.getElementById('dsSubSelect'); const hasItems = cat.items && cat.items.length; sel.style.display = hasItems ? '' : 'none'; if (hasItems) { sel.innerHTML = cat.items.map((d,i) => `<option value="${i}" ${i===0?'selected':''}>${d.name}</option>`).join(''); } state.selectedMetrics = []; rebuildMetrics(); updateRec(); renderTrigger(); }
+    function rebuildMetrics() { const cat = CASCADE[state.dsType][state.dsIndex]; const subSel = document.getElementById('dsSubSelect'); if (subSel.style.display !== 'none') state.dsSubIndex = +subSel.value; const items = cat.items && cat.items.length ? cat.items : null; const list = items ? items[state.dsSubIndex].metrics : []; document.getElementById('metricsList').innerHTML = list.map(m => `<label class="ms-item"><input type="checkbox" value="${m}" ${state.selectedMetrics.includes(m)?'checked':''} onchange="toggleMetric('${m}',this.checked)"> ${m}</label>`).join(''); renderTrigger(); }
+    function renderTrigger() { const t = document.querySelector('#metricsSelect .multi-select-trigger'); t.innerHTML = state.selectedMetrics.length ? state.selectedMetrics.map(m => `<span class="ms-tag">${m} <i class="fa-solid fa-xmark" onclick="event.stopPropagation();removeMetric('${m}')"></i></span>`).join('') : '<span class="ms-placeholder">点击选择指标</span>'; }
+    function toggleMetric(n,c) { if(c){if(!state.selectedMetrics.includes(n))state.selectedMetrics.push(n)}else state.selectedMetrics=state.selectedMetrics.filter(m=>m!==n); renderTrigger(); updateRec(); }
+    function removeMetric(n) { state.selectedMetrics=state.selectedMetrics.filter(m=>m!==n); rebuildMetrics(); renderTrigger(); updateRec(); }
+    function filterMetrics(v) { document.querySelectorAll('#metricsList .ms-item').forEach(e=>e.style.display=e.textContent.includes(v)?'flex':'none'); }
+    let mO=false; function toggleMetrics(e) { mO=!mO; document.getElementById('metricsDropdown').classList.toggle('open',mO); document.querySelector('#metricsSelect .multi-select-trigger').classList.toggle('open',mO); e.stopPropagation(); }
+    function rebuildResources() { document.getElementById('resourceList').innerHTML = ALL_RESOURCES.map(r => `<label class="ms-item"><input type="checkbox" value="${r}" ${state.selectedResources.includes(r)?'checked':''} onchange="toggleRes('${r}',this.checked)"> ${r}</label>`).join(''); renderResTrigger(); }
+    function renderResTrigger() { const t = document.querySelector('#resourceSelect .multi-select-trigger'); t.innerHTML = state.selectedResources.length ? state.selectedResources.map(r => `<span class="ms-tag">${r.split('.')[0]} <i class="fa-solid fa-xmark" onclick="event.stopPropagation();removeRes('${r}')"></i></span>`).join('') : '<span class="ms-placeholder">选择资源实例...</span>'; }
+    function toggleRes(n,c) { if(c){if(!state.selectedResources.includes(n))state.selectedResources.push(n)}else state.selectedResources=state.selectedResources.filter(r=>r!==n); renderResTrigger(); }
+    function removeRes(n) { state.selectedResources=state.selectedResources.filter(r=>r!==n); rebuildResources(); renderResTrigger(); }
+    function filterResources(v) { document.querySelectorAll('#resourceList .ms-item').forEach(e=>e.style.display=e.textContent.includes(v)?'flex':'none'); }
+    let rO=false; function toggleResources(e) { rO=!rO; document.getElementById('resourceDropdown').classList.toggle('open',rO); document.querySelector('#resourceSelect .multi-select-trigger').classList.toggle('open',rO); e.stopPropagation(); }
+    document.querySelectorAll('#objType label').forEach(l => { l.addEventListener('click', function() { document.querySelectorAll('#objType label').forEach(x=>x.classList.remove('active')); this.classList.add('active'); state.objType=this.dataset.value; document.getElementById('objAll').classList.toggle('hidden',state.objType!=='all'); document.getElementById('objGroup').classList.toggle('hidden',state.objType!=='group'); document.getElementById('objSpec').classList.toggle('hidden',state.objType!=='spec'); }); });
+    document.querySelectorAll('input[name="aggType"]').forEach(r => r.addEventListener('change', updateObjHint));
+    let topN = 10;
+    function spinTop(d) { topN = Math.max(1, Math.min(100, topN + d)); document.getElementById('topValue').textContent = topN; updateObjHint(); }
+    function updateObjHint() { const m = state.selectedMetrics[0] || 'CPU使用率'; const a = document.querySelector('input[name="aggType"]:checked'); const agg = a ? {avg:'平均值',max:'最大值',min:'最小值'}[a.value] : '最大值'; document.getElementById('objHint').innerHTML = `${m}${agg}的 降序 Top <strong>${topN}</strong>`; }
+    const METRIC_REC = {
+        'CPU使用率':['line','area'],
+        '内存使用率':['area','line'],
+        '网络流入速率':['area','line'],
+        '网络流出速率':['line','area'],
+        '云硬盘使用率':['area','numeric'],
+        '云硬盘I/O写入':['bar','line'],
+    };
+    const CHART_DEFS = [
+        {i:'fa-solid fa-hashtag',    l:'数值图', t:'numeric'},
+        {i:'fa-solid fa-chart-line', l:'折线图', t:'line'},
+        {i:'fa-solid fa-chart-area', l:'面积图', t:'area'},
+        {i:'fa-solid fa-chart-bar',  l:'柱状图', t:'bar'},
+    ];
+
+    function updateRec() {
+        const el = document.getElementById('recCharts');
+        if (!state.selectedMetrics.length) {
+            el.innerHTML = '<span style="font-size:12px;color:var(--text-ter)">选择指标后将自动推荐图表类型</span>';
+            return;
+        }
+        const isNow = document.getElementById('cfgPeriod').value === 'now';
+        const ch = state.charts.find(c=>c.id===state.selectedId);
+        const cur = ch ? ch.type : 'line';
+
+        let types;
+        if (isNow) {
+            types = ['numeric', 'line', 'area'];
+        } else {
+            const first = state.selectedMetrics[0];
+            const rec = METRIC_REC[first] || ['line', 'area', 'bar', 'numeric'];
+            types = rec;
+        }
+
+        const modeLabel = isNow
+            ? '<span style="font-size:9px;font-weight:600;background:var(--brand-subtle);color:var(--brand);padding:1px 6px;border-radius:3px;margin-right:4px">当前值</span>'
+            : '<span style="font-size:9px;font-weight:600;background:#F2F2F7;color:#6B7280;padding:1px 6px;border-radius:3px;margin-right:4px">趋势</span>';
+
+        const sorted = CHART_DEFS.sort((a,b) => {
+            const ia = types.indexOf(a.t);
+            const ib = types.indexOf(b.t);
+            return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        });
+
+        el.innerHTML = sorted.map(t =>
+            `<div class="rec-chart ${t.t===cur?'active':''}" onclick="pickRec('${t.t}')" style="${types.includes(t.t)?'':'opacity:0.4'}">
+                <i class="${t.i}"></i> ${t.l}
+            </div>`
+        ).join('') + `<span style="font-size:10px;color:var(--text-ter);margin-left:4px">${modeLabel}推荐</span>`;
+    }
+    function pickRec(t) { const ch = state.charts.find(c=>c.id===state.selectedId); if (!ch) return; ch.type = t; document.querySelectorAll('#cfgChartType .chart-type-opt').forEach(b=>b.classList.toggle('active',b.dataset.type===t)); updateRec(); renderGrid(); }
+    function addChart(t) { const ts=['line','area','bar','numeric']; const cs=['#007DFF','#07C160','#FF7D00','#8B5CF6','#06B6D4']; const nc={id:state.nextId++,title:'新图表',type:t||ts[Math.random()*ts.length|0],color:cs[Math.random()*cs.length|0],group:'默认分组',notes:'',legendPosition:'bottom',thresholds:[],linkEnabled:false,linkUrl:''}; state.charts.push(nc); renderGrid(); selectChart(nc.id); toast('已添加新图表'); }
+    function dupChart(id) { const c=state.charts.find(x=>x.id===id); if(!c)return; const cp=JSON.parse(JSON.stringify(c)); cp.id=state.nextId++; cp.title=c.title+' (副本)'; state.charts.push(cp); renderGrid(); toast('图表已复制'); }
+    function delChart(id) { state.charts=state.charts.filter(c=>c.id!==id); if(state.selectedId===id)closeConfig(); renderGrid(); toast('图表已删除'); }
+
+    let tt;
+    function toast(m) { const e=document.getElementById('toast'); e.textContent=m; e.classList.add('visible'); clearTimeout(tt); tt=setTimeout(()=>e.classList.remove('visible'),2200); }
+
+    document.querySelectorAll('.time-pill').forEach(p=>p.addEventListener('click',function(){document.querySelectorAll('.time-pill').forEach(x=>x.classList.remove('active'));this.classList.add('active');}));
+    document.querySelectorAll('.color-swatch').forEach(s=>s.addEventListener('click',function(){document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));this.classList.add('active');const c=state.charts.find(x=>x.id===state.selectedId);if(c){c.color=this.dataset.color;renderGrid();}}));
+    document.getElementById('configOverlay').addEventListener('click',closeConfig);
+    document.addEventListener('click',()=>{document.getElementById('metricsDropdown').classList.remove('open');document.querySelector('#metricsSelect .multi-select-trigger').classList.remove('open');document.getElementById('resourceDropdown').classList.remove('open');document.querySelector('#resourceSelect .multi-select-trigger').classList.remove('open');mO=false;rO=false;});
+    document.querySelector('#metricsSelect').addEventListener('click',e=>e.stopPropagation());
+    document.querySelector('#resourceSelect').addEventListener('click',e=>e.stopPropagation());
+
+    renderGrid();
+</script>
+
+</body>
+</html>
