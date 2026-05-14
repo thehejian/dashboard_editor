@@ -157,13 +157,9 @@
         <div class="group-header">阈值</div>
         <div class="config-section">
           <div v-for="(t, i) in currentChart.thresholds" :key="i" class="threshold-row">
-            <a-input-number
-              v-model:value="t.value"
-              placeholder="阈值"
-              style="width:80px"
-              size="small"
-              @change="updateThValue(i, $event)"
-            />
+            <a-button size="small" type="text" danger @click="removeThreshold(i)" :style="{ visibility: currentChart.thresholds.length === 1 && !currentChart.thresholds[0].value ? 'hidden' : 'visible' }">
+              <i class="fa-solid fa-xmark"></i>
+            </a-button>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <label v-for="l in TH_COLORS" :key="l.key" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;cursor:pointer;">
                 {{ l.label }}
@@ -171,9 +167,13 @@
                 <input type="radio" :name="'thLevel_' + i" :value="l.key" :checked="t.level === l.key" @change="updateThLevel(i, l.key)" style="margin:0">
               </label>
             </div>
-            <a-button size="small" type="text" danger @click="removeThreshold(i)" :style="{ visibility: currentChart.thresholds.length === 1 && !currentChart.thresholds[0].value ? 'hidden' : 'visible' }">
-              <i class="fa-solid fa-xmark"></i>
-            </a-button>
+            <a-input-number
+              v-model:value="t.value"
+              placeholder="阈值"
+              style="width:80px"
+              size="small"
+              @change="updateThValue(i, $event)"
+            />
           </div>
           <a-button type="dashed" size="small" @click="addThreshold" style="margin-top:4px">
             <i class="fa-solid fa-plus"></i> 添加阈值
@@ -251,13 +251,13 @@ const objHint = computed(() => {
 </script>
 
 <style scoped>
-.config-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 420px; background: var(--bg); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s var(--ease); box-shadow: -8px 0 24px rgba(0,0,0,0.04); }
+.config-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 420px; height: 100%; background: var(--bg); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s var(--ease); box-shadow: -8px 0 24px rgba(0,0,0,0.04); }
 .config-panel.open { transform: translateX(0); }
 .config-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .config-header h2 { font-size: 14px; font-weight: 600; color: var(--text); }
 .config-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .config-tabs .active { color: var(--brand); border-bottom: 2px solid var(--brand); }
-.config-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 24px; min-height: 0; }
+.config-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 24px; min-height: 0; }
 .config-section { display: flex; flex-direction: column; gap: 8px; }
 .config-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-ter); }
 .group-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sec); padding: 8px 0 4px; border-top: 1px solid var(--border); margin-top: 4px; }
@@ -274,6 +274,13 @@ const objHint = computed(() => {
 .config-footer button { flex: 1; }
 
 @media (max-width: 1024px) { .config-panel { width: 360px; } }
-@media (max-width: 768px) { .config-panel { width: 100%; } .config-scroll { padding: 16px; } }
-@media (max-width: 420px) { .config-scroll { padding: 12px; } }
+@media (max-width: 768px) { 
+  .config-panel { width: 100%; height: 100%; }
+  .config-scroll { padding: 16px; }
+  .config-footer { padding: 16px; flex-shrink: 0; }
+}
+@media (max-width: 420px) { 
+  .config-scroll { padding: 12px; }
+  .config-footer { padding: 12px; }
+}
 </style>

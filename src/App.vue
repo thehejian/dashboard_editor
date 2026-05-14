@@ -49,12 +49,35 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useEditorState } from './composables/useEditorState'
 import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
 
 const { state, toast, addChart, closeConfig } = useEditorState()
+
+const isMobile = ref(window.innerWidth <= 768)
+let resizeTimer = null
+
+onMounted(() => {
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer)
+    resizeTimer = setTimeout(() => {
+      isMobile.value = window.innerWidth <= 768
+    }, 100)
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', () => {})
+})
+
+watch(() => state.configOpen, (open) => {
+  if (isMobile.value) {
+    if (open) document.body.classList.add('noscroll')
+    else document.body.classList.remove('noscroll')
+  }
+})
 </script>
 
 <style>
@@ -73,6 +96,7 @@ const { state, toast, addChart, closeConfig } = useEditorState()
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
+body.noscroll { overflow: hidden; position: fixed; width: 100%; height: 100%; }
 body { font-family: var(--font); background: var(--bg-sec); color: var(--text); -webkit-font-smoothing: antialiased; font-size: 14px; }
 #app { display: flex; flex-direction: column; height: 100vh; min-height: 0; }
 ::-webkit-scrollbar { width: 4px; }
