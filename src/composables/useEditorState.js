@@ -103,6 +103,11 @@ const METRIC_REC = {
 
 const CHARTS_DATA = [
   { id:1, title:'CPU 使用率',      type:'line',    color:'#007DFF', group:'计算资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['CPU使用率'] },
+  { id:2, title:'内存使用率',       type:'area',    color:'#07C160', group:'计算资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['内存使用率'] },
+  { id:3, title:'网络流入速率',     type:'area',    color:'#06B6D4', group:'网络资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['网络流入速率'] },
+  { id:4, title:'网络流出速率',     type:'line',    color:'#FF7D00', group:'网络资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', metrics:['网络流出速率'] },
+  { id:5, title:'云硬盘使用率',     type:'numeric', color:'#007DFF', group:'存储资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:true,  linkUrl:'https://example.com/dashboard/5', metrics:['云硬盘使用率'] },
+  { id:6, title:'云硬盘 I/O 写入',  type:'bar',     color:'#F5222D', group:'默认分组', notes:'', legendPosition:'bottom', thresholds:[{value:80,level:'warning'},{value:95,level:'danger'}], linkEnabled:false, linkUrl:'', metrics:['云硬盘I/O写入'] },
 ]
 
 function cloneCharts() {
@@ -114,7 +119,7 @@ const state = reactive({
   selectedId: null,
   configTab: 'data',
   configOpen: false,
-  nextId: 2,
+  nextId: 7,
   selectedMetrics: [],
   selectedResources: [],
   dsType: 'group',
