@@ -286,7 +286,7 @@ const objHint = computed(() => {
 
 @media (max-width: 1024px) { .config-panel { width: 360px; } }
 @media (max-width: 768px) { 
-  .config-panel { width: 100%; height: 100%; }
+  .config-panel { width: 100%; height: 100%; top: 0; }
   .config-scroll { padding: 16px; }
   .config-footer { padding: 16px; flex-shrink: 0; }
 }
