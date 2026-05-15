@@ -3,10 +3,13 @@ const INSTANCE = '192.168.0.155:9100'
 const METRIC_PROMQL = {
   'CPU使用率': p => `100 - avg(rate(node_cpu_seconds_total{mode="idle",instance="${INSTANCE}"}[${p}])) * 100`,
   '内存使用率': p => `(1 - node_memory_free_bytes{instance="${INSTANCE}"} / node_memory_total_bytes{instance="${INSTANCE}"}) * 100`,
+  '系统负载': p => `node_load1{instance="${INSTANCE}"}`,
+  '运行时间': p => `node_time_seconds{instance="${INSTANCE}"} - node_boot_time_seconds{instance="${INSTANCE}"}`,
+  '磁盘使用率': p => `(1 - node_filesystem_avail_bytes{mountpoint="/",instance="${INSTANCE}"} / node_filesystem_size_bytes{mountpoint="/",instance="${INSTANCE}"}) * 100`,
+  '磁盘读取': p => `rate(node_disk_read_bytes_total{instance="${INSTANCE}"}[${p}])`,
+  '磁盘写入': p => `rate(node_disk_written_bytes_total{instance="${INSTANCE}"}[${p}])`,
   '网络流入速率': p => `sum(rate(node_network_receive_bytes_total{device!="lo0",instance="${INSTANCE}"}[${p}]))`,
   '网络流出速率': p => `sum(rate(node_network_transmit_bytes_total{device!="lo0",instance="${INSTANCE}"}[${p}]))`,
-  '云硬盘使用率': p => `(1 - node_filesystem_avail_bytes{mountpoint="/",instance="${INSTANCE}"} / node_filesystem_size_bytes{mountpoint="/",instance="${INSTANCE}"}) * 100`,
-  '云硬盘I/O写入': p => `sum(rate(node_disk_written_bytes_total{instance="${INSTANCE}"}[${p}]))`,
 }
 
 const PERIOD_CFG = {
@@ -39,7 +42,9 @@ function fmtTime(ts) {
 }
 
 function unitOf(metric) {
-  if (metric.includes('速率') || metric.includes('I/O')) return 'bytes/s'
+  if (metric.includes('速率') || metric.includes('读取') || metric.includes('写入')) return 'bytes/s'
+  if (metric === '运行时间') return 's'
+  if (metric === '系统负载') return ''
   return '%'
 }
 

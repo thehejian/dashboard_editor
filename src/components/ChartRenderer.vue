@@ -66,16 +66,38 @@ function clamp(v, max) {
   return Math.min(Math.abs(v), max) * Math.sign(v)
 }
 
+function fmtUptime(seconds) {
+  if (!seconds || seconds < 0) return '0'
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+  if (days > 0) return `${days}天 ${hours}小时`
+  if (hours > 0) return `${hours}小时 ${mins}分钟`
+  return `${mins}分钟`
+}
+
 function renderNumericSVG(c, val) {
-  const displayVal = val != null
-    ? (props.data?.unit === 'bytes/s' ? fmtBytes(val) : Math.round(val * 10) / 10 + '%')
-    : '2,847'
+  const unit = props.data?.unit || '%'
+  let displayVal = val != null ? val.toString() : '--'
+
+  if (val != null) {
+    if (unit === 'bytes/s') {
+      displayVal = fmtBytes(val)
+    } else if (unit === 's') {
+      displayVal = fmtUptime(val)
+    } else if (unit === '%') {
+      displayVal = Math.round(val * 10) / 10 + '%'
+    } else {
+      displayVal = Math.round(val * 10) / 10
+    }
+  }
+
   const trend = val != null ? (val >= 0 ? '+12.4%' : '-3.2%') : '+12.4%'
   const trendColor = val != null && val < 0 ? '#07C160' : '#07C160'
   const safeVal = val != null ? clamp(val, 99999) : 2847
   const waveH = Math.max(40, Math.min(60, 30 + Math.abs(safeVal) / 100))
 
-  return `<svg viewBox="0 0 340 165" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif"><rect x="0" y="0" width="340" height="165" fill="#FAFBFC" rx="4"/><defs><linearGradient id="lg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c}" stop-opacity="0.2"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><text x="170" y="72" text-anchor="middle" dominant-baseline="central" font-size="48" font-weight="700" fill="${c}">${displayVal}</text><text x="170" y="106" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#9CA3AF">监控数值</text><path d="M 190,128 C 205,125 215,132 228,126 C 241,120 254,129 267,124 C 280,119 293,126 306,121" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/><text x="308" y="118" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="${trendColor}" opacity="0.8">${trend}</text><text x="170" y="148" text-anchor="middle" font-size="9" fill="#E5E5EA">● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ●</text></svg>`
+  return `<svg viewBox="0 0 340 165" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif"><rect x="0" y="0" width="340" height="165" fill="#FAFBFC" rx="4"/><defs><linearGradient id="lg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c}" stop-opacity="0.2"/><stop offset="100%" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><text x="170" y="72" text-anchor="middle" dominant-baseline="central" font-size="48" font-weight="700" fill="${c}">${displayVal}</text><text x="170" y="106" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#9CA3AF">${unit === 's' ? '运行时长' : '监控数值'}</text><path d="M 190,128 C 205,125 215,132 228,126 C 241,120 254,129 267,124 C 280,119 293,126 306,121" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/><text x="308" y="118" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="${trendColor}" opacity="0.8">${trend}</text><text x="170" y="148" text-anchor="middle" font-size="9" fill="#E5E5EA">● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ●</text></svg>`
 }
 
 function renderChart() {
