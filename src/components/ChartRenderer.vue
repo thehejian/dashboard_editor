@@ -155,15 +155,16 @@ function renderChart() {
       .style('fill', c).style('radius', [2, 2, 0, 0])
   }
 
-  chart.axis('x', { labelFontSize: 9, labelFill: '#9CA3AF', title: null })
-  chart.axis('y', { labelFontSize: 9, labelFill: '#9CA3AF', gridStroke: '#E5E5EA', gridLineWidth: 1, title: null })
+  const xTitle = props.data?.unit === 'MB/s' ? '时间' : (props.data?.unit === '%' ? '时间' : '时间')
+  chart.axis('x', { labelFontSize: 10, labelFill: '#9CA3AF', title: xTitle, titleFill: '#6B7280', titleFontSize: 10, titleOffset: 30 })
+  chart.axis('y', { labelFontSize: 10, labelFill: '#9CA3AF', gridStroke: '#E5E5EA', gridLineWidth: 1, title: null })
   chart.render()
 }
 
 onMounted(() => { renderChart() })
 
 watch(
-  () => [props.type, props.color, props.data],
+  () => [props.type, props.color, props.data?.points, props.data?.lastValue],
   () => nextTick(() => renderChart()),
   { deep: true }
 )
