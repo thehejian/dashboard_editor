@@ -60,6 +60,34 @@
             <h1>{{ currentDashboard?.title || '仪表盘' }}</h1>
           </div>
           <div class="canvas-controls">
+            <div class="filters">
+              <a-dropdown :trigger="['click']">
+                <button class="filter-btn" :class="{ active: state.filters.env !== 'all' }">
+                  <span>环境: {{ FILTERS.environments.find(e => e.value === state.filters.env)?.label || '全部' }}</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item v-for="opt in FILTERS.environments" :key="opt.value" @click="state.filters.env = opt.value">
+                      {{ opt.label }}
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+              <a-dropdown :trigger="['click']">
+                <button class="filter-btn" :class="{ active: state.filters.cluster !== 'all' }">
+                  <span>集群: {{ FILTERS.clusters.find(c => c.value === state.filters.cluster)?.label || '全部' }}</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item v-for="opt in FILTERS.clusters" :key="opt.value" @click="state.filters.cluster = opt.value">
+                      {{ opt.label }}
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
             <div class="time-pills">
               <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
               <button class="time-pill" :class="{ active: state.period === '6h' }" @click="setPeriod('6h')">6h</button>
@@ -67,6 +95,20 @@
               <button class="time-pill" :class="{ active: state.period === '7d' }" @click="setPeriod('7d')">7d</button>
               <button class="time-pill" :class="{ active: state.period === '30d' }" @click="setPeriod('30d')">30d</button>
             </div>
+            <a-dropdown :trigger="['click']" class="refresh-dropdown">
+              <button class="header-btn refresh-btn">
+                <i class="fa-solid fa-rotate"></i>
+                <span>{{ state.refreshRate === '0' ? '自动刷新' : REFRESH_OPTIONS.find(r => r.value === state.refreshRate)?.label }}</span>
+              </button>
+              <template #overlay>
+                <a-menu>
+                  <a-menu-item v-for="opt in REFRESH_OPTIONS" :key="opt.value" @click="setRefreshRate(opt.value)">
+                    {{ opt.label }}
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+            <span v-if="state.lastRefresh" class="last-refresh">最后更新: {{ state.lastRefresh }}</span>
           </div>
         </div>
         <div class="canvas-scroll">
@@ -95,7 +137,7 @@ import ConfigPanel from './components/ConfigPanel.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 
-const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard } = useEditorState()
+const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate } = useEditorState()
 
 const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))
 
@@ -181,6 +223,16 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .time-pill { padding: 4px 14px; font-size: 12px; font-weight: 500; border-radius: 18px; border: none; background: transparent; color: var(--text-ter); cursor: pointer; transition: all 0.15s; }
 .time-pill:hover { color: var(--text); }
 .time-pill.active { background: var(--brand); color: #FFF; }
+.filters { display: flex; gap: 8px; }
+.filter-btn { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; font-size: 12px; font-weight: 500; border-radius: var(--capsule); border: 1px solid var(--border); background: var(--bg); color: var(--text-sec); cursor: pointer; transition: all 0.15s; }
+.filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+.filter-btn.active { border-color: var(--brand); color: var(--brand); background: var(--brand-subtle); }
+.refresh-dropdown { margin-left: 8px; }
+.refresh-btn { padding: 0 12px; }
+.refresh-btn i { animation: none; }
+.refresh-btn i.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.last-refresh { font-size: 11px; color: var(--text-ter); margin-left: 12px; white-space: nowrap; }
 .canvas-scroll { flex: 1 1 0%; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 32px 60px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 
 .config-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.25s var(--ease); }

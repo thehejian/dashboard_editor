@@ -170,7 +170,38 @@ const state = reactive({
   period: '24h',
   interval: '1m',
   toast: null,
+  refreshInterval: null,
+  refreshRate: '0',
+  lastRefresh: null,
+  filters: {
+    env: 'all',
+    cluster: 'all',
+  },
 })
+
+const REFRESH_OPTIONS = [
+  { value: '0', label: '关闭' },
+  { value: '30', label: '30秒' },
+  { value: '60', label: '1分钟' },
+  { value: '300', label: '5分钟' },
+  { value: '900', label: '15分钟' },
+  { value: '1800', label: '30分钟' },
+]
+
+const FILTERS = {
+  environments: [
+    { value: 'all', label: '全部' },
+    { value: 'prod', label: '生产环境' },
+    { value: 'test', label: '测试环境' },
+    { value: 'dev', label: '开发环境' },
+  ],
+  clusters: [
+    { value: 'all', label: '全部' },
+    { value: 'cluster-1', label: '集群一' },
+    { value: 'cluster-2', label: '集群二' },
+    { value: 'cluster-3', label: '集群三' },
+  ],
+}
 
 const currentDashboard = computed(() => state.dashboards.find(d => d.id === state.currentDashboardId) || null)
 
@@ -463,9 +494,33 @@ function reorderCharts(newOrder) {
   state.charts = newOrder
 }
 
+function setRefreshRate(rate) {
+  state.refreshRate = rate
+  if (state.refreshInterval) {
+    clearInterval(state.refreshInterval)
+    state.refreshInterval = null
+  }
+  if (rate !== '0') {
+    const ms = parseInt(rate) * 1000
+    state.refreshInterval = setInterval(() => {
+      refreshAllCharts()
+      state.lastRefresh = new Date().toLocaleTimeString()
+    }, ms)
+    state.lastRefresh = new Date().toLocaleTimeString()
+  }
+}
+
+function clearRefresh() {
+  if (state.refreshInterval) {
+    clearInterval(state.refreshInterval)
+    state.refreshInterval = null
+  }
+  state.refreshRate = '0'
+}
+
 export function useEditorState() {
   return {
-    CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS,
+    CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS, REFRESH_OPTIONS, FILTERS,
     state,
     chartData,
     currentChart, currentCategory, currentSubDataset, availableMetrics, recommendedCharts, currentDashboard,
@@ -477,5 +532,6 @@ export function useEditorState() {
     updateThValue, updateThLevel, toggleLink, getCurrentThresholds,
     refreshChart, refreshAllCharts,
     switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts,
+    setRefreshRate, clearRefresh,
   }
 }
