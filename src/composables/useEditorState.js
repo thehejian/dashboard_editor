@@ -177,10 +177,6 @@ const state = reactive({
   refreshInterval: null,
   refreshRate: '0',
   lastRefresh: null,
-  filters: {
-    env: 'prod',
-    cluster: 'cluster-1',
-  },
 })
 
 const REFRESH_OPTIONS = [
@@ -191,19 +187,6 @@ const REFRESH_OPTIONS = [
   { value: '900', label: '15分钟' },
   { value: '1800', label: '30分钟' },
 ]
-
-const FILTERS = {
-  environments: [
-    { value: 'prod', label: '生产环境' },
-    { value: 'test', label: '测试环境' },
-    { value: 'dev', label: '开发环境' },
-  ],
-  clusters: [
-    { value: 'cluster-1', label: '集群一' },
-    { value: 'cluster-2', label: '集群二' },
-    { value: 'cluster-3', label: '集群三' },
-  ],
-}
 
 const currentDashboard = computed(() => state.dashboards.find(d => d.id === state.currentDashboardId) || null)
 
@@ -523,7 +506,7 @@ function clearRefresh() {
 
 export function useEditorState() {
   return {
-    CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS, REFRESH_OPTIONS, FILTERS,
+    CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS, REFRESH_OPTIONS,
     state,
     chartData,
     currentChart, currentCategory, currentSubDataset, availableMetrics, recommendedCharts, currentDashboard,

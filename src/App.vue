@@ -71,34 +71,6 @@
             <h1>{{ currentDashboard?.title || '仪表盘' }}</h1>
           </div>
           <div class="canvas-controls">
-            <div class="filters">
-              <a-dropdown :trigger="['click']">
-                <button class="filter-btn" :class="{ active: state.filters.env !== 'all' }">
-                  <span>环境: {{ FILTERS.environments.find(e => e.value === state.filters.env)?.label }}</span>
-                  <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item v-for="opt in FILTERS.environments" :key="opt.value" @click="state.filters.env = opt.value">
-                      {{ opt.label }}
-                    </a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
-              <a-dropdown :trigger="['click']">
-                <button class="filter-btn" :class="{ active: state.filters.cluster !== 'all' }">
-                  <span>集群: {{ FILTERS.clusters.find(c => c.value === state.filters.cluster)?.label }}</span>
-                  <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item v-for="opt in FILTERS.clusters" :key="opt.value" @click="state.filters.cluster = opt.value">
-                      {{ opt.label }}
-                    </a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
-            </div>
             <div class="time-pills">
               <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
               <button class="time-pill" :class="{ active: state.period === '6h' }" @click="setPeriod('6h')">6h</button>
