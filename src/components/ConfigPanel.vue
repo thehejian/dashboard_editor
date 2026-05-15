@@ -260,7 +260,7 @@ const objHint = computed(() => {
 </script>
 
 <style scoped>
-.config-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 420px; height: 100%; background: var(--bg); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s var(--ease); box-shadow: -8px 0 24px rgba(0,0,0,0.04); }
+.config-panel { position: fixed; top: 48px; right: 0; bottom: 0; width: 420px; height: 100%; background: var(--bg); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s var(--ease); box-shadow: -8px 0 24px rgba(0,0,0,0.04); }
 .config-panel.open { transform: translateX(0); }
 .config-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .config-header h2 { font-size: 14px; font-weight: 600; color: var(--text); }

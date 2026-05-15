@@ -118,12 +118,12 @@ watch(() => state.configOpen, (open) => {
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
 body { font-family: var(--font); background: var(--bg-sec); color: var(--text); -webkit-font-smoothing: antialiased; font-size: 14px; }
-#app { display: flex; flex-direction: column; height: 100vh; min-height: 0; }
+#app { display: flex; flex-direction: column; height: 100vh; min-height: 0; padding-top: 48px; }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-.header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 100; }
+.header { position: fixed; top: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 100; }
 .header-left { display: flex; align-items: center; gap: 16px; }
 .header-logo { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text); user-select: none; }
 .header-logo .logo-img { height: 20px; width: auto; }

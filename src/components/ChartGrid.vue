@@ -61,6 +61,7 @@ watch(() => state.period, () => { refreshAllCharts() })
 
 <style scoped>
 .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; flex: 1 1 0%; min-height: 0; grid-auto-rows: minmax(280px, 1fr); }
+.chart-group-label { grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--text-ter); padding: 16px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .add-card { border: 1px dashed var(--border-hover); border-radius: var(--rl); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s var(--ease); background: var(--bg); color: var(--text-ter); box-shadow: var(--shadow-sm); }
 .add-card:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
 .add-card i { font-size: 24px; }
