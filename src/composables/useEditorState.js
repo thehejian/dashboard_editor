@@ -102,12 +102,18 @@ const METRIC_REC = {
 }
 
 const CHARTS_DATA = [
-  { id:1, title:'CPU 使用率',      type:'line',    color:'#007DFF', group:'计算资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['CPU使用率'] },
-  { id:2, title:'内存使用率',       type:'area',    color:'#07C160', group:'计算资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['内存使用率'] },
-  { id:3, title:'网络流入速率',     type:'area',    color:'#06B6D4', group:'网络资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['网络流入速率'] },
-  { id:4, title:'网络流出速率',     type:'line',    color:'#FF7D00', group:'网络资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['网络流出速率'] },
-  { id:5, title:'云硬盘使用率',     type:'numeric', color:'#007DFF', group:'存储资源', notes:'', legendPosition:'bottom', thresholds:[], linkEnabled:true,  linkUrl:'https://example.com/dashboard/5', drillDownUrl:'/detail/evs-usage', metrics:['云硬盘使用率'] },
-  { id:6, title:'云硬盘 I/O 写入',  type:'bar',     color:'#F5222D', group:'默认分组', notes:'', legendPosition:'bottom', thresholds:[{value:80,level:'warning'},{value:95,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['云硬盘I/O写入'] },
+  { id:1, title:'CPU 使用率',      type:'numeric', color:'#007DFF', group:'核心指标', notes:'当前 CPU 使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:85,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['CPU使用率'] },
+  { id:2, title:'内存使用率',       type:'numeric', color:'#07C160', group:'核心指标', notes:'当前内存使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:85,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['内存使用率'] },
+  { id:3, title:'系统负载 (1分钟)', type:'numeric', color:'#FF7D00', group:'核心指标', notes:'1分钟平均负载', legendPosition:'bottom', thresholds:[{value:4,level:'warning'},{value:8,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['系统负载'] },
+  { id:4, title:'系统运行时间',     type:'numeric', color:'#06B6D4', group:'核心指标', notes:'系统运行时长', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['运行时间'] },
+  { id:5, title:'CPU 使用率趋势',   type:'line',    color:'#007DFF', group:'CPU监控', notes:'CPU 使用率随时间变化', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['CPU使用率'] },
+  { id:6, title:'内存使用趋势',     type:'area',    color:'#07C160', group:'内存监控', notes:'内存使用量随时间变化', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['内存使用率'] },
+  { id:7, title:'磁盘使用率',       type:'numeric', color:'#F5222D', group:'磁盘监控', notes:'磁盘空间使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['磁盘使用率'] },
+  { id:8, title:'磁盘读写速率',     type:'bar',     color:'#9C27B0', group:'磁盘监控', notes:'磁盘读写速度', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['磁盘读取','磁盘写入'] },
+  { id:9, title:'网络流量',         type:'area',    color:'#06B6D4', group:'网络监控', notes:'网络入/出流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['网络流入速率','网络流出速率'] },
+  { id:10, title:'系统负载趋势',    type:'line',    color:'#FF7D00', group:'系统负载', notes:'1/5/15分钟负载', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['系统负载'] },
+  { id:11, title:'Top 10 进程 (CPU)', type:'bar',  color:'#007DFF', group:'进程监控', notes:'CPU 使用最高进程', legendPosition:'right', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['CPU使用率'] },
+  { id:12, title:'Top 10 进程 (内存)', type:'bar', color:'#07C160', group:'进程监控', notes:'内存使用最高进程', legendPosition:'right', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['内存使用率'] },
 ]
 
 function cloneCharts() {
@@ -159,7 +165,7 @@ const state = reactive({
   selectedId: null,
   configTab: 'data',
   configOpen: false,
-  nextId: 7,
+  nextId: 13,
   selectedMetrics: [],
   selectedResources: [],
   dsType: 'group',
