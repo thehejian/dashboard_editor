@@ -28,8 +28,6 @@
         <div class="canvas-toolbar">
           <div class="canvas-title">
             <h1>生产环境 · 核心监控</h1>
-            <span class="edit-hint"><i class="fa-solid fa-pen"></i> 编辑标题</span>
-            <span class="dots"><i class="fa-solid fa-ellipsis"></i></span>
           </div>
           <div class="canvas-controls">
             <div class="time-pills">
@@ -142,7 +140,7 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .main { display: flex; flex: 1; overflow: hidden; position: relative; min-height: 0; }
 
 .canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0; background: radial-gradient(ellipse at 25% 20%, rgba(0,125,255,0.02) 0%, transparent 55%), var(--bg-sec); }
-.canvas-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px 16px; flex-shrink: 0; }
+.canvas-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; flex-shrink: 0; }
 .canvas-title { display: flex; align-items: center; gap: 10px; }
 .canvas-title h1 { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
 .canvas-title .edit-hint { font-size: 12px; color: var(--text-ter); cursor: pointer; opacity: 0; transition: opacity 0.2s; }
@@ -154,7 +152,7 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .time-pill { padding: 4px 14px; font-size: 12px; font-weight: 500; border-radius: 18px; border: none; background: transparent; color: var(--text-ter); cursor: pointer; transition: all 0.15s; }
 .time-pill:hover { color: var(--text); }
 .time-pill.active { background: var(--brand); color: #FFF; }
-.canvas-scroll { flex: 1 1 0%; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 32px 60px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.canvas-scroll { flex: 1 1 0%; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 32px 60px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 
 .config-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.25s var(--ease); }
 .config-overlay.visible { opacity: 1; pointer-events: none; }
@@ -193,8 +191,8 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .chart-card:nth-child(5) { animation-delay: 0.19s; }
 .chart-card:nth-child(6) { animation-delay: 0.23s; }
 
-@media (max-width: 1024px) { .canvas-toolbar { padding: 16px 20px 12px; } .canvas-scroll { padding: 0 20px 12px; } }
-@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px 10px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } }
+@media (max-width: 1024px) { .canvas-toolbar { padding: 16px 20px; } .canvas-scroll { padding: 16px 20px 12px; } }
+@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 16px 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } }
 @media (max-width: 640px) { .canvas-toolbar { flex-direction: column; align-items: flex-start; gap: 6px; } .header { height: 44px; } .canvas { height: calc(100dvh - 44px); } .canvas-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; } .header-logo { font-size: 14px; } .avatar { width: 26px; height: 26px; font-size: 10px; } .canvas-title h1 { font-size: 15px; } .chart-card { min-height: 160px; } .chart-card-header { padding: 8px 10px 2px; } .chart-card-header .chart-label h3 { font-size: 11px; } .chart-card-action { width: 32px; height: 32px; } .toast { font-size: 12px; padding: 8px 18px; bottom: 40px; } .fab-add { bottom: 24px; right: 20px; width: 48px; height: 48px; font-size: 18px; } }
-@media (max-width: 420px) { .canvas-toolbar { padding: 10px 12px 8px; } .canvas { height: calc(100dvh - 40px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 12px 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .chart-card { min-height: 140px; border-radius: var(--rm); } .chart-body svg { min-height: 120px; } .header { height: 40px; padding: 0 8px; } .header-logo { font-size: 13px; } .header-logo span.badge { display: none; } .header-btn { height: 28px; padding: 0 8px; font-size: 11px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .canvas-controls { width: 100%; } .time-pills { width: 100%; } .time-pill { flex: 1; text-align: center; } .chart-card-action { width: 30px; height: 30px; } .fab-add { bottom: 16px; right: 16px; width: 44px; height: 44px; font-size: 16px; } }
+@media (max-width: 420px) { .canvas-toolbar { padding: 10px 12px; } .canvas { height: calc(100dvh - 40px); } .canvas-scroll { flex: 1; min-height: 0; padding: 16px 12px 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .chart-card { min-height: 140px; border-radius: var(--rm); } .chart-body svg { min-height: 120px; } .header { height: 40px; padding: 0 8px; } .header-logo { font-size: 13px; } .header-logo span.badge { display: none; } .header-btn { height: 28px; padding: 0 8px; font-size: 11px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .canvas-controls { width: 100%; } .time-pills { width: 100%; } .time-pill { flex: 1; text-align: center; } .chart-card-action { width: 30px; height: 30px; } .fab-add { bottom: 16px; right: 16px; width: 44px; height: 44px; font-size: 16px; } }
 </style>
