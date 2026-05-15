@@ -3,10 +3,34 @@
     <header class="header">
       <div class="header-left">
         <div class="header-logo"><img :src="logoUrl" alt="Logo" class="logo-img"><span class="badge">Dashboard</span></div>
-        <div class="breadcrumb"><a href="#">仪表盘</a><i class="fa-solid fa-chevron-right" style="font-size:8px"></i><span>生产环境监控</span></div>
+        <a-dropdown :trigger="['click']" class="header-dropdown">
+          <button class="header-btn dashboard-select">
+            <span>{{ currentDashboard?.title || '选择仪表盘' }}</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item v-for="db in state.dashboards" :key="db.id" @click="switchDashboard(db.id)">
+                {{ db.title }}
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <a-dropdown :trigger="['click']" class="header-dropdown">
+          <button class="header-btn region-select">
+            <span>{{ currentRegion?.name || '选择区域' }}</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item v-for="r in REGIONS" :key="r.id" @click="switchRegion(r.id)">
+                {{ r.name }}
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
       </div>
       <div class="header-actions">
-        <button class="header-btn" @click="toast('已退出编辑')">退出编辑</button>
         <a-dropdown :trigger="['click']">
           <button class="header-btn"><i class="fa-solid fa-bars"></i></button>
           <template #overlay>
@@ -18,7 +42,13 @@
           </template>
         </a-dropdown>
         <button class="header-btn" @click="toast('已复制分享链接')"><i class="fa-regular fa-share-from-square"></i></button>
-        <button class="header-btn primary" @click="toast('仪表盘已保存')"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
+        <template v-if="state.editMode">
+          <button class="header-btn" @click="saveDashboard()"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
+          <button class="header-btn" @click="exitEditMode()">退出编辑</button>
+        </template>
+        <template v-else>
+          <button class="header-btn primary" @click="enterEditMode()"><i class="fa-solid fa-pen"></i><span>编辑</span></button>
+        </template>
         <div class="avatar">A</div>
       </div>
     </header>
@@ -27,14 +57,15 @@
       <main class="canvas">
         <div class="canvas-toolbar">
           <div class="canvas-title">
-            <h1>生产环境 · 核心监控</h1>
+            <h1>{{ currentDashboard?.title || '仪表盘' }}</h1>
           </div>
           <div class="canvas-controls">
             <div class="time-pills">
-              <button class="time-pill">1h</button>
-              <button class="time-pill active">6h</button>
-              <button class="time-pill">24h</button>
-              <button class="time-pill">7d</button>
+              <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
+              <button class="time-pill" :class="{ active: state.period === '6h' }" @click="setPeriod('6h')">6h</button>
+              <button class="time-pill" :class="{ active: state.period === '24h' }" @click="setPeriod('24h')">24h</button>
+              <button class="time-pill" :class="{ active: state.period === '7d' }" @click="setPeriod('7d')">7d</button>
+              <button class="time-pill" :class="{ active: state.period === '30d' }" @click="setPeriod('30d')">30d</button>
             </div>
           </div>
         </div>
@@ -64,7 +95,9 @@ import ConfigPanel from './components/ConfigPanel.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 
-const { state, toast, addChart, closeConfig } = useEditorState()
+const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard } = useEditorState()
+
+const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))
 
 function scrollToChart(chartId) {
   const el = document.querySelector(`[data-chart-id="${chartId}"]`)
@@ -90,7 +123,6 @@ onUnmounted(() => {
 })
 
 watch(() => state.configOpen, (open) => {
-  // Mobile: don't block scroll, just let it work naturally
 })
 </script>
 
@@ -130,6 +162,8 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .header-btn:hover { border-color: var(--border-hover); color: var(--text); }
 .header-btn.primary { background: var(--brand); border-color: var(--brand); color: #FFF; }
 .header-btn.primary:hover { background: var(--brand-hover); }
+.header-btn.dashboard-select, .header-btn.region-select { padding: 0 12px; }
+.header-dropdown { margin-left: 8px; }
 .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #FFF; cursor: pointer; margin-left: 4px; }
 
 .main { display: flex; flex: 1; overflow: hidden; position: relative; min-height: 0; }

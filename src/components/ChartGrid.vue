@@ -1,28 +1,38 @@
 <template>
-  <div class="chart-grid">
-    <div
-      v-for="ch in state.charts"
-      :key="ch.id"
-      class="chart-card"
-      :class="{ selected: state.selectedId === ch.id }"
-      :data-chart-id="ch.id"
-      @click="selectChart(ch.id)"
+  <div class="chart-wrapper">
+    <draggable
+      v-model="chartList"
+      class="chart-grid"
+      :class="{ 'edit-mode': state.editMode }"
+      item-key="id"
+      :disabled="!state.editMode"
+      ghost-class="ghost"
+      @end="onDragEnd"
     >
-      <div class="chart-card-header">
-        <div class="chart-label">
-          <span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
-          <h3>{{ ch.title }}</h3>
-          <i v-if="ch.linkEnabled" class="fa-solid fa-arrow-up-right-from-square link-icon"></i>
+      <template #item="{ element: ch }">
+        <div
+          class="chart-card"
+          :class="{ selected: state.selectedId === ch.id }"
+          :data-chart-id="ch.id"
+          @click="state.editMode && selectChart(ch.id)"
+        >
+          <div class="chart-card-header">
+            <div class="chart-label">
+              <span v-if="state.editMode" class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+              <h3>{{ ch.title }}</h3>
+              <i v-if="ch.linkEnabled" class="fa-solid fa-arrow-up-right-from-square link-icon"></i>
+            </div>
+            <div v-if="state.editMode" class="chart-card-actions">
+              <button class="chart-card-action" @click.stop="dupChart(ch.id)"><i class="fa-regular fa-copy"></i></button>
+              <button class="chart-card-action danger" @click.stop="delChart(ch.id)"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <ChartRenderer :type="ch.type" :color="ch.color" :data="chartData[ch.id]" />
+          </div>
         </div>
-        <div class="chart-card-actions">
-          <button class="chart-card-action" @click.stop="dupChart(ch.id)"><i class="fa-regular fa-copy"></i></button>
-          <button class="chart-card-action danger" @click.stop="delChart(ch.id)"><i class="fa-regular fa-trash-can"></i></button>
-        </div>
-      </div>
-      <div class="chart-body">
-        <ChartRenderer :type="ch.type" :color="ch.color" :data="chartData[ch.id]" />
-      </div>
-    </div>
+      </template>
+    </draggable>
     <div class="add-card" @click="addChart()">
       <i class="fa-solid fa-plus"></i>
       <span>添加图表</span>
@@ -31,11 +41,19 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import draggable from 'vuedraggable'
 import { useEditorState } from '../composables/useEditorState'
 import ChartRenderer from './ChartRenderer.vue'
 
-const { state, chartData, selectChart, addChart, delChart, dupChart, refreshAllCharts } = useEditorState()
+const { state, chartData, selectChart, addChart, delChart, dupChart, refreshAllCharts, reorderCharts } = useEditorState()
+
+const chartList = computed({
+  get: () => state.charts,
+  set: (val) => reorderCharts(val)
+})
+
+function onDragEnd() {}
 
 onMounted(() => { refreshAllCharts() })
 
@@ -43,15 +61,21 @@ watch(() => state.period, () => { refreshAllCharts() })
 </script>
 
 <style scoped>
+.chart-wrapper { display: flex; flex-wrap: wrap; gap: 16px; flex: 1 1 0%; min-height: 0; }
 .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; flex: 1 1 0%; min-height: 0; grid-auto-rows: minmax(280px, 1fr); }
-.add-card { border: 1px dashed var(--border-hover); border-radius: var(--rl); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s var(--ease); background: var(--bg); color: var(--text-ter); box-shadow: var(--shadow-sm); }
+.chart-grid.edit-mode .chart-card { cursor: grab; }
+.chart-grid.edit-mode .chart-card:active { cursor: grabbing; }
+.chart-grid.edit-mode .drag-handle { opacity: 1; }
+.chart-grid.edit-mode .chart-card:hover { border-color: var(--border-hover); }
+.chart-grid.ghost { opacity: 0.5; background: var(--brand-subtle); }
+.add-card { border: 1px dashed var(--border-hover); border-radius: var(--rl); min-height: 120px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s var(--ease); background: var(--bg); color: var(--text-ter); box-shadow: var(--shadow-sm); }
 .add-card:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
 .add-card i { font-size: 24px; }
 .add-card span { font-size: 13px; font-weight: 500; }
 .chart-body { flex: 1; padding: 2px 14px 14px; display: flex; align-items: stretch; touch-action: pan-y; }
 .chart-body > * { width: 100%; min-height: 155px; touch-action: pan-y; }
-@media (max-width: 1024px) { .chart-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; } }
-@media (max-width: 768px) { .chart-grid { gap: 16px; } .add-card i { font-size: 20px; } }
-@media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; gap: 16px; } .add-card i { font-size: 18px; } }
-@media (max-width: 420px) { .chart-grid { gap: 16px; } .add-card { border-radius: var(--rm); } .add-card i { font-size: 16px; } .add-card span { font-size: 12px; } }
+@media (max-width: 1024px) { .chart-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } }
+@media (max-width: 768px) { .add-card i { font-size: 20px; } }
+@media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; } .add-card i { font-size: 18px; } }
+@media (max-width: 420px) { .add-card { border-radius: var(--rm); } .add-card i { font-size: 16px; } .add-card span { font-size: 12px; } }
 </style>

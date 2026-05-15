@@ -114,7 +114,47 @@ function cloneCharts() {
   return JSON.parse(JSON.stringify(CHARTS_DATA)).map(ch => ({ ...ch, thresholds: [...ch.thresholds], metrics: [...ch.metrics] }))
 }
 
+const REGIONS = [
+  { id: 'cn-north-1', name: '华北区域一', code: 'cn-north-1' },
+  { id: 'cn-north-2', name: '华北区域二', code: 'cn-north-2' },
+  { id: 'cn-north-3', name: '华北区域三', code: 'cn-north-3' },
+  { id: 'cn-south-1', name: '华南区域一', code: 'cn-south-1' },
+  { id: 'cn-east-1', name: '华东区域一', code: 'cn-east-1' },
+  { id: 'cn-east-2', name: '华东区域二', code: 'cn-east-2' },
+  { id: 'us-east-1', name: '美东区域一', code: 'us-east-1' },
+  { id: 'us-west-1', name: '美西区域一', code: 'us-west-1' },
+  { id: 'ap-southeast-1', name: '新加坡区域', code: 'ap-southeast-1' },
+  { id: 'ap-southeast-2', name: '曼谷区域', code: 'ap-southeast-2' },
+]
+
+function createDashboard(id, title, region = 'cn-north-1', period = '24h') {
+  return {
+    id,
+    title,
+    region,
+    period,
+    charts: cloneCharts(),
+  }
+}
+
+const DASHBOARDS = [
+  createDashboard(1, '生产环境核心监控', 'cn-north-1', '24h'),
+  createDashboard(2, '开发环境监控', 'cn-north-2', '6h'),
+  createDashboard(3, '测试环境仪表盘', 'cn-east-1', '24h'),
+]
+
+function cloneDashboards() {
+  return JSON.parse(JSON.stringify(DASHBOARDS)).map(d => ({
+    ...d,
+    charts: d.charts.map(ch => ({ ...ch, thresholds: [...ch.thresholds], metrics: [...ch.metrics] })),
+  }))
+}
+
 const state = reactive({
+  dashboards: cloneDashboards(),
+  currentDashboardId: 1,
+  editMode: false,
+  currentRegion: 'cn-north-1',
   charts: cloneCharts(),
   selectedId: null,
   configTab: 'data',
@@ -131,6 +171,8 @@ const state = reactive({
   interval: '1m',
   toast: null,
 })
+
+const currentDashboard = computed(() => state.dashboards.find(d => d.id === state.currentDashboardId) || null)
 
 const chartData = reactive({})
 
@@ -372,12 +414,61 @@ async function refreshAllCharts() {
   }
 }
 
+function switchDashboard(id) {
+  const db = state.dashboards.find(d => d.id === id)
+  if (!db) return
+  state.currentDashboardId = id
+  state.charts = db.charts
+  state.currentRegion = db.region
+  state.period = db.period
+  state.editMode = false
+  state.configOpen = false
+  state.selectedId = null
+}
+
+function switchRegion(regionId) {
+  state.currentRegion = regionId
+  const db = currentDashboard.value
+  if (db) db.region = regionId
+}
+
+function setPeriod(period) {
+  state.period = period
+  const db = currentDashboard.value
+  if (db) db.period = period
+}
+
+function enterEditMode() {
+  state.editMode = true
+}
+
+function exitEditMode() {
+  state.editMode = false
+  const db = currentDashboard.value
+  if (db) db.charts = [...state.charts]
+  toast('已保存')
+}
+
+function saveDashboard() {
+  const db = currentDashboard.value
+  if (db) {
+    db.charts = [...state.charts]
+    db.region = state.currentRegion
+    db.period = state.period
+  }
+  toast('保存成功')
+}
+
+function reorderCharts(newOrder) {
+  state.charts = newOrder
+}
+
 export function useEditorState() {
   return {
-    CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS,
+    CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS,
     state,
     chartData,
-    currentChart, currentCategory, currentSubDataset, availableMetrics, recommendedCharts,
+    currentChart, currentCategory, currentSubDataset, availableMetrics, recommendedCharts, currentDashboard,
     toast, addChart, applyNewChart, delChart, dupChart,
     selectChart, closeConfig, switchTab,
     switchDSType, onCategoryChange, onSubDatasetChange,
@@ -385,5 +476,6 @@ export function useEditorState() {
     setObjType, spinTop, pickRec, addThreshold, removeThreshold,
     updateThValue, updateThLevel, toggleLink, getCurrentThresholds,
     refreshChart, refreshAllCharts,
+    switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts,
   }
 }
