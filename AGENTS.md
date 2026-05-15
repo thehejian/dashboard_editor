@@ -49,15 +49,34 @@ Vue 3 + Vite 仪表盘编辑器。迁移自单文件 HTML，使用 Composition A
 - SVG 图表渲染在 `renderChartSVG(type, color)` 中, 使用 `v-html` 插入
 - 图表标题的链接图标在 ChartGrid.vue 中根据 `ch.linkEnabled` 条件渲染
 - 级联数据定义在 `CASCADE` 对象: `group[]` 和 `resource[]` 两个入口; 三级结构: category → items[] → metrics[]
+- 顶部导航点击跳转到具体图表: 使用 `data-chart-id` 属性 + `scrollIntoView`
+- 画布不分组, 导航下拉列出所有图表标题
+
+## 技术栈
+
+- Vue 3 ^3.5 + Vite ^6.3
+- Ant Design Vue ^4.2.6
+- AntV G2 ^5.4.8
 
 ## 开发命令
 
 ```bash
-npm run dev     # 启动开发服务器
+npm run dev     # 启动开发服务器 (热更新)
 npm run build   # 构建到 dist/
 npm run preview # 预览构建产物
 ```
 
+## API 代理
+
+在 `vite.config.js` 中配置，代理 `/api/v1` 到后端服务。
+
+## 移动端注意
+
+- 使用 `100dvh` 替代 `100vh` 解决移动端底部安全区域
+- ConfigPanel 移动端需设 `top: 0` 使底部按钮固定
+
 ## 参考文档
 
-- `document/01-参考.txt` — 监控系统架构设计说明 (指标 → 处理 → 展示映射)
+- `document/01-参考.txt` — 监控系统架构设计说明
+- `document/03-图表推荐逻辑.md` — 图表推荐逻辑详解
+- `开发文档.md` — 完整技术文档
