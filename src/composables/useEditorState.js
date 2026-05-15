@@ -142,7 +142,7 @@ function createDashboard(id, title, region = 'cn-north-1', period = '24h') {
 }
 
 const DASHBOARDS = [
-  createDashboard(1, '生产环境核心监控', 'cn-north-1', '24h'),
+  createDashboard(1, '虚拟机监控', 'cn-north-1', '24h'),
   createDashboard(2, '开发环境监控', 'cn-north-2', '6h'),
   createDashboard(3, '测试环境仪表盘', 'cn-east-1', '24h'),
 ]
