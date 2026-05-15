@@ -11,8 +11,8 @@
           <button class="header-btn"><i class="fa-solid fa-bars"></i></button>
           <template #overlay>
             <a-menu>
-              <a-menu-item v-for="(group, idx) in chartGroups" :key="idx" @click="scrollToGroup(group)">
-                {{ group }}
+              <a-menu-item v-for="(chart, idx) in state.charts" :key="idx" @click="scrollToChart(chart.id)">
+                {{ chart.title }}
               </a-menu-item>
             </a-menu>
           </template>
@@ -66,13 +66,8 @@ const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 
 const { state, toast, addChart, closeConfig } = useEditorState()
 
-const chartGroups = computed(() => {
-  const groups = new Set(state.charts.map(ch => ch.group).filter(Boolean))
-  return Array.from(groups)
-})
-
-function scrollToGroup(groupName) {
-  const el = document.querySelector(`[data-group="${groupName}"]`)
+function scrollToChart(chartId) {
+  const el = document.querySelector(`[data-chart-id="${chartId}"]`)
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
