@@ -2,7 +2,7 @@
   <div class="app">
     <header class="header">
       <div class="header-left">
-        <div class="header-logo"><img src="https://res-static.hc-cdn.cn/cloudbu-site/china/zh-cn/wangxue/header/logo.svg" alt="华为云" class="logo-img"><span class="badge">Dashboard</span></div>
+        <div class="header-logo"><img :src="logoUrl" alt="Logo" class="logo-img"><span class="badge">Dashboard</span></div>
         <div class="breadcrumb"><a href="#">仪表盘</a><i class="fa-solid fa-chevron-right" style="font-size:8px"></i><span>生产环境监控</span></div>
       </div>
       <div class="header-actions">
@@ -53,6 +53,8 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useEditorState } from './composables/useEditorState'
 import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
+
+const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 
 const { state, toast, addChart, closeConfig } = useEditorState()
 

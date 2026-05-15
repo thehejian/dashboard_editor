@@ -199,7 +199,7 @@
     </div>
     <div class="config-footer">
       <a-button @click="closeConfig">取消</a-button>
-      <a-button type="primary" @click="handleApply">更新预览</a-button>
+      <a-button type="primary" @click="handleApply">{{ isNewChart ? '创建图表' : '更新预览' }}</a-button>
     </div>
   </aside>
 </template>
@@ -214,8 +214,10 @@ const {
   closeConfig, switchTab, switchDSType,
   spinTop, pickRec,
   addThreshold, removeThreshold, updateThValue, updateThLevel,
-  toast, refreshChart,
+  toast, refreshChart, applyNewChart,
 } = useEditorState()
+
+const isNewChart = computed(() => state.selectedId === null)
 
 const cascaderOptions = computed(() =>
   CASCADE[state.dsType].map((cat, i) => ({
@@ -237,12 +239,16 @@ function onCascaderChange() {
 }
 
 function handleApply() {
-  const ch = currentChart.value
-  if (ch && state.selectedMetrics.length) {
-    ch.metrics = [...state.selectedMetrics]
+  if (isNewChart.value) {
+    applyNewChart()
+  } else {
+    const ch = currentChart.value
+    if (ch && state.selectedMetrics.length) {
+      ch.metrics = [...state.selectedMetrics]
+    }
+    refreshChart(state.selectedId)
+    toast('图表已更新')
   }
-  refreshChart(state.selectedId)
-  toast('图表已更新')
 }
 
 const objHint = computed(() => {

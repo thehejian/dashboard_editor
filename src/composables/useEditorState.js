@@ -10,12 +10,35 @@ const CASCADE = {
       { name: '弹性云服务器性能分析 (多云)', metrics: METRICS_NEW },
       { name: '云硬盘性能分析 (多云)',    metrics: METRICS_NEW },
     ]},
-    { name: '资源性能分析', items: [{ name: '弹性云服务器', metrics: METRICS_NEW }]},
-    { name: '容量分析',          items: [] },
-    { name: '资源统计',          items: [] },
-    { name: '系统级监控',        items: [] },
-    { name: '业务分析',          items: [] },
-    { name: 'AI云服务可用性状态', items: [] },
+    { name: '资源性能分析', items: [
+      { name: '弹性云服务器 ECS', metrics: METRICS_NEW },
+      { name: '裸金属服务器 BMS', metrics: METRICS_NEW },
+      { name: 'GPU云服务器', metrics: METRICS_NEW },
+    ]},
+    { name: '容量分析', items: [
+      { name: '云硬盘容量分析', metrics: ['云硬盘使用率', '云硬盘I/O写入', '云硬盘I/O读取'] },
+      { name: '对象存储容量', metrics: ['存储使用量', '存储请求次数'] },
+      { name: '文件存储容量', metrics: ['文件系统使用率', 'inode使用率'] },
+    ]},
+    { name: '资源统计', items: [
+      { name: 'ECS资源统计', metrics: ['实例数', 'CPU总量', '内存总量'] },
+      { name: 'VPC网络统计', metrics: ['带宽使用率', '流量统计'] },
+      { name: '安全组统计', metrics: ['规则数', '关联实例数'] },
+    ]},
+    { name: '系统级监控', items: [
+      { name: '宿主机监控', metrics: ['CPU使用率', '内存使用率', '磁盘使用率', '网络流入速率', '网络流出速率'] },
+      { name: '虚拟化层监控', metrics: ['虚拟机数量', 'Hypervisor负载', '资源池利用率'] },
+      { name: '基础设施监控', metrics: ['电源状态', '温度监控', 'UPS状态'] },
+    ]},
+    { name: '业务分析', items: [
+      { name: '网站访问分析', metrics: ['访问量', '响应时间', '错误率'] },
+      { name: 'API调用分析', metrics: ['调用次数', '延迟', '成功率'] },
+      { name: '数据库性能', metrics: ['QPS', '连接数', '慢查询'] },
+    ]},
+    { name: 'AI云服务可用性状态', items: [
+      { name: 'ModelArts服务', metrics: ['训练任务数', '推理请求数', 'GPU利用率'] },
+      { name: 'AI应用实例', metrics: ['实例状态', '响应时间', '错误率'] },
+    ]},
   ],
   resource: [
     { name: '全部', items: [
@@ -23,11 +46,31 @@ const CASCADE = {
       { name: '弹性云服务器性能分析 (多云)', metrics: METRICS_NEW },
       { name: '云硬盘性能分析 (多云)',    metrics: METRICS_NEW },
     ]},
-    { name: '业务应用',    items: [] },
-    { name: '云服务',      items: [] },
-    { name: '云资源',      items: [] },
-    { name: '虚拟资源池',  items: [] },
-    { name: '物理资源',    items: [] },
+    { name: '业务应用', items: [
+      { name: 'Web应用', metrics: ['请求数', '响应时间', '错误率'] },
+      { name: '微服务', metrics: ['调用次数', '延迟', '成功率'] },
+      { name: '后台服务', metrics: ['处理任务数', '队列长度', '资源使用率'] },
+    ]},
+    { name: '云服务', items: [
+      { name: 'RDS数据库', metrics: ['QPS', '连接数', 'CPU使用率', '内存使用率'] },
+      { name: 'Redis缓存', metrics: ['命中率', '内存使用', '连接数'] },
+      { name: 'OBS对象存储', metrics: ['请求次数', '流量', '存储量'] },
+    ]},
+    { name: '云资源', items: [
+      { name: '弹性云服务器ECS', metrics: METRICS_NEW },
+      { name: '云硬盘EVS', metrics: ['使用率', 'I/O写入', 'I/O读取'] },
+      { name: '弹性公网IP', metrics: ['带宽使用', '流量统计'] },
+    ]},
+    { name: '虚拟资源池', items: [
+      { name: 'Kubernetes集群', metrics: ['节点数', 'Pod数', 'CPU使用率', '内存使用率'] },
+      { name: '容器实例', metrics: ['实例数', 'CPU使用', '内存使用'] },
+      { name: 'Serverless函数', metrics: ['调用次数', '执行时间', '并发数'] },
+    ]},
+    { name: '物理资源', items: [
+      { name: '物理服务器', metrics: ['CPU使用率', '内存使用率', '磁盘使用率', '网络流量'] },
+      { name: '网络设备', metrics: ['端口带宽', '包转发率', 'CPU使用率'] },
+      { name: '存储设备', metrics: ['存储使用率', 'IOPS', '吞吐量'] },
+    ]},
   ],
 }
 
@@ -155,12 +198,27 @@ function toast(msg, duration = 2000) {
   setTimeout(() => { if (state.toast === msg) state.toast = null }, duration)
 }
 
-function addChart(type) {
+function addChart() {
+  // 打开配置面板新建模式，不直接添加到画板
+  state.configOpen = true
+  state.configTab = 'data'
+  state.selectedId = null  // 新建模式，没有选中任何图表
+  state.selectedMetrics = []
+  state.dsValue = []
+  state.period = undefined  // 未选择
+  state.interval = undefined  // 未选择
+  state.objType = 'all'
+  state.aggType = 'max'
+  state.topN = 10
+  state.selectedResources = []
+}
+
+function applyNewChart() {
   const colors = ['#007DFF','#07C160','#FF7D00','#06B6D4','#F5222D']
   const ch = {
     id: state.nextId++,
     title: `图表 ${state.nextId - 1}`,
-    type: type || 'line',
+    type: 'line',
     color: colors[(state.nextId - 1) % colors.length],
     group: '默认分组',
     notes: '',
@@ -168,11 +226,12 @@ function addChart(type) {
     thresholds: [],
     linkEnabled: false,
     linkUrl: '',
-    metrics: [],
+    metrics: [...state.selectedMetrics],
   }
   state.charts.push(ch)
   selectChart(ch.id)
-  toast('已添加图表')
+  state.configOpen = false
+  toast('图表已添加')
 }
 
 function delChart(id) {
@@ -319,7 +378,7 @@ export function useEditorState() {
     state,
     chartData,
     currentChart, currentCategory, currentSubDataset, availableMetrics, recommendedCharts,
-    toast, addChart, delChart, dupChart,
+    toast, addChart, applyNewChart, delChart, dupChart,
     selectChart, closeConfig, switchTab,
     switchDSType, onCategoryChange, onSubDatasetChange,
     toggleMetric, removeMetric, toggleResource, removeResource,
