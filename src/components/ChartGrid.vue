@@ -42,15 +42,15 @@ watch(() => state.period, () => { refreshAllCharts() })
 </script>
 
 <style scoped>
-.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; flex: 1 1 0%; min-height: 0; grid-auto-rows: minmax(280px, 1fr); }
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; flex: 1 1 0%; min-height: 0; grid-auto-rows: minmax(280px, 1fr); }
 .add-card { border: 1px dashed var(--border-hover); border-radius: var(--rl); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s var(--ease); background: var(--bg); color: var(--text-ter); box-shadow: var(--shadow-sm); }
 .add-card:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
 .add-card i { font-size: 24px; }
 .add-card span { font-size: 13px; font-weight: 500; }
 .chart-body { flex: 1; padding: 2px 14px 14px; display: flex; align-items: stretch; touch-action: pan-y; }
 .chart-body > * { width: 100%; min-height: 155px; touch-action: pan-y; }
-@media (max-width: 1024px) { .chart-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; } }
+@media (max-width: 1024px) { .chart-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; } }
 @media (max-width: 768px) { .chart-grid { gap: 16px; } .add-card i { font-size: 20px; } }
-@media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; gap: 14px; } .add-card i { font-size: 18px; } }
-@media (max-width: 420px) { .chart-grid { gap: 12px; } .add-card { border-radius: var(--rm); } .add-card i { font-size: 16px; } .add-card span { font-size: 12px; } }
+@media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; gap: 16px; } .add-card i { font-size: 18px; } }
+@media (max-width: 420px) { .chart-grid { gap: 16px; } .add-card { border-radius: var(--rm); } .add-card i { font-size: 16px; } .add-card span { font-size: 12px; } }
 </style>
