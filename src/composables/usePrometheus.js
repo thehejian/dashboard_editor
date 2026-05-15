@@ -36,8 +36,13 @@ async function qr(query, from, to, step) {
   return d.data.result
 }
 
-function fmtTime(ts) {
+function fmtTime(ts, period = '24h') {
   const d = new Date(ts * 1000)
+  if (period === '7d' || period === '30d') {
+    const m = d.getMonth() + 1
+    const day = d.getDate()
+    return `${m}/${day}`
+  }
   return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
@@ -75,7 +80,7 @@ export async function fetchChartData(chart, period = '24h') {
 
   if (!results.length) return null
   const points = results[0].values.map(([t, v]) => ({
-    time: fmtTime(t),
+    time: fmtTime(t, period),
     value: Math.round(parseFloat(v) * 10) / 10,
   }))
 
