@@ -41,7 +41,18 @@
             </a-menu>
           </template>
         </a-dropdown>
-        <button class="header-btn" @click="toast('已复制分享链接')"><i class="fa-regular fa-share-from-square"></i></button>
+        <a-dropdown :trigger="['click']">
+          <button class="header-btn"><i class="fa-solid fa-download"></i></button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item @click="handleExportPng">导出 PNG</a-menu-item>
+              <a-menu-item @click="handleExportPdf">导出 PDF</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <button class="header-btn" @click="handleShare">
+          <i class="fa-regular fa-share-from-square"></i>
+        </button>
         <template v-if="state.editMode">
           <button class="header-btn" @click="saveDashboard()"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
           <button class="header-btn" @click="exitEditMode()">退出编辑</button>
@@ -132,12 +143,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useEditorState } from './composables/useEditorState'
+import { useExport } from './composables/useExport'
 import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 
 const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate } = useEditorState()
+const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport()
 
 const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))
 
@@ -149,7 +162,30 @@ function scrollToChart(chartId) {
 }
 
 const isMobile = ref(window.innerWidth <= 768)
+const canvasRef = ref(null)
 let resizeTimer = null
+
+async function handleExportPng() {
+  const el = document.querySelector('.canvas-scroll')
+  if (el) {
+    const ok = await exportToPng(el, currentDashboard.value?.title || 'dashboard')
+    toast(ok ? 'PNG 已导出' : '导出失败')
+  }
+}
+
+async function handleExportPdf() {
+  const el = document.querySelector('.canvas-scroll')
+  if (el) {
+    const ok = await exportToPdf(el, currentDashboard.value?.title || 'dashboard')
+    toast(ok ? 'PDF 已导出' : '导出失败')
+  }
+}
+
+function handleShare() {
+  const link = generateShareLink(state.currentDashboardId, state.currentRegion, state.period)
+  const ok = copyShareLink(link)
+  toast(ok ? '分享链接已复制' : '复制失败')
+}
 
 onMounted(() => {
   window.addEventListener('resize', () => {

@@ -191,8 +191,12 @@
           </div>
         </div>
         <div class="config-section" v-if="currentChart.linkEnabled">
-          <span class="config-label">链接 URL</span>
+          <span class="config-label">链接 URL (标题图标跳转)</span>
           <a-input v-model:value="currentChart.linkUrl" placeholder="https://..." />
+        </div>
+        <div class="config-section">
+          <span class="config-label">下钻链接 (点击图表跳转)</span>
+          <a-input v-model:value="currentChart.drillDownUrl" placeholder="/detail/xxx" />
         </div>
       </template>
 

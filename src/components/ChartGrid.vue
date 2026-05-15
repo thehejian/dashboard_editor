@@ -14,7 +14,7 @@
           class="chart-card"
           :class="{ selected: state.selectedId === ch.id }"
           :data-chart-id="ch.id"
-          @click="state.editMode && selectChart(ch.id)"
+          @click="handleChartClick(ch)"
         >
           <div class="chart-card-header">
             <div class="chart-label">
@@ -78,6 +78,14 @@ function toggleFullscreen(ch) {
 
 function closeFullscreen() {
   fullscreenChart.value = null
+}
+
+function handleChartClick(ch) {
+  if (state.editMode) {
+    selectChart(ch.id)
+  } else if (ch.drillDownUrl) {
+    window.location.href = ch.drillDownUrl
+  }
 }
 
 onMounted(() => { refreshAllCharts() })
