@@ -29,7 +29,7 @@
             </div>
           </div>
           <div class="chart-body">
-            <ChartRenderer :type="ch.type" :color="ch.color" :data="chartData[ch.id]" />
+            <ChartRenderer :type="ch.type" :color="ch.color" :data="chartData[ch.id]" :thresholds="ch.thresholds" />
           </div>
         </div>
       </template>
@@ -47,7 +47,7 @@
             <button class="fullscreen-close" @click="closeFullscreen"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="fullscreen-body">
-            <ChartRenderer :type="fullscreenChart.type" :color="fullscreenChart.color" :data="chartData[fullscreenChart.id]" />
+            <ChartRenderer :type="fullscreenChart.type" :color="fullscreenChart.color" :data="chartData[fullscreenChart.id]" :thresholds="fullscreenChart.thresholds" />
           </div>
         </div>
       </div>

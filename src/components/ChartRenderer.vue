@@ -1,5 +1,5 @@
 <template>
-  <div v-if="type === 'numeric'" class="numeric-wrap" v-html="renderNumericSVG(color, realValue)"></div>
+  <div v-if="type === 'numeric'" class="numeric-wrap" v-html="renderNumericSVG(displayColor, realValue)"></div>
   <div v-else ref="container" class="chart-renderer"></div>
 </template>
 
@@ -11,6 +11,25 @@ const props = defineProps({
   type: { type: String, default: 'line' },
   color: { type: String, default: '#007DFF' },
   data: { type: Object, default: null },
+  thresholds: { type: Array, default: () => [] },
+})
+
+const TH_COLORS = {
+  danger: '#F5222D',
+  warning: '#FF7D00',
+  info: '#007DFF',
+  normal: '#07C160',
+}
+
+const displayColor = computed(() => {
+  const val = realValue.value
+  if (val == null) return props.color
+  for (const th of props.thresholds) {
+    if (val >= th.value) {
+      return TH_COLORS[th.level] || props.color
+    }
+  }
+  return TH_COLORS.normal
 })
 
 const container = ref(null)
