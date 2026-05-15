@@ -81,7 +81,9 @@ function renderNumericSVG(c, val) {
   let displayVal = val != null ? val.toString() : '--'
 
   if (val != null) {
-    if (unit === 'bytes/s') {
+    if (unit === 'MB/s') {
+      displayVal = (val / 1048576).toFixed(1) + 'M'
+    } else if (unit === 'bytes/s') {
       displayVal = fmtBytes(val)
     } else if (unit === 's') {
       displayVal = fmtUptime(val)

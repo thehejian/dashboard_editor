@@ -42,7 +42,7 @@ function fmtTime(ts) {
 }
 
 function unitOf(metric) {
-  if (metric.includes('速率') || metric.includes('读取') || metric.includes('写入')) return 'bytes/s'
+  if (metric.includes('速率') || metric.includes('读取') || metric.includes('写入')) return 'MB/s'
   if (metric === '运行时间') return 's'
   if (metric === '系统负载') return ''
   return '%'
