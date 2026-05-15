@@ -276,7 +276,8 @@ const objHint = computed(() => {
 .obj-hint { font-size: 11px; color: var(--text-sec); padding: 4px 0; }
 .spinner-group { display: flex; align-items: center; gap: 4px; }
 .spinner-group .spinner-value { width: 40px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text); }
-.rec-charts { display: flex; gap: 6px; flex-wrap: wrap; }
+.rec-charts { display: flex; gap: 8px; flex-wrap: wrap; }
+.rec-charts .ant-btn { height: 32px; padding: 0 12px; font-size: 13px; }
 .rec-warning { margin-top: 8px; padding: 8px 10px; background: #FFF7E6; border: 1px solid #FFD591; border-radius: 4px; font-size: 11px; color: #D46B08; display: flex; align-items: center; gap: 6px; }
 .rec-warning i { color: #FAAD14; }
 .threshold-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
