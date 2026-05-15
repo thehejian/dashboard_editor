@@ -121,7 +121,10 @@
               <i :class="chart.i"></i> {{ chart.l }}
             </a-button>
           </div>
-          <div v-else style="font-size:12px;color:var(--text-ter)">选择指标后将自动推荐图表类型</div>
+          <div v-if="recommendedCharts.warning" class="rec-warning">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ recommendedCharts.warning }}
+          </div>
+          <div v-if="!state.selectedMetrics.length" style="font-size:12px;color:var(--text-ter)">选择指标后将自动推荐图表类型</div>
         </div>
       </template>
 
@@ -268,6 +271,8 @@ const objHint = computed(() => {
 .spinner-group { display: flex; align-items: center; gap: 4px; }
 .spinner-group .spinner-value { width: 40px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text); }
 .rec-charts { display: flex; gap: 6px; flex-wrap: wrap; }
+.rec-warning { margin-top: 8px; padding: 8px 10px; background: #FFF7E6; border: 1px solid #FFD591; border-radius: 4px; font-size: 11px; color: #D46B08; display: flex; align-items: center; gap: 6px; }
+.rec-warning i { color: #FAAD14; }
 .threshold-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .config-toggle { display: flex; align-items: center; justify-content: space-between; }
 .config-footer { display: flex; gap: 8px; padding: 10px 20px; border-top: 1px solid var(--border); flex-shrink: 0; }

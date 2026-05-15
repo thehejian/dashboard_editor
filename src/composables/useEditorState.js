@@ -104,22 +104,50 @@ const currentSubDataset = computed(() => {
 const availableMetrics = computed(() => currentSubDataset.value?.metrics || [])
 
 const recommendedCharts = computed(() => {
-  if (!state.selectedMetrics.length) return { items: [], label: '' }
+  if (!state.selectedMetrics.length) return { items: [], types: [], cur: '', mode: '', warning: '' }
+
   const isNow = state.period === 'now'
-  let types
+  const isSingleResource = state.objType === 'spec' && state.selectedResources.length === 1
+
+  let types = []
+
   if (isNow) {
-    types = ['numeric', 'line', 'area']
+    if (isSingleResource) {
+      types = ['numeric', 'line']
+    } else {
+      types = ['bar', 'numeric']
+    }
   } else {
-    const first = state.selectedMetrics[0]
-    types = METRIC_REC[first] || ['line', 'area', 'bar', 'numeric']
+    types = ['line', 'area']
   }
-  const cur = currentChart.value?.type || 'line'
-  const sorted = [...CHART_DEFS].sort((a, b) => {
-    const ia = types.indexOf(a.t)
-    const ib = types.indexOf(b.t)
-    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
-  })
-  return { items: sorted, types, cur, mode: isNow ? 'current' : 'trend' }
+
+  // 只显示推荐的图表类型
+  const filtered = CHART_DEFS.filter(c => types.includes(c.t))
+  const sorted = [...filtered].sort((a, b) => types.indexOf(a.t) - types.indexOf(b.t))
+
+  // 当前选中的图表类型（如果在推荐列表中则高亮，否则用第一个）
+  const curInList = currentChart.value?.type && types.includes(currentChart.value.type)
+  const cur = curInList ? currentChart.value.type : types[0]
+
+  const modeLabel = isNow ? (isSingleResource ? '当前值' : '当前值排名') : '趋势'
+
+  // 检查当前图表类型是否在推荐列表中
+  let warning = ''
+  if (currentChart.value?.type && !types.includes(currentChart.value.type)) {
+    const reasons = []
+    if (isNow && isSingleResource && (currentChart.value.type === 'bar' || currentChart.value.type === 'area')) {
+      reasons.push('当前值+单资源推荐使用数值卡片')
+    }
+    if (!isNow && currentChart.value.type === 'numeric') {
+      reasons.push('时间段推荐使用折线图或面积图')
+    }
+    if (isNow && !isSingleResource && currentChart.value.type === 'numeric') {
+      reasons.push('当前值+多资源推荐使用柱状图')
+    }
+    if (reasons.length) warning = reasons.join('，') + '，可能导致显示异常'
+  }
+
+  return { items: sorted, types, cur, mode: modeLabel, warning }
 })
 
 function toast(msg, duration = 2000) {

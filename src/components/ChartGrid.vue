@@ -47,8 +47,8 @@ watch(() => state.period, () => { refreshAllCharts() })
 .add-card:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
 .add-card i { font-size: 24px; }
 .add-card span { font-size: 13px; font-weight: 500; }
-.chart-body { flex: 1; padding: 2px 14px 14px; display: flex; align-items: stretch; }
-.chart-body > * { width: 100%; min-height: 155px; }
+.chart-body { flex: 1; padding: 2px 14px 14px; display: flex; align-items: stretch; touch-action: pan-y; }
+.chart-body > * { width: 100%; min-height: 155px; touch-action: pan-y; }
 @media (max-width: 1024px) { .chart-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; } }
 @media (max-width: 768px) { .chart-grid { gap: 16px; } .add-card i { font-size: 20px; } }
 @media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; gap: 14px; } .add-card i { font-size: 18px; } }

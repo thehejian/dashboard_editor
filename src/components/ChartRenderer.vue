@@ -132,6 +132,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .chart-renderer { flex: 1; min-height: 155px; min-width: 0; }
-.numeric-wrap { flex: 1; min-height: 155px; min-width: 0; }
+.numeric-wrap { flex: 1; min-height: 155px; min-width: 0; display: flex; }
 .numeric-wrap svg { width: 100%; height: 100%; }
 </style>
