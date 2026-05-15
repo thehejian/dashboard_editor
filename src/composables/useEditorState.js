@@ -109,11 +109,9 @@ const CHARTS_DATA = [
   { id:5, title:'CPU 使用率趋势',   type:'line',    color:'#007DFF', group:'CPU监控', notes:'CPU 使用率随时间变化', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['CPU使用率'] },
   { id:6, title:'内存使用趋势',     type:'area',    color:'#07C160', group:'内存监控', notes:'内存使用量随时间变化', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['内存使用率'] },
   { id:7, title:'磁盘使用率',       type:'numeric', color:'#F5222D', group:'磁盘监控', notes:'磁盘空间使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['磁盘使用率'] },
-  { id:8, title:'磁盘读写速率',     type:'bar',     color:'#9C27B0', group:'磁盘监控', notes:'磁盘读写速度', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['磁盘读取','磁盘写入'] },
-  { id:9, title:'网络流量',         type:'area',    color:'#06B6D4', group:'网络监控', notes:'网络入/出流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['网络流入速率','网络流出速率'] },
+  { id:8, title:'磁盘读写速率',     type:'bar',     color:'#9C27B0', group:'磁盘监控', notes:'磁盘读写速度', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['磁盘读取'] },
+  { id:9, title:'网络流量',         type:'area',    color:'#06B6D4', group:'网络监控', notes:'网络入/出流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['网络流入速率'] },
   { id:10, title:'系统负载趋势',    type:'line',    color:'#FF7D00', group:'系统负载', notes:'1/5/15分钟负载', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['系统负载'] },
-  { id:11, title:'Top 10 进程 (CPU)', type:'bar',  color:'#007DFF', group:'进程监控', notes:'CPU 使用最高进程', legendPosition:'right', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['CPU使用率'] },
-  { id:12, title:'Top 10 进程 (内存)', type:'bar', color:'#07C160', group:'进程监控', notes:'内存使用最高进程', legendPosition:'right', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['内存使用率'] },
 ]
 
 function cloneCharts() {
@@ -165,7 +163,7 @@ const state = reactive({
   selectedId: null,
   configTab: 'data',
   configOpen: false,
-  nextId: 13,
+  nextId: 11,
   selectedMetrics: [],
   selectedResources: [],
   dsType: 'group',
