@@ -6,7 +6,17 @@
         <div class="breadcrumb"><a href="#">仪表盘</a><i class="fa-solid fa-chevron-right" style="font-size:8px"></i><span>生产环境监控</span></div>
       </div>
       <div class="header-actions">
-        <button class="header-btn" @click="toast('已保存到草稿')"><i class="fa-regular fa-clock"></i><span>草稿</span></button>
+        <button class="header-btn" @click="toast('已退出编辑')">退出编辑</button>
+        <a-dropdown :trigger="['click']">
+          <button class="header-btn"><i class="fa-solid fa-bars"></i></button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item v-for="(group, idx) in chartGroups" :key="idx" @click="scrollToGroup(group)">
+                {{ group }}
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
         <button class="header-btn" @click="toast('已复制分享链接')"><i class="fa-regular fa-share-from-square"></i></button>
         <button class="header-btn primary" @click="toast('仪表盘已保存')"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
         <div class="avatar">A</div>
@@ -57,6 +67,18 @@ import ConfigPanel from './components/ConfigPanel.vue'
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 
 const { state, toast, addChart, closeConfig } = useEditorState()
+
+const chartGroups = computed(() => {
+  const groups = new Set(state.charts.map(ch => ch.group).filter(Boolean))
+  return Array.from(groups)
+})
+
+function scrollToGroup(groupName) {
+  const el = document.querySelector(`[data-group="${groupName}"]`)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
 const isMobile = ref(window.innerWidth <= 768)
 let resizeTimer = null

@@ -1,27 +1,30 @@
 <template>
   <div class="chart-grid">
-    <div
-      v-for="ch in state.charts"
-      :key="ch.id"
-      class="chart-card"
-      :class="{ selected: state.selectedId === ch.id }"
-      @click="selectChart(ch.id)"
-    >
-      <div class="chart-card-header">
-        <div class="chart-label">
-          <span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
-          <h3>{{ ch.title }}</h3>
-          <i v-if="ch.linkEnabled" class="fa-solid fa-arrow-up-right-from-square link-icon"></i>
+    <template v-for="(groupName, gIdx) in groupedCharts" :key="groupName">
+      <div v-if="groupName" class="chart-group-label" :data-group="groupName">{{ groupName }}</div>
+      <div
+        v-for="ch in getChartsByGroup(groupName)"
+        :key="ch.id"
+        class="chart-card"
+        :class="{ selected: state.selectedId === ch.id }"
+        @click="selectChart(ch.id)"
+      >
+        <div class="chart-card-header">
+          <div class="chart-label">
+            <span class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+            <h3>{{ ch.title }}</h3>
+            <i v-if="ch.linkEnabled" class="fa-solid fa-arrow-up-right-from-square link-icon"></i>
+          </div>
+          <div class="chart-card-actions">
+            <button class="chart-card-action" @click.stop="dupChart(ch.id)"><i class="fa-regular fa-copy"></i></button>
+            <button class="chart-card-action danger" @click.stop="delChart(ch.id)"><i class="fa-regular fa-trash-can"></i></button>
+          </div>
         </div>
-        <div class="chart-card-actions">
-          <button class="chart-card-action" @click.stop="dupChart(ch.id)"><i class="fa-regular fa-copy"></i></button>
-          <button class="chart-card-action danger" @click.stop="delChart(ch.id)"><i class="fa-regular fa-trash-can"></i></button>
+        <div class="chart-body">
+          <ChartRenderer :type="ch.type" :color="ch.color" :data="chartData[ch.id]" />
         </div>
       </div>
-      <div class="chart-body">
-        <ChartRenderer :type="ch.type" :color="ch.color" :data="chartData[ch.id]" />
-      </div>
-    </div>
+    </template>
     <div class="add-card" @click="addChart()">
       <i class="fa-solid fa-plus"></i>
       <span>添加图表</span>
@@ -30,11 +33,26 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useEditorState } from '../composables/useEditorState'
 import ChartRenderer from './ChartRenderer.vue'
 
 const { state, chartData, selectChart, addChart, delChart, dupChart, refreshAllCharts } = useEditorState()
+
+const groupedCharts = computed(() => {
+  const groups = []
+  state.charts.forEach(ch => {
+    const group = ch.group || '默认分组'
+    if (!groups.includes(group)) {
+      groups.push(group)
+    }
+  })
+  return groups
+})
+
+function getChartsByGroup(groupName) {
+  return state.charts.filter(ch => (ch.group || '默认分组') === groupName)
+}
 
 onMounted(() => { refreshAllCharts() })
 
