@@ -178,8 +178,8 @@ const state = reactive({
   refreshRate: '0',
   lastRefresh: null,
   filters: {
-    env: 'all',
-    cluster: 'all',
+    env: 'prod',
+    cluster: 'cluster-1',
   },
 })
 
@@ -194,13 +194,11 @@ const REFRESH_OPTIONS = [
 
 const FILTERS = {
   environments: [
-    { value: 'all', label: '全部' },
     { value: 'prod', label: '生产环境' },
     { value: 'test', label: '测试环境' },
     { value: 'dev', label: '开发环境' },
   ],
   clusters: [
-    { value: 'all', label: '全部' },
     { value: 'cluster-1', label: '集群一' },
     { value: 'cluster-2', label: '集群二' },
     { value: 'cluster-3', label: '集群三' },

@@ -74,7 +74,7 @@
             <div class="filters">
               <a-dropdown :trigger="['click']">
                 <button class="filter-btn" :class="{ active: state.filters.env !== 'all' }">
-                  <span>环境: {{ FILTERS.environments.find(e => e.value === state.filters.env)?.label || '全部' }}</span>
+                  <span>环境: {{ FILTERS.environments.find(e => e.value === state.filters.env)?.label }}</span>
                   <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <template #overlay>
@@ -87,7 +87,7 @@
               </a-dropdown>
               <a-dropdown :trigger="['click']">
                 <button class="filter-btn" :class="{ active: state.filters.cluster !== 'all' }">
-                  <span>集群: {{ FILTERS.clusters.find(c => c.value === state.filters.cluster)?.label || '全部' }}</span>
+                  <span>集群: {{ FILTERS.clusters.find(c => c.value === state.filters.cluster)?.label }}</span>
                   <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <template #overlay>
