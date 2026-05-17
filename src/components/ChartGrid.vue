@@ -101,8 +101,8 @@ watch(() => state.period, () => { refreshAllCharts() })
 .chart-grid.edit-mode .drag-handle { opacity: 1; }
 .chart-grid.edit-mode .chart-card:hover { border-color: var(--border-hover); }
 .chart-grid.ghost { opacity: 0.5; background: var(--brand-subtle); }
-.add-card { border: 1px dashed var(--border-hover); border-radius: var(--rl); min-height: 120px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s var(--ease); background: var(--bg); color: var(--text-ter); box-shadow: var(--shadow-sm); }
-.add-card:hover { border-color: var(--brand); background: var(--brand-subtle); color: var(--brand); }
+.add-card { border: 1px solid var(--border); border-radius: var(--rl); min-height: 200px; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s var(--ease); background: var(--bg); color: var(--text-ter); box-shadow: var(--shadow-sm); }
+.add-card:hover { border-color: var(--brand); color: var(--brand); }
 .add-card i { font-size: 24px; }
 .add-card span { font-size: 13px; font-weight: 500; }
 .chart-body { flex: 1; padding: 2px 14px 14px; display: flex; align-items: stretch; touch-action: pan-y; }
