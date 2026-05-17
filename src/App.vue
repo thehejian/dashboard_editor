@@ -5,11 +5,71 @@
         <div class="header-logo"><img :src="logoUrl" alt="Logo" class="logo-img"><span class="badge">运维中心</span></div>
         <nav class="module-nav">
           <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">首页</router-link>
-          <router-link to="/alarm" class="nav-item" :class="{ active: $route.path === '/alarm' }">告警</router-link>
-          <router-link to="/monitor" class="nav-item" :class="{ active: $route.path === '/monitor' }">监控</router-link>
-          <router-link to="/resource" class="nav-item" :class="{ active: $route.path === '/resource' }">资源</router-link>
-          <router-link to="/ops" class="nav-item" :class="{ active: $route.path === '/ops' }">运维</router-link>
-          <router-link to="/system" class="nav-item" :class="{ active: $route.path === '/system' }">系统</router-link>
+
+          <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'alarm'" @openChange="openNav('alarm')">
+            <span class="nav-item" :class="{ active: $route.path.startsWith('/alarm') }">
+              告警 <i class="fa-solid fa-chevron-down"></i>
+            </span>
+            <template #overlay>
+              <a-menu @click="handleNavClick">
+                <a-menu-item key="/alarm/realtime">实时告警</a-menu-item>
+                <a-menu-item key="/alarm/history">历史告警</a-menu-item>
+                <a-menu-item key="/alarm/config">告警配置</a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+
+          <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'monitor'" @openChange="openNav('monitor')">
+            <span class="nav-item" :class="{ active: $route.path.startsWith('/monitor') }">
+              监控 <i class="fa-solid fa-chevron-down"></i>
+            </span>
+            <template #overlay>
+              <a-menu @click="handleNavClick">
+                <a-menu-item key="/monitor/dashboard">仪表盘</a-menu-item>
+                <a-menu-item key="/monitor/resource">资源监控</a-menu-item>
+                <a-menu-item key="/monitor/config">监控配置</a-menu-item>
+                <a-menu-item key="/monitor/topology">拓扑图</a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+
+          <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'resource'" @openChange="openNav('resource')">
+            <span class="nav-item" :class="{ active: $route.path.startsWith('/resource') }">
+              资源 <i class="fa-solid fa-chevron-down"></i>
+            </span>
+            <template #overlay>
+              <a-menu @click="handleNavClick">
+                <a-menu-item key="/resource/list">资产列表</a-menu-item>
+                <a-menu-item key="/resource/topology">资产拓扑</a-menu-item>
+                <a-menu-item key="/resource/changes">变更记录</a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+
+          <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'ops'" @openChange="openNav('ops')">
+            <span class="nav-item" :class="{ active: $route.path.startsWith('/ops') }">
+              运维 <i class="fa-solid fa-chevron-down"></i>
+            </span>
+            <template #overlay>
+              <a-menu @click="handleNavClick">
+                <a-menu-item key="/ops/jobs">自动作业</a-menu-item>
+                <a-menu-item key="/ops/logs">日志管理</a-menu-item>
+                <a-menu-item key="/ops/inspect">巡检报告</a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+
+          <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'system'" @openChange="openNav('system')">
+            <span class="nav-item" :class="{ active: $route.path.startsWith('/system') }">
+              系统 <i class="fa-solid fa-chevron-down"></i>
+            </span>
+            <template #overlay>
+              <a-menu @click="handleNavClick">
+                <a-menu-item key="/system/users">用户权限</a-menu-item>
+                <a-menu-item key="/system/config">系统配置</a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
         </nav>
         <a-dropdown :trigger="['click']" class="header-dropdown">
           <button class="header-btn dashboard-select">
@@ -124,12 +184,20 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useEditorState } from './composables/useEditorState'
 import { useExport } from './composables/useExport'
 import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
+const router = useRouter()
+
+const activeNav = ref('')
+
+const openNav = (name) => { activeNav.value = activeNav.value === name ? '' : name }
+
+const handleNavClick = ({ key }) => { router.push(key); activeNav.value = '' }
 
 const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate, createNewDashboard } = useEditorState()
 const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport()
