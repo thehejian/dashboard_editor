@@ -224,7 +224,7 @@ const getTodoIcon = (type) => ({ alert: 'fa-solid fa-bell', renew: 'fa-solid fa-
 </script>
 
 <style scoped>
-.home-view { padding: 24px; }
+.home-view { padding: 24px; min-height: 100%; }
 .welcome-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .welcome-text h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
 .welcome-text p { color: var(--text-secondary); margin: 0; }
