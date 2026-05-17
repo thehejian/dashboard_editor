@@ -1,123 +1,182 @@
 <template>
   <div class="home-view">
     <div class="home-header">
-      <h1>工作台</h1>
-      <p class="subtitle">欢迎回来，这里是今天的概览</p>
-    </div>
-
-    <div class="overview-cards">
-      <div class="overview-card">
-        <div class="card-icon warning"><i class="fa-solid fa-bell"></i></div>
-        <div class="card-content">
-          <div class="card-value">{{ stats.activeAlerts }}</div>
-          <div class="card-label">活跃告警</div>
-        </div>
+      <div class="welcome">
+        <h1>欢迎回来，管理员</h1>
+        <p class="subtitle">这里是今天的系统概览</p>
       </div>
-      <div class="overview-card">
-        <div class="card-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
-        <div class="card-content">
-          <div class="card-value">{{ stats.critical }}</div>
-          <div class="card-label">紧急</div>
-        </div>
-      </div>
-      <div class="overview-card">
-        <div class="card-icon info"><i class="fa-solid fa-server"></i></div>
-        <div class="card-content">
-          <div class="card-value">{{ stats.resources }}</div>
-          <div class="card-label">在线资源</div>
-        </div>
-      </div>
-      <div class="overview-card">
-        <div class="card-icon success"><i class="fa-solid fa-check-circle"></i></div>
-        <div class="card-content">
-          <div class="card-value">{{ stats.tasksDone }}</div>
-          <div class="card-label">任务完成</div>
-        </div>
+      <div class="recent-access">
+        <span class="label">最近访问</span>
+        <a-dropdown>
+          <span class="recent-item">
+            <i class="fa-solid fa-chart-line"></i> 监控中心
+            <i class="fa-solid fa-chevron-down"></i>
+          </span>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item v-for="item in recentList" :key="item.path" @click="$router.push(item.path)">
+                <i :class="item.icon"></i> {{ item.name }}
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
       </div>
     </div>
 
-    <div class="home-grid">
-      <div class="quick-access">
-        <h3>快捷入口</h3>
-        <div class="quick-items">
-          <div class="quick-item" @click="$router.push('/monitor')">
-            <i class="fa-solid fa-chart-line"></i>
-            <span>监控中心</span>
-          </div>
-          <div class="quick-item" @click="$router.push('/alarm')">
-            <i class="fa-solid fa-bell"></i>
-            <span>告警中心</span>
-          </div>
-          <div class="quick-item" @click="$router.push('/resource')">
-            <i class="fa-solid fa-database"></i>
-            <span>资源中心</span>
-          </div>
-          <div class="quick-item" @click="$router.push('/ops')">
-            <i class="fa-solid fa-terminal"></i>
-            <span>运维中心</span>
+    <div class="stat-cards">
+      <div class="stat-card" @click="$router.push('/resource/list')">
+        <div class="stat-icon resources"><i class="fa-solid fa-server"></i></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.totalResources }}</div>
+          <div class="stat-label">资源总数</div>
+          <div class="stat-trend up" v-if="stats.resourceChange > 0">↑ {{ stats.resourceChange }}</div>
+        </div>
+      </div>
+      <div class="stat-card alert-card" @click="$router.push('/alarm/realtime')">
+        <div class="stat-icon alerts"><i class="fa-solid fa-bell"></i></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.activeAlerts }}</div>
+          <div class="stat-label">活跃告警</div>
+          <div class="stat-breakdown">
+            <span class="critical">{{ stats.critical }} 紧急</span>
+            <span class="warning">{{ stats.warning }} 重要</span>
           </div>
         </div>
       </div>
-
-      <div class="todo-list">
-        <h3>个人待办 <span class="badge">{{ todos.length }}</span></h3>
-        <div class="todo-items">
-          <div class="todo-item" v-for="todo in todos" :key="todo.id">
-            <a-checkbox :checked="todo.done" @change="toggleTodo(todo.id)">
-              <span :class="{ done: todo.done }">{{ todo.title }}</span>
-            </a-checkbox>
-            <span class="todo-time">{{ todo.time }}</span>
+      <div class="stat-card" @click="$router.push('/monitor/resource')">
+        <div class="stat-icon health"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.healthRate }}%</div>
+          <div class="stat-label">健康状态</div>
+          <div class="stat-status normal">正常运行</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon todo"><i class="fa-solid fa-list-check"></i></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.todoCount }}</div>
+          <div class="stat-label">待办事项</div>
+          <div class="stat-breakdown">
+            <span>告警 {{ stats.todoAlerts }}</span>
+            <span>续费 {{ stats.todoRenew }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="stats-section">
-      <h3>统计看板</h3>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-header">
-            <span>告警趋势</span>
-            <span class="stat-period">近7天</span>
-          </div>
-          <div class="stat-chart">
-            <div class="simple-chart">
-              <div class="bar" v-for="(v, i) in alertTrend" :key="i" :style="{ height: v + '%' }"></div>
-            </div>
+    <div class="chart-section">
+      <div class="section-header">
+        <h3>告警趋势</h3>
+        <div class="time-selector">
+          <button :class="{ active: alertPeriod === '7d' }" @click="alertPeriod = '7d'">近7天</button>
+          <button :class="{ active: alertPeriod === '30d' }" @click="alertPeriod = '30d'">近30天</button>
+        </div>
+      </div>
+      <div class="trend-chart">
+        <div class="chart-bars">
+          <div class="bar-group" v-for="(value, index) in alertTrend" :key="index">
+            <div class="bar" :style="{ height: value + '%' }"></div>
+            <span class="bar-label">{{ index + 1 }}日</span>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-header">
-            <span>资源使用率</span>
-            <span class="stat-period">当前</span>
+        <div class="chart-summary">
+          <div class="summary-item">
+            <span class="dot critical"></span>
+            <span>紧急 {{ alertSummary.critical }}</span>
           </div>
-          <div class="stat-chart">
-            <div class="usage-list">
-              <div class="usage-item" v-for="u in usageStats" :key="u.name">
-                <span class="usage-name">{{ u.name }}</span>
-                <a-progress :percent="u.value" :showInfo="false" :strokeColor="u.color" />
-                <span class="usage-value">{{ u.value }}%</span>
+          <div class="summary-item">
+            <span class="dot warning"></span>
+            <span>重要 {{ alertSummary.warning }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="dot info"></span>
+            <span>次要 {{ alertSummary.info }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="grid-left">
+        <div class="resource-distribution">
+          <div class="section-header">
+            <h3>资源分布</h3>
+          </div>
+          <div class="distribution-list">
+            <div class="dist-item" v-for="item in resourceDist" :key="item.name">
+              <div class="dist-info">
+                <span class="dist-name">{{ item.name }}</span>
+                <span class="dist-count">{{ item.count }}</span>
               </div>
+              <div class="dist-bar">
+                <div class="dist-progress" :style="{ width: item.percent + '%', background: item.color }"></div>
+              </div>
+              <span class="dist-percent">{{ item.percent }}%</span>
             </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-header">
-            <span>任务统计</span>
-            <span class="stat-period">本月</span>
+
+        <div class="recent-alerts">
+          <div class="section-header">
+            <h3>最近告警</h3>
+            <a-button type="link" @click="$router.push('/alarm/realtime')">查看全部 <i class="fa-solid fa-arrow-right"></i></a-button>
           </div>
-          <div class="stat-chart task-stats">
-            <div class="task-item">
-              <span class="task-label">执行中</span>
-              <span class="task-value running">{{ taskStats.running }}</span>
+          <div class="alert-list">
+            <div class="alert-item" v-for="alert in recentAlerts" :key="alert.id" :class="alert.level">
+              <div class="alert-icon">
+                <i class="fa-solid" :class="{
+                  'fa-circle-exclamation': alert.level === 'critical',
+                  'fa-triangle-exclamation': alert.level === 'warning',
+                  'fa-circle-info': alert.level === 'info'
+                }"></i>
+              </div>
+              <div class="alert-content">
+                <div class="alert-title">{{ alert.title }}</div>
+                <div class="alert-meta">{{ alert.resource }} · {{ alert.time }}</div>
+              </div>
+              <a-tag :color="getLevelColor(alert.level)">{{ getLevelText(alert.level) }}</a-tag>
             </div>
-            <div class="task-item">
-              <span class="task-label">已完成</span>
-              <span class="task-value done">{{ taskStats.done }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-right">
+        <div class="quick-links">
+          <div class="section-header">
+            <h3>快速入口</h3>
+          </div>
+          <div class="link-items">
+            <div class="link-item" v-for="link in quickLinks" :key="link.path" @click="$router.push(link.path)">
+              <i :class="link.icon" :style="{ color: link.color }"></i>
+              <span>{{ link.name }}</span>
             </div>
-            <div class="task-item">
-              <span class="task-label">失败</span>
-              <span class="task-value failed">{{ taskStats.failed }}</span>
+          </div>
+          <div class="collections">
+            <div class="collection-header">收藏</div>
+            <div class="collection-list">
+              <span class="collection-tag" v-for="col in collections" :key="col">{{ col }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="todo-list">
+          <div class="section-header">
+            <h3>待办事项</h3>
+          </div>
+          <div class="todo-items">
+            <div class="todo-item" v-for="item in todos" :key="item.id">
+              <div class="todo-icon" :class="item.type">
+                <i class="fa-solid" :class="{
+                  'fa-bell': item.type === 'alert',
+                  'fa-credit-card': item.type === 'renew',
+                  'fa-gear': item.type === 'config'
+                }"></i>
+              </div>
+              <div class="todo-content">
+                <div class="todo-title">{{ item.title }}</div>
+                <div class="todo-desc">{{ item.desc }}</div>
+              </div>
+              <span class="todo-count">{{ item.count }}</span>
             </div>
           </div>
         </div>
@@ -129,295 +188,152 @@
 <script setup>
 import { ref, reactive } from 'vue'
 
+const alertPeriod = ref('7d')
+
 const stats = reactive({
+  totalResources: 156,
+  resourceChange: 5,
   activeAlerts: 12,
   critical: 3,
-  resources: 156,
-  tasksDone: 28
+  warning: 5,
+  healthRate: 98,
+  todoCount: 5,
+  todoAlerts: 3,
+  todoRenew: 2
 })
+
+const alertTrend = ref([45, 60, 35, 80, 55, 70, 90, 65, 50, 75, 40, 60])
+
+const alertSummary = reactive({ critical: 5, warning: 15, info: 22 })
+
+const resourceDist = ref([
+  { name: '业务应用', count: 45, percent: 45, color: '#1890ff' },
+  { name: '云服务', count: 30, percent: 30, color: '#722ed1' },
+  { name: '云资源', count: 15, percent: 15, color: '#52c41a' },
+  { name: '物理资源', count: 10, percent: 10, color: '#fa8c16' }
+])
+
+const recentAlerts = ref([
+  { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001', time: '10:32' },
+  { id: 2, level: 'warning', title: '磁盘空间不足', resource: 'db-primary', time: '09:15' },
+  { id: 3, level: 'info', title: '内存使用率偏高', resource: 'app-server-03', time: '08:45' }
+])
+
+const recentList = ref([
+  { name: '监控中心', icon: 'fa-solid fa-chart-line', path: '/monitor/dashboard' },
+  { name: '告警中心', icon: 'fa-solid fa-bell', path: '/alarm/realtime' },
+  { name: '资源中心', icon: 'fa-solid fa-database', path: '/resource/list' }
+])
+
+const quickLinks = ref([
+  { name: '监控中心', icon: 'fa-solid fa-chart-line', path: '/monitor/dashboard', color: '#1890ff' },
+  { name: '告警中心', icon: 'fa-solid fa-bell', path: '/alarm/realtime', color: '#f5222d' },
+  { name: '资源中心', icon: 'fa-solid fa-database', path: '/resource/list', color: '#52c41a' },
+  { name: '运维中心', icon: 'fa-solid fa-terminal', path: '/ops/jobs', color: '#722ed1' }
+])
+
+const collections = ref(['云服务器', '数据库', 'Kubernetes'])
 
 const todos = ref([
-  { id: 1, title: '处理告警 #2345 CPU告警', done: false, time: '10:30' },
-  { id: 2, title: '审核巡检报告', done: false, time: '11:00' },
-  { id: 3, title: '更新监控阈值', done: true, time: '09:15' },
-  { id: 4, title: '处理告警 #2342 磁盘告警', done: false, time: '14:00' }
+  { id: 1, type: 'alert', title: '待处理告警', desc: '需要及时处理', count: 3 },
+  { id: 2, type: 'renew', title: '待续费资源', desc: '即将到期', count: 2 },
+  { id: 3, type: 'config', title: '配置提醒', desc: '待处理配置', count: 0 }
 ])
 
-const alertTrend = ref([60, 45, 80, 55, 70, 90, 65])
-
-const usageStats = ref([
-  { name: 'CPU', value: 72, color: '#faad14' },
-  { name: '内存', value: 68, color: '#1890ff' },
-  { name: '磁盘', value: 45, color: '#52c41a' },
-  { name: '网络', value: 35, color: '#722ed1' }
-])
-
-const taskStats = reactive({
-  running: 5,
-  done: 42,
-  failed: 2
-})
-
-const toggleTodo = (id) => {
-  const todo = todos.value.find(t => t.id === id)
-  if (todo) todo.done = !todo.done
-}
+const getLevelColor = (level) => ({ critical: 'red', warning: 'orange', info: 'blue' }[level])
+const getLevelText = (level) => ({ critical: '紧急', warning: '重要', info: '次要' }[level])
 </script>
 
 <style scoped>
-.home-view {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
+.home-view { padding: 24px; max-width: 1400px; margin: 0 auto; }
 
-.home-header {
-  margin-bottom: 24px;
-}
+.home-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.welcome h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
+.subtitle { color: var(--text-secondary); margin: 0; }
+.recent-access { display: flex; align-items: center; gap: 8px; }
+.recent-access .label { font-size: 13px; color: var(--text-secondary); }
+.recent-item { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; background: var(--bg-card); border-radius: 6px; font-size: 13px; }
 
-.home-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 8px;
-}
+.stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--bg-card); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.stat-icon.resources { background: #e6f7ff; color: #1890ff; }
+.stat-icon.alerts { background: #fff1f0; color: #f5222d; }
+.stat-icon.health { background: #f6ffed; color: #52c41a; }
+.stat-icon.todo { background: #fff7e6; color: #fa8c16; }
+.stat-value { font-size: 28px; font-weight: 600; }
+.stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.stat-trend { font-size: 12px; }
+.stat-trend.up { color: #52c41a; }
+.stat-breakdown { font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; }
+.stat-breakdown .critical { color: #f5222d; }
+.stat-breakdown .warning { color: #fa8c16; }
+.stat-status { font-size: 12px; color: #52c41a; }
 
-.subtitle {
-  color: var(--text-secondary);
-  margin: 0;
-}
+.chart-section { background: var(--bg-card); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.section-header h3 { font-size: 16px; font-weight: 600; margin: 0; }
+.time-selector { display: flex; gap: 4px; }
+.time-selector button { padding: 4px 12px; font-size: 12px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-radius: 4px; }
+.time-selector button.active { background: var(--brand); color: #fff; }
+.trend-chart { display: flex; gap: 24px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; flex: 1; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.bar { width: 100%; background: var(--brand); border-radius: 4px 4px 0 0; min-height: 4px; }
+.bar-label { font-size: 11px; color: var(--text-secondary); }
+.chart-summary { display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.summary-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.summary-item .dot { width: 8px; height: 8px; border-radius: 50%; }
+.summary-item .dot.critical { background: #f5222d; }
+.summary-item .dot.warning { background: #fa8c16; }
+.summary-item .dot.info { background: #1890ff; }
 
-.overview-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
+.content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+.grid-left, .grid-right { display: flex; flex-direction: column; gap: 24px; }
 
-.overview-card {
-  background: var(--bg-card);
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: var(--shadow-sm);
-}
+.resource-distribution, .recent-alerts, .quick-links, .todo-list { background: var(--bg-card); border-radius: 12px; padding: 20px; }
+.dist-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.dist-info { width: 100px; display: flex; justify-content: space-between; }
+.dist-name { font-size: 13px; }
+.dist-count { color: var(--text-secondary); font-size: 12px; }
+.dist-bar { flex: 1; height: 8px; background: var(--bg-sec); border-radius: 4px; overflow: hidden; }
+.dist-progress { height: 100%; border-radius: 4px; }
+.dist-percent { width: 40px; text-align: right; font-size: 12px; color: var(--text-secondary); }
 
-.card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
+.alert-list { display: flex; flex-direction: column; gap: 12px; }
+.alert-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-sec); border-radius: 8px; }
+.alert-item.critical { border-left: 3px solid #f5222d; }
+.alert-item.warning { border-left: 3px solid #fa8c16; }
+.alert-item.info { border-left: 3px solid #1890ff; }
+.alert-item .alert-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.alert-item.critical .alert-icon { background: #fff1f0; color: #f5222d; }
+.alert-item.warning .alert-icon { background: #fff7e6; color: #fa8c16; }
+.alert-item.info .alert-icon { background: #e6f7ff; color: #1890ff; }
+.alert-item .alert-content { flex: 1; }
+.alert-item .alert-title { font-size: 13px; font-weight: 500; }
+.alert-item .alert-meta { font-size: 12px; color: var(--text-secondary); }
 
-.card-icon.warning { background: #fff7e6; color: #fa8c16; }
-.card-icon.danger { background: #fff1f0; color: #f5222d; }
-.card-icon.info { background: #e6f7ff; color: #1890ff; }
-.card-icon.success { background: #f6ffed; color: #52c41a; }
+.link-items { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+.link-item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; background: var(--bg-sec); border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+.link-item:hover { background: var(--brand-subtle); }
+.link-item i { font-size: 24px; }
+.link-item span { font-size: 13px; }
+.collection-header { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.collection-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.collection-tag { padding: 4px 12px; background: var(--bg-sec); border-radius: 16px; font-size: 12px; color: var(--text-secondary); }
 
-.card-value {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
+.todo-items { display: flex; flex-direction: column; gap: 12px; }
+.todo-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-sec); border-radius: 8px; }
+.todo-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.todo-icon.alert { background: #fff1f0; color: #f5222d; }
+.todo-icon.renew { background: #fff7e6; color: #fa8c16; }
+.todo-icon.config { background: #e6f7ff; color: #1890ff; }
+.todo-content { flex: 1; }
+.todo-title { font-size: 13px; font-weight: 500; }
+.todo-desc { font-size: 12px; color: var(--text-secondary); }
+.todo-count { font-size: 20px; font-weight: 600; color: var(--text-primary); }
 
-.card-label {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.home-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 768px) {
-  .home-grid { grid-template-columns: 1fr; }
-}
-
-.quick-access, .todo-list {
-  background: var(--bg-card);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-}
-
-.quick-access h3, .todo-list h3, .stats-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.quick-items {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.quick-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px;
-  background: var(--bg);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.quick-item:hover {
-  background: var(--brand-subtle);
-  transform: translateY(-2px);
-}
-
-.quick-item i {
-  font-size: 24px;
-  color: var(--brand);
-}
-
-.quick-item span {
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.badge {
-  background: var(--brand);
-  color: #fff;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.todo-items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.todo-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.todo-item:last-child { border-bottom: none; }
-
-.todo-item .done {
-  text-decoration: line-through;
-  color: var(--text-secondary);
-}
-
-.todo-time {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.stats-section h3 {
-  margin-bottom: 16px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  background: var(--bg-card);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-}
-
-.stat-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.stat-header span:first-child {
-  font-weight: 600;
-}
-
-.stat-period {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.simple-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 100px;
-  gap: 8px;
-}
-
-.bar {
-  flex: 1;
-  background: var(--brand);
-  border-radius: 4px 4px 0 0;
-  min-height: 4px;
-}
-
-.usage-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.usage-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.usage-name {
-  width: 40px;
-  font-size: 12px;
-}
-
-.usage-value {
-  width: 40px;
-  text-align: right;
-  font-size: 12px;
-}
-
-.task-stats {
-  display: flex;
-  justify-content: space-around;
-  padding: 16px 0;
-}
-
-.task-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.task-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.task-value {
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.task-value.running { color: #1890ff; }
-.task-value.done { color: #52c41a; }
-.task-value.failed { color: #f5222d; }
+@media (max-width: 1024px) { .stat-cards { grid-template-columns: repeat(2, 1fr); } .content-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .stat-cards { grid-template-columns: 1fr; } .home-header { flex-direction: column; gap: 12px; } }
 </style>
