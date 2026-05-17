@@ -160,7 +160,7 @@
     </header>
 
     <div class="main">
-      <template v-if="$route.path === '/monitor'">
+      <template v-if="$route.path === '/monitor' || $route.path === '/monitor/dashboard'">
         <main class="canvas">
           <div class="canvas-toolbar">
             <div class="canvas-title">
