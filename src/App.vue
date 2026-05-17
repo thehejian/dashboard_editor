@@ -59,6 +59,7 @@
         </template>
         <template v-else>
           <button class="header-btn primary" @click="enterEditMode()"><i class="fa-solid fa-pen"></i><span>编辑</span></button>
+          <button class="header-btn" @click="createNewDashboard()"><i class="fa-solid fa-plus"></i><span>创建</span></button>
         </template>
         <div class="avatar">A</div>
       </div>
@@ -121,7 +122,7 @@ import ConfigPanel from './components/ConfigPanel.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 
-const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate } = useEditorState()
+const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate, createNewDashboard } = useEditorState()
 const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport()
 
 const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))

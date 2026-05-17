@@ -443,6 +443,19 @@ function switchDashboard(id) {
   state.selectedId = null
 }
 
+function createNewDashboard() {
+  const newId = Math.max(...state.dashboards.map(d => d.id)) + 1
+  const newDb = createDashboard(newId, '新仪表盘', state.currentRegion, '24h')
+  newDb.charts = []
+  state.dashboards.push(newDb)
+  state.currentDashboardId = newId
+  state.charts = []
+  state.editMode = true
+  state.configOpen = false
+  state.selectedId = null
+  toast('已创建新仪表盘')
+}
+
 function switchRegion(regionId) {
   state.currentRegion = regionId
   const db = currentDashboard.value
@@ -517,7 +530,7 @@ export function useEditorState() {
     setObjType, spinTop, pickRec, addThreshold, removeThreshold,
     updateThValue, updateThLevel, toggleLink, getCurrentThresholds,
     refreshChart, refreshAllCharts,
-    switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts,
+    switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts, createNewDashboard,
     setRefreshRate, clearRefresh,
   }
 }
