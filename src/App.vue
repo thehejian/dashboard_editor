@@ -129,7 +129,33 @@
           <button class="header-btn primary" @click="enterEditMode()"><i class="fa-solid fa-pen"></i><span>编辑</span></button>
           <button class="header-btn" @click="createNewDashboard()"><i class="fa-solid fa-plus"></i><span>创建</span></button>
         </template>
-        <div class="avatar">A</div>
+
+        <button class="header-btn nav-icon-btn" title="待办">
+          <i class="fa-solid fa-list-check"></i>
+          <span class="nav-badge">3</span>
+        </button>
+        <button class="header-btn nav-icon-btn" title="申请">
+          <i class="fa-solid fa-file-signature"></i>
+        </button>
+
+        <a-dropdown :trigger="['click']" class="user-dropdown">
+          <div class="avatar">A</div>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item disabled>
+                <div class="user-info">
+                  <div class="user-name">管理员</div>
+                  <div class="user-email">admin@company.com</div>
+                </div>
+              </a-menu-item>
+              <a-menu-divider />
+              <a-menu-item key="profile"><i class="fa-regular fa-user"></i> 个人中心</a-menu-item>
+              <a-menu-item key="settings"><i class="fa-solid fa-gear"></i> 个人设置</a-menu-item>
+              <a-menu-divider />
+              <a-menu-item key="logout" danger><i class="fa-solid fa-right-from-bracket"></i> 退出登录</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
       </div>
     </header>
 
@@ -297,6 +323,14 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .header-btn.dashboard-select, .header-btn.region-select { padding: 0 12px; }
 .header-dropdown { margin-left: 8px; }
 .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #FFF; cursor: pointer; margin-left: 4px; }
+
+.nav-icon-btn { position: relative; width: 32px; padding: 0; justify-content: center; }
+.nav-badge { position: absolute; top: 2px; right: 2px; min-width: 14px; height: 14px; font-size: 10px; background: var(--danger); color: #fff; border-radius: 7px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+.user-dropdown { cursor: pointer; }
+.user-dropdown .ant-dropdown-trigger { display: block; }
+.user-info { padding: 8px 12px; }
+.user-name { font-weight: 600; font-size: 14px; }
+.user-email { font-size: 12px; color: var(--text-secondary); }
 
 .main { display: flex; flex: 1; overflow: hidden; position: relative; min-height: 0; }
 
