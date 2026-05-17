@@ -313,10 +313,10 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .user-name { font-weight: 600; font-size: 14px; }
 .user-email { font-size: 12px; color: var(--text-secondary); }
 
-.main { display: flex; flex: 1; position: relative; min-height: 0; }
+.main { display: flex; flex: 1; position: relative; min-height: 0; height: calc(100vh - 48px); }
 .main.dashboard-mode { overflow: hidden; }
 
-.page-view-container { min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.page-view-container { min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; height: 100%; }
 
 .canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0; background: radial-gradient(ellipse at 25% 20%, rgba(0,125,255,0.02) 0%, transparent 55%), var(--bg-sec); }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 32px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
