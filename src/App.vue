@@ -99,45 +99,6 @@
         </a-dropdown>
       </div>
       <div class="header-actions">
-        <a-dropdown :trigger="['click']">
-          <button class="header-btn"><i class="fa-solid fa-bars"></i></button>
-          <template #overlay>
-            <a-menu>
-              <a-menu-item v-for="(chart, idx) in state.charts" :key="idx" @click="scrollToChart(chart.id)">
-                {{ chart.title }}
-              </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-        <a-dropdown :trigger="['click']">
-          <button class="header-btn"><i class="fa-solid fa-download"></i></button>
-          <template #overlay>
-            <a-menu>
-              <a-menu-item @click="handleExportPng">导出 PNG</a-menu-item>
-              <a-menu-item @click="handleExportPdf">导出 PDF</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-        <button class="header-btn" @click="handleShare">
-          <i class="fa-regular fa-share-from-square"></i>
-        </button>
-        <template v-if="state.editMode">
-          <button class="header-btn" @click="saveDashboard()"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
-          <button class="header-btn" @click="exitEditMode()">退出编辑</button>
-        </template>
-        <template v-else>
-          <button class="header-btn primary" @click="enterEditMode()"><i class="fa-solid fa-pen"></i><span>编辑</span></button>
-          <button class="header-btn" @click="createNewDashboard()"><i class="fa-solid fa-plus"></i><span>创建</span></button>
-        </template>
-
-        <button class="header-btn nav-icon-btn" title="待办">
-          <i class="fa-solid fa-list-check"></i>
-          <span class="nav-badge">3</span>
-        </button>
-        <button class="header-btn nav-icon-btn" title="申请">
-          <i class="fa-solid fa-file-signature"></i>
-        </button>
-
         <a-dropdown :trigger="['click']" class="user-dropdown">
           <div class="avatar">A</div>
           <template #overlay>
@@ -148,6 +109,9 @@
                   <div class="user-email">admin@company.com</div>
                 </div>
               </a-menu-item>
+              <a-menu-divider />
+              <a-menu-item key="todo"><i class="fa-solid fa-list-check"></i> 待办 <span class="menu-badge">3</span></a-menu-item>
+              <a-menu-item key="apply"><i class="fa-solid fa-file-signature"></i> 申请</a-menu-item>
               <a-menu-divider />
               <a-menu-item key="profile"><i class="fa-regular fa-user"></i> 个人中心</a-menu-item>
               <a-menu-item key="settings"><i class="fa-solid fa-gear"></i> 个人设置</a-menu-item>
@@ -162,11 +126,52 @@
     <div class="main">
       <template v-if="$route.path === '/monitor' || $route.path === '/monitor/dashboard'">
         <main class="canvas">
+          <div class="dashboard-toolbar">
+            <div class="dashboard-tabs">
+              <div class="dashboard-tab" v-for="db in state.dashboards" :key="db.id" :class="{ active: db.id === state.currentDashboardId }" @click="switchDashboard(db.id)">
+                {{ db.title }}
+                <span class="tab-close" @click.stop="closeDashboard(db.id)">×</span>
+              </div>
+              <button class="dashboard-tab add-tab" @click="createNewDashboard()">+</button>
+            </div>
+            <div class="dashboard-actions">
+              <a-dropdown :trigger="['click']" class="header-dropdown">
+                <button class="header-btn">{{ currentRegion?.name || '选择区域' }} <i class="fa-solid fa-chevron-down"></i></button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item v-for="r in REGIONS" :key="r.id" @click="switchRegion(r.id)">{{ r.name }}</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+              <a-dropdown :trigger="['click']">
+                <button class="header-btn"><i class="fa-solid fa-bars"></i></button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item v-for="(chart, idx) in state.charts" :key="idx" @click="scrollToChart(chart.id)">{{ chart.title }}</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+              <a-dropdown :trigger="['click']">
+                <button class="header-btn"><i class="fa-solid fa-download"></i></button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item @click="handleExportPng">导出 PNG</a-menu-item>
+                    <a-menu-item @click="handleExportPdf">导出 PDF</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+              <button class="header-btn" @click="handleShare"><i class="fa-regular fa-share-from-square"></i></button>
+              <template v-if="state.editMode">
+                <button class="header-btn" @click="saveDashboard()"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
+                <button class="header-btn" @click="exitEditMode()">退出编辑</button>
+              </template>
+              <template v-else>
+                <button class="header-btn primary" @click="enterEditMode()"><i class="fa-solid fa-pen"></i><span>编辑</span></button>
+              </template>
+            </div>
+          </div>
           <div class="canvas-toolbar">
             <div class="canvas-title">
-              <h1>{{ currentDashboard?.title || '仪表盘' }}</h1>
-            </div>
-            <div class="canvas-controls">
               <div class="time-pills">
                 <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
                 <button class="time-pill" :class="{ active: state.period === '6h' }" @click="setPeriod('6h')">6h</button>
@@ -335,6 +340,17 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .main { display: flex; flex: 1; overflow: hidden; position: relative; min-height: 0; }
 
 .canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0; background: radial-gradient(ellipse at 25% 20%, rgba(0,125,255,0.02) 0%, transparent 55%), var(--bg-sec); }
+.dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 32px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.dashboard-tabs { display: flex; align-items: center; gap: 4px; }
+.dashboard-tab { padding: 6px 16px; font-size: 13px; border-radius: 6px 6px 0 0; cursor: pointer; color: var(--text-secondary); background: var(--bg-sec); border: 1px solid var(--border); border-bottom: none; position: relative; transition: all 0.15s; }
+.dashboard-tab:hover { color: var(--text); }
+.dashboard-tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+.dashboard-tab .tab-close { margin-left: 8px; opacity: 0.6; font-size: 14px; }
+.dashboard-tab .tab-close:hover { opacity: 1; }
+.dashboard-tab.add-tab { padding: 6px 12px; font-size: 16px; }
+.dashboard-actions { display: flex; align-items: center; gap: 8px; }
+.menu-badge { background: var(--danger); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 8px; }
+
 .canvas-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; flex-shrink: 0; }
 .canvas-title { display: flex; align-items: center; gap: 10px; }
 .canvas-title h1 { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }

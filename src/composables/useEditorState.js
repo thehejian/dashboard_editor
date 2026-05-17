@@ -508,6 +508,21 @@ function createNewDashboard() {
   toast('已创建新仪表盘')
 }
 
+function closeDashboard(id) {
+  if (state.dashboards.length <= 1) {
+    toast('至少保留一个仪表盘')
+    return
+  }
+  const idx = state.dashboards.findIndex(d => d.id === id)
+  if (idx > -1) {
+    state.dashboards.splice(idx, 1)
+    if (state.currentDashboardId === id) {
+      state.currentDashboardId = state.dashboards[0].id
+      loadDashboard(state.currentDashboardId)
+    }
+  }
+}
+
 function switchRegion(regionId) {
   state.currentRegion = regionId
   const db = currentDashboard.value
