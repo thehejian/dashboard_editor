@@ -179,7 +179,7 @@
         <div class="config-overlay" :class="{ visible: state.configOpen }" @click="closeConfig"></div>
         <ConfigPanel />
       </template>
-      <router-view v-else />
+      <router-view v-else class="page-view-container" />
     </div>
 
 
@@ -312,6 +312,8 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .user-email { font-size: 12px; color: var(--text-secondary); }
 
 .main { display: flex; flex: 1; overflow: hidden; position: relative; min-height: 0; }
+
+.page-view-container { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 
 .canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0; background: radial-gradient(ellipse at 25% 20%, rgba(0,125,255,0.02) 0%, transparent 55%), var(--bg-sec); }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 32px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
