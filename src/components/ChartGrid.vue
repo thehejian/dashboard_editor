@@ -33,12 +33,11 @@
           </div>
         </div>
       </template>
+      <div class="add-card" @click="addChart()">
+        <i class="fa-solid fa-plus"></i>
+        <span>添加图表</span>
+      </div>
     </draggable>
-    <div class="add-card" @click="addChart()">
-      <i class="fa-solid fa-plus"></i>
-      <span>添加图表</span>
-    </div>
-
     <Teleport to="body">
       <div v-if="fullscreenChart" class="fullscreen-overlay" @click="closeFullscreen">
         <div class="fullscreen-card" @click.stop>
