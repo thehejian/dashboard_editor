@@ -71,32 +71,6 @@
             </template>
           </a-dropdown>
         </nav>
-        <a-dropdown :trigger="['click']" class="header-dropdown">
-          <button class="header-btn dashboard-select">
-            <span>{{ currentDashboard?.title || '选择仪表盘' }}</span>
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-          <template #overlay>
-            <a-menu>
-              <a-menu-item v-for="db in state.dashboards" :key="db.id" @click="switchDashboard(db.id)">
-                {{ db.title }}
-              </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-        <a-dropdown :trigger="['click']" class="header-dropdown">
-          <button class="header-btn region-select">
-            <span>{{ currentRegion?.name || '选择区域' }}</span>
-            <i class="fa-solid fa-chevron-down"></i>
-          </button>
-          <template #overlay>
-            <a-menu>
-              <a-menu-item v-for="r in REGIONS" :key="r.id" @click="switchRegion(r.id)">
-                {{ r.name }}
-              </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
       </div>
       <div class="header-actions">
         <a-dropdown :trigger="['click']" class="user-dropdown">
