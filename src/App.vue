@@ -110,6 +110,11 @@
               </div>
               <button class="dashboard-tab add-tab" @click="createNewDashboard()">+</button>
             </div>
+            <div class="dashboard-tabs-mobile">
+              <a-select v-model="state.currentDashboardId" style="width: 100%" @change="switchDashboard">
+                <a-select-option v-for="db in state.dashboards" :key="db.id" :value="db.id">{{ db.title }}</a-select-option>
+              </a-select>
+            </div>
             <div class="dashboard-actions">
               <a-dropdown :trigger="['click']" class="header-dropdown">
                 <button class="header-btn">{{ currentRegion?.name || '选择区域' }} <i class="fa-solid fa-chevron-down"></i></button>
@@ -324,6 +329,7 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0; background: radial-gradient(ellipse at 25% 20%, rgba(0,125,255,0.02) 0%, transparent 55%), var(--bg-sec); }
 .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 32px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .dashboard-tabs { display: flex; align-items: center; gap: 4px; }
+.dashboard-tabs-mobile { display: none; }
 .dashboard-tab { padding: 6px 16px; font-size: 13px; border-radius: 6px 6px 0 0; cursor: pointer; color: var(--text-secondary); background: var(--bg-sec); border: 1px solid var(--border); border-bottom: none; position: relative; transition: all 0.15s; }
 .dashboard-tab:hover { color: var(--text); }
 .dashboard-tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
@@ -395,7 +401,7 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .chart-card:nth-child(6) { animation-delay: 0.23s; }
 
 @media (max-width: 1024px) { .canvas-toolbar { padding: 16px 20px; } .canvas-scroll { padding: 0 20px 12px; } }
-@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .module-nav .nav-item { padding: 6px 8px; } .module-nav .nav-item span { display: none; } .module-nav .nav-item .fa-chevron-down { display: none; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } .main { height: calc(100dvh - 48px); } .page-view-container { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; } }
+@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .module-nav .nav-item { padding: 6px 8px; } .module-nav .nav-item span { display: none; } .module-nav .nav-item .fa-chevron-down { display: none; } .dashboard-toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; } .dashboard-tabs { display: none; } .dashboard-tabs-mobile { display: block; width: 100%; } .dashboard-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } .main { height: calc(100dvh - 48px); } .page-view-container { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; } }
 @media (max-width: 640px) { .canvas-toolbar { flex-direction: column; align-items: flex-start; gap: 6px; } .header { height: 44px; } .canvas { height: calc(100dvh - 44px); } .canvas-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; } .header-logo { font-size: 14px; } .avatar { width: 26px; height: 26px; font-size: 10px; } .canvas-title h1 { font-size: 15px; } .chart-card { min-height: 160px; } .chart-card-header { padding: 8px 10px 2px; } .chart-card-header .chart-label h3 { font-size: 11px; } .chart-card-action { width: 32px; height: 32px; } .toast { font-size: 12px; padding: 8px 18px; bottom: 40px; } .fab-add { bottom: 24px; right: 20px; width: 48px; height: 48px; font-size: 18px; } }
 @media (max-width: 420px) { .canvas-toolbar { padding: 10px 12px; } .canvas { height: calc(100dvh - 40px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 12px 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .chart-card { min-height: 140px; border-radius: var(--rm); } .chart-body svg { min-height: 120px; } .header { height: 40px; padding: 0 8px; } .header-logo { font-size: 13px; } .header-logo span.badge { display: none; } .header-btn { height: 28px; padding: 0 8px; font-size: 11px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .canvas-controls { width: 100%; } .time-pills { width: 100%; } .time-pill { flex: 1; text-align: center; } .chart-card-action { width: 30px; height: 30px; } .fab-add { bottom: 16px; right: 16px; width: 44px; height: 44px; font-size: 16px; } }
 </style>
