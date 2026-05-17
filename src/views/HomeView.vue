@@ -1,6 +1,6 @@
 <template>
   <div class="home-view">
-    <a-row :gutter="[24, 24]">
+    <a-row :gutter="[16, 16]">
       <a-col :span="24">
         <div class="welcome-bar">
           <div class="welcome-text">
