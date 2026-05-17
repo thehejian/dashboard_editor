@@ -131,20 +131,72 @@ const REGIONS = [
   { id: 'ap-southeast-2', name: '曼谷区域', code: 'ap-southeast-2' },
 ]
 
-function createDashboard(id, title, region = 'cn-north-1', period = '24h') {
+function createDashboard(id, title, region = 'cn-north-1', period = '24h', charts = null) {
   return {
     id,
     title,
     region,
     period,
-    charts: cloneCharts(),
+    charts: charts || cloneCharts(),
   }
+}
+
+const CONTAINER_CHARTS = [
+  { id:101, title:'集群节点数',      type:'numeric', color:'#007DFF', group:'集群概览', notes:'集群中节点总数', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['集群节点数'] },
+  { id:102, title:'Pod 总数',        type:'numeric', color:'#07C160', group:'集群概览', notes:'集群中 Pod 总数', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Pod总数'] },
+  { id:103, title:'运行中 Pod',      type:'numeric', color:'#07C160', group:'集群概览', notes:'Running 状态的 Pod', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['运行中Pod'] },
+  { id:104, title:'异常 Pod',        type:'numeric', color:'#F5222D', group:'集群概览', notes:'非 Running 状态的 Pod', legendPosition:'bottom', thresholds:[{value:1,level:'warning'},{value:5,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['异常Pod'] },
+
+  { id:105, title:'节点 CPU 使用率', type:'area',    color:'#007DFF', group:'节点资源', notes:'所有节点平均 CPU 使用率', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['节点CPU使用率'] },
+  { id:106, title:'节点内存使用率',  type:'area',    color:'#07C160', group:'节点资源', notes:'所有节点平均内存使用率', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['节点内存使用率'] },
+  { id:107, title:'节点磁盘使用率',  type:'numeric', color:'#F5222D', group:'节点资源', notes:'节点磁盘使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['节点磁盘使用率'] },
+  { id:108, title:'节点网络流入',    type:'area',    color:'#06B6D4', group:'节点资源', notes:'所有节点网络入流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['节点网络流入'] },
+  { id:109, title:'节点网络流出',    type:'area',    color:'#FF7D00', group:'节点资源', notes:'所有节点网络出流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['节点网络流出'] },
+  { id:110, title:'节点负载',        type:'line',    color:'#9C27B0', group:'节点资源', notes:'节点负载趋势', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['节点负载'] },
+
+  { id:111, title:'Pod 运行数',      type:'numeric', color:'#07C160', group:'Pod状态', notes:'Running 状态 Pod 数', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Pod运行数'] },
+  { id:112, title:'Pod 等待数',      type:'numeric', color:'#FF7D00', group:'Pod状态', notes:'Pending 状态 Pod 数', legendPosition:'bottom', thresholds:[{value:1,level:'warning'},{value:5,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Pod等待数'] },
+  { id:113, title:'Pod 终止数',      type:'numeric', color:'#F5222D', group:'Pod状态', notes:'Failed/Terminated Pod 数', legendPosition:'bottom', thresholds:[{value:1,level:'warning'},{value:3,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Pod终止数'] },
+  { id:114, title:'Pod 重启次数',    type:'numeric', color:'#FF7D00', group:'Pod状态', notes:'Pod 重启总次数', legendPosition:'bottom', thresholds:[{value:5,level:'warning'},{value:20,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Pod重启次数'] },
+  { id:115, title:'OOMKill 次数',   type:'numeric', color:'#F5222D', group:'Pod状态', notes:'内存溢出被 kill 次数', legendPosition:'bottom', thresholds:[{value:1,level:'warning'},{value:5,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['OOMKill次数'] },
+  { id:116, title:'CPU Throttling',  type:'numeric', color:'#FF7D00', group:'Pod状态', notes:'CPU 限流次数', legendPosition:'bottom', thresholds:[{value:10,level:'warning'},{value:50,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['CPUThrottling'] },
+
+  { id:117, title:'容器 CPU 使用率', type:'area',    color:'#007DFF', group:'容器资源', notes:'容器 CPU 使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['容器CPU使用率'] },
+  { id:118, title:'容器内存使用率',  type:'area',    color:'#07C160', group:'容器资源', notes:'容器内存使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['容器内存使用率'] },
+  { id:119, title:'容器网络流入',    type:'area',    color:'#06B6D4', group:'容器资源', notes:'容器网络入流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['容器网络流入'] },
+  { id:120, title:'容器网络流出',    type:'area',    color:'#FF7D00', group:'容器资源', notes:'容器网络出流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['容器网络流出'] },
+  { id:121, title:'容器磁盘读取',    type:'area',    color:'#9C27B0', group:'容器资源', notes:'容器块设备读取', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['容器磁盘读取'] },
+  { id:122, title:'容器磁盘写入',    type:'area',    color:'#E11D48', group:'容器资源', notes:'容器块设备写入', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['容器磁盘写入'] },
+
+  { id:123, title:'Pod 网络流入速率',type:'area',    color:'#06B6D4', group:'网络流量', notes:'Pod 网络入流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Pod网络流入速率'] },
+  { id:124, title:'Pod 网络流出速率',type:'area',    color:'#FF7D00', group:'网络流量', notes:'Pod 网络出流量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Pod网络流出速率'] },
+  { id:125, title:'Service 入口流量',type:'line',    color:'#007DFF', group:'网络流量', notes:'Service 入口请求量', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Service入口流量'] },
+  { id:126, title:'Ingress QPS',      type:'line',    color:'#07C160', group:'网络流量', notes:'Ingress 请求速率', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['IngressQPS'] },
+  { id:127, title:'Ingress 延迟',     type:'line',    color:'#FF7D00', group:'网络流量', notes:'Ingress 请求延迟', legendPosition:'bottom', thresholds:[{value:500,level:'warning'},{value:2000,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Ingress延迟'] },
+  { id:128, title:'Ingress 错误率',  type:'line',    color:'#F5222D', group:'网络流量', notes:'Ingress 5xx 错误率', legendPosition:'bottom', thresholds:[{value:1,level:'warning'},{value:5,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Ingress错误率'] },
+
+  { id:129, title:'PVC 已用容量',     type:'numeric', color:'#007DFF', group:'存储卷', notes:'PVC 已使用存储', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['PVC已用容量'] },
+  { id:130, title:'PVC 可用容量',     type:'numeric', color:'#07C160', group:'存储卷', notes:'PVC 可用存储', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['PVC可用容量'] },
+  { id:131, title:'存储请求量',       type:'line',    color:'#06B6D4', group:'存储卷', notes:'存储资源请求趋势', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['存储请求量'] },
+  { id:132, title:'存储利用率',       type:'area',    color:'#F5222D', group:'存储卷', notes:'存储使用百分比', legendPosition:'bottom', thresholds:[{value:70,level:'warning'},{value:90,level:'danger'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['存储利用率'] },
+
+  { id:133, title:'Deployment 数量',type:'numeric', color:'#007DFF', group:'工作负载', notes:'Deployment 总数', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['Deployment数量'] },
+  { id:134, title:'StatefulSet 数量',type:'numeric', color:'#07C160', group:'工作负载', notes:'StatefulSet 总数', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['StatefulSet数量'] },
+  { id:135, title:'DaemonSet 数量',  type:'numeric', color:'#06B6D4', group:'工作负载', notes:'DaemonSet 总数', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['DaemonSet数量'] },
+  { id:136, title:'滚动更新中',       type:'numeric', color:'#FF7D00', group:'工作负载', notes:'正在滚动更新的 workload', legendPosition:'bottom', thresholds:[{value:1,level:'warning'}], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['滚动更新中'] },
+  { id:137, title:'就绪副本数',       type:'line',    color:'#07C160', group:'工作负载', notes:'就绪副本数趋势', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['就绪副本数'] },
+  { id:138, title:'期望副本数',       type:'line',    color:'#9CA3AF', group:'工作负载', notes:'期望副本数趋势', legendPosition:'bottom', thresholds:[], linkEnabled:false, linkUrl:'', drillDownUrl:'', metrics:['期望副本数'] },
+]
+
+function cloneContainerCharts() {
+  return JSON.parse(JSON.stringify(CONTAINER_CHARTS)).map(ch => ({ ...ch, thresholds: [...ch.thresholds], metrics: [...ch.metrics] }))
 }
 
 const DASHBOARDS = [
   createDashboard(1, '虚拟机监控', 'cn-north-1', '24h'),
-  createDashboard(2, '开发环境监控', 'cn-north-2', '6h'),
-  createDashboard(3, '测试环境仪表盘', 'cn-east-1', '24h'),
+  createDashboard(2, '容器监控', 'cn-north-1', '24h', cloneContainerCharts()),
+  createDashboard(3, '开发环境监控', 'cn-north-2', '6h'),
+  createDashboard(4, '测试环境仪表盘', 'cn-east-1', '24h'),
 ]
 
 function cloneDashboards() {
