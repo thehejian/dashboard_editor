@@ -2,7 +2,15 @@
   <div class="app">
     <header class="header">
       <div class="header-left">
-        <div class="header-logo"><img :src="logoUrl" alt="Logo" class="logo-img"><span class="badge">Dashboard</span></div>
+        <div class="header-logo"><img :src="logoUrl" alt="Logo" class="logo-img"><span class="badge">运维中心</span></div>
+        <nav class="module-nav">
+          <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">首页</router-link>
+          <router-link to="/alarm" class="nav-item" :class="{ active: $route.path === '/alarm' }">告警</router-link>
+          <router-link to="/monitor" class="nav-item" :class="{ active: $route.path === '/monitor' }">监控</router-link>
+          <router-link to="/resource" class="nav-item" :class="{ active: $route.path === '/resource' }">资源</router-link>
+          <router-link to="/ops" class="nav-item" :class="{ active: $route.path === '/ops' }">运维</router-link>
+          <router-link to="/system" class="nav-item" :class="{ active: $route.path === '/system' }">系统</router-link>
+        </nav>
         <a-dropdown :trigger="['click']" class="header-dropdown">
           <button class="header-btn dashboard-select">
             <span>{{ currentDashboard?.title || '选择仪表盘' }}</span>
@@ -66,46 +74,47 @@
     </header>
 
     <div class="main">
-      <main class="canvas">
-        <div class="canvas-toolbar">
-          <div class="canvas-title">
-            <h1>{{ currentDashboard?.title || '仪表盘' }}</h1>
-          </div>
-          <div class="canvas-controls">
-            <div class="time-pills">
-              <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
-              <button class="time-pill" :class="{ active: state.period === '6h' }" @click="setPeriod('6h')">6h</button>
-              <button class="time-pill" :class="{ active: state.period === '24h' }" @click="setPeriod('24h')">24h</button>
-              <button class="time-pill" :class="{ active: state.period === '7d' }" @click="setPeriod('7d')">7d</button>
-              <button class="time-pill" :class="{ active: state.period === '30d' }" @click="setPeriod('30d')">30d</button>
+      <template v-if="$route.path === '/monitor'">
+        <main class="canvas">
+          <div class="canvas-toolbar">
+            <div class="canvas-title">
+              <h1>{{ currentDashboard?.title || '仪表盘' }}</h1>
             </div>
-            <a-dropdown :trigger="['click']" class="refresh-dropdown">
-              <button class="header-btn refresh-btn">
-                <i class="fa-solid fa-rotate"></i>
-                <span>{{ state.refreshRate === '0' ? '自动刷新' : REFRESH_OPTIONS.find(r => r.value === state.refreshRate)?.label }}</span>
-              </button>
-              <template #overlay>
-                <a-menu>
-                  <a-menu-item v-for="opt in REFRESH_OPTIONS" :key="opt.value" @click="setRefreshRate(opt.value)">
-                    {{ opt.label }}
-                  </a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-            <span v-if="state.lastRefresh" class="last-refresh">最后更新: {{ state.lastRefresh }}</span>
+            <div class="canvas-controls">
+              <div class="time-pills">
+                <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
+                <button class="time-pill" :class="{ active: state.period === '6h' }" @click="setPeriod('6h')">6h</button>
+                <button class="time-pill" :class="{ active: state.period === '24h' }" @click="setPeriod('24h')">24h</button>
+                <button class="time-pill" :class="{ active: state.period === '7d' }" @click="setPeriod('7d')">7d</button>
+                <button class="time-pill" :class="{ active: state.period === '30d' }" @click="setPeriod('30d')">30d</button>
+              </div>
+              <a-dropdown :trigger="['click']" class="refresh-dropdown">
+                <button class="header-btn refresh-btn">
+                  <i class="fa-solid fa-rotate"></i>
+                  <span>{{ state.refreshRate === '0' ? '自动刷新' : REFRESH_OPTIONS.find(r => r.value === state.refreshRate)?.label }}</span>
+                </button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item v-for="opt in REFRESH_OPTIONS" :key="opt.value" @click="setRefreshRate(opt.value)">
+                      {{ opt.label }}
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+              <span v-if="state.lastRefresh" class="last-refresh">最后更新: {{ state.lastRefresh }}</span>
+            </div>
           </div>
-        </div>
-        <div class="canvas-scroll">
-          <ChartGrid />
-        </div>
-        <button class="fab-add" @click="addChart()" title="添加图表">
-          <i class="fa-solid fa-plus"></i>
-        </button>
-      </main>
-
-      <div class="config-overlay" :class="{ visible: state.configOpen }" @click="closeConfig"></div>
-
-      <ConfigPanel />
+          <div class="canvas-scroll">
+            <ChartGrid />
+          </div>
+          <button class="fab-add" @click="addChart()" title="添加图表">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </main>
+        <div class="config-overlay" :class="{ visible: state.configOpen }" @click="closeConfig"></div>
+        <ConfigPanel />
+      </template>
+      <router-view v-else />
     </div>
 
 
@@ -204,6 +213,10 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .header-logo { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text); user-select: none; }
 .header-logo .logo-img { height: 20px; width: auto; }
 .header-logo .badge { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; background: var(--brand-subtle); color: var(--brand); padding: 2px 6px; border-radius: 4px; }
+.module-nav { display: flex; gap: 4px; margin-left: 16px; padding-left: 16px; border-left: 1px solid var(--border); }
+.module-nav .nav-item { padding: 6px 12px; font-size: 13px; color: var(--text-sec); text-decoration: none; border-radius: 6px; transition: all 0.15s; }
+.module-nav .nav-item:hover { color: var(--text); background: var(--bg-sec); }
+.module-nav .nav-item.active { color: var(--brand); background: var(--brand-subtle); font-weight: 500; }
 .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-ter); }
 .breadcrumb a { color: var(--text-sec); text-decoration: none; }
 .breadcrumb a:hover { color: var(--text); }
