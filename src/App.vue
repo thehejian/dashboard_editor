@@ -124,31 +124,33 @@
                   </a-menu>
                 </template>
               </a-dropdown>
-              <a-dropdown :trigger="['click']">
-                <button class="header-btn"><i class="fa-solid fa-bars"></i></button>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item v-for="(chart, idx) in state.charts" :key="idx" @click="scrollToChart(chart.id)">{{ chart.title }}</a-menu-item>
-                  </a-menu>
+              <div class="dashboard-action-icons">
+                <a-dropdown :trigger="['click']">
+                  <button class="header-btn"><i class="fa-solid fa-bars"></i></button>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item v-for="(chart, idx) in state.charts" :key="idx" @click="scrollToChart(chart.id)">{{ chart.title }}</a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+                <a-dropdown :trigger="['click']">
+                  <button class="header-btn"><i class="fa-solid fa-download"></i></button>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item @click="handleExportPng">导出 PNG</a-menu-item>
+                      <a-menu-item @click="handleExportPdf">导出 PDF</a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+                <button class="header-btn" @click="handleShare"><i class="fa-regular fa-share-from-square"></i></button>
+                <template v-if="state.editMode">
+                  <button class="header-btn" @click="saveDashboard()"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
+                  <button class="header-btn" @click="exitEditMode()">退出编辑</button>
                 </template>
-              </a-dropdown>
-              <a-dropdown :trigger="['click']">
-                <button class="header-btn"><i class="fa-solid fa-download"></i></button>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item @click="handleExportPng">导出 PNG</a-menu-item>
-                    <a-menu-item @click="handleExportPdf">导出 PDF</a-menu-item>
-                  </a-menu>
+                <template v-else>
+                  <button class="header-btn primary" @click="enterEditMode()"><i class="fa-solid fa-pen"></i><span>编辑</span></button>
                 </template>
-              </a-dropdown>
-              <button class="header-btn" @click="handleShare"><i class="fa-regular fa-share-from-square"></i></button>
-              <template v-if="state.editMode">
-                <button class="header-btn" @click="saveDashboard()"><i class="fa-regular fa-floppy-disk"></i><span>保存</span></button>
-                <button class="header-btn" @click="exitEditMode()">退出编辑</button>
-              </template>
-              <template v-else>
-                <button class="header-btn primary" @click="enterEditMode()"><i class="fa-solid fa-pen"></i><span>编辑</span></button>
-              </template>
+              </div>
             </div>
           </div>
           <div class="canvas-toolbar">
@@ -337,6 +339,7 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .dashboard-tab .tab-close:hover { opacity: 1; }
 .dashboard-tab.add-tab { padding: 6px 12px; font-size: 16px; }
 .dashboard-actions { display: flex; align-items: center; gap: 8px; }
+.dashboard-action-icons { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .menu-badge { background: var(--danger); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 8px; }
 
 .canvas-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; flex-shrink: 0; }
@@ -401,7 +404,7 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .chart-card:nth-child(6) { animation-delay: 0.23s; }
 
 @media (max-width: 1024px) { .canvas-toolbar { padding: 16px 20px; } .canvas-scroll { padding: 0 20px 12px; } }
-@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .module-nav .nav-item { padding: 6px 8px; } .module-nav .nav-item span { display: none; } .module-nav .nav-item .fa-chevron-down { display: none; } .dashboard-toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; } .dashboard-tabs { display: none; } .dashboard-tabs-mobile { display: block; width: 100%; } .dashboard-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } .main { height: calc(100dvh - 48px); } .page-view-container { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; } }
+@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .module-nav .nav-item { padding: 6px 8px; } .module-nav .nav-item span { display: none; } .module-nav .nav-item .fa-chevron-down { display: none; } .dashboard-toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; } .dashboard-tabs { display: none; } .dashboard-tabs-mobile { display: block; width: 100%; margin-bottom: 4px; } .dashboard-actions { display: flex; align-items: center; justify-content: space-between; width: 100%; } .dashboard-action-icons { gap: 8px; margin-left: 0; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } .main { height: calc(100dvh - 48px); } .page-view-container { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; } }
 @media (max-width: 640px) { .canvas-toolbar { flex-direction: column; align-items: flex-start; gap: 6px; } .header { height: 44px; } .canvas { height: calc(100dvh - 44px); } .canvas-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; } .header-logo { font-size: 14px; } .avatar { width: 26px; height: 26px; font-size: 10px; } .canvas-title h1 { font-size: 15px; } .chart-card { min-height: 160px; } .chart-card-header { padding: 8px 10px 2px; } .chart-card-header .chart-label h3 { font-size: 11px; } .chart-card-action { width: 32px; height: 32px; } .toast { font-size: 12px; padding: 8px 18px; bottom: 40px; } .fab-add { bottom: 24px; right: 20px; width: 48px; height: 48px; font-size: 18px; } }
 @media (max-width: 420px) { .canvas-toolbar { padding: 10px 12px; } .canvas { height: calc(100dvh - 40px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 12px 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .chart-card { min-height: 140px; border-radius: var(--rm); } .chart-body svg { min-height: 120px; } .header { height: 40px; padding: 0 8px; } .header-logo { font-size: 13px; } .header-logo span.badge { display: none; } .header-btn { height: 28px; padding: 0 8px; font-size: 11px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .canvas-controls { width: 100%; } .time-pills { width: 100%; } .time-pill { flex: 1; text-align: center; } .chart-card-action { width: 30px; height: 30px; } .fab-add { bottom: 16px; right: 16px; width: 44px; height: 44px; font-size: 16px; } }
 </style>
