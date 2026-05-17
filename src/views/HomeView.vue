@@ -133,7 +133,10 @@
       </a-col>
 
       <a-col :xl="16" :lg="16" :md="16" :sm="24" :xs="24">
-        <a-card title="最近告警" :extra="h => h('a-button', {type: 'link', onClick: () => $router.push('/alarm/realtime')}, ['查看全部 '])">
+        <a-card title="最近告警">
+          <template #extra>
+            <a-button type="link" @click="$router.push('/alarm/realtime')">查看全部</a-button>
+          </template>
           <div class="alert-list">
             <div class="alert-item" v-for="alert in recentAlerts" :key="alert.id" :class="alert.level">
               <div class="alert-icon">
