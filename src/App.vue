@@ -4,11 +4,13 @@
       <div class="header-left">
         <div class="header-logo"><img :src="logoUrl" alt="Logo" class="logo-img"><span class="badge">运维中心</span></div>
         <nav class="module-nav">
-          <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">首页</router-link>
+          <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">
+            <i class="fa-solid fa-house"></i><span>首页</span>
+          </router-link>
 
           <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'alarm'" @openChange="openNav('alarm')">
             <span class="nav-item" :class="{ active: $route.path.startsWith('/alarm') }">
-              告警 <i class="fa-solid fa-chevron-down"></i>
+              <i class="fa-solid fa-bell"></i><span>告警</span> <i class="fa-solid fa-chevron-down"></i>
             </span>
             <template #overlay>
               <a-menu @click="handleNavClick">
@@ -21,7 +23,7 @@
 
           <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'monitor'" @openChange="openNav('monitor')">
             <span class="nav-item" :class="{ active: $route.path.startsWith('/monitor') }">
-              监控 <i class="fa-solid fa-chevron-down"></i>
+              <i class="fa-solid fa-chart-line"></i><span>监控</span> <i class="fa-solid fa-chevron-down"></i>
             </span>
             <template #overlay>
               <a-menu @click="handleNavClick">
@@ -35,7 +37,7 @@
 
           <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'resource'" @openChange="openNav('resource')">
             <span class="nav-item" :class="{ active: $route.path.startsWith('/resource') }">
-              资源 <i class="fa-solid fa-chevron-down"></i>
+              <i class="fa-solid fa-server"></i><span>资源</span> <i class="fa-solid fa-chevron-down"></i>
             </span>
             <template #overlay>
               <a-menu @click="handleNavClick">
@@ -48,7 +50,7 @@
 
           <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'ops'" @openChange="openNav('ops')">
             <span class="nav-item" :class="{ active: $route.path.startsWith('/ops') }">
-              运维 <i class="fa-solid fa-chevron-down"></i>
+              <i class="fa-solid fa-wrench"></i><span>运维</span> <i class="fa-solid fa-chevron-down"></i>
             </span>
             <template #overlay>
               <a-menu @click="handleNavClick">
@@ -61,7 +63,7 @@
 
           <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'system'" @openChange="openNav('system')">
             <span class="nav-item" :class="{ active: $route.path.startsWith('/system') }">
-              系统 <i class="fa-solid fa-chevron-down"></i>
+              <i class="fa-solid fa-gear"></i><span>系统</span> <i class="fa-solid fa-chevron-down"></i>
             </span>
             <template #overlay>
               <a-menu @click="handleNavClick">
@@ -289,7 +291,8 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .header-logo .logo-img { height: 20px; width: auto; }
 .header-logo .badge { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; background: var(--brand-subtle); color: var(--brand); padding: 2px 6px; border-radius: 4px; }
 .module-nav { display: flex; gap: 4px; margin-left: 16px; padding-left: 16px; border-left: 1px solid var(--border); }
-.module-nav .nav-item { padding: 6px 12px; font-size: 13px; color: var(--text-sec); text-decoration: none; border-radius: 6px; transition: all 0.15s; }
+.module-nav .nav-item { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; color: var(--text-sec); text-decoration: none; border-radius: 6px; transition: all 0.15s; }
+.module-nav .nav-item i { font-size: 14px; }
 .module-nav .nav-item:hover { color: var(--text); background: var(--bg-sec); }
 .module-nav .nav-item.active { color: var(--brand); background: var(--brand-subtle); font-weight: 500; }
 .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-ter); }
@@ -392,7 +395,7 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 .chart-card:nth-child(6) { animation-delay: 0.23s; }
 
 @media (max-width: 1024px) { .canvas-toolbar { padding: 16px 20px; } .canvas-scroll { padding: 0 20px 12px; } }
-@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } .main { height: calc(100dvh - 48px); } .page-view-container { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; } }
+@media (max-width: 768px) { .breadcrumb { display: none; } .header { padding: 0 12px; } .header-btn { padding: 0 10px; } .header-btn span { display: none; } .module-nav .nav-item { padding: 6px 8px; } .module-nav .nav-item span { display: none; } .module-nav .nav-item .fa-chevron-down { display: none; } .canvas-title h1 { font-size: 16px; } .canvas-toolbar { padding: 12px 16px; } .canvas { height: calc(100dvh - 48px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 16px 80px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .time-pills { overflow-x: auto; -webkit-overflow-scrolling: touch; } .time-pill { white-space: nowrap; } .chart-card { min-height: 180px; } .chart-card-options { opacity: 1; } .chart-card-header .drag-handle { display: none; } .main { height: calc(100dvh - 48px); } .page-view-container { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; } }
 @media (max-width: 640px) { .canvas-toolbar { flex-direction: column; align-items: flex-start; gap: 6px; } .header { height: 44px; } .canvas { height: calc(100dvh - 44px); } .canvas-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; } .header-logo { font-size: 14px; } .avatar { width: 26px; height: 26px; font-size: 10px; } .canvas-title h1 { font-size: 15px; } .chart-card { min-height: 160px; } .chart-card-header { padding: 8px 10px 2px; } .chart-card-header .chart-label h3 { font-size: 11px; } .chart-card-action { width: 32px; height: 32px; } .toast { font-size: 12px; padding: 8px 18px; bottom: 40px; } .fab-add { bottom: 24px; right: 20px; width: 48px; height: 48px; font-size: 18px; } }
 @media (max-width: 420px) { .canvas-toolbar { padding: 10px 12px; } .canvas { height: calc(100dvh - 40px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 12px 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .chart-card { min-height: 140px; border-radius: var(--rm); } .chart-body svg { min-height: 120px; } .header { height: 40px; padding: 0 8px; } .header-logo { font-size: 13px; } .header-logo span.badge { display: none; } .header-btn { height: 28px; padding: 0 8px; font-size: 11px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .canvas-controls { width: 100%; } .time-pills { width: 100%; } .time-pill { flex: 1; text-align: center; } .chart-card-action { width: 30px; height: 30px; } .fab-add { bottom: 16px; right: 16px; width: 44px; height: 44px; font-size: 16px; } }
 </style>
