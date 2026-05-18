@@ -177,48 +177,43 @@
             </a-radio-group>
           </div>
           <div class="detail-chart">
-            <svg class="detail-line-svg" viewBox="0 0 400 180" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="detailAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" style="stop-color:#1890ff;stop-opacity:0.3"/>
-                  <stop offset="100%" style="stop-color:#1890ff;stop-opacity:0.05"/>
-                </linearGradient>
-              </defs>
-              <g class="grid-lines">
-                <line x1="0" y1="36" x2="400" y2="36" stroke="#f0f0f0" stroke-width="1"/>
-                <line x1="0" y1="72" x2="400" y2="72" stroke="#f0f0f0" stroke-width="1"/>
-                <line x1="0" y1="108" x2="400" y2="108" stroke="#f0f0f0" stroke-width="1"/>
-                <line x1="0" y1="144" x2="400" y2="144" stroke="#f0f0f0" stroke-width="1"/>
-              </g>
-              <path class="area-fill" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78 L400,180 L0,180 Z" fill="url(#detailAreaGradient)"/>
-              <path class="line-path" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78" fill="none" stroke="#1890ff" stroke-width="2.5"/>
-              <circle cx="0" cy="90" r="4" fill="#1890ff"/>
-              <circle cx="57" cy="85" r="4" fill="#1890ff"/>
-              <circle cx="114" cy="88" r="4" fill="#1890ff"/>
-              <circle cx="171" cy="82" r="4" fill="#1890ff"/>
-              <circle cx="228" cy="86" r="4" fill="#1890ff"/>
-              <circle cx="285" cy="80" r="4" fill="#1890ff"/>
-              <circle cx="342" cy="84" r="4" fill="#1890ff"/>
-              <circle cx="400" cy="78" r="4" fill="#1890ff"/>
-            </svg>
-            <div class="detail-labels">
-              <span>周一</span>
-              <span>周二</span>
-              <span>周三</span>
-              <span>周四</span>
-              <span>周五</span>
-              <span>周六</span>
-              <span>周日</span>
+            <div v-if="detailType === 'resource'">
+              <svg class="detail-line-svg" viewBox="0 0 400 180" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="detailAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1890ff;stop-opacity:0.3"/>
+                    <stop offset="100%" style="stop-color:#1890ff;stop-opacity:0.05"/>
+                  </linearGradient>
+                </defs>
+                <g class="grid-lines">
+                  <line x1="0" y1="36" x2="400" y2="36" stroke="#f0f0f0" stroke-width="1"/>
+                  <line x1="0" y1="72" x2="400" y2="72" stroke="#f0f0f0" stroke-width="1"/>
+                  <line x1="0" y1="108" x2="400" y2="108" stroke="#f0f0f0" stroke-width="1"/>
+                  <line x1="0" y1="144" x2="400" y2="144" stroke="#f0f0f0" stroke-width="1"/>
+                </g>
+                <path class="area-fill" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78 L400,180 L0,180 Z" fill="url(#detailAreaGradient)"/>
+                <path class="line-path" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78" fill="none" stroke="#1890ff" stroke-width="2.5"/>
+                <circle cx="0" cy="90" r="4" fill="#1890ff"/>
+                <circle cx="57" cy="85" r="4" fill="#1890ff"/>
+                <circle cx="114" cy="88" r="4" fill="#1890ff"/>
+                <circle cx="171" cy="82" r="4" fill="#1890ff"/>
+                <circle cx="228" cy="86" r="4" fill="#1890ff"/>
+                <circle cx="285" cy="80" r="4" fill="#1890ff"/>
+                <circle cx="342" cy="84" r="4" fill="#1890ff"/>
+                <circle cx="400" cy="78" r="4" fill="#1890ff"/>
+              </svg>
+              <div class="detail-labels">
+                <span>周一</span><span>周二</span><span>周三</span><span>周四</span>
+                <span>周五</span><span>周六</span><span>周日</span>
+              </div>
+              <div class="y-axis">
+                <span>1,400,000</span><span>1,200,000</span>
+                <span>1,000,000</span><span>800,000</span><span>0</span>
+              </div>
             </div>
-            <div class="y-axis">
-              <span>1,400,000</span>
-              <span>1,200,000</span>
-              <span>1,000,000</span>
-              <span>800,000</span>
-              <span>0</span>
-            </div>
+            <div v-else class="health-trend-chart" ref="healthTrendContainer"></div>
           </div>
-          <div class="detail-kpi">
+          <div v-if="detailType === 'resource'" class="detail-kpi">
             <div class="detail-kpi-item">
               <span class="dk-label">当前资源总数</span>
               <span class="dk-value">1,234,567</span>
@@ -236,7 +231,25 @@
               <span class="dk-value up">+15%</span>
             </div>
           </div>
-          <div class="detail-table">
+          <div v-if="detailType === 'health'" class="detail-kpi">
+            <div class="detail-kpi-item">
+              <span class="dk-label">当前健康资源</span>
+              <span class="dk-value">{{ healthData.kpi.current }}</span>
+            </div>
+            <div class="detail-kpi-item">
+              <span class="dk-label">峰值数量</span>
+              <span class="dk-value">{{ healthData.kpi.peak }}</span>
+            </div>
+            <div class="detail-kpi-item">
+              <span class="dk-label">平均值</span>
+              <span class="dk-value">{{ healthData.kpi.avg }}</span>
+            </div>
+            <div class="detail-kpi-item">
+              <span class="dk-label">同比变化</span>
+              <span class="dk-value up">{{ healthData.kpi.change }}</span>
+            </div>
+          </div>
+          <div v-if="detailType === 'resource'" class="detail-table">
             <h4>详细数据</h4>
             <div class="table-toolbar">
               <a-input-search v-model:value="detailSearch" placeholder="搜索资源类型" style="width: 200px" />
@@ -264,6 +277,30 @@
               </template>
             </a-table>
           </div>
+          <div v-if="detailType === 'health'" class="detail-table">
+            <h4>详细数据</h4>
+            <a-table
+              :columns="healthColumns"
+              :dataSource="healthData.tableData"
+              :pagination="false"
+              size="small"
+              rowKey="range"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'percent'">
+                  <div class="bar-cell">
+                    <div class="bar-bg">
+                      <div class="bar-fill" :style="{ width: record.percent + '%' }"></div>
+                    </div>
+                    <span>{{ record.percent }}%</span>
+                  </div>
+                </template>
+                <template v-else-if="column.key === 'status'">
+                  <span :class="'health-' + (record.range === '100%' ? 'good' : record.range === '<80%' ? 'bad' : 'warn')">{{ record.status }}</span>
+                </template>
+              </template>
+            </a-table>
+          </div>
         </div>
         <div class="detail-footer">
           <div></div>
@@ -280,13 +317,87 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
 import { Chart } from '@antv/g2'
 
 const detailPanelOpen = ref(false)
 const currentCardTitle = ref('')
 const detailPeriod = ref('week')
+const detailType = ref('resource')
+
+const healthData = reactive({
+  kpi: { current: '1,180,234', peak: '1,185,000', avg: '1,175,000', change: '+8%' },
+  trendData: [
+    { day: '5月16', healthy100: 800000, healthy95: 250000, healthy90: 80000, healthy80: 30000, healthyBelow: 20000 },
+    { day: '5月17', healthy100: 820000, healthy95: 240000, healthy90: 75000, healthy80: 28000, healthyBelow: 18000 },
+    { day: '5月18', healthy100: 810000, healthy95: 260000, healthy90: 70000, healthy80: 35000, healthyBelow: 15000 },
+    { day: '5月19', healthy100: 830000, healthy95: 230000, healthy90: 80000, healthy80: 25000, healthyBelow: 20000 },
+    { day: '5月20', healthy100: 840000, healthy95: 220000, healthy90: 75000, healthy80: 30000, healthyBelow: 15000 },
+    { day: '5月21', healthy100: 850000, healthy95: 210000, healthy90: 70000, healthy80: 28000, healthyBelow: 20000 },
+    { day: '5月22', healthy100: 860000, healthy95: 200000, healthy90: 75000, healthy80: 25000, healthyBelow: 20000 },
+  ],
+  tableData: [
+    { range: '100%', count: 860000, percent: 69.7, status: '健康' },
+    { range: '95%~99%', count: 200000, percent: 16.2, status: '良好' },
+    { range: '90%~94%', count: 75000, percent: 6.1, status: '警告' },
+    { range: '80%~89%', count: 25000, percent: 2.0, status: '异常' },
+    { range: '<80%', count: 20000, percent: 1.6, status: '严重' },
+  ],
+})
+
+const healthColumns = [
+  { title: '健康率范围', dataIndex: 'range', key: 'range' },
+  { title: '资源数量', dataIndex: 'count', key: 'count', align: 'right', sorter: (a, b) => a.count - b.count },
+  { title: '占比', dataIndex: 'percent', key: 'percent', align: 'right' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+]
+
+const healthTrendContainer = ref(null)
+let healthTrendChart = null
+
+function renderHealthTrendChart() {
+  if (healthTrendChart) { healthTrendChart.destroy(); healthTrendChart = null }
+  if (!healthTrendContainer.value) return
+
+  healthTrendChart = new Chart({
+    container: healthTrendContainer.value,
+    autoFit: true,
+    height: 180,
+    padding: [20, 10, 20, 20],
+  })
+
+  const chartData = healthData.trendData.flatMap(d => [
+    { day: d.day, type: '100%', value: d.healthy100 },
+    { day: d.day, type: '95%~99%', value: d.healthy95 },
+    { day: d.day, type: '90%~94%', value: d.healthy90 },
+    { day: d.day, type: '80%~89%', value: d.healthy80 },
+    { day: d.day, type: '<80%', value: d.healthyBelow },
+  ])
+
+  healthTrendChart.data(chartData)
+
+  healthTrendChart.line()
+    .encode('x', 'day')
+    .encode('y', 'value')
+    .encode('color', 'type')
+    .style('lineWidth', 2)
+    .style('shape', 'smooth')
+
+  healthTrendChart.point()
+    .encode('x', 'day')
+    .encode('y', 'value')
+    .encode('color', 'type')
+    .style('fill', '#fff')
+    .style('lineWidth', 1.5)
+    .style('size', 4)
+
+  healthTrendChart.axis('x', { title: null, labelFontSize: 11, labelFill: '#9CA3AF' })
+  healthTrendChart.axis('y', { title: null, labelFontSize: 11, labelFill: '#9CA3AF', gridStroke: '#f0f0f0', gridLineWidth: 1 })
+  healthTrendChart.legend('color', { position: 'bottom', itemSpacing: 16 })
+
+  healthTrendChart.render()
+}
 const detailSearch = ref('')
 const detailPage = ref(1)
 
@@ -322,11 +433,25 @@ watch(detailPanelOpen, (val) => {
     detailPeriod.value = 'week'
     detailSearch.value = ''
     detailPage.value = 1
+    nextTick(() => {
+      if (detailType.value === 'health') renderHealthTrendChart()
+    })
   }
 })
 
 const openDetailPanel = (card) => {
   currentCardTitle.value = card.title
+  if (card.title === '健康资源') {
+    detailType.value = 'health'
+  } else if (card.title === '资源总数') {
+    detailType.value = 'resource'
+  } else if (card.title === '当日告警') {
+    detailType.value = 'alert'
+  } else if (card.title === '资源分类分布') {
+    detailType.value = 'distribution'
+  } else if (card.title === '告警趋势') {
+    detailType.value = 'trend'
+  }
   detailPanelOpen.value = true
 }
 
@@ -471,6 +596,7 @@ onMounted(() => { renderAlertTrendChart() })
 
 onBeforeUnmount(() => {
   if (alertTrendChart) { alertTrendChart.destroy(); alertTrendChart = null }
+  if (healthTrendChart) { healthTrendChart.destroy(); healthTrendChart = null }
 })
 
 const refreshCard = (card) => {
@@ -532,6 +658,7 @@ const refreshCard = (card) => {
 .legend-percent { color: var(--text-secondary); min-width: 35px; text-align: right; }
 
 .line-chart { position: relative; height: 192px; min-height: 192px; }
+.health-trend-chart { height: 180px; min-height: 180px; }
 .line-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
 
 .chart-card { min-height: 270px; }
@@ -608,7 +735,7 @@ const refreshCard = (card) => {
 .time-tabs :deep(.ant-radio-button-wrapper-checked) { background: #1890ff; border-color: #1890ff; color: #fff; z-index: 1; }
 .time-tabs :deep(.ant-radio-button-wrapper::before) { z-index: 0; }
 
-.detail-chart { position: relative; margin-bottom: 24px; padding-left: 70px; }
+.detail-chart { position: relative; margin-bottom: 24px; }
 .detail-line-svg { width: 100%; height: 180px; }
 .y-axis {
   position: absolute;
@@ -651,6 +778,12 @@ const refreshCard = (card) => {
 .table-toolbar { margin-bottom: 12px; }
 .detail-table :deep(.ant-table-thead > tr > th) { background: #fafafa; font-weight: 600; }
 .detail-table :deep(.ant-pagination) { margin-top: 12px; }
+.bar-cell { display: flex; align-items: center; gap: 6px; }
+.bar-bg { flex: 1; height: 10px; background: #f0f0f0; border-radius: 5px; overflow: hidden; min-width: 100px; }
+.bar-fill { height: 100%; background: #1890ff; border-radius: 5px; }
+.health-good { color: #52C41A; }
+.health-warn { color: #fa8c16; }
+.health-bad { color: #f5222d; }
 .num-up { color: #52C41A; }
 .num-down { color: #f5222d; }
 
