@@ -7,107 +7,78 @@
             <h2>欢迎回来，管理员</h2>
             <p>这里是今天的系统概览</p>
           </div>
-          <a-dropdown>
-            <a-button>
-              最近访问 <i class="fa-solid fa-chevron-down"></i>
-            </a-button>
-            <template #overlay>
-              <a-menu @click="({key}) => $router.push(key)">
-                <a-menu-item key="/monitor/dashboard"><i class="fa-solid fa-chart-line"></i> 监控中心</a-menu-item>
-                <a-menu-item key="/alarm/realtime"><i class="fa-solid fa-bell"></i> 告警中心</a-menu-item>
-                <a-menu-item key="/resource/list"><i class="fa-solid fa-database"></i> 资源中心</a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
         </div>
       </a-col>
 
-      <a-col :xs="12" :sm="12" :md="6" v-for="stat in statCards" :key="stat.title">
-        <a-card class="stat-card" hoverable @click="stat.onClick">
-          <div class="stat-content">
-            <div class="stat-header">
-              <a-badge :dot="stat.dot" :dotColor="stat.color">
-                <div class="stat-icon" :style="{ background: stat.bgColor }">
-                  <i :class="stat.icon" :style="{ color: stat.color }"></i>
-                </div>
-              </a-badge>
-              <span class="stat-title">{{ stat.title }}</span>
+      <a-col :xs="12" :sm="12" :md="6" v-for="card in kpiCards" :key="card.title">
+        <div class="kpi-card" :class="card.bgClass">
+          <div class="card-header">
+            <div class="card-icon" :style="{ background: card.iconBg }">
+              <i :class="card.icon" :style="{ color: card.iconColor }"></i>
             </div>
-            <div class="stat-value">
-              <span class="value">{{ stat.value }}</span>
-              <span class="suffix" v-if="stat.suffix">{{ stat.suffix }}</span>
-            </div>
-            <div class="stat-footer" v-if="stat.trend || stat.sub">
-              <span v-if="stat.trend" :class="stat.trend > 0 ? 'up' : 'down'">
-                <i :class="stat.trend > 0 ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
-                {{ Math.abs(stat.trend) }}
-              </span>
-              <span class="sub" v-if="stat.sub">{{ stat.sub }}</span>
-            </div>
-          </div>
-        </a-card>
-      </a-col>
-
-      <a-col :xl="16" :lg="16" :md="16" :sm="24" :xs="24">
-        <a-card title="告警趋势" class="chart-card">
-          <template #extra>
-            <a-radio-group v-model:value="alertPeriod" size="small">
-              <a-radio-button value="7d">近7天</a-radio-button>
-              <a-radio-button value="30d">近30天</a-radio-button>
-            </a-radio-group>
-          </template>
-          <div class="trend-chart">
-            <div class="chart-bars">
-              <div class="bar-item" v-for="(v, i) in alertTrend" :key="i">
-                <div class="bar" :style="{ height: v + '%' }"></div>
-                <span class="label">{{ i + 1 }}日</span>
-              </div>
-            </div>
-            <div class="chart-legend">
-              <span><i class="dot critical"></i> 紧急 {{ alertSummary.critical }}</span>
-              <span><i class="dot warning"></i> 重要 {{ alertSummary.warning }}</span>
-              <span><i class="dot info"></i> 次要 {{ alertSummary.info }}</span>
+            <span class="card-title">{{ card.title }}</span>
+            <div class="card-actions">
+              <a-button type="text" size="small" class="action-btn" @click.stop="refreshCard(card)">
+                <i class="fa-solid fa-rotate-right"></i>
+              </a-button>
+              <a-dropdown :trigger="['click']">
+                <a-button type="text" size="small" class="action-btn">
+                  <i class="fa-solid fa-ellipsis"></i>
+                </a-button>
+                <template #overlay>
+                  <a-menu @click="({key}) => handleCardAction(card, key)">
+                    <a-menu-item key="detail"><i class="fa-solid fa-eye"></i> 查看详情</a-menu-item>
+                    <a-menu-item key="export"><i class="fa-solid fa-download"></i> 导出数据</a-menu-item>
+                    <a-menu-item key="history"><i class="fa-solid fa-clock-rotate-left"></i> 历史趋势</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
             </div>
           </div>
-        </a-card>
-      </a-col>
-
-      <a-col :xl="8" :lg="8" :md="8" :sm="24" :xs="24">
-        <a-card title="健康状态" class="health-card">
-          <div class="health-ring">
-            <a-progress type="circle" :percent="98" :width="120" :strokeColor=" '#52c41a'" :trailColor="'#f0f0f0'" />
-            <div class="health-text">
-              <div class="value">98%</div>
-              <div class="label">整体健康</div>
-            </div>
+          <div class="card-value">
+            <span class="value">{{ card.value }}</span>
+            <span class="trend" :class="card.trend > 0 ? 'up' : 'down'" v-if="card.trend !== undefined">
+              <i :class="card.trend > 0 ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
+              {{ card.trendText }}
+            </span>
           </div>
-          <div class="health-detail">
-            <div class="detail-item">
-              <span class="dot green"></span>
-              <span>正常 {{ healthDetail.normal }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="dot orange"></span>
-              <span>警告 {{ healthDetail.warning }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="dot red"></span>
-              <span>异常 {{ healthDetail.error }}</span>
-            </div>
-          </div>
-        </a-card>
+          <div class="card-sub" v-if="card.sub">{{ card.sub }}</div>
+        </div>
       </a-col>
 
       <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24">
-        <a-card title="资源分布" class="dist-card">
-          <div class="dist-list">
-            <div class="dist-item" v-for="item in resourceDist" :key="item.name">
-              <div class="dist-info">
-                <span class="name">{{ item.name }}</span>
-                <span class="count">{{ item.count }} 台</span>
+        <a-card class="chart-card donut-card">
+          <template #title>
+            <span>资源分类分布</span>
+          </template>
+          <template #extra>
+            <a-button type="text" size="small" class="refresh-btn">
+              <i class="fa-solid fa-rotate-right"></i>
+            </a-button>
+          </template>
+          <div class="donut-chart">
+            <div class="donut-ring">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#f0f0f0" stroke-width="12"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#007BFF" stroke-width="12"
+                  stroke-dasharray="99 220" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#69C0FF" stroke-width="12"
+                  stroke-dasharray="66 220" stroke-dashoffset="-99" transform="rotate(-90 50 50)"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#52C41A" stroke-width="12"
+                  stroke-dasharray="33 220" stroke-dashoffset="-165" transform="rotate(-90 50 50)"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#FA8C16" stroke-width="12"
+                  stroke-dasharray="22 220" stroke-dashoffset="-198" transform="rotate(-90 50 50)"/>
+              </svg>
+              <div class="donut-center">
+                <span class="total">1,234,567</span>
+                <span class="label">资源总数</span>
               </div>
-              <div class="dist-bar">
-                <a-progress :percent="item.percent" :showInfo="false" :strokeColor="item.color" :strokeWidth="8" />
+            </div>
+            <div class="donut-legend">
+              <div class="legend-item" v-for="item in resourceDist" :key="item.name">
+                <span class="legend-dot" :style="{ background: item.color }"></span>
+                <span class="legend-name">{{ item.name }}</span>
+                <span class="legend-percent">{{ item.percent }}%</span>
               </div>
             </div>
           </div>
@@ -115,57 +86,68 @@
       </a-col>
 
       <a-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24">
-        <a-card title="快速入口" class="links-card">
-          <div class="link-grid">
-            <div class="link-item" v-for="link in quickLinks" :key="link.path" @click="$router.push(link.path)">
-              <div class="link-icon" :style="{ background: link.bgColor }">
-                <i :class="link.icon" :style="{ color: link.color }"></i>
-              </div>
-              <span class="link-name">{{ link.name }}</span>
-            </div>
-          </div>
-          <a-divider />
-          <div class="collections">
-            <span class="col-label">收藏</span>
-            <a-tag v-for="col in collections" :key="col" color="blue">{{ col }}</a-tag>
-          </div>
-        </a-card>
-      </a-col>
-
-      <a-col :xl="16" :lg="16" :md="16" :sm="24" :xs="24">
-        <a-card title="最近告警">
-          <template #extra>
-            <a-button type="link" @click="$router.push('/alarm/realtime')">查看全部</a-button>
+        <a-card class="chart-card line-card">
+          <template #title>
+            <span>告警趋势</span>
           </template>
-          <div class="alert-list">
-            <div class="alert-item" v-for="alert in recentAlerts" :key="alert.id" :class="alert.level">
-              <div class="alert-icon">
-                <i :class="getAlertIcon(alert.level)"></i>
-              </div>
-              <div class="alert-body">
-                <div class="alert-title">{{ alert.title }}</div>
-                <div class="alert-meta">{{ alert.resource }} · {{ alert.time }}</div>
-              </div>
-              <a-tag :color="getLevelColor(alert.level)">{{ getLevelText(alert.level) }}</a-tag>
+          <template #extra>
+            <a-button type="text" size="small" class="refresh-btn">
+              <i class="fa-solid fa-rotate-right"></i>
+            </a-button>
+          </template>
+          <div class="line-chart">
+            <svg class="area-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:#ff4d4f;stop-opacity:0.3"/>
+                  <stop offset="100%" style="stop-color:#ff4d4f;stop-opacity:0.05"/>
+                </linearGradient>
+              </defs>
+              <path class="area-fill" d="M0,128 L57,108 L114,98 L171,52 L228,88 L285,78 L342,96 L400,104 L400,160 L0,160 Z" fill="url(#areaGradient)"/>
+              <path class="line-path" d="M0,128 L57,108 L114,98 L171,52 L228,88 L285,78 L342,96 L400,104" fill="none" stroke="#ff4d4f" stroke-width="2.5"/>
+              <circle cx="0" cy="128" r="4" fill="#ff4d4f"/>
+              <circle cx="57" cy="108" r="4" fill="#ff4d4f"/>
+              <circle cx="114" cy="98" r="4" fill="#ff4d4f"/>
+              <circle cx="171" cy="52" r="4" fill="#ff4d4f"/>
+              <circle cx="228" cy="88" r="4" fill="#ff4d4f"/>
+              <circle cx="285" cy="78" r="4" fill="#ff4d4f"/>
+              <circle cx="342" cy="96" r="4" fill="#ff4d4f"/>
+              <circle cx="400" cy="104" r="4" fill="#ff4d4f"/>
+            </svg>
+            <div class="line-labels">
+              <span>周一</span>
+              <span>周二</span>
+              <span>周三</span>
+              <span>周四</span>
+              <span>周五</span>
+              <span>周六</span>
+              <span>周日</span>
             </div>
           </div>
         </a-card>
       </a-col>
 
-      <a-col :xl="8" :lg="8" :md="8" :sm="24" :xs="24">
-        <a-card title="待办事项">
-          <div class="todo-list">
-            <div class="todo-item" v-for="item in todos" :key="item.id">
-              <div class="todo-icon" :class="item.type">
-                <i :class="getTodoIcon(item.type)"></i>
-              </div>
-              <div class="todo-body">
-                <div class="todo-title">{{ item.title }}</div>
-                <div class="todo-desc">{{ item.desc }}</div>
-              </div>
-              <div class="todo-count">{{ item.count }}</div>
-            </div>
-          </div>
+      <a-col :span="24">
+        <a-card class="table-card">
+          <template #title>
+            <span>最近告警事件</span>
+          </template>
+          <template #extra>
+            <a-button type="link">查看全部</a-button>
+          </template>
+          <a-table :columns="alertColumns" :dataSource="alertEvents" :pagination="false" size="small" rowKey="id">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'level'">
+                <a-tag :color="record.level === '严重' ? 'pink' : 'orange'">{{ record.level }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'status'">
+                <span :class="'status-' + record.status">{{ record.status }}</span>
+              </template>
+              <template v-else-if="column.key === 'action'">
+                <a-button type="link" size="small">查看详情</a-button>
+              </template>
+            </template>
+          </a-table>
         </a-card>
       </a-col>
     </a-row>
@@ -173,57 +155,89 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue'
+import { message } from 'ant-design-vue'
 
-const alertPeriod = ref('7d')
-
-const statCards = reactive([
-  { title: '资源总数', value: '156', suffix: '台', trend: 5, sub: '较昨日', icon: 'fa-solid fa-server', color: '#1890ff', bgColor: '#e6f7ff', onClick: () => {} },
-  { title: '活跃告警', value: '12', dot: true, dotColor: '#f5222d', sub: '紧急3 重要5', icon: 'fa-solid fa-bell', color: '#f5222d', bgColor: '#fff1f0', onClick: () => {} },
-  { title: '健康状态', value: '98', suffix: '%', icon: 'fa-solid fa-heart-pulse', color: '#52c41a', bgColor: '#f6ffed', onClick: () => {} },
-  { title: '待办事项', value: '5', sub: '告警3 续费2', icon: 'fa-solid fa-list-check', color: '#fa8c16', bgColor: '#fff7e6', onClick: () => {} },
+const kpiCards = reactive([
+  {
+    title: '资源总数',
+    value: '1,234,567',
+    trend: 12,
+    trendText: '较上月 +12%',
+    icon: 'fa-solid fa-layer-group',
+    iconBg: '#e6f7ff',
+    iconColor: '#007BFF',
+    sub: ' ',
+  },
+  {
+    title: '健康资源',
+    value: '1,180,234',
+    trend: undefined,
+    trendText: '',
+    icon: 'fa-solid fa-circle-check',
+    iconBg: '#f6ffed',
+    iconColor: '#52C41A',
+    sub: '健康率 95.6%',
+  },
+  {
+    title: '当日告警',
+    value: '54,333',
+    trend: -8,
+    trendText: '较上周 -8%',
+    icon: 'fa-solid fa-triangle-exclamation',
+    iconBg: '#fff7e6',
+    iconColor: '#FA8C16',
+    sub: ' ',
+  },
+  {
+    title: '今日事件',
+    value: '128',
+    trend: 5,
+    trendText: '较昨日 +5%',
+    icon: 'fa-solid fa-bell',
+    iconBg: '#fff0f6',
+    iconColor: '#EB2F96',
+    sub: ' ',
+  },
 ])
-
-const alertTrend = ref([45, 60, 35, 80, 55, 70, 90])
-const alertSummary = reactive({ critical: 5, warning: 15, info: 22 })
-
-const healthDetail = reactive({ normal: 142, warning: 10, error: 4 })
 
 const resourceDist = reactive([
-  { name: '业务应用', count: 45, percent: 45, color: '#1890ff' },
-  { name: '云服务', count: 30, percent: 30, color: '#722ed1' },
-  { name: '云资源', count: 15, percent: 15, color: '#52c41a' },
-  { name: '物理资源', count: 10, percent: 10, color: '#fa8c16' },
+  { name: '业务应用', percent: 45, color: '#007BFF' },
+  { name: '云服务', percent: 30, color: '#69C0FF' },
+  { name: '云资源', percent: 15, color: '#52C41A' },
+  { name: '物理资源', percent: 10, color: '#FA8C16' },
 ])
 
-const quickLinks = ref([
-  { name: '监控中心', icon: 'fa-solid fa-chart-line', color: '#1890ff', bgColor: '#e6f7ff', path: '/monitor/dashboard' },
-  { name: '告警中心', icon: 'fa-solid fa-bell', color: '#f5222d', bgColor: '#fff1f0', path: '/alarm/realtime' },
-  { name: '资源中心', icon: 'fa-solid fa-database', color: '#52c41a', bgColor: '#f6ffed', path: '/resource/list' },
-  { name: '运维中心', icon: 'fa-solid fa-terminal', color: '#722ed1', bgColor: '#f9f0ff', path: '/ops/jobs' },
+const alertColumns = [
+  { title: '时间', dataIndex: 'time', key: 'time', width: 80 },
+  { title: 'CI名称', dataIndex: 'ciName', key: 'ciName' },
+  { title: 'CI类型', dataIndex: 'ciType', key: 'ciType', width: 80 },
+  { title: '事件', dataIndex: 'event', key: 'event' },
+  { title: '级别', dataIndex: 'level', key: 'level', width: 80 },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
+  { title: '操作', key: 'action', width: 100 },
+]
+
+const alertEvents = reactive([
+  { id: 1, time: '10:23', ciName: 'ecs-prod-001', ciType: 'ECS', event: 'CPU使用率过高', level: '严重', status: '处理中' },
+  { id: 2, time: '10:15', ciName: 'mysql-01', ciType: 'MySQL', event: '连接数超限', level: '警告', status: '已恢复' },
+  { id: 3, time: '09:58', ciName: 'redis-01', ciType: 'Redis', event: '内存使用率过高', level: '警告', status: '处理中' },
+  { id: 4, time: '09:45', ciName: 'k8s-node-03', ciType: 'K8s', event: '节点离线', level: '严重', status: '已处理' },
+  { id: 5, time: '09:30', ciName: 'slb-prod-01', ciType: 'SLB', event: '后端健康检查失败', level: '警告', status: '已恢复' },
 ])
 
-const collections = ref(['云服务器', '数据库', 'Kubernetes'])
+const refreshCard = (card) => {
+  message.success(`刷新 ${card.title} 数据`)
+}
 
-const recentAlerts = ref([
-  { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001', time: '10:32' },
-  { id: 2, level: 'warning', title: '磁盘空间不足', resource: 'db-primary', time: '09:15' },
-  { id: 3, level: 'info', title: '内存使用率偏高', resource: 'app-server-03', time: '08:45' },
-])
-
-const todos = ref([
-  { id: 1, type: 'alert', title: '待处理告警', desc: '需要及时处理', count: 3 },
-  { id: 2, type: 'renew', title: '待续费资源', desc: '即将到期', count: 2 },
-])
-
-const getAlertIcon = (level) => ({
-  critical: 'fa-solid fa-circle-exclamation',
-  warning: 'fa-solid fa-triangle-exclamation',
-  info: 'fa-solid fa-circle-info'
-}[level])
-const getLevelColor = (level) => ({ critical: 'red', warning: 'orange', info: 'blue' }[level])
-const getLevelText = (level) => ({ critical: '紧急', warning: '重要', info: '次要' }[level])
-const getTodoIcon = (type) => ({ alert: 'fa-solid fa-bell', renew: 'fa-solid fa-credit-card' }[type])
+const handleCardAction = (card, key) => {
+  const actions = {
+    detail: '查看详情',
+    export: '导出数据',
+    history: '历史趋势',
+  }
+  message.info(`${card.title} - ${actions[key]}`)
+}
 </script>
 
 <style scoped>
@@ -232,82 +246,64 @@ const getTodoIcon = (type) => ({ alert: 'fa-solid fa-bell', renew: 'fa-solid fa-
 .welcome-text h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
 .welcome-text p { color: var(--text-secondary); margin: 0; }
 
-.stat-card { height: 100%; }
-.stat-card :deep(.ant-card-body) { padding: 20px; }
-.stat-content { display: flex; flex-direction: column; gap: 12px; }
-.stat-header { display: flex; align-items: center; gap: 8px; }
-.stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-.stat-title { font-size: 14px; color: var(--text-secondary); }
-.stat-value { display: flex; align-items: baseline; gap: 4px; }
-.stat-value .value { font-size: 28px; font-weight: 600; }
-.stat-value .suffix { font-size: 14px; color: var(--text-secondary); }
-.stat-footer { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.stat-footer .up { color: #52c41a; }
-.stat-footer .down { color: #f5222d; }
-.stat-footer .sub { color: var(--text-secondary); }
+.kpi-card {
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+  position: relative;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.kpi-card:hover .card-actions { opacity: 1; }
 
+.card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.card-title { font-size: 14px; color: var(--text-secondary); flex: 1; }
+.card-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.2s; }
+.action-btn { padding: 2px 6px; color: var(--text-secondary); }
+.action-btn:hover { color: #1890ff; }
+
+.card-value { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+.card-value .value { font-size: 28px; font-weight: 600; color: #1a1a1a; }
+.trend { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+.trend.up { color: #52C41A; }
+.trend.down { color: #f5222d; }
+.card-sub { font-size: 12px; color: var(--text-secondary); min-height: 16px; }
+
+.chart-card :deep(.ant-card-head) { border-bottom: 1px solid #f0f0f0; }
 .chart-card :deep(.ant-card-body) { padding: 20px; }
-.trend-chart { display: flex; flex-direction: column; gap: 16px; }
-.chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 100px; }
-.bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.bar { width: 100%; background: linear-gradient(180deg, #1890ff 0%, #69c0ff 100%); border-radius: 4px 4px 0 0; min-height: 4px; }
-.chart-bars .label { font-size: 11px; color: var(--text-secondary); }
-.chart-legend { display: flex; justify-content: center; gap: 24px; font-size: 13px; }
-.chart-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-.chart-legend .critical { background: #f5222d; }
-.chart-legend .warning { background: #fa8c16; }
-.chart-legend .info { background: #1890ff; }
+.refresh-btn { color: #1890ff; }
 
-.health-card :deep(.ant-card-body) { padding: 20px; }
-.health-ring { display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 24px; }
-.health-text { text-align: center; }
-.health-text .value { font-size: 28px; font-weight: 600; color: #52c41a; }
-.health-text .label { font-size: 13px; color: var(--text-secondary); }
-.health-detail { display: flex; justify-content: space-around; }
-.health-detail .detail-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.health-detail .dot { width: 8px; height: 8px; border-radius: 50%; }
-.health-detail .green { background: #52c41a; }
-.health-detail .orange { background: #fa8c16; }
-.health-detail .red { background: #f5222d; }
+.donut-chart { display: flex; align-items: center; justify-content: center; gap: 32px; padding: 20px 0; }
+.donut-ring { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
+.donut-ring svg { width: 100%; height: 100%; }
+.donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+.donut-center .total { display: block; font-size: 20px; font-weight: 600; color: #1a1a1a; }
+.donut-center .label { font-size: 12px; color: var(--text-secondary); }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.legend-name { flex: 1; min-width: 60px; }
+.legend-percent { color: var(--text-secondary); min-width: 35px; text-align: right; }
 
-.dist-card :deep(.ant-card-body) { padding: 20px; }
-.dist-list { display: flex; flex-direction: column; gap: 16px; }
-.dist-item { display: flex; flex-direction: column; gap: 8px; }
-.dist-info { display: flex; justify-content: space-between; font-size: 13px; }
-.dist-info .name { font-weight: 500; }
-.dist-info .count { color: var(--text-secondary); }
+.line-chart { position: relative; display: flex; flex-direction: column; justify-content: center; height: 100%; min-height: 172px; }
+.area-svg { width: 100%; height: 172px; }
+.line-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
 
-.links-card :deep(.ant-card-body) { padding: 20px; }
-.link-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.link-item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-.link-item:hover { background: var(--bg-sec); }
-.link-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-.link-name { font-size: 12px; }
-.collections { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.col-label { font-size: 13px; color: var(--text-secondary); }
+.chart-card { min-height: 270px; }
+.chart-card :deep(.ant-card-body) { height: calc(100% - 57px); display: flex; flex-direction: column; justify-content: center; }
+.table-card :deep(.ant-card-head-title) { font-weight: 600; }
+.table-card :deep(.ant-table-thead > tr > th) { background: #fafafa; font-weight: 600; }
+.status-处理中 { color: #8c8c8c; }
+.status-已恢复, .status-已处理 { color: #52C41A; }
 
-.alert-list { display: flex; flex-direction: column; gap: 12px; }
-.alert-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: var(--bg-sec); }
-.alert-item.critical { border-left: 3px solid #f5222d; }
-.alert-item.warning { border-left: 3px solid #fa8c16; }
-.alert-item.info { border-left: 3px solid #1890ff; }
-.alert-item .alert-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.alert-item.critical .alert-icon { background: #fff1f0; color: #f5222d; }
-.alert-item.warning .alert-icon { background: #fff7e6; color: #fa8c16; }
-.alert-item.info .alert-icon { background: #e6f7ff; color: #1890ff; }
-.alert-item .alert-body { flex: 1; }
-.alert-item .alert-title { font-size: 13px; font-weight: 500; }
-.alert-item .alert-meta { font-size: 12px; color: var(--text-secondary); }
-
-.todo-list { display: flex; flex-direction: column; gap: 12px; }
-.todo-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: var(--bg-sec); }
-.todo-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-.todo-icon.alert { background: #fff1f0; color: #f5222d; }
-.todo-icon.renew { background: #fff7e6; color: #fa8c16; }
-.todo-body { flex: 1; }
-.todo-title { font-size: 13px; font-weight: 500; }
-.todo-desc { font-size: 12px; color: var(--text-secondary); }
-.todo-count { font-size: 24px; font-weight: 600; }
-
-@media (max-width: 768px) { .link-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) {
+  .donut-chart { flex-direction: column; }
+  .donut-legend { flex-direction: row; flex-wrap: wrap; }
+  .card-actions { opacity: 1; }
+}
 </style>

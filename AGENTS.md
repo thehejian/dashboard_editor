@@ -57,18 +57,41 @@ Vue 3 + Vite 仪表盘编辑器。迁移自单文件 HTML，使用 Composition A
 - Vue 3 ^3.5 + Vite ^6.3
 - Ant Design Vue ^4.2.6
 - AntV G2 ^5.4.8
+- vue-router ^4.6.4 (路由 + 多视图)
+- vuedraggable ^4.1.0 (拖拽排序)
+- html2canvas + jspdf (导出 PDF)
+- 后端: Express + PostgreSQL + OpenAI (server/ 目录)
+
+## 项目结构
+
+```
+src/
+├── main.js              # 入口
+├── App.vue              # 布局 + 路由出口
+├── router.js            # 路由配置
+├── composables/
+│   └── useEditorState.js # 核心状态 (editor 逻辑)
+├── components/          # 通用组件 (ChartGrid, ConfigPanel, MultiSelect, ChartRenderer)
+└── views/               # 页面视图
+    ├── MonitorView.vue      # 监控大屏 (主入口)
+    ├── AlarmView.vue       # 告警中心
+    ├── OpsView.vue         # 运维中心
+    ├── ResourceView.vue    # 资产管理
+    └── system/*.vue        # 系统配置
+```
 
 ## 开发命令
 
 ```bash
-npm run dev     # 启动开发服务器 (热更新)
+npm run dev     # 启动 Vite 开发服务器 (热更新, host: 0.0.0.0)
 npm run build   # 构建到 dist/
 npm run preview # 预览构建产物
+cd server && npm run dev  # 启动后端 (Express)
 ```
 
 ## API 代理
 
-在 `vite.config.js` 中配置，代理 `/api/v1` 到后端服务。
+`vite.config.js` 代理 `/api/v1` → `http://192.168.0.155:9090`
 
 ## 移动端注意
 
@@ -80,3 +103,18 @@ npm run preview # 预览构建产物
 - `document/01-参考.txt` — 监控系统架构设计说明
 - `document/03-图表推荐逻辑.md` — 图表推荐逻辑详解
 - `开发文档.md` — 完整技术文档
+- `项目避坑指南.md` — 项目常见问题汇总
+- `样式修改建议-P10.md` — UI 样式规范
+
+## 样式排查经验
+
+### 卡片高度对齐问题
+
+- **KPI 卡片高度不一致**：有 sub 值的卡片比没有的高 → 给所有卡片统一添加空 sub 行 `sub: ' '`，并给 `.card-sub` 设置 `min-height: 16px`
+- **两个图表卡片高度不一致**：环形图比折线图低 → 调整环形图 `padding` 和图表内部 `min-height`，逐像素调试至一致
+- **方法**：先确定目标高度，再分别调整各元素的 padding/margin/min-height 填充至目标
+
+### 卡片间距问题
+
+- **Ant Design Vue 的 a-row gutter 已经控制间距**：gutter 设为 16px，子卡片不需要再写 margin（margin-bottom/margin-top），否则间距会变成 32px（2倍）
+- **统一由 gutter 控制**：所有卡片之间的上下左右间距都通过 a-row 的 gutter 属性设置
