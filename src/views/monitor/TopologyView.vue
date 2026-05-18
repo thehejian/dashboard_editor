@@ -28,22 +28,30 @@
         <div class="topology-toolbar">
           <div class="toolbar-left">
             <a-input-search v-model:value="searchText" placeholder="搜索节点..." style="width: 180px" size="small" />
-            <a-button size="small"><i class="fa-solid fa-download"></i> 导出PNG</a-button>
-            <a-button size="small"><i class="fa-solid fa-rotate"></i> 刷新</a-button>
-            <a-button size="small"><i class="fa-solid fa-question-circle"></i> 帮助</a-button>
+            <a-button size="small">导出PNG</a-button>
+            <a-button size="small">刷新</a-button>
+            <a-button size="small">帮助</a-button>
           </div>
+          <div class="toolbar-divider"></div>
           <div class="toolbar-right">
-            <a-button type="text" size="small" @click="zoomIn"><i class="fa-solid fa-plus"></i></a-button>
-            <a-button type="text" size="small" @click="zoomOut"><i class="fa-solid fa-minus"></i></a-button>
-            <a-button type="text" size="small" @click="resetView"><i class="fa-solid fa-expand"></i></a-button>
-            <a-button type="text" size="small"><i class="fa-solid fa-list"></i></a-button>
-            <a-button type="text" size="small"><i class="fa-solid fa-sliders"></i></a-button>
-          </div>
-          <div class="toolbar-user">
-            <a-badge count="3" :offset="[-4, 4]" size="small">
-              <a-button type="text" size="small"><i class="fa-regular fa-bell"></i></a-button>
-            </a-badge>
-            <a-avatar size="small" icon="user" style="background-color:#1890ff;cursor:pointer;margin-left:4px" />
+            <a-tooltip title="放大">
+              <a-button type="text" size="small" @click="zoomIn"><i class="fa-solid fa-plus"></i></a-button>
+            </a-tooltip>
+            <a-tooltip title="缩小">
+              <a-button type="text" size="small" @click="zoomOut"><i class="fa-solid fa-minus"></i></a-button>
+            </a-tooltip>
+            <a-tooltip title="适应视图">
+              <a-button type="text" size="small" @click="resetView"><i class="fa-solid fa-expand"></i></a-button>
+            </a-tooltip>
+            <a-tooltip title="全部收起">
+              <a-button type="text" size="small"><i class="fa-solid fa-compress"></i></a-button>
+            </a-tooltip>
+            <a-tooltip title="全部展开">
+              <a-button type="text" size="small"><i class="fa-solid fa-expand"></i></a-button>
+            </a-tooltip>
+            <a-tooltip title="设置">
+              <a-button type="text" size="small"><i class="fa-solid fa-gear"></i></a-button>
+            </a-tooltip>
           </div>
         </div>
       </div>
@@ -457,10 +465,12 @@ onBeforeUnmount(() => {
   flex: 1;
   justify-content: flex-end;
 }
-.toolbar-left, .toolbar-right, .toolbar-user {
+.toolbar-left, .toolbar-right {
   display: flex; align-items: center; gap: 4px;
 }
-.toolbar-user { margin-left: 8px; padding-left: 8px; border-left: 1px solid #e8e8e8; }
+.toolbar-divider {
+  width: 1px; height: 20px; background: #e8e8e8; flex-shrink: 0;
+}
 
 /* ── page title ── */
 .topology-title {
