@@ -599,7 +599,7 @@ function renderHealthTrendChart() {
     container: healthTrendContainer.value,
     autoFit: true,
     height: 180,
-    padding: [20, 10, 20, 20],
+    padding: [20, 20, 20, 20],
   })
 
   const chartData = healthData.trendData.flatMap(d => [
@@ -627,8 +627,6 @@ function renderHealthTrendChart() {
     .style('lineWidth', 1.5)
     .style('size', 4)
 
-  healthTrendChart.axis('x', { title: null, labelFontSize: 11, labelFill: '#9CA3AF' })
-  healthTrendChart.axis('y', { title: null, labelFontSize: 11, labelFill: '#9CA3AF', gridStroke: '#f0f0f0', gridLineWidth: 1 })
   healthTrendChart.legend('color', { position: 'bottom', itemSpacing: 16 })
 
   healthTrendChart.render()
@@ -718,7 +716,7 @@ function renderAlertDetailChart() {
     container: alertDetailContainer.value,
     autoFit: true,
     height: 180,
-    padding: [20, 10, 8, 20],
+    padding: [20, 20, 8, 20],
   })
 
   const chartData = alertDetailTrendData.flatMap(d => [
@@ -752,8 +750,6 @@ function renderAlertDetailChart() {
     .style('lineWidth', 1.5)
     .style('size', 4)
 
-  alertDetailChart.axis('x', { title: null, labelFontSize: 11, labelFill: '#9CA3AF' })
-  alertDetailChart.axis('y', { title: null, labelFontSize: 11, labelFill: '#9CA3AF', gridStroke: '#f0f0f0', gridLineWidth: 1 })
   alertDetailChart.legend('color', { position: 'bottom', itemSpacing: 16, itemAlign: 'center' })
 
   alertDetailChart.render()
@@ -793,7 +789,7 @@ function renderEventDetailChart() {
     container: eventDetailContainer.value,
     autoFit: true,
     height: 180,
-    padding: [20, 10, 8, 20],
+    padding: [20, 20, 8, 20],
   })
 
   const chartData = eventDetailTrendData.flatMap(d => [
@@ -827,8 +823,6 @@ function renderEventDetailChart() {
     .style('lineWidth', 1.5)
     .style('size', 4)
 
-  eventDetailChart.axis('x', { title: null, labelFontSize: 11, labelFill: '#9CA3AF' })
-  eventDetailChart.axis('y', { title: '事件数量', labelFontSize: 11, labelFill: '#9CA3AF', gridStroke: '#f0f0f0', gridLineWidth: 1 })
   eventDetailChart.legend('color', { position: 'bottom', itemSpacing: 16 })
 
   eventDetailChart.render()
@@ -959,7 +953,7 @@ function renderTrendSingleChart() {
     container: trendSingleContainer.value,
     autoFit: true,
     height: 180,
-    padding: [20, 20, 20, 40],
+    padding: [20, 20, 32, 20],
   })
 
   trendSingleChart.data(trendSingleData)
@@ -967,26 +961,16 @@ function renderTrendSingleChart() {
   trendSingleChart.area()
     .encode('x', 'day')
     .encode('y', 'value')
-    .style('fill', 'l(0) 0:#ff4d4f20 1:#ff4d4f05')
     .style('shape', 'smooth')
 
   trendSingleChart.line()
     .encode('x', 'day')
     .encode('y', 'value')
-    .style('stroke', '#ff4d4f')
-    .style('lineWidth', 2.5)
     .style('shape', 'smooth')
 
   trendSingleChart.point()
     .encode('x', 'day')
     .encode('y', 'value')
-    .style('fill', '#ff4d4f')
-    .style('stroke', '#fff')
-    .style('lineWidth', 2)
-    .style('size', 5)
-
-  trendSingleChart.axis('x', { title: null, labelFontSize: 11, labelFill: '#9CA3AF' })
-  trendSingleChart.axis('y', { title: null, labelFontSize: 11, labelFill: '#9CA3AF', gridStroke: '#e8f4fd', gridLineWidth: 1 })
 
   trendSingleChart.render()
 }
@@ -1137,7 +1121,7 @@ function renderAlertTrendChart() {
     container: alertTrendContainer.value,
     autoFit: true,
     height: 192,
-    padding: [20, 20, 20, 40],
+    padding: [20, 20, 20, 20],
   })
 
   alertTrendChart.data(alertTrendData)
@@ -1162,9 +1146,6 @@ function renderAlertTrendChart() {
     .style('stroke', '#fff')
     .style('lineWidth', 2)
     .style('size', 5)
-
-  alertTrendChart.axis('x', { title: null, labelFontSize: 11, labelFill: '#9CA3AF' })
-  alertTrendChart.axis('y', { title: null, labelFontSize: 11, labelFill: '#9CA3AF', gridStroke: '#f0f0f0', gridLineWidth: 1 })
 
   alertTrendChart.render()
 }

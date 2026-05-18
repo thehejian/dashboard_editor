@@ -118,7 +118,7 @@ function renderChart() {
   chart = new Chart({
     container: container.value,
     autoFit: true,
-    padding: [8, 8, 16, 36],
+    padding: [8, 8, 16, 16],
   })
 
   if (props.type === 'line') {
@@ -155,9 +155,6 @@ function renderChart() {
       .style('fill', c).style('radius', [2, 2, 0, 0])
   }
 
-  const xTitle = props.data?.unit === 'MB/s' ? '时间' : (props.data?.unit === '%' ? '时间' : '时间')
-  chart.axis('x', { labelFontSize: 10, labelFill: '#9CA3AF', title: xTitle, titleFill: '#6B7280', titleFontSize: 10, titleOffset: 30 })
-  chart.axis('y', { labelFontSize: 10, labelFill: '#9CA3AF', gridStroke: '#E5E5EA', gridLineWidth: 1, title: null })
   chart.render()
 }
 
