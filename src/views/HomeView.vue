@@ -272,7 +272,7 @@
           <div v-if="detailType === 'resource'" class="detail-table">
             <h4>详细数据</h4>
             <div class="table-toolbar">
-              <a-input-search v-model:value="detailSearch" placeholder="搜索资源类型" style="width: 200px" />
+              <a-input-search v-model:value="detailSearch" placeholder="搜索资源类型" class="detail-search" />
             </div>
             <a-table
               :columns="detailColumns"
@@ -324,7 +324,7 @@
           <div v-else-if="detailType === 'alert'" class="detail-table">
             <h4>详细数据</h4>
             <div class="table-toolbar">
-              <a-input-search v-model:value="alertDetailSearch" placeholder="搜索..." style="width: 200px" />
+              <a-input-search v-model:value="alertDetailSearch" placeholder="搜索..." class="detail-search" />
             </div>
             <a-table
               :columns="alertDetailColumns"
@@ -375,7 +375,7 @@
           <div v-else-if="detailType === 'distribution'" class="detail-table">
             <h4>详细数据</h4>
             <div class="table-toolbar">
-              <a-input-search v-model:value="distDetailSearch" placeholder="搜索..." style="width: 200px" />
+              <a-input-search v-model:value="distDetailSearch" placeholder="搜索..." class="detail-search" />
             </div>
             <a-table
               :columns="distDetailColumns"
@@ -395,7 +395,7 @@
           <div v-else-if="detailType === 'trend'" class="detail-table">
             <h4>详细数据</h4>
             <div class="table-toolbar">
-              <a-input-search v-model:value="trendDetailSearch" placeholder="搜索..." style="width: 200px" />
+              <a-input-search v-model:value="trendDetailSearch" placeholder="搜索..." class="detail-search" />
             </div>
             <a-table
               :columns="trendDetailColumns"
@@ -1307,15 +1307,22 @@ const refreshCard = (card) => {
   .detail-body { padding: 12px; }
   .detail-header { padding: 12px 14px; }
   .detail-header h3 { font-size: 14px; }
+  .detail-header .close-btn { padding: 8px 12px; font-size: 18px; }
   .detail-kpi { padding: 12px; gap: 8px; }
   .dk-value { font-size: 16px; }
   .time-tabs :deep(.ant-radio-button-wrapper) { font-size: 11px; padding: 0 4px; }
   .ci-row { grid-template-columns: 70px 1fr 70px 1fr; }
   .ci-label { font-size: 11px; padding: 8px 10px; }
   .ci-value { font-size: 12px; padding: 8px 10px; }
+  .alert-summary-card { flex-wrap: wrap; gap: 6px; }
+  .alert-summary-card .alert-event-name { flex: 0 0 100%; order: 1; }
+  .alert-summary-card .alert-event-time { flex: 0 0 100%; order: 2; }
   .timeline-content { font-size: 12px; }
   .timeline-title { font-size: 13px; }
   .detail-footer { flex-direction: column; gap: 8px; padding: 12px 14px; }
+  .detail-footer > div:first-child { display: none; }
+  .footer-actions { width: 100%; }
+  .footer-actions button { flex: 1; }
 }
 
 @media (max-width: 576px) {
@@ -1323,9 +1330,19 @@ const refreshCard = (card) => {
   .kpi-card { padding: 10px 12px; min-height: 70px; }
   .card-value .value { font-size: 18px; }
   .card-icon { width: 24px; height: 24px; font-size: 11px; }
+  .detail-search { width: 100% !important; }
   .detail-panel-content { right: -100%; }
   .detail-table :deep(.ant-table) { overflow-x: auto; }
   .detail-table :deep(.ant-table-body) { overflow-x: auto !important; }
+  .ci-row { grid-template-columns: 1fr; gap: 0; }
+  .ci-label { padding: 8px 10px 2px; }
+  .ci-value { padding: 2px 10px 8px; }
+  .ci-label:empty, .ci-value:empty { display: none; }
+}
+
+@media (max-width: 480px) {
+  .detail-kpi { grid-template-columns: 1fr; }
+  .detail-panel-content { right: -100%; }
 }
 
 .detail-panel {
@@ -1431,6 +1448,7 @@ const refreshCard = (card) => {
 
 .detail-table h4 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
 .table-toolbar { margin-bottom: 12px; }
+.detail-search { width: 200px; }
 .detail-table :deep(.ant-table-thead > tr > th) { background: #fafafa; font-weight: 600; }
 .detail-table :deep(.ant-pagination) { margin-top: 12px; }
 .bar-cell { display: flex; align-items: center; gap: 6px; }
