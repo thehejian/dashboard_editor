@@ -541,7 +541,7 @@ function renderHealthTrendChart() {
     container: healthTrendContainer.value,
     autoFit: true,
     height: 180,
-    padding: [20, 20, 20, 20],
+    padding: [20, 20, 16, 20],
   })
 
   const chartData = healthData.trendData.flatMap(d => [
@@ -569,7 +569,7 @@ function renderHealthTrendChart() {
     .style('lineWidth', 1.5)
     .style('size', 4)
 
-  healthTrendChart.legend('color', { position: 'bottom', itemSpacing: 16 })
+  healthTrendChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
   healthTrendChart.render()
 }
@@ -620,11 +620,11 @@ const alertDetailTrendData = [
 ]
 
 const alertDetailColumns = [
-  { title: '告警ID', dataIndex: 'alertId', key: 'alertId', width: 130 },
-  { title: '资源名称', dataIndex: 'resourceName', key: 'resourceName' },
+  { title: '告警ID', dataIndex: 'alertId', key: 'alertId', width: 130, fixed: 'left' },
+  { title: '资源名称', dataIndex: 'resourceName', key: 'resourceName', width: 120, fixed: 'left' },
   { title: '资源类型', dataIndex: 'resourceType', key: 'resourceType', width: 80 },
   { title: '告警级别', dataIndex: 'level', key: 'level', width: 80 },
-  { title: '告警类型', dataIndex: 'alertType', key: 'alertType' },
+  { title: '告警类型', dataIndex: 'alertType', key: 'alertType', width: 120 },
   { title: '告警时间', dataIndex: 'alertTime', key: 'alertTime', width: 150 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
 ]
@@ -658,7 +658,7 @@ function renderAlertDetailChart() {
     container: alertDetailContainer.value,
     autoFit: true,
     height: 180,
-    padding: [20, 20, 8, 20],
+    padding: [20, 20, 16, 20],
   })
 
   const chartData = alertDetailTrendData.flatMap(d => [
@@ -692,7 +692,7 @@ function renderAlertDetailChart() {
     .style('lineWidth', 1.5)
     .style('size', 4)
 
-  alertDetailChart.legend('color', { position: 'bottom', itemSpacing: 16, itemAlign: 'center' })
+  alertDetailChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
   alertDetailChart.render()
 }
@@ -731,7 +731,7 @@ function renderEventDetailChart() {
     container: eventDetailContainer.value,
     autoFit: true,
     height: 180,
-    padding: [20, 20, 8, 20],
+    padding: [20, 20, 16, 20],
   })
 
   const chartData = eventDetailTrendData.flatMap(d => [
@@ -765,7 +765,7 @@ function renderEventDetailChart() {
     .style('lineWidth', 1.5)
     .style('size', 4)
 
-  eventDetailChart.legend('color', { position: 'bottom', itemSpacing: 16 })
+  eventDetailChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
   eventDetailChart.render()
 }
