@@ -129,35 +129,7 @@
               </a-dropdown>
             </div>
           </template>
-          <div class="line-chart">
-            <svg class="area-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" style="stop-color:#ff4d4f;stop-opacity:0.3"/>
-                  <stop offset="100%" style="stop-color:#ff4d4f;stop-opacity:0.05"/>
-                </linearGradient>
-              </defs>
-              <path class="area-fill" d="M0,128 L57,108 L114,98 L171,52 L228,88 L285,78 L342,96 L400,104 L400,160 L0,160 Z" fill="url(#areaGradient)"/>
-              <path class="line-path" d="M0,128 L57,108 L114,98 L171,52 L228,88 L285,78 L342,96 L400,104" fill="none" stroke="#ff4d4f" stroke-width="2.5"/>
-              <circle cx="0" cy="128" r="4" fill="#ff4d4f"/>
-              <circle cx="57" cy="108" r="4" fill="#ff4d4f"/>
-              <circle cx="114" cy="98" r="4" fill="#ff4d4f"/>
-              <circle cx="171" cy="52" r="4" fill="#ff4d4f"/>
-              <circle cx="228" cy="88" r="4" fill="#ff4d4f"/>
-              <circle cx="285" cy="78" r="4" fill="#ff4d4f"/>
-              <circle cx="342" cy="96" r="4" fill="#ff4d4f"/>
-              <circle cx="400" cy="104" r="4" fill="#ff4d4f"/>
-            </svg>
-            <div class="line-labels">
-              <span>周一</span>
-              <span>周二</span>
-              <span>周三</span>
-              <span>周四</span>
-              <span>周五</span>
-              <span>周六</span>
-              <span>周日</span>
-            </div>
-          </div>
+          <div class="line-chart" ref="alertTrendContainer"></div>
         </a-card>
       </a-col>
 
@@ -308,8 +280,9 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { message } from 'ant-design-vue'
+import { Chart } from '@antv/g2'
 
 const detailPanelOpen = ref(false)
 const currentCardTitle = ref('')
@@ -441,6 +414,65 @@ const alertEvents = reactive([
   { id: 5, time: '09:30', ciName: 'slb-prod-01', ciType: 'SLB', event: '后端健康检查失败', level: '警告', status: '已恢复' },
 ])
 
+const alertTrendContainer = ref(null)
+let alertTrendChart = null
+
+const alertTrendData = [
+  { date: '5月16', value: 45 },
+  { date: '5月17', value: 52 },
+  { date: '5月18', value: 38 },
+  { date: '5月19', value: 65 },
+  { date: '5月20', value: 48 },
+  { date: '5月21', value: 35 },
+  { date: '5月22', value: 42 },
+]
+
+function renderAlertTrendChart() {
+  if (alertTrendChart) { alertTrendChart.destroy(); alertTrendChart = null }
+  if (!alertTrendContainer.value) return
+
+  alertTrendChart = new Chart({
+    container: alertTrendContainer.value,
+    autoFit: true,
+    height: 192,
+    padding: [20, 20, 20, 40],
+  })
+
+  alertTrendChart.data(alertTrendData)
+
+  alertTrendChart.area()
+    .encode('x', 'date')
+    .encode('y', 'value')
+    .style('fill', 'l(0) 0:#ff4d4f30 1:#ff4d4f05')
+    .style('shape', 'smooth')
+
+  alertTrendChart.line()
+    .encode('x', 'date')
+    .encode('y', 'value')
+    .style('stroke', '#ff4d4f')
+    .style('lineWidth', 2.5)
+    .style('shape', 'smooth')
+
+  alertTrendChart.point()
+    .encode('x', 'date')
+    .encode('y', 'value')
+    .style('fill', '#ff4d4f')
+    .style('stroke', '#fff')
+    .style('lineWidth', 2)
+    .style('size', 5)
+
+  alertTrendChart.axis('x', { title: null, labelFontSize: 11, labelFill: '#9CA3AF' })
+  alertTrendChart.axis('y', { title: null, labelFontSize: 11, labelFill: '#9CA3AF', gridStroke: '#f0f0f0', gridLineWidth: 1 })
+
+  alertTrendChart.render()
+}
+
+onMounted(() => { renderAlertTrendChart() })
+
+onBeforeUnmount(() => {
+  if (alertTrendChart) { alertTrendChart.destroy(); alertTrendChart = null }
+})
+
 const refreshCard = (card) => {
   message.success(`刷新 ${card.title} 数据`)
 }
@@ -487,7 +519,7 @@ const refreshCard = (card) => {
 .chart-actions .action-btn { padding: 2px 6px; color: var(--text-secondary); }
 .chart-actions .action-btn:hover { color: #1890ff; }
 
-.donut-chart { display: flex; align-items: center; justify-content: center; gap: 32px; padding: 20px 0; }
+.donut-chart { display: flex; align-items: center; justify-content: center; gap: 32px; padding: 16px 0; }
 .donut-ring { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
 .donut-ring svg { width: 100%; height: 100%; }
 .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
@@ -499,8 +531,7 @@ const refreshCard = (card) => {
 .legend-name { flex: 1; min-width: 60px; }
 .legend-percent { color: var(--text-secondary); min-width: 35px; text-align: right; }
 
-.line-chart { position: relative; display: flex; flex-direction: column; justify-content: center; height: 100%; min-height: 172px; }
-.area-svg { width: 100%; height: 172px; }
+.line-chart { position: relative; height: 192px; min-height: 192px; }
 .line-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
 
 .chart-card { min-height: 270px; }
@@ -518,7 +549,7 @@ const refreshCard = (card) => {
 
 .detail-panel {
   position: fixed;
-  top: 0;
+  top: 64px;
   right: 0;
   bottom: 0;
   left: 0;

@@ -123,3 +123,13 @@ cd server && npm run dev  # 启动后端 (Express)
 
 - **Ant Design Vue 的 a-radio-group 在侧滑面板中无法选中**：使用 `v-model:value` 替代 `v-model`，并添加 watch 在面板打开时强制重置选中值
 - **z-index 问题**：侧滑面板使用高 z-index 时，内部 Radio 按钮需要增加 `position: relative; z-index: 1` 样式确保可点击
+
+### AntV G2 图表卡片高度调试
+
+- **问题**：G2 图表渲染高度与 SVG 不同，导致两个卡片高度不一致
+- **排查步骤**：
+  1. 检查卡片容器 min-height 是否一致
+  2. 检查图表内容区（donut-chart / line-chart）的 padding 和 height
+  3. 调整 G2 图表的 height 和 padding 参数
+  4. 检查 ant-card-body 的高度计算是否正确（calc(100% - 57px)）
+- **方法**：先用浏览器开发者工具确定目标高度，再微调各元素参数至一致
