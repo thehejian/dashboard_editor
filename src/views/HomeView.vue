@@ -74,32 +74,7 @@
               </a-dropdown>
             </div>
           </template>
-          <div class="donut-chart">
-            <div class="donut-ring">
-              <svg viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="35" fill="none" stroke="#f0f0f0" stroke-width="12"/>
-                <circle cx="50" cy="50" r="35" fill="none" stroke="#007BFF" stroke-width="12"
-                  stroke-dasharray="99 220" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
-                <circle cx="50" cy="50" r="35" fill="none" stroke="#69C0FF" stroke-width="12"
-                  stroke-dasharray="66 220" stroke-dashoffset="-99" transform="rotate(-90 50 50)"/>
-                <circle cx="50" cy="50" r="35" fill="none" stroke="#52C41A" stroke-width="12"
-                  stroke-dasharray="33 220" stroke-dashoffset="-165" transform="rotate(-90 50 50)"/>
-                <circle cx="50" cy="50" r="35" fill="none" stroke="#FA8C16" stroke-width="12"
-                  stroke-dasharray="22 220" stroke-dashoffset="-198" transform="rotate(-90 50 50)"/>
-              </svg>
-              <div class="donut-center">
-                <span class="total">1,234,567</span>
-                <span class="label">资源总数</span>
-              </div>
-            </div>
-            <div class="donut-legend">
-              <div class="legend-item" v-for="item in resourceDist" :key="item.name">
-                <span class="legend-dot" :style="{ background: item.color }"></span>
-                <span class="legend-name">{{ item.name }}</span>
-                <span class="legend-percent">{{ item.percent }}%</span>
-              </div>
-            </div>
-          </div>
+          <div ref="mainDonutContainer" class="main-donut-chart"></div>
         </a-card>
       </a-col>
 
@@ -179,40 +154,7 @@
             </a-radio-group>
           </div>
           <div class="detail-chart">
-            <div v-if="detailType === 'resource'">
-              <svg class="detail-line-svg" viewBox="0 0 400 180" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="detailAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" style="stop-color:#1890ff;stop-opacity:0.3"/>
-                    <stop offset="100%" style="stop-color:#1890ff;stop-opacity:0.05"/>
-                  </linearGradient>
-                </defs>
-                <g class="grid-lines">
-                  <line x1="0" y1="36" x2="400" y2="36" stroke="#f0f0f0" stroke-width="1"/>
-                  <line x1="0" y1="72" x2="400" y2="72" stroke="#f0f0f0" stroke-width="1"/>
-                  <line x1="0" y1="108" x2="400" y2="108" stroke="#f0f0f0" stroke-width="1"/>
-                  <line x1="0" y1="144" x2="400" y2="144" stroke="#f0f0f0" stroke-width="1"/>
-                </g>
-                <path class="area-fill" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78 L400,180 L0,180 Z" fill="url(#detailAreaGradient)"/>
-                <path class="line-path" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78" fill="none" stroke="#1890ff" stroke-width="2.5"/>
-                <circle cx="0" cy="90" r="4" fill="#1890ff"/>
-                <circle cx="57" cy="85" r="4" fill="#1890ff"/>
-                <circle cx="114" cy="88" r="4" fill="#1890ff"/>
-                <circle cx="171" cy="82" r="4" fill="#1890ff"/>
-                <circle cx="228" cy="86" r="4" fill="#1890ff"/>
-                <circle cx="285" cy="80" r="4" fill="#1890ff"/>
-                <circle cx="342" cy="84" r="4" fill="#1890ff"/>
-                <circle cx="400" cy="78" r="4" fill="#1890ff"/>
-              </svg>
-              <div class="detail-labels">
-                <span>周一</span><span>周二</span><span>周三</span><span>周四</span>
-                <span>周五</span><span>周六</span><span>周日</span>
-              </div>
-              <div class="y-axis">
-                <span>1,400,000</span><span>1,200,000</span>
-                <span>1,000,000</span><span>800,000</span><span>0</span>
-              </div>
-            </div>
+            <div v-if="detailType === 'resource'" ref="resourceTrendContainer"></div>
             <div v-else-if="detailType === 'health'" class="health-trend-chart" ref="healthTrendContainer"></div>
             <div v-else-if="detailType === 'alert'" class="alert-trend-chart" ref="alertDetailContainer"></div>
             <div v-else-if="detailType === 'event'" class="event-trend-chart" ref="eventDetailContainer"></div>
@@ -759,13 +701,13 @@ const eventDetailContainer = ref(null)
 let eventDetailChart = null
 
 const eventDetailTrendData = [
-  { day: '周一', critical: 45, warning: 60, info: 20 },
-  { day: '周二', critical: 40, warning: 65, info: 22 },
-  { day: '周三', critical: 35, warning: 55, info: 18 },
-  { day: '周四', critical: 50, warning: 70, info: 25 },
-  { day: '周五', critical: 42, warning: 58, info: 20 },
-  { day: '周六', critical: 38, warning: 62, info: 24 },
-  { day: '周日', critical: 48, warning: 60, info: 26 },
+  { day: '5月15', critical: 45, warning: 60, info: 20 },
+  { day: '5月16', critical: 40, warning: 65, info: 22 },
+  { day: '5月17', critical: 35, warning: 55, info: 18 },
+  { day: '5月18', critical: 50, warning: 70, info: 25 },
+  { day: '5月19', critical: 42, warning: 58, info: 20 },
+  { day: '5月20', critical: 38, warning: 62, info: 24 },
+  { day: '5月21', critical: 48, warning: 60, info: 26 },
 ]
 
 const eventDetailColumns = [
@@ -834,10 +776,10 @@ const distDetailSearch = ref('')
 const distDetailPage = ref(1)
 
 const distDonutData = [
-  { name: '弹性服务器', value: 555555, color: '#007BFF' },
-  { name: '容器', value: 370370, color: '#69C0FF' },
-  { name: '业务服务', value: 185185, color: '#52C41A' },
-  { name: '物理设备', value: 123457, color: '#FA8C16' },
+  { name: '业务应用', value: 555555, color: '#007BFF' },
+  { name: '云服务', value: 370370, color: '#69C0FF' },
+  { name: '云资源', value: 185185, color: '#52C41A' },
+  { name: '物理资源', value: 123457, color: '#FA8C16' },
 ]
 
 const distDetailColumns = [
@@ -874,8 +816,8 @@ function renderDistDonutChart() {
   distDonutChart = new Chart({
     container: distDonutContainer.value,
     autoFit: true,
-    height: 200,
-    padding: [10, 10, 10, 10],
+    height: 220,
+    padding: [10, 10, 28, 10],
   })
 
   distDonutChart.coordinate({ type: 'theta', innerRadius: 0.6, outerRadius: 0.9 })
@@ -899,10 +841,13 @@ function renderDistDonutChart() {
     labelLine: true,
   })
 
-  distDonutChart.legend('color', { position: 'right', itemSpacing: 12, itemLabelFontSize: 12 })
+  distDonutChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16, itemLabelFontSize: 12 })
 
   distDonutChart.render()
 }
+
+const mainDonutContainer = ref(null)
+let mainDonutChart = null
 
 const trendSingleContainer = ref(null)
 let trendSingleChart = null
@@ -910,14 +855,26 @@ const trendDetailSearch = ref('')
 const trendDetailPage = ref(1)
 
 const trendSingleData = [
-  { day: '周一', value: 45 },
-  { day: '周二', value: 52 },
-  { day: '周三', value: 38 },
-  { day: '周四', value: 65 },
-  { day: '周五', value: 48 },
-  { day: '周六', value: 35 },
-  { day: '周日', value: 42 },
+  { day: '5月15', value: 45 },
+  { day: '5月16', value: 52 },
+  { day: '5月17', value: 38 },
+  { day: '5月18', value: 65 },
+  { day: '5月19', value: 48 },
+  { day: '5月20', value: 35 },
+  { day: '5月21', value: 42 },
 ]
+
+const resourceTrendData = [
+  { day: '5月15', value: 1210000 },
+  { day: '5月16', value: 1218000 },
+  { day: '5月17', value: 1225000 },
+  { day: '5月18', value: 1222000 },
+  { day: '5月19', value: 1230000 },
+  { day: '5月20', value: 1234000 },
+  { day: '5月21', value: 1234567 },
+]
+const resourceTrendContainer = ref(null)
+let resourceTrendChart = null
 
 const trendDetailColumns = [
   { title: '名称', dataIndex: 'name', key: 'name' },
@@ -975,6 +932,63 @@ function renderTrendSingleChart() {
   trendSingleChart.render()
 }
 
+function renderResourceTrendChart() {
+  if (resourceTrendChart) { resourceTrendChart.destroy(); resourceTrendChart = null }
+  if (!resourceTrendContainer.value) return
+
+  resourceTrendChart = new Chart({
+    container: resourceTrendContainer.value,
+    autoFit: true,
+    height: 180,
+    padding: [20, 20, 20, 20],
+  })
+
+  resourceTrendChart.data(resourceTrendData)
+
+  resourceTrendChart.area()
+    .encode('x', 'day')
+    .encode('y', 'value')
+    .style('shape', 'smooth')
+
+  resourceTrendChart.line()
+    .encode('x', 'day')
+    .encode('y', 'value')
+    .style('shape', 'smooth')
+
+  resourceTrendChart.point()
+    .encode('x', 'day')
+    .encode('y', 'value')
+
+  resourceTrendChart.render()
+}
+
+function renderMainDonutChart() {
+  if (mainDonutChart) { mainDonutChart.destroy(); mainDonutChart = null }
+  if (!mainDonutContainer.value) return
+
+  mainDonutChart = new Chart({
+    container: mainDonutContainer.value,
+    autoFit: true,
+    height: 220,
+    padding: [10, 10, 28, 10],
+  })
+
+  mainDonutChart.coordinate({ type: 'theta', innerRadius: 0.6, outerRadius: 0.9 })
+
+  mainDonutChart.data(resourceDist.map(d => ({ name: d.name, value: d.percent })))
+
+  mainDonutChart.interval()
+    .encode('y', 'value')
+    .encode('color', 'name')
+    .scale('color', { range: ['#007BFF', '#69C0FF', '#52C41A', '#FA8C16'] })
+    .style('stroke', '#fff')
+    .style('lineWidth', 2)
+
+  mainDonutChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16, itemLabelFontSize: 12 })
+
+  mainDonutChart.render()
+}
+
 watch(detailPanelOpen, (val) => {
   if (val) {
     detailPeriod.value = 'week'
@@ -983,7 +997,8 @@ watch(detailPanelOpen, (val) => {
     alertDetailSearch.value = ''
     alertDetailPage.value = 1
     nextTick(() => {
-      if (detailType.value === 'health') renderHealthTrendChart()
+      if (detailType.value === 'resource') renderResourceTrendChart()
+      else if (detailType.value === 'health') renderHealthTrendChart()
       else if (detailType.value === 'alert') renderAlertDetailChart()
       else if (detailType.value === 'event') renderEventDetailChart()
       else if (detailType.value === 'distribution') renderDistDonutChart()
@@ -1120,7 +1135,7 @@ function renderAlertTrendChart() {
   alertTrendChart = new Chart({
     container: alertTrendContainer.value,
     autoFit: true,
-    height: 192,
+    height: 220,
     padding: [20, 20, 20, 20],
   })
 
@@ -1150,7 +1165,10 @@ function renderAlertTrendChart() {
   alertTrendChart.render()
 }
 
-onMounted(() => { renderAlertTrendChart() })
+onMounted(() => {
+  renderAlertTrendChart()
+  renderMainDonutChart()
+})
 
 onBeforeUnmount(() => {
   if (alertTrendChart) { alertTrendChart.destroy(); alertTrendChart = null }
@@ -1159,6 +1177,8 @@ onBeforeUnmount(() => {
   if (eventDetailChart) { eventDetailChart.destroy(); eventDetailChart = null }
   if (distDonutChart) { distDonutChart.destroy(); distDonutChart = null }
   if (trendSingleChart) { trendSingleChart.destroy(); trendSingleChart = null }
+  if (resourceTrendChart) { resourceTrendChart.destroy(); resourceTrendChart = null }
+  if (mainDonutChart) { mainDonutChart.destroy(); mainDonutChart = null }
 })
 
 const refreshCard = (card) => {
@@ -1219,11 +1239,12 @@ const refreshCard = (card) => {
 .legend-name { flex: 1; min-width: 60px; }
 .legend-percent { color: var(--text-secondary); min-width: 35px; text-align: right; }
 
-.line-chart { position: relative; height: 192px; min-height: 192px; }
+.line-chart { position: relative; height: 220px; min-height: 220px; }
 .health-trend-chart { height: 180px; min-height: 180px; }
 .alert-trend-chart { height: 180px; min-height: 180px; }
 .event-trend-chart { height: 180px; min-height: 180px; }
-.dist-donut-chart { height: 200px; min-height: 200px; }
+.dist-donut-chart { height: 220px; min-height: 220px; }
+.main-donut-chart { height: 220px; min-height: 220px; }
 .trend-single-chart { height: 180px; min-height: 180px; }
 .alert-summary-card { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid #f0f0f0; border-radius: 8px; margin-bottom: 20px; }
 .alert-event-name { font-size: 18px; font-weight: 600; color: #1a1a1a; flex: 1; }
@@ -1265,7 +1286,7 @@ const refreshCard = (card) => {
 
 .detail-panel {
   position: fixed;
-  top: 64px;
+  top: 48px;
   right: 0;
   bottom: 0;
   left: 0;
