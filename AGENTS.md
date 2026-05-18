@@ -138,3 +138,11 @@ cd server && npm run dev  # 启动后端 (Express)
 
 - **G2 底部图例一屏展示不下**：图例项过多时，G2 底部图例会换行导致布局错乱
 - **修复**：通过 `padding` 参数缩小图表左右边距来增加绘图区宽度，为底部图例提供足够空间；同时移除老式 SVG 图表遗留的 `padding-left: 70px` 容器样式
+
+### 告警事件详情侧滑面板
+
+- **触发方式**：表格行内的"查看详情"按钮点击 → `openAlertEventDetail(record)` → 设置 `alertEventRecord` → 面板展示告警事件详情内容
+- **面板复用**：使用同一个 detail-panel，通过 `alertEventRecord` 判断展示模式（`v-if="!alertEventRecord"` 显示正常面板内容，`v-else` 显示告警事件详情）
+- **布局结构**：摘要卡片（级别标签+事件名称+时间）→ CI属性信息表（4行4列网格）→ 处理历史时间轴（CSS 垂直虚线+红/黄圆点）→ 底部操作按钮（关闭+处理告警）
+- **关闭处理**：`closeDetailPanel` 同时重置 `alertEventRecord.value = null`，关闭后恢复为正常面板
+- **注意**：不要在 `v-if`/`v-else-if` 链中混用 `v-else-if` 和独立 `v-if` 作为兄弟元素，需要使用 `v-else-if` 链的首个必须是 `v-if`，后续同链使用 `v-else-if`
