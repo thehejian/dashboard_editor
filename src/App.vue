@@ -30,7 +30,7 @@
                 <a-menu-item key="/monitor/dashboard">仪表盘</a-menu-item>
                 <a-menu-item key="/monitor/resource">资源监控</a-menu-item>
                 <a-menu-item key="/monitor/config">监控配置</a-menu-item>
-                <a-menu-item key="/monitor/topology">拓扑图</a-menu-item>
+                <a-menu-item key="/monitor/topology">拓扑视图</a-menu-item>
               </a-menu>
             </template>
           </a-dropdown>
