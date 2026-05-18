@@ -116,7 +116,7 @@
           <template #extra>
             <a-button type="link">查看全部</a-button>
           </template>
-          <a-table :columns="alertColumns" :dataSource="alertEvents" :pagination="false" size="small" rowKey="id">
+          <a-table :columns="alertColumns" :dataSource="alertEvents" :pagination="false" size="small" rowKey="id" :scroll="{ x: 700 }">
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'level'">
                 <a-tag :color="record.level === '严重' ? 'pink' : 'orange'">{{ record.level }}</a-tag>
@@ -352,6 +352,7 @@
               :pagination="false"
               size="small"
               rowKey="level"
+              :scroll="{ x: 600 }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'level'">
@@ -1279,9 +1280,52 @@ const refreshCard = (card) => {
 .status-已恢复, .status-已处理 { color: #52C41A; }
 
 @media (max-width: 768px) {
+  .home-view { padding: 12px; }
+  .welcome-bar { margin-bottom: 16px; }
+  .welcome-text h2 { font-size: 16px; }
+  .welcome-text p { font-size: 12px; }
+  .kpi-card { padding: 12px 14px; min-height: 80px; }
+  .card-header { margin-bottom: 8px; }
+  .card-icon { width: 28px; height: 28px; font-size: 13px; }
+  .card-title { font-size: 12px; }
+  .card-actions { opacity: 1; }
+  .card-value .value { font-size: 20px; }
+  .trend { font-size: 11px; }
+  .card-sub { font-size: 11px; min-height: 14px; }
+  .chart-card { min-height: 220px; }
+  .chart-card :deep(.ant-card-body) { padding: 12px; }
+  .chart-actions { opacity: 1; }
   .donut-chart { flex-direction: column; }
   .donut-legend { flex-direction: row; flex-wrap: wrap; }
-  .card-actions { opacity: 1; }
+  .donut-ring { width: 120px; height: 120px; }
+  .donut-center .total { font-size: 16px; }
+  .line-chart { height: 160px; min-height: 160px; }
+  .health-trend-chart { height: 140px; min-height: 140px; }
+  .alert-trend-chart { height: 140px; min-height: 140px; }
+  .event-trend-chart { height: 140px; min-height: 140px; }
+  .detail-panel-content { width: 100%; right: -100%; }
+  .detail-body { padding: 12px; }
+  .detail-header { padding: 12px 14px; }
+  .detail-header h3 { font-size: 14px; }
+  .detail-kpi { padding: 12px; gap: 8px; }
+  .dk-value { font-size: 16px; }
+  .time-tabs :deep(.ant-radio-button-wrapper) { font-size: 11px; padding: 0 4px; }
+  .ci-row { grid-template-columns: 70px 1fr 70px 1fr; }
+  .ci-label { font-size: 11px; padding: 8px 10px; }
+  .ci-value { font-size: 12px; padding: 8px 10px; }
+  .timeline-content { font-size: 12px; }
+  .timeline-title { font-size: 13px; }
+  .detail-footer { flex-direction: column; gap: 8px; padding: 12px 14px; }
+}
+
+@media (max-width: 576px) {
+  .home-view { padding: 8px; }
+  .kpi-card { padding: 10px 12px; min-height: 70px; }
+  .card-value .value { font-size: 18px; }
+  .card-icon { width: 24px; height: 24px; font-size: 11px; }
+  .detail-panel-content { right: -100%; }
+  .detail-table :deep(.ant-table) { overflow-x: auto; }
+  .detail-table :deep(.ant-table-body) { overflow-x: auto !important; }
 }
 
 .detail-panel {
