@@ -1,11 +1,14 @@
 <template>
   <div class="topology-layout">
-    <aside class="sidebar-nav">
+    <aside class="sidebar-nav" :class="{ collapsed: navCollapsed }">
       <div class="sidebar-header">
         <i class="fa-solid fa-bars"></i>
-        <span>拓扑视图</span>
+        <span v-show="!navCollapsed">拓扑视图</span>
+        <a-button type="text" size="small" class="collapse-btn" @click="navCollapsed = !navCollapsed">
+          <i class="fa-solid" :class="navCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+        </a-button>
       </div>
-      <div class="nav-list">
+      <div v-show="!navCollapsed" class="nav-list">
         <div v-for="item in navItems" :key="item.key"
           class="nav-item"
           :class="{ active: activeNav === item.key }"
@@ -13,19 +16,6 @@
           <i class="fa-solid" :class="item.icon"></i>
           <span>{{ item.label }}</span>
         </div>
-      </div>
-    </aside>
-
-    <aside v-if="activeNav === 'cloud-system'" class="sidebar-cloud" :class="{ collapsed: cloudViewCollapsed }">
-      <div class="sidebar-header">
-        <i class="fa-solid fa-diagram-project"></i>
-        <span>云系统视图</span>
-        <a-button type="text" size="small" class="collapse-btn" @click="cloudViewCollapsed = !cloudViewCollapsed">
-          <i class="fa-solid" :class="cloudViewCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
-        </a-button>
-      </div>
-      <div v-show="!cloudViewCollapsed" class="cloud-tree">
-        <TreeNode v-for="node in treeData" :key="node.name" :node="node" />
       </div>
     </aside>
 
@@ -58,54 +48,126 @@
         </div>
       </div>
 
-      <div v-if="activeNav === 'cloud-system' && topoTab === 'resource'" class="topology-content">
-        <div class="region-cards">
-          <div class="region-card region-card-green">
-            <div class="rc-header">
-              <h3>华东1</h3>
-              <span class="status-tag status-normal">正常</span>
+      <div class="topology-title">
+        <h2>{{ selectedNodeName }}</h2>
+      </div>
+
+      <div class="topology-body">
+        <aside v-if="activeNav === 'cloud-system'" class="sidebar-cloud" :class="{ collapsed: cloudViewCollapsed }">
+          <div class="sidebar-header">
+            <i class="fa-solid fa-diagram-project"></i>
+            <span v-show="!cloudViewCollapsed">云系统视图</span>
+            <a-button type="text" size="small" class="collapse-btn" @click="cloudViewCollapsed = !cloudViewCollapsed">
+              <i class="fa-solid" :class="cloudViewCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+            </a-button>
+          </div>
+          <div v-show="!cloudViewCollapsed" class="cloud-tree">
+            <TreeNode v-for="node in treeData" :key="node.name" :node="node" :selected="selectedNodeName" @select="onNodeSelect" />
+          </div>
+        </aside>
+
+        <div class="topology-content">
+          <div v-if="activeNav === 'cloud-system' && topoTab === 'resource'" class="region-cards">
+            <div class="region-card region-card-green">
+              <div class="rc-header">
+                <h3>华东1</h3>
+                <span class="status-tag status-normal">正常</span>
+              </div>
+              <div class="rc-body">
+                <div class="rc-section">
+                  <h4 class="rc-section-title">云服务</h4>
+                  <div class="service-grid">
+                    <span v-for="svc in regionEast.services" :key="svc.name" class="service-item" :class="'svc-' + svc.status">
+                      <span class="status-dot" :class="'dot-' + svc.status"></span>
+                      {{ svc.name }}
+                    </span>
+                  </div>
+                </div>
+                <div class="rc-section">
+                  <h4 class="rc-section-title">可用区 ({{ regionEast.az.length }})</h4>
+                  <div class="az-grid">
+                    <div v-for="az in regionEast.az" :key="az.name" class="az-card" :class="'az-' + az.status">
+                      <div class="az-header">
+                        <span class="az-name">{{ az.name }}</span>
+                        <span class="az-status" :class="'azs-' + az.status">{{ az.statusLabel }}</span>
+                      </div>
+                      <div class="az-metrics">
+                        <span>CPU: {{ az.cpu }}%</span>
+                        <span>内存: {{ az.mem }}%</span>
+                        <span>存储: {{ az.storage }}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="rc-section">
+                  <h4 class="rc-section-title">物理资源</h4>
+                  <div class="phy-grid">
+                    <div class="phy-item">
+                      <span class="phy-label">物理服务器</span>
+                      <span class="phy-count">{{ regionEast.phy.server.count }} 台</span>
+                      <div class="phy-bars">
+                        <span v-for="(b, j) in regionEast.phy.server.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
+                      </div>
+                    </div>
+                    <div class="phy-item">
+                      <span class="phy-label">网络设备</span>
+                      <span class="phy-count">{{ regionEast.phy.network.count }} 台</span>
+                      <div class="phy-bars">
+                        <span v-for="(b, j) in regionEast.phy.network.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="rc-body">
-              <div class="rc-section">
-                <h4 class="rc-section-title">云服务</h4>
-                <div class="service-grid">
-                  <span v-for="svc in regionEast.services" :key="svc.name" class="service-item" :class="'svc-' + svc.status">
-                    <span class="status-dot" :class="'dot-' + svc.status"></span>
-                    {{ svc.name }}
-                  </span>
-                </div>
+
+            <div class="region-card region-card-orange">
+              <div class="rc-header">
+                <h3>华北2</h3>
+                <span class="status-tag status-warning">警告</span>
               </div>
-              <div class="rc-section">
-                <h4 class="rc-section-title">可用区 ({{ regionEast.az.length }})</h4>
-                <div class="az-grid">
-                  <div v-for="az in regionEast.az" :key="az.name" class="az-card" :class="'az-' + az.status">
-                    <div class="az-header">
-                      <span class="az-name">{{ az.name }}</span>
-                      <span class="az-status" :class="'azs-' + az.status">{{ az.statusLabel }}</span>
-                    </div>
-                    <div class="az-metrics">
-                      <span>CPU: {{ az.cpu }}%</span>
-                      <span>内存: {{ az.mem }}%</span>
-                      <span>存储: {{ az.storage }}%</span>
+              <div class="rc-body">
+                <div class="rc-section">
+                  <h4 class="rc-section-title">云服务</h4>
+                  <div class="service-grid">
+                    <span v-for="svc in regionNorth.services" :key="svc.name" class="service-item" :class="'svc-' + svc.status">
+                      <span class="status-dot" :class="'dot-' + svc.status"></span>
+                      {{ svc.name }}
+                    </span>
+                  </div>
+                </div>
+                <div class="rc-section">
+                  <h4 class="rc-section-title">可用区 ({{ regionNorth.az.length }})</h4>
+                  <div class="az-grid">
+                    <div v-for="az in regionNorth.az" :key="az.name" class="az-card" :class="'az-' + az.status">
+                      <div class="az-header">
+                        <span class="az-name">{{ az.name }}</span>
+                        <span class="az-status" :class="'azs-' + az.status">{{ az.statusLabel }}</span>
+                      </div>
+                      <div class="az-metrics">
+                        <span>CPU: {{ az.cpu }}%</span>
+                        <span>内存: {{ az.mem }}%</span>
+                        <span>存储: {{ az.storage }}%</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div class="rc-section">
-                <h4 class="rc-section-title">物理资源</h4>
-                <div class="phy-grid">
-                  <div class="phy-item">
-                    <span class="phy-label">物理服务器</span>
-                    <span class="phy-count">{{ regionEast.phy.server.count }} 台</span>
-                    <div class="phy-bars">
-                      <span v-for="(b, j) in regionEast.phy.server.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
+                <div class="rc-section">
+                  <h4 class="rc-section-title">物理资源</h4>
+                  <div class="phy-grid">
+                    <div class="phy-item">
+                      <span class="phy-label">物理服务器</span>
+                      <span class="phy-count">{{ regionNorth.phy.server.count }} 台</span>
+                      <div class="phy-bars">
+                        <span v-for="(b, j) in regionNorth.phy.server.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div class="phy-item">
-                    <span class="phy-label">网络设备</span>
-                    <span class="phy-count">{{ regionEast.phy.network.count }} 台</span>
-                    <div class="phy-bars">
-                      <span v-for="(b, j) in regionEast.phy.network.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
+                    <div class="phy-item">
+                      <span class="phy-label">网络设备</span>
+                      <span class="phy-count">{{ regionNorth.phy.network.count }} 台</span>
+                      <div class="phy-bars">
+                        <span v-for="(b, j) in regionNorth.phy.network.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -113,67 +175,14 @@
             </div>
           </div>
 
-          <div class="region-card region-card-orange">
-            <div class="rc-header">
-              <h3>华北2</h3>
-              <span class="status-tag status-warning">警告</span>
-            </div>
-            <div class="rc-body">
-              <div class="rc-section">
-                <h4 class="rc-section-title">云服务</h4>
-                <div class="service-grid">
-                  <span v-for="svc in regionNorth.services" :key="svc.name" class="service-item" :class="'svc-' + svc.status">
-                    <span class="status-dot" :class="'dot-' + svc.status"></span>
-                    {{ svc.name }}
-                  </span>
-                </div>
-              </div>
-              <div class="rc-section">
-                <h4 class="rc-section-title">可用区 ({{ regionNorth.az.length }})</h4>
-                <div class="az-grid">
-                  <div v-for="az in regionNorth.az" :key="az.name" class="az-card" :class="'az-' + az.status">
-                    <div class="az-header">
-                      <span class="az-name">{{ az.name }}</span>
-                      <span class="az-status" :class="'azs-' + az.status">{{ az.statusLabel }}</span>
-                    </div>
-                    <div class="az-metrics">
-                      <span>CPU: {{ az.cpu }}%</span>
-                      <span>内存: {{ az.mem }}%</span>
-                      <span>存储: {{ az.storage }}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="rc-section">
-                <h4 class="rc-section-title">物理资源</h4>
-                <div class="phy-grid">
-                  <div class="phy-item">
-                    <span class="phy-label">物理服务器</span>
-                    <span class="phy-count">{{ regionNorth.phy.server.count }} 台</span>
-                    <div class="phy-bars">
-                      <span v-for="(b, j) in regionNorth.phy.server.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
-                    </div>
-                  </div>
-                  <div class="phy-item">
-                    <span class="phy-label">网络设备</span>
-                    <span class="phy-count">{{ regionNorth.phy.network.count }} 台</span>
-                    <div class="phy-bars">
-                      <span v-for="(b, j) in regionNorth.phy.network.bars" :key="j" class="phy-bar" :style="{ background: b.color }" :title="b.label">{{ b.count }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div v-else-if="activeNav !== 'cloud-system'" class="placeholder-content">
+            <p>{{ placeholderText }}</p>
+          </div>
+
+          <div v-else class="placeholder-content">
+            <p>网络拓扑开发中...</p>
           </div>
         </div>
-      </div>
-
-      <div v-else-if="activeNav !== 'cloud-system'" class="topology-content placeholder-content">
-        <p>{{ placeholderText }}</p>
-      </div>
-
-      <div v-else class="topology-content placeholder-content">
-        <p>网络拓扑开发中...</p>
       </div>
 
       <div class="legend-float" v-if="legendVisible">
@@ -212,7 +221,13 @@ const navItems = [
   { key: 'service', label: '云服务拓扑', icon: 'fa-cubes' },
 ]
 const activeNav = ref('cloud-system')
+const navCollapsed = ref(false)
 const cloudViewCollapsed = ref(false)
+const selectedNodeName = ref('生产云')
+
+function onNodeSelect(name) {
+  selectedNodeName.value = name
+}
 
 const placeholderText = computed(() => {
   const map = { app: '应用拓扑开发中...', service: '云服务拓扑开发中...' }
@@ -297,17 +312,8 @@ let graph = null
 const g6Data = {
   id: 'root',
   children: [
-    {
-      id: 'east', children: [
-        { id: 'east-az-a' },
-        { id: 'east-az-b' },
-      ]
-    },
-    {
-      id: 'north', children: [
-        { id: 'north-az-a' },
-      ]
-    },
+    { id: 'east', children: [{ id: 'east-az-a' }, { id: 'east-az-b' }] },
+    { id: 'north', children: [{ id: 'north-az-a' }] },
   ]
 }
 
@@ -367,16 +373,24 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  transition: width 0.25s ease;
 }
+.sidebar-nav.collapsed { width: 44px; }
 .sidebar-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px;
+  padding: 16px 12px;
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
   border-bottom: 1px solid #e8e8e8;
+}
+.sidebar-header .collapse-btn {
+  margin-left: auto;
+  color: var(--text-sec);
+  font-size: 12px;
+  flex-shrink: 0;
 }
 .nav-list { padding: 8px 0; }
 .nav-item {
@@ -389,6 +403,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   user-select: none;
   border-left: 3px solid transparent;
+  white-space: nowrap;
 }
 .nav-item:hover { background: #f5f7fa; }
 .nav-item.active {
@@ -398,30 +413,6 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 .nav-item i { width: 16px; text-align: center; font-size: 14px; }
-
-/* ── sidebar cloud ── */
-.sidebar-cloud {
-  width: 240px;
-  flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e8e8e8;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  transition: width 0.25s ease;
-}
-.sidebar-cloud.collapsed {
-  width: 44px;
-  overflow: hidden;
-}
-.sidebar-cloud .sidebar-header {
-  justify-content: space-between;
-}
-.sidebar-cloud .collapse-btn {
-  color: var(--text-sec);
-  font-size: 12px;
-}
-.cloud-tree { padding: 4px 0 12px; }
 
 /* ── main ── */
 .topology-main {
@@ -443,11 +434,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   gap: 12px;
 }
-.topology-tabs {
-  display: flex;
-  gap: 0;
-  flex-shrink: 0;
-}
+.topology-tabs { display: flex; gap: 0; flex-shrink: 0; }
 .topology-tabs .tab-btn {
   padding: 6px 16px;
   border: none;
@@ -462,10 +449,7 @@ onBeforeUnmount(() => {
   border-bottom-color: #1890ff;
   font-weight: 500;
 }
-.topology-tabs .tab-btn:disabled {
-  color: #d9d9d9;
-  cursor: not-allowed;
-}
+.topology-tabs .tab-btn:disabled { color: #d9d9d9; cursor: not-allowed; }
 .topology-toolbar {
   display: flex;
   align-items: center;
@@ -473,14 +457,47 @@ onBeforeUnmount(() => {
   flex: 1;
   justify-content: flex-end;
 }
-.toolbar-left,
-.toolbar-right,
-.toolbar-user {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.toolbar-left, .toolbar-right, .toolbar-user {
+  display: flex; align-items: center; gap: 4px;
 }
 .toolbar-user { margin-left: 8px; padding-left: 8px; border-left: 1px solid #e8e8e8; }
+
+/* ── page title ── */
+.topology-title {
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+.topology-title h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+/* ── body (cloud sidebar + content) ── */
+.topology-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── sidebar cloud ── */
+.sidebar-cloud {
+  width: 240px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: width 0.25s ease;
+}
+.sidebar-cloud.collapsed { width: 44px; }
+.sidebar-cloud .sidebar-header { justify-content: space-between; }
+.cloud-tree { padding: 4px 0 12px; }
 
 /* ── content ── */
 .topology-content {
@@ -503,65 +520,28 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
-.region-card {
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-.rc-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-}
+.region-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.rc-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
 .region-card-green .rc-header { background: linear-gradient(135deg, #43a047, #66bb6a); }
 .region-card-orange .rc-header { background: linear-gradient(135deg, #ef6c00, #ffa726); }
 .rc-header h3 { font-size: 16px; font-weight: 600; color: #fff; margin: 0; }
-.status-tag {
-  font-size: 12px;
-  padding: 2px 12px;
-  border-radius: 12px;
-  color: #fff;
-}
+.status-tag { font-size: 12px; padding: 2px 12px; border-radius: 12px; color: #fff; }
 .status-tag.status-normal { background: rgba(255,255,255,0.25); }
 .status-tag.status-warning { background: rgba(255,255,255,0.25); }
-
 .rc-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 20px; }
 .rc-section-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 10px; }
-
-/* services */
 .service-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .service-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  font-size: 13px;
-  color: var(--text);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; background: #f5f7fa; border-radius: 4px;
+  font-size: 13px; color: var(--text);
 }
-.status-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dot-normal { background: #52c41a; }
 .dot-warning { background: #fa8c16; }
 .dot-error { background: #f5222d; }
-
-/* az */
 .az-grid { display: flex; gap: 12px; flex-wrap: wrap; }
-.az-card {
-  flex: 1;
-  min-width: 200px;
-  padding: 12px 16px;
-  border-radius: 6px;
-  border: 1.5px solid;
-}
+.az-card { flex: 1; min-width: 200px; padding: 12px 16px; border-radius: 6px; border: 1.5px solid; }
 .az-card.az-normal { border-color: #b7eb8f; background: #f6ffed; }
 .az-card.az-warning { border-color: #ffd591; background: #fff7e6; }
 .az-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -569,86 +549,38 @@ onBeforeUnmount(() => {
 .azs-normal { color: #52c41a; font-size: 12px; }
 .azs-warning { color: #fa8c16; font-size: 12px; }
 .az-metrics { display: flex; gap: 16px; font-size: 12px; color: var(--text-sec); }
-
-/* physical */
 .phy-grid { display: flex; gap: 24px; }
 .phy-item { flex: 1; }
 .phy-label { display: block; font-size: 12px; color: var(--text-sec); margin-bottom: 4px; }
 .phy-count { font-size: 22px; font-weight: 700; color: #1890ff; display: block; margin-bottom: 8px; }
 .phy-bars { display: flex; gap: 4px; }
 .phy-bar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 3px;
-  font-size: 11px;
-  color: #fff;
-  font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 20px; padding: 0 6px; border-radius: 3px;
+  font-size: 11px; color: #fff; font-weight: 600;
 }
 
 /* legend float */
 .legend-float {
-  position: fixed;
-  top: 100px;
-  right: 24px;
-  background: rgba(255,255,255,0.95);
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  width: 150px;
-  z-index: 100;
+  position: fixed; top: 100px; right: 24px;
+  background: rgba(255,255,255,0.95); border: 1px solid #e8e8e8;
+  border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  width: 150px; z-index: 100;
 }
-.legend-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-}
+.legend-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 12px; font-weight: 600; color: var(--text); }
 .legend-body { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
 .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-sec); }
 
 /* minimap float */
 .minimap-float {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: rgba(255,255,255,0.95);
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  width: 160px;
-  z-index: 100;
+  position: fixed; bottom: 24px; right: 24px;
+  background: rgba(255,255,255,0.95); border: 1px solid #e8e8e8;
+  border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  width: 160px; z-index: 100;
 }
-.minimap-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-}
-.minimap-body {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100px;
-}
-.minimap-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #1890ff;
-}
+.minimap-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 12px; font-weight: 600; color: var(--text); }
+.minimap-body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100px; }
+.minimap-dot { width: 12px; height: 12px; border-radius: 50%; background: #1890ff; }
 
 @media (max-width: 1024px) {
   .region-cards { grid-template-columns: 1fr; }
