@@ -1,22 +1,31 @@
 <template>
   <div class="topology-layout">
-    <aside class="topology-sidebar">
+    <aside class="sidebar-nav">
       <div class="sidebar-header">
         <i class="fa-solid fa-bars"></i>
-        <span>云系统视图</span>
+        <span>拓扑视图</span>
       </div>
-      <div class="accordion">
-        <div v-for="(sec, i) in accordionSections" :key="i" class="accordion-section">
-          <div class="accordion-header" @click="toggleAccordion(i)">
-            <i class="fa-solid" :class="accordionActive[i] ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
-            <span>{{ sec.title }}</span>
-          </div>
-          <div v-show="accordionActive[i]" class="accordion-body">
-            <template v-if="i === 0">
-              <TreeNode v-for="node in treeData" :key="node.name" :node="node" />
-            </template>
-          </div>
+      <div class="nav-list">
+        <div v-for="item in navItems" :key="item.key"
+          class="nav-item"
+          :class="{ active: activeNav === item.key }"
+          @click="activeNav = item.key">
+          <i class="fa-solid" :class="item.icon"></i>
+          <span>{{ item.label }}</span>
         </div>
+      </div>
+    </aside>
+
+    <aside v-if="activeNav === 'cloud-system'" class="sidebar-cloud" :class="{ collapsed: cloudViewCollapsed }">
+      <div class="sidebar-header">
+        <i class="fa-solid fa-diagram-project"></i>
+        <span>云系统视图</span>
+        <a-button type="text" size="small" class="collapse-btn" @click="cloudViewCollapsed = !cloudViewCollapsed">
+          <i class="fa-solid" :class="cloudViewCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+        </a-button>
+      </div>
+      <div v-show="!cloudViewCollapsed" class="cloud-tree">
+        <TreeNode v-for="node in treeData" :key="node.name" :node="node" />
       </div>
     </aside>
 
@@ -49,7 +58,7 @@
         </div>
       </div>
 
-      <div v-if="topoTab === 'resource'" class="topology-content">
+      <div v-if="activeNav === 'cloud-system' && topoTab === 'resource'" class="topology-content">
         <div class="region-cards">
           <div class="region-card region-card-green">
             <div class="rc-header">
@@ -159,6 +168,10 @@
         </div>
       </div>
 
+      <div v-else-if="activeNav !== 'cloud-system'" class="topology-content placeholder-content">
+        <p>{{ placeholderText }}</p>
+      </div>
+
       <div v-else class="topology-content placeholder-content">
         <p>网络拓扑开发中...</p>
       </div>
@@ -189,19 +202,22 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Graph } from '@antv/g6'
 import TreeNode from './TreeNode.vue'
 
-const accordionActive = reactive([true, false, false])
-const accordionSections = [
-  { title: '云系统拓扑' },
-  { title: '应用拓扑' },
-  { title: '云服务拓扑' },
+const navItems = [
+  { key: 'cloud-system', label: '云系统拓扑', icon: 'fa-cloud' },
+  { key: 'app', label: '应用拓扑', icon: 'fa-cube' },
+  { key: 'service', label: '云服务拓扑', icon: 'fa-cubes' },
 ]
-function toggleAccordion(i) {
-  accordionActive[i] = !accordionActive[i]
-}
+const activeNav = ref('cloud-system')
+const cloudViewCollapsed = ref(false)
+
+const placeholderText = computed(() => {
+  const map = { app: '应用拓扑开发中...', service: '云服务拓扑开发中...' }
+  return map[activeNav.value] || ''
+})
 
 const topoTab = ref('resource')
 const searchText = ref('')
@@ -342,9 +358,9 @@ onBeforeUnmount(() => {
   background: #f5f7fa;
 }
 
-/* ── sidebar ── */
-.topology-sidebar {
-  width: 240px;
+/* ── sidebar nav ── */
+.sidebar-nav {
+  width: 200px;
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #e8e8e8;
@@ -362,21 +378,50 @@ onBeforeUnmount(() => {
   color: var(--text);
   border-bottom: 1px solid #e8e8e8;
 }
-.accordion { flex: 1; }
-.accordion-section { border-bottom: 1px solid #f0f0f0; }
-.accordion-header {
+.nav-list { padding: 8px 0; }
+.nav-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 10px 16px;
   font-size: 13px;
-  font-weight: 500;
   color: var(--text);
   cursor: pointer;
   user-select: none;
+  border-left: 3px solid transparent;
 }
-.accordion-header:hover { background: #f5f7fa; }
-.accordion-body { padding: 4px 0 8px; }
+.nav-item:hover { background: #f5f7fa; }
+.nav-item.active {
+  background: #e6f7ff;
+  color: #1890ff;
+  border-left-color: #1890ff;
+  font-weight: 500;
+}
+.nav-item i { width: 16px; text-align: center; font-size: 14px; }
+
+/* ── sidebar cloud ── */
+.sidebar-cloud {
+  width: 240px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: width 0.25s ease;
+}
+.sidebar-cloud.collapsed {
+  width: 44px;
+  overflow: hidden;
+}
+.sidebar-cloud .sidebar-header {
+  justify-content: space-between;
+}
+.sidebar-cloud .collapse-btn {
+  color: var(--text-sec);
+  font-size: 12px;
+}
+.cloud-tree { padding: 4px 0 12px; }
 
 /* ── main ── */
 .topology-main {
@@ -607,10 +652,10 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1024px) {
   .region-cards { grid-template-columns: 1fr; }
-  .topology-sidebar { width: 200px; }
+  .sidebar-cloud { width: 200px; }
 }
 @media (max-width: 768px) {
-  .topology-sidebar { display: none; }
+  .sidebar-nav, .sidebar-cloud { display: none; }
   .topology-header { flex-wrap: wrap; }
   .toolbar-left { display: none; }
 }
