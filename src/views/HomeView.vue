@@ -18,8 +18,11 @@
             </div>
             <span class="card-title">{{ card.title }}</span>
             <div class="card-actions">
-              <a-button type="text" size="small" class="action-btn" @click.stop="refreshCard(card)">
+              <a-button type="text" size="small" class="action-btn" @click.stop="refreshCard(card)" title="刷新">
                 <i class="fa-solid fa-rotate-right"></i>
+              </a-button>
+              <a-button type="text" size="small" class="action-btn" @click.stop="openDetailPanel(card)" title="查看详情">
+                <i class="fa-solid fa-eye"></i>
               </a-button>
               <a-dropdown :trigger="['click']">
                 <a-button type="text" size="small" class="action-btn">
@@ -27,7 +30,6 @@
                 </a-button>
                 <template #overlay>
                   <a-menu @click="({key}) => handleCardAction(card, key)">
-                    <a-menu-item key="detail"><i class="fa-solid fa-eye"></i> 查看详情</a-menu-item>
                     <a-menu-item key="export"><i class="fa-solid fa-download"></i> 导出数据</a-menu-item>
                     <a-menu-item key="history"><i class="fa-solid fa-clock-rotate-left"></i> 历史趋势</a-menu-item>
                   </a-menu>
@@ -52,9 +54,25 @@
             <span>资源分类分布</span>
           </template>
           <template #extra>
-            <a-button type="text" size="small" class="refresh-btn">
-              <i class="fa-solid fa-rotate-right"></i>
-            </a-button>
+            <div class="chart-actions">
+              <a-button type="text" size="small" class="action-btn" title="刷新">
+                <i class="fa-solid fa-rotate-right"></i>
+              </a-button>
+              <a-button type="text" size="small" class="action-btn" title="查看详情" @click="openDetailPanel({title: '资源分类分布'})">
+                <i class="fa-solid fa-eye"></i>
+              </a-button>
+              <a-dropdown :trigger="['click']">
+                <a-button type="text" size="small" class="action-btn">
+                  <i class="fa-solid fa-ellipsis"></i>
+                </a-button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item key="export"><i class="fa-solid fa-download"></i> 导出数据</a-menu-item>
+                    <a-menu-item key="history"><i class="fa-solid fa-clock-rotate-left"></i> 历史趋势</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
           </template>
           <div class="donut-chart">
             <div class="donut-ring">
@@ -91,9 +109,25 @@
             <span>告警趋势</span>
           </template>
           <template #extra>
-            <a-button type="text" size="small" class="refresh-btn">
-              <i class="fa-solid fa-rotate-right"></i>
-            </a-button>
+            <div class="chart-actions">
+              <a-button type="text" size="small" class="action-btn" title="刷新">
+                <i class="fa-solid fa-rotate-right"></i>
+              </a-button>
+              <a-button type="text" size="small" class="action-btn" title="查看详情" @click="openDetailPanel({title: '告警趋势'})">
+                <i class="fa-solid fa-eye"></i>
+              </a-button>
+              <a-dropdown :trigger="['click']">
+                <a-button type="text" size="small" class="action-btn">
+                  <i class="fa-solid fa-ellipsis"></i>
+                </a-button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item key="export"><i class="fa-solid fa-download"></i> 导出数据</a-menu-item>
+                    <a-menu-item key="history"><i class="fa-solid fa-clock-rotate-left"></i> 历史趋势</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
           </template>
           <div class="line-chart">
             <svg class="area-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
@@ -151,12 +185,185 @@
         </a-card>
       </a-col>
     </a-row>
+
+    <div class="detail-panel" :class="{ open: detailPanelOpen }">
+      <div class="detail-mask" @click="closeDetailPanel"></div>
+      <div class="detail-panel-content">
+        <div class="detail-header">
+          <h3>{{ currentCardTitle }} - 历史详情</h3>
+          <a-button type="text" class="close-btn" @click="closeDetailPanel">
+            <i class="fa-solid fa-xmark"></i>
+          </a-button>
+        </div>
+        <div class="detail-body">
+          <div class="time-tabs">
+            <a-radio-group v-model="detailPeriod" button-style="solid" size="small">
+              <a-radio-button value="today">今日</a-radio-button>
+              <a-radio-button value="week">本周</a-radio-button>
+              <a-radio-button value="month">本月</a-radio-button>
+              <a-radio-button value="quarter">本季度</a-radio-button>
+            </a-radio-group>
+          </div>
+          <div class="detail-chart">
+            <svg class="detail-line-svg" viewBox="0 0 400 180" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="detailAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:#1890ff;stop-opacity:0.3"/>
+                  <stop offset="100%" style="stop-color:#1890ff;stop-opacity:0.05"/>
+                </linearGradient>
+              </defs>
+              <g class="grid-lines">
+                <line x1="0" y1="36" x2="400" y2="36" stroke="#f0f0f0" stroke-width="1"/>
+                <line x1="0" y1="72" x2="400" y2="72" stroke="#f0f0f0" stroke-width="1"/>
+                <line x1="0" y1="108" x2="400" y2="108" stroke="#f0f0f0" stroke-width="1"/>
+                <line x1="0" y1="144" x2="400" y2="144" stroke="#f0f0f0" stroke-width="1"/>
+              </g>
+              <path class="area-fill" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78 L400,180 L0,180 Z" fill="url(#detailAreaGradient)"/>
+              <path class="line-path" d="M0,90 L57,85 L114,88 L171,82 L228,86 L285,80 L342,84 L400,78" fill="none" stroke="#1890ff" stroke-width="2.5"/>
+              <circle cx="0" cy="90" r="4" fill="#1890ff"/>
+              <circle cx="57" cy="85" r="4" fill="#1890ff"/>
+              <circle cx="114" cy="88" r="4" fill="#1890ff"/>
+              <circle cx="171" cy="82" r="4" fill="#1890ff"/>
+              <circle cx="228" cy="86" r="4" fill="#1890ff"/>
+              <circle cx="285" cy="80" r="4" fill="#1890ff"/>
+              <circle cx="342" cy="84" r="4" fill="#1890ff"/>
+              <circle cx="400" cy="78" r="4" fill="#1890ff"/>
+            </svg>
+            <div class="detail-labels">
+              <span>周一</span>
+              <span>周二</span>
+              <span>周三</span>
+              <span>周四</span>
+              <span>周五</span>
+              <span>周六</span>
+              <span>周日</span>
+            </div>
+            <div class="y-axis">
+              <span>1,400,000</span>
+              <span>1,200,000</span>
+              <span>1,000,000</span>
+              <span>800,000</span>
+              <span>0</span>
+            </div>
+          </div>
+          <div class="detail-kpi">
+            <div class="detail-kpi-item">
+              <span class="dk-label">当前资源总数</span>
+              <span class="dk-value">1,234,567</span>
+            </div>
+            <div class="detail-kpi-item">
+              <span class="dk-label">峰值</span>
+              <span class="dk-value">1,235,000</span>
+            </div>
+            <div class="detail-kpi-item">
+              <span class="dk-label">平均值</span>
+              <span class="dk-value">1,229,000</span>
+            </div>
+            <div class="detail-kpi-item">
+              <span class="dk-label">同比变化</span>
+              <span class="dk-value up">+15%</span>
+            </div>
+          </div>
+          <div class="detail-table">
+            <h4>详细数据</h4>
+            <div class="table-toolbar">
+              <a-input-search v-model:value="detailSearch" placeholder="搜索资源类型" style="width: 200px" />
+            </div>
+            <a-table
+              :columns="detailColumns"
+              :dataSource="filteredDetailData"
+              :pagination="{ current: detailPage, pageSize: 5, total: filteredDetailData.length, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }"
+              size="small"
+              rowKey="type"
+              @change="handleDetailTableChange"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'added'">
+                  <span :class="record.added > 0 ? 'num-up' : 'num-down'">+{{ record.added }}</span>
+                </template>
+                <template v-else-if="column.key === 'removed'">
+                  <span :class="record.removed > 0 ? 'num-down' : 'num-up'">-{{ record.removed }}</span>
+                </template>
+                <template v-else-if="column.key === 'net'">
+                  <span :class="record.net > 0 ? 'num-up' : 'num-down'">
+                    {{ record.net > 0 ? '+' : '' }}{{ record.net }}
+                  </span>
+                </template>
+              </template>
+            </a-table>
+          </div>
+        </div>
+        <div class="detail-footer">
+          <div></div>
+          <div class="footer-actions">
+            <a-button type="primary" class="export-btn">
+              <i class="fa-solid fa-download"></i> 导出数据
+            </a-button>
+            <a-button @click="closeDetailPanel">关闭</a-button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
+
+const detailPanelOpen = ref(false)
+const currentCardTitle = ref('')
+const detailPeriod = ref('week')
+const detailSearch = ref('')
+const detailPage = ref(1)
+
+const detailData = reactive([
+  { type: 'ECS', added: 320, removed: 85, net: 235, total: '555,555' },
+  { type: 'MySQL', added: 45, removed: 12, net: 33, total: '1,850' },
+  { type: 'Redis', added: 28, removed: 8, net: 20, total: '1,200' },
+  { type: 'K8s Pod', added: 580, removed: 165, net: 415, total: '370,370' },
+  { type: 'SLB', added: 18, removed: 5, net: 13, total: '850' },
+  { type: 'RDS', added: 35, removed: 10, net: 25, total: '920' },
+  { type: 'OSS', added: 95, removed: 38, net: 67, total: '12,500' },
+])
+
+const detailColumns = [
+  { title: '资源类型', dataIndex: 'type', key: 'type', filters: detailData.map(d => ({ text: d.type, value: d.type })), onFilter: (value, record) => record.type === value },
+  { title: '新增', dataIndex: 'added', key: 'added', align: 'right', sorter: (a, b) => a.added - b.added },
+  { title: '退出', dataIndex: 'removed', key: 'removed', align: 'right', sorter: (a, b) => a.removed - b.removed },
+  { title: '净变化', dataIndex: 'net', key: 'net', align: 'right', sorter: (a, b) => a.net - b.net },
+  { title: '当前总数', dataIndex: 'total', key: 'total', align: 'right' },
+]
+
+const filteredDetailData = computed(() => {
+  if (!detailSearch.value) return detailData
+  return detailData.filter(item => item.type.toLowerCase().includes(detailSearch.value.toLowerCase()))
+})
+
+const handleDetailTableChange = (pag) => {
+  detailPage.value = pag.current
+}
+
+const openDetailPanel = (card) => {
+  currentCardTitle.value = card.title
+  detailPanelOpen.value = true
+}
+
+const closeDetailPanel = () => {
+  detailPanelOpen.value = false
+}
+
+const handleCardAction = (card, key) => {
+  if (key === 'detail') {
+    openDetailPanel(card)
+    return
+  }
+  const actions = {
+    export: '导出数据',
+    history: '历史趋势',
+  }
+  message.info(`${card.title} - ${actions[key]}`)
+}
 
 const kpiCards = reactive([
   {
@@ -229,15 +436,6 @@ const alertEvents = reactive([
 const refreshCard = (card) => {
   message.success(`刷新 ${card.title} 数据`)
 }
-
-const handleCardAction = (card, key) => {
-  const actions = {
-    detail: '查看详情',
-    export: '导出数据',
-    history: '历史趋势',
-  }
-  message.info(`${card.title} - ${actions[key]}`)
-}
 </script>
 
 <style scoped>
@@ -276,7 +474,10 @@ const handleCardAction = (card, key) => {
 
 .chart-card :deep(.ant-card-head) { border-bottom: 1px solid #f0f0f0; }
 .chart-card :deep(.ant-card-body) { padding: 20px; }
-.refresh-btn { color: #1890ff; }
+.chart-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.2s; }
+.chart-card:hover .chart-actions { opacity: 1; }
+.chart-actions .action-btn { padding: 2px 6px; color: var(--text-secondary); }
+.chart-actions .action-btn:hover { color: #1890ff; }
 
 .donut-chart { display: flex; align-items: center; justify-content: center; gap: 32px; padding: 20px 0; }
 .donut-ring { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
@@ -306,4 +507,119 @@ const handleCardAction = (card, key) => {
   .donut-legend { flex-direction: row; flex-wrap: wrap; }
   .card-actions { opacity: 1; }
 }
+
+.detail-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.detail-panel.open {
+  pointer-events: auto;
+  opacity: 1;
+}
+.detail-mask {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+.detail-panel-content {
+  position: absolute;
+  top: 0;
+  right: -500px;
+  width: 500px;
+  height: 100%;
+  background: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s;
+}
+.detail-panel.open .detail-panel-content {
+  right: 0;
+}
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.detail-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.close-btn { font-size: 16px; color: #8c8c8c; }
+.close-btn:hover { color: #1890ff; }
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.time-tabs { margin-bottom: 20px; }
+.time-tabs :deep(.ant-radio-group) { width: 100%; display: flex; }
+.time-tabs :deep(.ant-radio-button-wrapper) { flex: 1; text-align: center; }
+.time-tabs :deep(.ant-radio-button-wrapper-checked) { background: #1890ff; border-color: #1890ff; color: #fff; }
+
+.detail-chart { position: relative; margin-bottom: 24px; padding-left: 70px; }
+.detail-line-svg { width: 100%; height: 180px; }
+.y-axis {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.detail-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.detail-kpi {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+.detail-kpi-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dk-label { font-size: 12px; color: var(--text-secondary); }
+.dk-value { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+.dk-value.up { color: #52C41A; }
+
+.detail-table h4 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+.table-toolbar { margin-bottom: 12px; }
+.detail-table :deep(.ant-table-thead > tr > th) { background: #fafafa; font-weight: 600; }
+.detail-table :deep(.ant-pagination) { margin-top: 12px; }
+.num-up { color: #52C41A; }
+.num-down { color: #f5222d; }
+
+.detail-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid #f0f0f0;
+}
+.footer-actions { display: flex; gap: 16px; }
+.export-btn { display: flex; align-items: center; gap: 6px; }
 </style>
