@@ -118,3 +118,8 @@ cd server && npm run dev  # 启动后端 (Express)
 
 - **Ant Design Vue 的 a-row gutter 已经控制间距**：gutter 设为 16px，子卡片不需要再写 margin（margin-bottom/margin-top），否则间距会变成 32px（2倍）
 - **统一由 gutter 控制**：所有卡片之间的上下左右间距都通过 a-row 的 gutter 属性设置
+
+### Radio 按钮问题
+
+- **Ant Design Vue 的 a-radio-group 在侧滑面板中无法选中**：使用 `v-model:value` 替代 `v-model`，并添加 watch 在面板打开时强制重置选中值
+- **z-index 问题**：侧滑面板使用高 z-index 时，内部 Radio 按钮需要增加 `position: relative; z-index: 1` 样式确保可点击

@@ -197,7 +197,7 @@
         </div>
         <div class="detail-body">
           <div class="time-tabs">
-            <a-radio-group v-model="detailPeriod" button-style="solid" size="small">
+            <a-radio-group v-model:value="detailPeriod" button-style="solid" size="small">
               <a-radio-button value="today">今日</a-radio-button>
               <a-radio-button value="week">本周</a-radio-button>
               <a-radio-button value="month">本月</a-radio-button>
@@ -308,7 +308,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 
 const detailPanelOpen = ref(false)
@@ -343,6 +343,14 @@ const filteredDetailData = computed(() => {
 const handleDetailTableChange = (pag) => {
   detailPage.value = pag.current
 }
+
+watch(detailPanelOpen, (val) => {
+  if (val) {
+    detailPeriod.value = 'week'
+    detailSearch.value = ''
+    detailPage.value = 1
+  }
+})
 
 const openDetailPanel = (card) => {
   currentCardTitle.value = card.title
@@ -564,8 +572,10 @@ const refreshCard = (card) => {
 }
 .time-tabs { margin-bottom: 20px; }
 .time-tabs :deep(.ant-radio-group) { width: 100%; display: flex; }
-.time-tabs :deep(.ant-radio-button-wrapper) { flex: 1; text-align: center; }
-.time-tabs :deep(.ant-radio-button-wrapper-checked) { background: #1890ff; border-color: #1890ff; color: #fff; }
+.time-tabs :deep(.ant-radio-button-wrapper) { flex: 1; text-align: center; position: relative; z-index: 1; }
+.time-tabs :deep(.ant-radio-button-wrapper:hover) { z-index: 1; }
+.time-tabs :deep(.ant-radio-button-wrapper-checked) { background: #1890ff; border-color: #1890ff; color: #fff; z-index: 1; }
+.time-tabs :deep(.ant-radio-button-wrapper::before) { z-index: 0; }
 
 .detail-chart { position: relative; margin-bottom: 24px; padding-left: 70px; }
 .detail-line-svg { width: 100%; height: 180px; }
