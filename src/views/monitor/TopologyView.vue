@@ -664,10 +664,11 @@ function initNetworkGraph() {
         labelLineHeight: 14,
         labelFill: '#333',
         labelFontWeight: '500',
-        iconFontFamily: 'Font Awesome 6 Free Solid',
+        iconFontFamily: 'Font Awesome 6 Free',
+        iconFontWeight: 900,
         iconText: (d) => d.iconText || '',
         iconFill: (d) => d.style?.fill === '#f5222d' ? '#f5222d' : '#1890ff',
-        iconFontSize: (d) => (d.style?.size || 44) >= 52 ? 28 : 24,
+        iconFontSize: (d) => (d.style?.size || 44) >= 52 ? 30 : 26,
       }
     },
     edge: {
@@ -710,6 +711,33 @@ function initNetworkGraph() {
     behaviors: ['drag-canvas', 'zoom-canvas'],
   })
   networkGraph.render()
+
+  alignNetworkCombos()
+  networkGraph.on('afterlayout', () => alignNetworkCombos())
+}
+
+function alignNetworkCombos() {
+  if (!networkGraph) return
+  const comboData = networkGraph.getComboData()
+  if (comboData.length < 2) return
+  const tops = comboData.map(c => {
+    const children = networkGraph.getChildrenData(c.id).map(d => d.id || d)
+    const topY = Math.min(...children.map(id => {
+      const d = networkGraph.getNodeData(id)
+      return d.y - (d.style?.size || 44) / 2
+    }))
+    return { id: c.id, topY }
+  })
+  const minTop = Math.min(...tops.map(t => t.topY))
+  tops.forEach(t => {
+    const diff = minTop - t.topY
+    if (Math.abs(diff) > 1) {
+      const children = networkGraph.getChildrenData(t.id).map(d => d.id || d)
+      const tr = {}
+      children.forEach(id => { tr[id] = [0, diff] })
+      networkGraph.translateElementBy(tr, false)
+    }
+  })
 }
 
 function destroyNetworkGraph() {
