@@ -591,55 +591,109 @@ const g6Data = {
 
 const NODE_SIZE = { internet: 56, border: 52, spine: 48, tor: 44, server: 40 }
 
-const networkTopoData = {
-  nodes: [
-    { id: 'internet', data: { label: 'Internet / 企业专线\n网络' }, iconText: '\uf0ac', style: { fill: '#1890ff', size: NODE_SIZE.internet } },
-    { id: 'border-leaf', data: { label: 'Border Leaf\n192.168.0.1' }, iconText: '\uf6ff', style: { fill: '#1890ff', size: NODE_SIZE.border } },
-    { id: 'mgmt-spine-east', data: { label: '管理核心Spine\n192.1.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-east' },
-    { id: 'biz-spine-east', data: { label: '业务核心Spine\n192.1.0.2' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-east' },
-    { id: 'mgmt-tor-east', data: { label: '管理TOR\n192.1.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
-    { id: 'biz-tor-east', data: { label: '业务TOR\n192.1.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
-    { id: 'storage-tor-east', data: { label: '存储TOR\n192.1.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
-    { id: 'mgmt-nodes-east', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-    { id: 'network-nodes-east', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-    { id: 'compute-nodes-east', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-    { id: 'storage-nodes-east', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-    { id: 'mgmt-spine-north', data: { label: '管理核心Spine\n192.2.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-north' },
-    { id: 'biz-spine-north', data: { label: '业务核心Spine\n192.2.0.2' }, iconText: '\uf126', style: { fill: '#f5222d', size: NODE_SIZE.spine }, combo: 'region-north' },
-    { id: 'mgmt-tor-north', data: { label: '管理TOR\n192.2.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
-    { id: 'biz-tor-north', data: { label: '业务TOR\n192.2.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
-    { id: 'storage-tor-north', data: { label: '存储TOR\n192.2.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
-    { id: 'mgmt-nodes-north', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
-    { id: 'network-nodes-north', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
-    { id: 'compute-nodes-north', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
-    { id: 'storage-nodes-north', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
-  ],
-  combos: [
-    { id: 'region-east', data: { label: 'Region: 华东1' }, style: { fill: '#fff', stroke: '#e8e8e8', lineWidth: 1.5, radius: 8 } },
-    { id: 'region-north', data: { label: 'Region: 华北2' }, style: { fill: '#fff', stroke: '#e8e8e8', lineWidth: 1.5, radius: 8 } },
-  ],
-  edges: [
-    { source: 'internet', target: 'border-leaf', style: { stroke: '#d9d9d9', lineWidth: 2 } },
-    { source: 'border-leaf', target: 'mgmt-spine-east', data: { label: '管理通道' } },
-    { source: 'border-leaf', target: 'biz-spine-east', data: { label: '业务平面' } },
-    { source: 'mgmt-spine-east', target: 'mgmt-tor-east' },
-    { source: 'biz-spine-east', target: 'biz-tor-east' },
-    { source: 'biz-spine-east', target: 'storage-tor-east', data: { label: '存储平面' } },
-    { source: 'mgmt-tor-east', target: 'mgmt-nodes-east' },
-    { source: 'biz-tor-east', target: 'network-nodes-east' },
-    { source: 'biz-tor-east', target: 'compute-nodes-east' },
-    { source: 'storage-tor-east', target: 'storage-nodes-east' },
-    { source: 'border-leaf', target: 'mgmt-spine-north', data: { label: '管理通道' } },
-    { source: 'border-leaf', target: 'biz-spine-north', data: { label: '业务平面' } },
-    { source: 'mgmt-spine-north', target: 'mgmt-tor-north' },
-    { source: 'biz-spine-north', target: 'biz-tor-north' },
-    { source: 'biz-spine-north', target: 'storage-tor-north', data: { label: '存储平面' } },
-    { source: 'mgmt-tor-north', target: 'mgmt-nodes-north' },
-    { source: 'biz-tor-north', target: 'network-nodes-north' },
-    { source: 'biz-tor-north', target: 'compute-nodes-north' },
-    { source: 'storage-tor-north', target: 'storage-nodes-north' },
-    { source: 'biz-spine-east', target: 'biz-spine-north', data: { label: 'Region互联' }, style: { lineDash: [5, 5], stroke: '#fa8c16' } },
-  ]
+const COMBO_PAD = [30, 28, 20, 28] // [top, right, bottom, left]
+
+const NET_LAYOUT = {
+  internet: [430, 60],
+  'border-leaf': [430, 180],
+  'mgmt-spine-east':   [200, 340],
+  'biz-spine-east':    [450, 340],
+  'mgmt-tor-east':     [200, 490],
+  'biz-tor-east':      [450, 490],
+  'storage-tor-east':  [700, 490],
+  'mgmt-nodes-east':   [200, 640],
+  'network-nodes-east': [420, 640],
+  'compute-nodes-east': [480, 640],
+  'storage-nodes-east': [700, 640],
+  'mgmt-spine-north':   [200, 840],
+  'biz-spine-north':    [450, 840],
+  'mgmt-tor-north':     [200, 990],
+  'biz-tor-north':      [450, 990],
+  'storage-tor-north':  [700, 990],
+  'mgmt-nodes-north':   [200, 1140],
+  'network-nodes-north': [420, 1140],
+  'compute-nodes-north': [480, 1140],
+  'storage-nodes-north': [700, 1140],
+}
+
+const NET_NODE_DEFS = [
+  { id: 'internet', data: { label: 'Internet / 企业专线\n网络' }, iconText: '\uf0ac', style: { fill: '#1890ff', size: NODE_SIZE.internet } },
+  { id: 'border-leaf', data: { label: 'Border Leaf\n192.168.0.1' }, iconText: '\uf6ff', style: { fill: '#1890ff', size: NODE_SIZE.border } },
+  { id: 'mgmt-spine-east', data: { label: '管理核心Spine\n192.1.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-east' },
+  { id: 'biz-spine-east', data: { label: '业务核心Spine\n192.1.0.2' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-east' },
+  { id: 'mgmt-tor-east', data: { label: '管理TOR\n192.1.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
+  { id: 'biz-tor-east', data: { label: '业务TOR\n192.1.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
+  { id: 'storage-tor-east', data: { label: '存储TOR\n192.1.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
+  { id: 'mgmt-nodes-east', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
+  { id: 'network-nodes-east', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
+  { id: 'compute-nodes-east', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
+  { id: 'storage-nodes-east', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
+  { id: 'mgmt-spine-north', data: { label: '管理核心Spine\n192.2.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-north' },
+  { id: 'biz-spine-north', data: { label: '业务核心Spine\n192.2.0.2' }, iconText: '\uf126', style: { fill: '#f5222d', size: NODE_SIZE.spine }, combo: 'region-north' },
+  { id: 'mgmt-tor-north', data: { label: '管理TOR\n192.2.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
+  { id: 'biz-tor-north', data: { label: '业务TOR\n192.2.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
+  { id: 'storage-tor-north', data: { label: '存储TOR\n192.2.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
+  { id: 'mgmt-nodes-north', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
+  { id: 'network-nodes-north', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
+  { id: 'compute-nodes-north', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
+  { id: 'storage-nodes-north', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
+]
+
+const NET_COMBO_DEFS = [
+  { id: 'region-east', data: { label: 'Region: 华东1' } },
+  { id: 'region-north', data: { label: 'Region: 华北2' } },
+]
+
+const NET_EDGES = [
+  { source: 'internet', target: 'border-leaf', style: { stroke: '#d9d9d9', lineWidth: 2 } },
+  { source: 'border-leaf', target: 'mgmt-spine-east', data: { label: '管理通道' } },
+  { source: 'border-leaf', target: 'biz-spine-east', data: { label: '业务平面' } },
+  { source: 'mgmt-spine-east', target: 'mgmt-tor-east' },
+  { source: 'biz-spine-east', target: 'biz-tor-east' },
+  { source: 'biz-spine-east', target: 'storage-tor-east', data: { label: '存储平面' } },
+  { source: 'mgmt-tor-east', target: 'mgmt-nodes-east' },
+  { source: 'biz-tor-east', target: 'network-nodes-east' },
+  { source: 'biz-tor-east', target: 'compute-nodes-east' },
+  { source: 'storage-tor-east', target: 'storage-nodes-east' },
+  { source: 'border-leaf', target: 'mgmt-spine-north', data: { label: '管理通道' } },
+  { source: 'border-leaf', target: 'biz-spine-north', data: { label: '业务平面' } },
+  { source: 'mgmt-spine-north', target: 'mgmt-tor-north' },
+  { source: 'biz-spine-north', target: 'biz-tor-north' },
+  { source: 'biz-spine-north', target: 'storage-tor-north', data: { label: '存储平面' } },
+  { source: 'mgmt-tor-north', target: 'mgmt-nodes-north' },
+  { source: 'biz-tor-north', target: 'network-nodes-north' },
+  { source: 'biz-tor-north', target: 'compute-nodes-north' },
+  { source: 'storage-tor-north', target: 'storage-nodes-north' },
+  { source: 'biz-spine-east', target: 'biz-spine-north', data: { label: 'Region互联' }, style: { lineDash: [5, 5], stroke: '#fa8c16' } },
+]
+
+function createNetworkTopoData() {
+  const nodes = NET_NODE_DEFS.map(n => ({
+    ...n,
+    x: NET_LAYOUT[n.id][0],
+    y: NET_LAYOUT[n.id][1],
+  }))
+  const combos = NET_COMBO_DEFS.map(c => {
+    const children = nodes.filter(n => n.combo === c.id)
+    if (!children.length) return c
+    const half = (d) => (d.style?.size || 48) / 2
+    const l = Math.min(...children.map(n => n.x - half(n)))
+    const r = Math.max(...children.map(n => n.x + half(n)))
+    const t = Math.min(...children.map(n => n.y - half(n)))
+    const b = Math.max(...children.map(n => n.y + half(n)))
+    const cx = (l + r) / 2
+    const cy = (t + b) / 2
+    return {
+      ...c,
+      x: cx,
+      y: cy,
+      style: {
+        fill: '#fff', stroke: '#e8e8e8', lineWidth: 1.5, radius: 8,
+        size: [r - l + COMBO_PAD[1] + COMBO_PAD[3], b - t + COMBO_PAD[0] + COMBO_PAD[2]],
+      }
+    }
+  })
+  return { nodes, combos, edges: NET_EDGES }
 }
 
 function initNetworkGraph() {
@@ -649,8 +703,7 @@ function initNetworkGraph() {
     container: networkContainer.value,
     width: rect.width,
     height: rect.height,
-    autoFit: 'view',
-    data: networkTopoData,
+    data: createNetworkTopoData(),
     node: {
       type: 'rect',
       style: {
@@ -692,7 +745,6 @@ function initNetworkGraph() {
         stroke: (d) => d.style?.stroke || '#e8e8e8',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         radius: (d) => d.style?.radius || 6,
-        padding: [30, 28, 20, 28],
         labelText: (d) => d.data?.label || '',
         labelFontSize: 13,
         labelFontWeight: 'bold',
@@ -701,90 +753,11 @@ function initNetworkGraph() {
         labelOffsetY: 10,
       }
     },
-    layout: {
-      type: 'dagre',
-      rankdir: 'TB',
-      nodesep: 100,
-      ranksep: 80,
-      align: 'UL',
-    },
     behaviors: ['drag-canvas', 'zoom-canvas'],
   })
   networkGraph.render().then(() => {
-    alignNetworkCombos()
-    centerRank0Nodes()
+    networkGraph.fitView({ padding: 20 })
   })
-  networkGraph.on('afterlayout', () => {
-    alignNetworkCombos()
-    centerRank0Nodes()
-  })
-}
-
-function comboChildren(comboId) {
-  return networkGraph.getNodeData().filter(d => d.combo === comboId).map(d => d.id)
-}
-
-function getPad() {
-  const cd = networkGraph.getComboData()
-  return cd[0]?.style?.padding?.[1] || 28
-}
-
-function childrenAvgY(ids) {
-  const ys = ids.map(id => networkGraph.getNodeData(id).y).filter(y => y != null)
-  return ys.length ? (Math.min(...ys) + Math.max(...ys)) / 2 : null
-}
-
-function alignNetworkCombos() {
-  if (!networkGraph) return
-  const comboData = networkGraph.getComboData()
-  if (comboData.length < 2) return
-  const centers = []
-  for (const c of comboData) {
-    const children = comboChildren(c.id)
-    if (!children.length) return
-    const cy = childrenAvgY(children)
-    if (cy == null) return
-    centers.push({ id: c.id, cy })
-  }
-  const avg = centers.reduce((s, c) => s + c.cy, 0) / centers.length
-  const tr = {}
-  for (const c of centers) {
-    const diff = avg - c.cy
-    if (Math.abs(diff) > 1) {
-      for (const id of comboChildren(c.id)) tr[id] = [0, diff]
-    }
-  }
-  const keys = Object.keys(tr)
-  if (keys.length) networkGraph.translateElementBy(tr, false)
-}
-
-function centerRank0Nodes() {
-  if (!networkGraph) return
-  const north = comboChildren('region-north')
-  const east = comboChildren('region-east')
-  if (!north.length || !east.length) return
-  const pad = getPad()
-  const getX = id => {
-    const d = networkGraph.getNodeData(id)
-    if (d.x == null) return null
-    return d.x - ((d.style?.size || 48) / 2)
-  }
-  const xs = east.map(getX).concat(north.map(id => {
-    const d = networkGraph.getNodeData(id)
-    if (d.x == null) return null
-    return d.x + ((d.style?.size || 48) / 2)
-  }))
-  if (xs.some(x => x == null)) return
-  const leftEdge  = Math.min(...xs.slice(0, east.length)) - pad
-  const rightEdge = Math.max(...xs.slice(east.length)) + pad
-  const cx = (leftEdge + rightEdge) / 2
-  const tr = {}
-  for (const id of ['internet', 'border-leaf']) {
-    const d = networkGraph.getNodeData(id)
-    if (d.x == null) return
-    tr[id] = [cx - d.x, 0]
-  }
-  networkGraph.translateElementBy(tr, false)
 }
 
 function destroyNetworkGraph() {
