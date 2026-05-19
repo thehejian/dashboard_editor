@@ -10,7 +10,7 @@
         block-node
       />
     </div>
-    <div class="security-content">
+    <div class="security-content" :class="{ 'create-mode': isCreatePage }">
       <router-view />
     </div>
   </div>
@@ -55,6 +55,8 @@ const treeData = [
   },
 ]
 
+const isCreatePage = computed(() => route.path.includes('/idp/create'))
+
 const selectedKeys = computed(() => {
   const p = route.path
   if (p.startsWith('/system/security/idp/create')) return ['/system/security/idp']
@@ -94,6 +96,10 @@ function onSelect(keys) {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+}
+.security-content.create-mode {
+  overflow: hidden;
+  padding: 0;
 }
 :deep(.ant-tree) {
   background: transparent;
