@@ -176,6 +176,17 @@ cd server && npm run dev  # 启动后端 (Express)
   3. 注意数据定义统一（`distDonutData` 与 `resourceDist` 分类名一致）
   4. 容器 `ref` 管理 + onBeforeUnmount 销毁 + watch 触发渲染
 
+### G2 5 Tooltip 自定义与溢出裁剪
+
+- **问题 1 — 多 mark 重复 tooltip**：area + line + point 三个 mark 共享编码，tooltip 聚合显示多条重复数据
+- **修复**：非主 mark（area/point）加 `.tooltip(false)`，只在主 mark（line/interval）上加 `.tooltip({ title, items })`
+- **问题 2 — tooltip 被 `overflow` 容器裁剪**：侧滑面板 `.detail-body` 有 `overflow-y: auto`，绝对定位的 tooltip 超出其边界时被裁剪
+- **修复**：`chart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })`
+  - `mount: 'body'` 将 tooltip DOM 挂到 `document.body`，脱离 `overflow` 容器
+  - 但 G2 默认 tooltip `z-index: 8`，侧滑面板 `z-index: 1050`，tooltip 在 body 上会被面板遮住
+  - 必须通过 `css` 参数将 tooltip `z-index` 提到面板之上（>1050）
+- **不要单独使用 `mount: 'body'` 而不加高 z-index**，否则 tooltip 不可见
+
 ### 侧滑面板 top 对齐
 
 - **问题**：导航栏 `height: 48px`，面板设置 `top: 64px`，产生 16px 间隙

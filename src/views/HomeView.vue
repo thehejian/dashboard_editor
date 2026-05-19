@@ -565,6 +565,7 @@ function renderHealthTrendChart() {
 
   healthTrendChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
+  healthTrendChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   healthTrendChart.render()
 }
 const detailSearch = ref('')
@@ -691,6 +692,7 @@ function renderAlertDetailChart() {
 
   alertDetailChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
+  alertDetailChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   alertDetailChart.render()
 }
 
@@ -767,6 +769,7 @@ function renderEventDetailChart() {
 
   eventDetailChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
+  eventDetailChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   eventDetailChart.render()
 }
 
@@ -844,6 +847,7 @@ function renderDistDonutChart() {
 
   distDonutChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16, itemLabelFontSize: 12 })
 
+  distDonutChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   distDonutChart.render()
 }
 
@@ -933,6 +937,7 @@ function renderTrendSingleChart() {
     .encode('y', 'value')
     .tooltip(false)
 
+  trendSingleChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   trendSingleChart.render()
 }
 
@@ -966,6 +971,7 @@ function renderResourceTrendChart() {
     .encode('y', 'value')
     .tooltip(false)
 
+  resourceTrendChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   resourceTrendChart.render()
 }
 
