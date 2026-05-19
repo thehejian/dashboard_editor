@@ -27,7 +27,13 @@
       <div class="topology-header">
         <div class="topology-tabs">
           <button class="tab-btn" :class="{ active: topoTab === 'resource' }" @click="topoTab = 'resource'">资源拓扑</button>
-          <button class="tab-btn" :class="{ active: topoTab === 'network' }" @click="topoTab = 'network'" disabled>网络拓扑</button>
+          <button class="tab-btn" :class="{ active: topoTab === 'network' }" @click="onSwitchNetworkTab">网络拓扑</button>
+        </div>
+        <div class="group-mode-bar" v-if="topoTab === 'network' && activeNav === 'cloud-system'">
+          <span class="gm-label">组网模式:</span>
+          <button class="gm-btn" :class="{ active: groupMode === 'single' }" @click="groupMode = 'single'">单核心组网</button>
+          <button class="gm-btn" :class="{ active: groupMode === 'dual' }" @click="groupMode = 'dual'">双核心组网</button>
+          <button class="gm-btn" :class="{ active: groupMode === 'three' }" @click="groupMode = 'three'">三层组网</button>
         </div>
         <div class="topology-toolbar">
           <div class="toolbar-left">
@@ -203,18 +209,61 @@
             <p>{{ placeholderText }}</p>
           </div>
 
-          <div v-else class="placeholder-content">
-            <p>网络拓扑开发中...</p>
+          <div v-else class="network-topology">
+            <div ref="networkContainer" class="network-canvas"></div>
+            <aside class="network-legend">
+              <div class="legend-section">
+                <h4>网络图例</h4>
+                <div class="legend-row"><span class="lg-line solid-red"></span> 云骨干/管理通道</div>
+                <div class="legend-row"><span class="lg-line dashed-black"></span> Region专线/AZ互通</div>
+                <div class="legend-row"><span class="lg-line solid-orange"></span> 网关/路由连接</div>
+                <div class="legend-row"><span class="lg-line solid-blue"></span> 内网/核心层</div>
+                <div class="legend-row"><span class="lg-line solid-green"></span> 业务网络/子网</div>
+              </div>
+              <div class="legend-section">
+                <h4>对象类型</h4>
+                <div class="legend-row"><span class="lg-dot dot-red"></span> 云系统</div>
+                <div class="legend-row"><span class="lg-dot dot-purple"></span> 路由器</div>
+                <div class="legend-row"><span class="lg-dot dot-orange"></span> 网关</div>
+                <div class="legend-row"><span class="lg-dot dot-green"></span> 交换机</div>
+                <div class="legend-row"><span class="lg-dot dot-blue"></span> 主机组</div>
+              </div>
+            </aside>
           </div>
         </div>
       </div>
 
-      <div class="minimap-float">
+      <div class="minimap-float" v-if="topoTab === 'network'">
         <div class="minimap-header">
           <span>缩略图</span>
         </div>
         <div class="minimap-body">
-          <div class="minimap-dot"></div>
+          <svg viewBox="0 0 120 160" class="minimap-svg">
+            <rect x="40" y="0" width="40" height="16" rx="3" fill="#52c41a" opacity="0.8"/>
+            <rect x="20" y="30" width="80" height="20" rx="4" fill="#e6f7ff" stroke="#91d5ff" stroke-width="1"/>
+            <rect x="60" y="30" width="80" height="20" rx="4" fill="#f6ffed" stroke="#b7eb8f" stroke-width="1"/>
+            <circle cx="35" cy="42" r="4" fill="#52c41a"/>
+            <circle cx="50" cy="42" r="4" fill="#52c41a"/>
+            <circle cx="65" cy="42" r="4" fill="#E6A23C"/>
+            <circle cx="80" cy="42" r="4" fill="#52c41a"/>
+            <rect x="10" y="60" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#d9d9d9" stroke-width="0.5"/>
+            <circle cx="30" cy="68" r="3" fill="#52c41a"/>
+            <circle cx="45" cy="68" r="3" fill="#52c41a"/>
+            <circle cx="60" cy="68" r="3" fill="#52c41a"/>
+            <circle cx="75" cy="68" r="3" fill="#52c41a"/>
+            <circle cx="90" cy="68" r="3" fill="#52c41a"/>
+            <rect x="10" y="80" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#d9d9d9" stroke-width="0.5"/>
+            <circle cx="20" cy="88" r="3" fill="#409EFF"/>
+            <circle cx="35" cy="88" r="3" fill="#67C23A"/>
+            <circle cx="50" cy="88" r="3" fill="#909399"/>
+            <circle cx="65" cy="88" r="3" fill="#E6A23C"/>
+            <rect x="10" y="100" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#d9d9d9" stroke-width="0.5"/>
+            <circle cx="20" cy="108" r="3" fill="#409EFF"/>
+            <circle cx="35" cy="108" r="3" fill="#67C23A"/>
+            <circle cx="50" cy="108" r="3" fill="#909399"/>
+            <circle cx="65" cy="108" r="3" fill="#E6A23C"/>
+            <line x1="60" y1="50" x2="60" y2="60" stroke="#d9d9d9" stroke-width="1"/>
+          </svg>
         </div>
       </div>
 
@@ -434,6 +483,11 @@ function statusLabel(s) {
   return ({ normal: '正常', warning: '警告', error: '异常' })[s] || s || ''
 }
 
+function onSwitchNetworkTab() {
+  topoTab.value = 'network'
+  setTimeout(() => initNetworkGraph(), 100)
+}
+
 function onNodeSelect(name) {
   selectedNodeName.value = name
 }
@@ -456,6 +510,9 @@ const placeholderText = computed(() => {
 
 const topoTab = ref('resource')
 const searchText = ref('')
+const groupMode = ref('single')
+const networkContainer = ref(null)
+let networkGraph = null
 
 const treeData = [
   {
@@ -535,42 +592,167 @@ const g6Data = {
   ]
 }
 
+const networkTopoData = {
+  nodes: [
+    { id: 'internet', data: { label: 'Internet / 企业专线\n网络' }, style: { fill: '#52c41a', size: [150, 44] } },
+    { id: 'border-leaf', data: { label: 'Border Leaf\n(出口网关)\n192.168.0.1' }, style: { fill: '#52c41a', size: [150, 56] } },
+    { id: 'mgmt-spine-east', data: { label: '管理核心Spine\n192.1.0.1' }, style: { fill: '#67C23A', size: [130, 44] }, combo: 'region-east' },
+    { id: 'biz-spine-east', data: { label: '业务核心Spine\n192.1.0.2' }, style: { fill: '#67C23A', size: [130, 44] }, combo: 'region-east' },
+    { id: 'mgmt-tor-east', data: { label: '管理TOR\n192.1.0.11' }, style: { fill: '#95de64', size: [120, 40] }, combo: 'region-east' },
+    { id: 'biz-tor-east', data: { label: '业务TOR\n192.1.0.12' }, style: { fill: '#95de64', size: [120, 40] }, combo: 'region-east' },
+    { id: 'storage-tor-east', data: { label: '存储TOR\n192.1.0.13' }, style: { fill: '#95de64', size: [120, 40] }, combo: 'region-east' },
+    { id: 'mgmt-nodes-east', data: { label: '管理节点\nx3' }, style: { fill: '#409EFF', size: [100, 40] }, combo: 'region-east' },
+    { id: 'network-nodes-east', data: { label: '网络节点\nx2' }, style: { fill: '#67C23A', size: [100, 40] }, combo: 'region-east' },
+    { id: 'compute-nodes-east', data: { label: '计算节点\nx2' }, style: { fill: '#909399', size: [100, 40] }, combo: 'region-east' },
+    { id: 'storage-nodes-east', data: { label: '存储节点\nx2' }, style: { fill: '#E6A23C', size: [100, 40] }, combo: 'region-east' },
+    { id: 'mgmt-spine-north', data: { label: '管理核心Spine\n192.2.0.1' }, style: { fill: '#67C23A', size: [130, 44] }, combo: 'region-north' },
+    { id: 'biz-spine-north', data: { label: '业务核心Spine\n192.2.0.2' }, style: { fill: '#E6A23C', size: [130, 44] }, combo: 'region-north' },
+    { id: 'mgmt-tor-north', data: { label: '管理TOR\n192.2.0.11' }, style: { fill: '#95de64', size: [120, 40] }, combo: 'region-north' },
+    { id: 'biz-tor-north', data: { label: '业务TOR\n192.2.0.12' }, style: { fill: '#95de64', size: [120, 40] }, combo: 'region-north' },
+    { id: 'storage-tor-north', data: { label: '存储TOR\n192.2.0.13' }, style: { fill: '#95de64', size: [120, 40] }, combo: 'region-north' },
+    { id: 'mgmt-nodes-north', data: { label: '管理节点\nx3' }, style: { fill: '#409EFF', size: [100, 40] }, combo: 'region-north' },
+    { id: 'network-nodes-north', data: { label: '网络节点\nx2' }, style: { fill: '#67C23A', size: [100, 40] }, combo: 'region-north' },
+    { id: 'compute-nodes-north', data: { label: '计算节点\nx2' }, style: { fill: '#909399', size: [100, 40] }, combo: 'region-north' },
+    { id: 'storage-nodes-north', data: { label: '存储节点\nx2' }, style: { fill: '#E6A23C', size: [100, 40] }, combo: 'region-north' },
+  ],
+  combos: [
+    { id: 'region-east', data: { label: 'Region: 华东1' }, style: { fill: '#e6f7ff', stroke: '#91d5ff', lineWidth: 1.5, radius: 8 } },
+    { id: 'region-north', data: { label: 'Region: 华北2' }, style: { fill: '#f6ffed', stroke: '#b7eb8f', lineWidth: 1.5, radius: 8 } },
+  ],
+  edges: [
+    { source: 'internet', target: 'border-leaf', style: { stroke: '#d9d9d9', lineWidth: 2 } },
+    { source: 'border-leaf', target: 'mgmt-spine-east', data: { label: '管理通道' } },
+    { source: 'border-leaf', target: 'biz-spine-east', data: { label: '业务平面' } },
+    { source: 'mgmt-spine-east', target: 'mgmt-tor-east' },
+    { source: 'biz-spine-east', target: 'biz-tor-east' },
+    { source: 'biz-spine-east', target: 'storage-tor-east', data: { label: '存储平面' } },
+    { source: 'mgmt-tor-east', target: 'mgmt-nodes-east' },
+    { source: 'biz-tor-east', target: 'network-nodes-east' },
+    { source: 'biz-tor-east', target: 'compute-nodes-east' },
+    { source: 'storage-tor-east', target: 'storage-nodes-east' },
+    { source: 'border-leaf', target: 'mgmt-spine-north', data: { label: '管理通道' } },
+    { source: 'border-leaf', target: 'biz-spine-north', data: { label: '业务平面' } },
+    { source: 'mgmt-spine-north', target: 'mgmt-tor-north' },
+    { source: 'biz-spine-north', target: 'biz-tor-north' },
+    { source: 'biz-spine-north', target: 'storage-tor-north', data: { label: '存储平面' } },
+    { source: 'mgmt-tor-north', target: 'mgmt-nodes-north' },
+    { source: 'biz-tor-north', target: 'network-nodes-north' },
+    { source: 'biz-tor-north', target: 'compute-nodes-north' },
+    { source: 'storage-tor-north', target: 'storage-nodes-north' },
+    { source: 'biz-spine-east', target: 'biz-spine-north', data: { label: 'Region互联' }, style: { lineDash: [5, 5], stroke: '#fa8c16' } },
+  ]
+}
+
+function initNetworkGraph() {
+  if (!networkContainer.value || networkGraph) return
+  const rect = networkContainer.value.getBoundingClientRect()
+  networkGraph = new Graph({
+    container: networkContainer.value,
+    width: rect.width,
+    height: rect.height,
+    autoFit: 'view',
+    data: networkTopoData,
+    node: {
+      type: 'rect',
+      style: {
+        size: (d) => d.style?.size || [130, 44],
+        radius: 6,
+        fill: '#fff',
+        stroke: (d) => d.style?.fill || '#d9d9d9',
+        lineWidth: 2,
+        labelText: (d) => d.data?.label || '',
+        labelPlacement: 'center',
+        labelFontSize: 11,
+        labelLineHeight: 15,
+        labelFill: '#333',
+      }
+    },
+    edge: {
+      type: 'polyline',
+      style: {
+        stroke: (d) => d.style?.stroke || '#d9d9d9',
+        lineWidth: (d) => d.style?.lineWidth || 1.5,
+        lineDash: (d) => d.style?.lineDash || undefined,
+        endArrow: true,
+        labelText: (d) => d.data?.label || '',
+        labelFontSize: 10,
+        labelFill: '#666',
+        labelBackgroundFill: '#fff',
+        labelBackgroundOpacity: 0.8,
+      }
+    },
+    combo: {
+      type: 'rect',
+      style: {
+        fill: (d) => d.style?.fill || '#fafafa',
+        stroke: (d) => d.style?.stroke || '#d9d9d9',
+        lineWidth: (d) => d.style?.lineWidth || 1.5,
+        radius: (d) => d.style?.radius || 6,
+        padding: [30, 20, 20, 20],
+        labelText: (d) => d.data?.label || '',
+        labelFontSize: 13,
+        labelFontWeight: 'bold',
+        labelFill: '#333',
+        labelPlacement: 'top-left',
+        labelOffsetY: -10,
+      }
+    },
+    layout: {
+      type: 'dagre',
+      rankdir: 'TB',
+      nodesep: 20,
+      ranksep: 60,
+    },
+    behaviors: ['drag-canvas', 'zoom-canvas'],
+  })
+  networkGraph.render()
+}
+
+function destroyNetworkGraph() {
+  if (networkGraph) { networkGraph.destroy(); networkGraph = null }
+}
+
+function initResourceGraph() {
+  if (!g6Container.value) return
+  if (graph) graph.destroy()
+  graph = new Graph({
+    container: g6Container.value,
+    width: 600,
+    height: 300,
+    autoFit: 'view',
+    data: g6Data,
+    node: {
+      style: {
+        labelText: (d) => ({ root: '云系统', east: '华东1', north: '华北2', 'east-az-a': '可用区A', 'east-az-b': '可用区B', 'north-az-a': '可用区A' }[d.id] || d.id),
+        size: [100, 36],
+        radius: 6,
+        fill: '#fff',
+        stroke: '#d9d9d9',
+        lineWidth: 1.5,
+        fontSize: 12,
+      }
+    },
+    edge: {
+      style: { stroke: '#d9d9d9', lineWidth: 1.5, endArrow: true },
+    },
+    layout: {
+      type: 'dendrogram',
+      direction: 'LR',
+      nodeSep: 40,
+      rankSep: 100,
+    },
+    behaviors: ['drag-canvas', 'zoom-canvas'],
+  })
+  graph.render()
+}
+
 onMounted(() => {
-  if (g6Container.value) {
-    graph = new Graph({
-      container: g6Container.value,
-      width: 600,
-      height: 300,
-      autoFit: 'view',
-      data: g6Data,
-      node: {
-        style: {
-          labelText: (d) => ({ root: '云系统', east: '华东1', north: '华北2', 'east-az-a': '可用区A', 'east-az-b': '可用区B', 'north-az-a': '可用区A' }[d.id] || d.id),
-          size: [100, 36],
-          radius: 6,
-          fill: '#fff',
-          stroke: '#d9d9d9',
-          lineWidth: 1.5,
-          fontSize: 12,
-        }
-      },
-      edge: {
-        style: { stroke: '#d9d9d9', lineWidth: 1.5, endArrow: true },
-      },
-      layout: {
-        type: 'dendrogram',
-        direction: 'LR',
-        nodeSep: 40,
-        rankSep: 100,
-      },
-      behaviors: ['drag-canvas', 'zoom-canvas'],
-    })
-    graph.render()
-  }
+  initResourceGraph()
 })
 
 onBeforeUnmount(() => {
-  if (graph) graph.destroy()
+  if (graph) { graph.destroy(); graph = null }
+  destroyNetworkGraph()
 })
 </script>
 
@@ -855,6 +1037,57 @@ onBeforeUnmount(() => {
   display: flex; justify-content: flex-end; gap: 8px;
   padding: 16px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0;
 }
+
+/* ── group mode bar ── */
+.group-mode-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 16px; background: #fafafa; border-radius: 6px;
+  flex-shrink: 0;
+}
+.gm-label { font-size: 12px; color: var(--text-sec); white-space: nowrap; }
+.gm-btn {
+  padding: 3px 14px; border: 1px solid #d9d9d9; background: #fff;
+  border-radius: 4px; font-size: 12px; cursor: pointer; color: var(--text-sec);
+  transition: all 0.2s;
+}
+.gm-btn:hover { color: #1890ff; border-color: #1890ff; }
+.gm-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+
+/* ── network topology ── */
+.network-topology {
+  display: flex; height: 100%; gap: 0; position: relative;
+}
+.network-canvas {
+  flex: 1; height: 100%; min-height: 500px; background: #fafafa;
+}
+.network-legend {
+  width: 180px; flex-shrink: 0; padding: 16px;
+  background: #fff; border-left: 1px solid #f0f0f0;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.legend-section h4 {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  margin: 0 0 10px; padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.legend-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-sec); margin-bottom: 6px;
+}
+.lg-line { display: inline-block; width: 28px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.lg-line.solid-red { background: #f5222d; }
+.lg-line.dashed-black { background: transparent; border-top: 2px dashed #333; height: 0; }
+.lg-line.solid-orange { background: #fa8c16; }
+.lg-line.solid-blue { background: #1890ff; }
+.lg-line.solid-green { background: #52c41a; }
+.lg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.lg-dot.dot-red { background: #f5222d; }
+.lg-dot.dot-purple { background: #722ed1; }
+.lg-dot.dot-orange { background: #fa8c16; }
+.lg-dot.dot-green { background: #52c41a; }
+.lg-dot.dot-blue { background: #1890ff; }
+
+.minimap-svg { width: 100%; height: auto; }
 
 @media (max-width: 1024px) {
   .region-cards { grid-template-columns: 1fr; }
