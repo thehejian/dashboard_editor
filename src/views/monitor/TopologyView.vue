@@ -92,8 +92,8 @@
 
         <div class="topology-content">
           <div v-if="activeNav === 'cloud-system' && topoTab === 'resource'" class="region-cards">
-            <div class="region-card region-card-green">
-              <div class="rc-header">
+          <div class="region-card region-card-green" @click="openNodeDetail('华东1')" style="cursor:pointer">
+            <div class="rc-header">
                 <h3>华东1</h3>
                 <span class="status-tag status-normal">正常</span>
               </div>
@@ -145,8 +145,8 @@
               </div>
             </div>
 
-            <div class="region-card region-card-orange">
-              <div class="rc-header">
+          <div class="region-card region-card-orange" @click="openNodeDetail('华北2')" style="cursor:pointer">
+            <div class="rc-header">
                 <h3>华北2</h3>
                 <span class="status-tag status-warning">警告</span>
               </div>
@@ -307,6 +307,19 @@ const nodeDetailMap = {
       { name: 'Redis', host: 'redis-cluster-01', status: 'normal', desc: '缓存服务' },
     ],
   },
+  华北2: {
+    name: '华北2', type: '节点', id: 'region-huabei2', status: 'warning',
+    physicalServers: [
+      { name: 'web-server-01', ip: '192.168.2.101', status: 'warning' },
+      { name: 'db-server-01', ip: '192.168.2.201', status: 'error' },
+    ],
+    services: [
+      { name: 'ECS', host: 'ecs-huabei-01', status: 'warning', desc: '弹性计算服务' },
+      { name: 'RDS', host: 'rds-huabei-01', status: 'normal', desc: '关系型数据库服务' },
+      { name: 'OSS', host: 'oss-huabei-01', status: 'normal', desc: '对象存储服务' },
+      { name: 'Kafka', host: 'kafka-huabei-01', status: 'error', desc: '消息队列服务' },
+    ],
+  },
 }
 
 function statusLabel(s) {
@@ -315,6 +328,9 @@ function statusLabel(s) {
 
 function onNodeSelect(name) {
   selectedNodeName.value = name
+}
+
+function openNodeDetail(name) {
   if (nodeDetailMap[name]) {
     nodeDetailData.value = nodeDetailMap[name]
     nodeDetailPanelOpen.value = true
