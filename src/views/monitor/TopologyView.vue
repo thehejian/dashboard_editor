@@ -49,9 +49,24 @@
             <a-tooltip title="全部展开">
               <a-button type="text" size="small"><i class="fa-solid fa-expand"></i></a-button>
             </a-tooltip>
-            <a-tooltip title="设置">
-              <a-button type="text" size="small"><i class="fa-solid fa-gear"></i></a-button>
-            </a-tooltip>
+            <a-dropdown :trigger="['click']">
+              <a-tooltip title="设置">
+                <a-button type="text" size="small"><i class="fa-solid fa-gear"></i></a-button>
+              </a-tooltip>
+              <template #overlay>
+                <a-menu>
+                  <a-menu-item key="legend" style="cursor:default;padding:6px 16px">
+                    <span class="status-dot dot-normal" style="margin-right:8px"></span> 正常
+                  </a-menu-item>
+                  <a-menu-item key="legend" style="cursor:default;padding:6px 16px">
+                    <span class="status-dot dot-warning" style="margin-right:8px"></span> 警告
+                  </a-menu-item>
+                  <a-menu-item key="legend" style="cursor:default;padding:6px 16px">
+                    <span class="status-dot dot-error" style="margin-right:8px"></span> 异常
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
           </div>
         </div>
       </div>
@@ -193,22 +208,9 @@
         </div>
       </div>
 
-      <div class="legend-float" v-if="legendVisible">
-        <div class="legend-header">
-          <span>状态图例</span>
-          <a-button type="text" size="small" @click="legendVisible = false"><i class="fa-solid fa-xmark"></i></a-button>
-        </div>
-        <div class="legend-body">
-          <div class="legend-item"><span class="status-dot dot-normal"></span> 正常</div>
-          <div class="legend-item"><span class="status-dot dot-warning"></span> 警告</div>
-          <div class="legend-item"><span class="status-dot dot-error"></span> 异常</div>
-        </div>
-      </div>
-
-      <div class="minimap-float" v-if="minimapVisible">
+      <div class="minimap-float">
         <div class="minimap-header">
           <span>缩略图</span>
-          <a-button type="text" size="small" @click="minimapVisible = false"><i class="fa-solid fa-xmark"></i></a-button>
         </div>
         <div class="minimap-body">
           <div class="minimap-dot"></div>
@@ -244,8 +246,6 @@ const placeholderText = computed(() => {
 
 const topoTab = ref('resource')
 const searchText = ref('')
-const legendVisible = ref(true)
-const minimapVisible = ref(true)
 
 const treeData = [
   {
@@ -569,17 +569,6 @@ onBeforeUnmount(() => {
   min-width: 24px; height: 20px; padding: 0 6px; border-radius: 3px;
   font-size: 11px; color: #fff; font-weight: 600;
 }
-
-/* legend float */
-.legend-float {
-  position: fixed; top: 100px; right: 24px;
-  background: rgba(255,255,255,0.95); border: 1px solid #e8e8e8;
-  border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  width: 150px; z-index: 100;
-}
-.legend-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 12px; font-weight: 600; color: var(--text); }
-.legend-body { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
-.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-sec); }
 
 /* minimap float */
 .minimap-float {
