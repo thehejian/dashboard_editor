@@ -552,6 +552,7 @@ function renderHealthTrendChart() {
     .encode('color', 'type')
     .style('lineWidth', 2)
     .style('shape', 'smooth')
+    .tooltip({ title: 'day', items: [{ channel: 'y', name: '资源数', valueFormatter: (v) => v.toLocaleString() }] })
 
   healthTrendChart.point()
     .encode('x', 'day')
@@ -675,6 +676,7 @@ function renderAlertDetailChart() {
     .encode('color', 'type')
     .style('lineWidth', 2)
     .style('shape', 'smooth')
+    .tooltip({ title: 'day', items: [{ channel: 'y', name: '告警数', valueFormatter: (v) => v.toLocaleString() }] })
 
   alertDetailChart.point()
     .encode('x', 'day')
@@ -748,6 +750,7 @@ function renderEventDetailChart() {
     .encode('color', 'type')
     .style('lineWidth', 2)
     .style('shape', 'smooth')
+    .tooltip({ title: 'day', items: [{ channel: 'y', name: '事件数', valueFormatter: (v) => v.toLocaleString() }] })
 
   eventDetailChart.point()
     .encode('x', 'day')
@@ -822,6 +825,7 @@ function renderDistDonutChart() {
     .scale('color', { range: ['#007BFF', '#69C0FF', '#52C41A', '#FA8C16'] })
     .style('stroke', '#fff')
     .style('lineWidth', 2)
+    .tooltip({ title: 'name', items: [{ channel: 'y', name: '数量', valueFormatter: (v) => v.toLocaleString() }] })
 
   distDonutChart.label({
     text: (d) => `${d.name}\n${d.value.toLocaleString()}`,
@@ -916,6 +920,7 @@ function renderTrendSingleChart() {
     .encode('x', 'day')
     .encode('y', 'value')
     .style('shape', 'smooth')
+    .tooltip({ title: 'day', items: [{ channel: 'y', name: '趋势值' }] })
 
   trendSingleChart.point()
     .encode('x', 'day')
@@ -946,6 +951,7 @@ function renderResourceTrendChart() {
     .encode('x', 'day')
     .encode('y', 'value')
     .style('shape', 'smooth')
+    .tooltip({ title: 'day', items: [{ channel: 'y', name: '资源总数', valueFormatter: (v) => v.toLocaleString() }] })
 
   resourceTrendChart.point()
     .encode('x', 'day')
@@ -975,6 +981,7 @@ function renderMainDonutChart() {
     .scale('color', { range: ['#007BFF', '#69C0FF', '#52C41A', '#FA8C16'] })
     .style('stroke', '#fff')
     .style('lineWidth', 2)
+    .tooltip({ title: 'name', items: [{ channel: 'y', name: '占比', valueFormatter: (v) => v + '%' }] })
 
   mainDonutChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16, itemLabelFontSize: 12 })
 
@@ -1145,6 +1152,7 @@ function renderAlertTrendChart() {
     .style('stroke', '#ff4d4f')
     .style('lineWidth', 2.5)
     .style('shape', 'smooth')
+    .tooltip({ title: 'date', items: [{ channel: 'y', name: '告警数量' }] })
 
   alertTrendChart.point()
     .encode('x', 'date')
