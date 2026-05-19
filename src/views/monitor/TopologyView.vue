@@ -29,14 +29,13 @@
           <button class="tab-btn" :class="{ active: topoTab === 'resource' }" @click="topoTab = 'resource'">资源拓扑</button>
           <button class="tab-btn" :class="{ active: topoTab === 'network' }" @click="onSwitchNetworkTab">网络拓扑</button>
         </div>
-        <div class="group-mode-bar" v-if="topoTab === 'network' && activeNav === 'cloud-system'">
-          <span class="gm-label">组网模式:</span>
-          <button class="gm-btn" :class="{ active: groupMode === 'single' }" @click="groupMode = 'single'">单核心组网</button>
-          <button class="gm-btn" :class="{ active: groupMode === 'dual' }" @click="groupMode = 'dual'">双核心组网</button>
-          <button class="gm-btn" :class="{ active: groupMode === 'three' }" @click="groupMode = 'three'">三层组网</button>
-        </div>
         <div class="topology-toolbar">
           <div class="toolbar-left">
+            <a-select v-if="topoTab === 'network'" v-model:value="groupMode" size="small" style="width: 126px">
+              <a-select-option value="single">单核心组网</a-select-option>
+              <a-select-option value="dual">双核心组网</a-select-option>
+              <a-select-option value="three">三层组网</a-select-option>
+            </a-select>
             <a-input-search v-model:value="searchText" placeholder="搜索节点..." style="width: 180px" size="small" />
             <a-button size="small">导出PNG</a-button>
             <a-button size="small">刷新</a-button>
@@ -51,31 +50,41 @@
               <a-button type="text" size="small" @click="zoomOut"><i class="fa-solid fa-minus"></i></a-button>
             </a-tooltip>
             <a-tooltip title="适应视图">
-              <a-button type="text" size="small" @click="resetView"><i class="fa-solid fa-expand"></i></a-button>
+              <a-button type="text" size="small" @click="resetView"><i class="fa-solid fa-maximize"></i></a-button>
             </a-tooltip>
             <a-tooltip title="全部收起">
-              <a-button type="text" size="small"><i class="fa-solid fa-compress"></i></a-button>
+              <a-button type="text" size="small"><i class="fa-solid fa-angles-up"></i></a-button>
             </a-tooltip>
             <a-tooltip title="全部展开">
-              <a-button type="text" size="small"><i class="fa-solid fa-expand"></i></a-button>
+              <a-button type="text" size="small"><i class="fa-solid fa-angles-down"></i></a-button>
             </a-tooltip>
             <a-dropdown :trigger="['click']">
               <a-tooltip title="设置">
                 <a-button type="text" size="small"><i class="fa-solid fa-gear"></i></a-button>
               </a-tooltip>
               <template #overlay>
-                <a-menu>
-                  <a-menu-item key="header" style="cursor:default;padding:4px 16px;font-size:11px;color:var(--text-sec);font-weight:600;">图例</a-menu-item>
-                  <a-menu-item key="legend-normal" style="cursor:default;padding:4px 16px 4px 24px;">
-                    <span class="status-dot dot-normal" style="margin-right:8px"></span> 正常
-                  </a-menu-item>
-                  <a-menu-item key="legend-warning" style="cursor:default;padding:4px 16px 4px 24px;">
-                    <span class="status-dot dot-warning" style="margin-right:8px"></span> 警告
-                  </a-menu-item>
-                  <a-menu-item key="legend-error" style="cursor:default;padding:4px 16px 4px 24px;">
-                    <span class="status-dot dot-error" style="margin-right:8px"></span> 异常
-                  </a-menu-item>
-                </a-menu>
+                <div class="sd-popup">
+                  <template v-if="topoTab === 'network'">
+                    <div class="sd-section">网络图例</div>
+                    <div class="sd-item"><span class="lg-line solid-red"></span> 云骨干/管理通道</div>
+                    <div class="sd-item"><span class="lg-line dashed-black"></span> Region专线/AZ互通</div>
+                    <div class="sd-item"><span class="lg-line solid-orange"></span> 网关/路由连接</div>
+                    <div class="sd-item"><span class="lg-line solid-blue"></span> 内网/核心层</div>
+                    <div class="sd-item"><span class="lg-line solid-green"></span> 业务网络/子网</div>
+                    <div class="sd-section" style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px;">对象类型</div>
+                    <div class="sd-item"><span class="lg-dot dot-red"></span> 云系统</div>
+                    <div class="sd-item"><span class="lg-dot dot-purple"></span> 路由器</div>
+                    <div class="sd-item"><span class="lg-dot dot-orange"></span> 网关</div>
+                    <div class="sd-item"><span class="lg-dot dot-green"></span> 交换机</div>
+                    <div class="sd-item"><span class="lg-dot dot-blue"></span> 主机组</div>
+                  </template>
+                  <template v-else>
+                    <div class="sd-section">图例</div>
+                    <div class="sd-item"><span class="status-dot dot-normal" style="margin-right:8px"></span> 正常</div>
+                    <div class="sd-item"><span class="status-dot dot-warning" style="margin-right:8px"></span> 警告</div>
+                    <div class="sd-item"><span class="status-dot dot-error" style="margin-right:8px"></span> 异常</div>
+                  </template>
+                </div>
               </template>
             </a-dropdown>
           </div>
@@ -211,24 +220,7 @@
 
           <div v-else class="network-topology">
             <div ref="networkContainer" class="network-canvas"></div>
-            <aside class="network-legend">
-              <div class="legend-section">
-                <h4>网络图例</h4>
-                <div class="legend-row"><span class="lg-line solid-red"></span> 云骨干/管理通道</div>
-                <div class="legend-row"><span class="lg-line dashed-black"></span> Region专线/AZ互通</div>
-                <div class="legend-row"><span class="lg-line solid-orange"></span> 网关/路由连接</div>
-                <div class="legend-row"><span class="lg-line solid-blue"></span> 内网/核心层</div>
-                <div class="legend-row"><span class="lg-line solid-green"></span> 业务网络/子网</div>
-              </div>
-              <div class="legend-section">
-                <h4>对象类型</h4>
-                <div class="legend-row"><span class="lg-dot dot-red"></span> 云系统</div>
-                <div class="legend-row"><span class="lg-dot dot-purple"></span> 路由器</div>
-                <div class="legend-row"><span class="lg-dot dot-orange"></span> 网关</div>
-                <div class="legend-row"><span class="lg-dot dot-green"></span> 交换机</div>
-                <div class="legend-row"><span class="lg-dot dot-blue"></span> 主机组</div>
-              </div>
-            </aside>
+
           </div>
         </div>
       </div>
@@ -579,7 +571,10 @@ const regionNorth = {
 const zoom = ref(1)
 function zoomIn() { zoom.value = Math.min(zoom.value + 0.1, 3) }
 function zoomOut() { zoom.value = Math.max(zoom.value - 0.1, 0.3) }
-function resetView() { zoom.value = 1 }
+function resetView() {
+  const g = topoTab.value === 'network' ? networkGraph : graph
+  if (g) g.fitView({ padding: 20 })
+}
 
 const g6Container = ref(null)
 let graph = null
@@ -1038,21 +1033,6 @@ onBeforeUnmount(() => {
   padding: 16px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0;
 }
 
-/* ── group mode bar ── */
-.group-mode-bar {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 16px; background: #fafafa; border-radius: 6px;
-  flex-shrink: 0;
-}
-.gm-label { font-size: 12px; color: var(--text-sec); white-space: nowrap; }
-.gm-btn {
-  padding: 3px 14px; border: 1px solid #d9d9d9; background: #fff;
-  border-radius: 4px; font-size: 12px; cursor: pointer; color: var(--text-sec);
-  transition: all 0.2s;
-}
-.gm-btn:hover { color: #1890ff; border-color: #1890ff; }
-.gm-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
-
 /* ── network topology ── */
 .network-topology {
   display: flex; height: 100%; gap: 0; position: relative;
@@ -1060,20 +1040,18 @@ onBeforeUnmount(() => {
 .network-canvas {
   flex: 1; height: 100%; min-height: 500px; background: #fafafa;
 }
-.network-legend {
-  width: 180px; flex-shrink: 0; padding: 16px;
-  background: #fff; border-left: 1px solid #f0f0f0;
-  display: flex; flex-direction: column; gap: 20px;
+.sd-popup {
+  min-width: 180px; background: #fff; border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12); padding: 8px 0;
 }
-.legend-section h4 {
-  font-size: 13px; font-weight: 600; color: var(--text);
-  margin: 0 0 10px; padding-bottom: 6px;
-  border-bottom: 1px solid #f0f0f0;
+.sd-section {
+  padding: 4px 16px; font-size: 11px; font-weight: 600; color: var(--text-sec);
 }
-.legend-row {
+.sd-item {
   display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--text-sec); margin-bottom: 6px;
+  padding: 4px 16px 4px 24px; font-size: 12px; color: var(--text); cursor: default;
 }
+.sd-item:hover { background: #f5f7fa; }
 .lg-line { display: inline-block; width: 28px; height: 3px; border-radius: 2px; flex-shrink: 0; }
 .lg-line.solid-red { background: #f5222d; }
 .lg-line.dashed-black { background: transparent; border-top: 2px dashed #333; height: 0; }
