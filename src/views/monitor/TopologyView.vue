@@ -26,8 +26,8 @@
 
       <div class="topology-header">
         <div class="topology-tabs">
-          <button class="tab-btn" :class="{ active: topoTab === 'resource' }" @click="topoTab = 'resource'">资源拓扑</button>
-          <button class="tab-btn" :class="{ active: topoTab === 'network' }" @click="onSwitchNetworkTab">网络拓扑</button>
+          <button class="tab-btn" :class="{ active: topoTab === 'resource' }" @click="switchTopoTab('resource')">资源拓扑</button>
+          <button class="tab-btn" :class="{ active: topoTab === 'network' }" @click="switchTopoTab('network')">网络拓扑</button>
         </div>
         <div class="topology-toolbar">
           <div class="toolbar-left">
@@ -351,7 +351,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Graph } from '@antv/g6'
 import TreeNode from './TreeNode.vue'
 
@@ -475,9 +476,11 @@ function statusLabel(s) {
   return ({ normal: '正常', warning: '警告', error: '异常' })[s] || s || ''
 }
 
-function onSwitchNetworkTab() {
-  topoTab.value = 'network'
-  setTimeout(() => initNetworkGraph(), 100)
+const route = useRoute()
+const router = useRouter()
+const topoTab = computed(() => route.query.tab || 'resource')
+function switchTopoTab(tab) {
+  router.push({ query: { ...route.query, tab } })
 }
 
 function onNodeSelect(name) {
@@ -500,7 +503,6 @@ const placeholderText = computed(() => {
   return map[activeNav.value] || ''
 })
 
-const topoTab = ref('resource')
 const searchText = ref('')
 const groupMode = ref('single')
 const networkContainer = ref(null)
@@ -741,8 +743,14 @@ function initResourceGraph() {
   graph.render()
 }
 
+watch(topoTab, (val) => {
+  if (val === 'network') nextTick(() => initNetworkGraph())
+  else destroyNetworkGraph()
+})
+
 onMounted(() => {
   initResourceGraph()
+  if (topoTab.value === 'network') nextTick(() => initNetworkGraph())
 })
 
 onBeforeUnmount(() => {
