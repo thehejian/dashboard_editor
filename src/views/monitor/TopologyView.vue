@@ -55,13 +55,14 @@
               </a-tooltip>
               <template #overlay>
                 <a-menu>
-                  <a-menu-item key="legend" style="cursor:default;padding:6px 16px">
+                  <a-menu-item key="header" style="cursor:default;padding:4px 16px;font-size:11px;color:var(--text-sec);font-weight:600;">图例</a-menu-item>
+                  <a-menu-item key="legend-normal" style="cursor:default;padding:4px 16px 4px 24px;">
                     <span class="status-dot dot-normal" style="margin-right:8px"></span> 正常
                   </a-menu-item>
-                  <a-menu-item key="legend" style="cursor:default;padding:6px 16px">
+                  <a-menu-item key="legend-warning" style="cursor:default;padding:4px 16px 4px 24px;">
                     <span class="status-dot dot-warning" style="margin-right:8px"></span> 警告
                   </a-menu-item>
-                  <a-menu-item key="legend" style="cursor:default;padding:6px 16px">
+                  <a-menu-item key="legend-error" style="cursor:default;padding:4px 16px 4px 24px;">
                     <span class="status-dot dot-error" style="margin-right:8px"></span> 异常
                   </a-menu-item>
                 </a-menu>
