@@ -5,79 +5,65 @@
       <a-tree
         v-model:selectedKeys="selectedKeys"
         :tree-data="treeData"
-        :default-expanded-keys="['tenant', 'auth', 'integration']"
+        :default-expanded-keys="['/system/security/tenant', '/system/security/auth', '/system/security/integration']"
         @select="onSelect"
         block-node
       />
     </div>
     <div class="security-content">
-      <component :is="currentComponent" />
+      <router-view />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, shallowRef, markRaw } from 'vue'
-import UserManagement from './security/UserManagement.vue'
-import UserGroupsView from './security/UserGroupsView.vue'
-import PoliciesView from './security/PoliciesView.vue'
-import RolesView from './security/RolesView.vue'
-import ResourceGroupsView from './security/ResourceGroupsView.vue'
-import AppIntegrationView from './security/AppIntegrationView.vue'
-import IdentityProvidersView from './security/IdentityProvidersView.vue'
-import IntegrationAccountsView from './security/IntegrationAccountsView.vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-const componentMap = {
-  users: markRaw(UserManagement),
-  'user-groups': markRaw(UserGroupsView),
-  policies: markRaw(PoliciesView),
-  roles: markRaw(RolesView),
-  'resource-groups': markRaw(ResourceGroupsView),
-  'app-integration': markRaw(AppIntegrationView),
-  idp: markRaw(IdentityProvidersView),
-  'integration-accounts': markRaw(IntegrationAccountsView),
-}
+const route = useRoute()
+const router = useRouter()
 
 const treeData = [
   {
     title: '租户管理',
-    key: 'tenant',
+    key: '/system/security/tenant',
     selectable: false,
     children: [
-      { title: '用户管理', key: 'users', isLeaf: true },
+      { title: '用户管理', key: '/system/security/users', isLeaf: true },
     ],
   },
   {
     title: '授权管理',
-    key: 'auth',
+    key: '/system/security/auth',
     selectable: false,
     children: [
-      { title: '用户组管理', key: 'user-groups', isLeaf: true },
-      { title: '策略管理', key: 'policies', isLeaf: true },
-      { title: '角色管理', key: 'roles', isLeaf: true },
-      { title: '资源组', key: 'resource-groups', isLeaf: true },
+      { title: '用户组管理', key: '/system/security/user-groups', isLeaf: true },
+      { title: '策略管理', key: '/system/security/policies', isLeaf: true },
+      { title: '角色管理', key: '/system/security/roles', isLeaf: true },
+      { title: '资源组', key: '/system/security/resource-groups', isLeaf: true },
     ],
   },
   {
     title: '集成管理',
-    key: 'integration',
+    key: '/system/security/integration',
     selectable: false,
     children: [
-      { title: '应用集成管理', key: 'app-integration', isLeaf: true },
-      { title: '身份提供商', key: 'idp', isLeaf: true },
-      { title: '集成账号', key: 'integration-accounts', isLeaf: true },
+      { title: '应用集成管理', key: '/system/security/app-integration', isLeaf: true },
+      { title: '身份提供商', key: '/system/security/idp', isLeaf: true },
+      { title: '集成账号', key: '/system/security/integration-accounts', isLeaf: true },
     ],
   },
 ]
 
-const selectedKeys = ref(['users'])
-const currentComponent = shallowRef(componentMap['users'])
+const selectedKeys = computed(() => {
+  const p = route.path
+  if (p.startsWith('/system/security/idp/create')) return ['/system/security/idp']
+  return [p]
+})
 
 function onSelect(keys) {
-  if (!keys.length) return
-  const key = keys[0]
-  if (componentMap[key]) {
-    currentComponent.value = componentMap[key]
+  if (keys.length && keys[0] !== route.path) {
+    router.push(keys[0])
   }
 }
 </script>

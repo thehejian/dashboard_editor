@@ -20,7 +20,22 @@ const routes = [
   { path: '/ops/logs', name: 'ops-logs', component: () => import('../views/ops/LogsView.vue') },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
 
-  { path: '/system/security', name: 'system-security', component: () => import('../views/system/SecurityView.vue') },
+  {
+    path: '/system/security',
+    component: () => import('../views/system/SecurityView.vue'),
+    redirect: '/system/security/users',
+    children: [
+      { path: 'users', component: () => import('../views/system/security/UserManagement.vue') },
+      { path: 'user-groups', component: () => import('../views/system/security/UserGroupsView.vue') },
+      { path: 'policies', component: () => import('../views/system/security/PoliciesView.vue') },
+      { path: 'roles', component: () => import('../views/system/security/RolesView.vue') },
+      { path: 'resource-groups', component: () => import('../views/system/security/ResourceGroupsView.vue') },
+      { path: 'app-integration', component: () => import('../views/system/security/AppIntegrationView.vue') },
+      { path: 'idp', component: () => import('../views/system/security/IdentityProvidersView.vue') },
+      { path: 'idp/create', component: () => import('../views/system/security/IdpCreatePage.vue') },
+      { path: 'integration-accounts', component: () => import('../views/system/security/IntegrationAccountsView.vue') },
+    ],
+  },
   { path: '/system/users', redirect: '/system/security' },
   { path: '/system/config', name: 'system-config', component: () => import('../views/system/SystemConfigView.vue') },
 ]
