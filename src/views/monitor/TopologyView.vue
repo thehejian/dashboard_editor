@@ -655,9 +655,8 @@ function initNetworkGraph() {
       type: 'circle',
       style: {
         size: (d) => d.style?.size || 44,
-        fill: (d) => d.style?.fill || '#1890ff',
-        stroke: '#fff',
-        lineWidth: 3,
+        fill: 'transparent',
+        stroke: 'transparent',
         labelText: (d) => d.data?.label || '',
         labelPlacement: 'bottom',
         labelOffsetY: 6,
@@ -667,8 +666,8 @@ function initNetworkGraph() {
         labelFontWeight: '500',
         iconFontFamily: 'Font Awesome 6 Free Solid',
         iconText: (d) => d.iconText || '',
-        iconFill: '#fff',
-        iconFontSize: (d) => (d.style?.size || 44) >= 48 ? 20 : 16,
+        iconFill: (d) => d.style?.fill === '#f5222d' ? '#f5222d' : '#1890ff',
+        iconFontSize: (d) => (d.style?.size || 44) >= 52 ? 28 : 24,
       }
     },
     edge: {
@@ -692,7 +691,7 @@ function initNetworkGraph() {
         stroke: (d) => d.style?.stroke || '#e8e8e8',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         radius: (d) => d.style?.radius || 6,
-        padding: [30, 40, 20, 40],
+        padding: [30, 28, 20, 28],
         labelText: (d) => d.data?.label || '',
         labelFontSize: 13,
         labelFontWeight: 'bold',
@@ -704,8 +703,9 @@ function initNetworkGraph() {
     layout: {
       type: 'dagre',
       rankdir: 'TB',
-      nodesep: 80,
+      nodesep: 100,
       ranksep: 80,
+      align: 'UL',
     },
     behaviors: ['drag-canvas', 'zoom-canvas'],
   })
