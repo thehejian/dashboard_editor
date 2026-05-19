@@ -72,11 +72,11 @@
                     <div class="sd-item"><span class="lg-line solid-blue"></span> 内网/核心层</div>
                     <div class="sd-item"><span class="lg-line solid-green"></span> 业务网络/子网</div>
                     <div class="sd-section" style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px;">对象类型</div>
-                    <div class="sd-item"><span class="lg-dot dot-red"></span> 云系统</div>
-                    <div class="sd-item"><span class="lg-dot dot-purple"></span> 路由器</div>
-                    <div class="sd-item"><span class="lg-dot dot-orange"></span> 网关</div>
-                    <div class="sd-item"><span class="lg-dot dot-green"></span> 交换机</div>
-                    <div class="sd-item"><span class="lg-dot dot-blue"></span> 主机组</div>
+                    <div class="sd-item"><i class="fa-solid fa-cloud" style="width:14px;text-align:center;color:#8c8c8c"></i> 云系统</div>
+                    <div class="sd-item"><i class="fa-solid fa-route" style="width:14px;text-align:center;color:#8c8c8c"></i> 路由器</div>
+                    <div class="sd-item"><i class="fa-solid fa-right-left" style="width:14px;text-align:center;color:#8c8c8c"></i> 网关</div>
+                    <div class="sd-item"><i class="fa-solid fa-code-branch" style="width:14px;text-align:center;color:#8c8c8c"></i> 交换机</div>
+                    <div class="sd-item"><i class="fa-solid fa-server" style="width:14px;text-align:center;color:#8c8c8c"></i> 主机组</div>
                   </template>
                   <template v-else>
                     <div class="sd-section">图例</div>
@@ -107,9 +107,9 @@
 
         <div class="topology-content">
           <div v-if="activeNav === 'cloud-system' && topoTab === 'resource'" class="region-cards">
-          <div class="region-card region-card-green" @click="openNodeDetail('华东1')" style="cursor:pointer">
+          <div class="region-card" @click="openNodeDetail('华东1')" style="cursor:pointer">
             <div class="rc-header">
-                <h3>华东1</h3>
+                <h3><span class="rc-badge rc-badge-green"></span>华东1</h3>
                 <span class="status-tag status-normal">正常</span>
               </div>
               <div class="rc-body">
@@ -160,9 +160,9 @@
               </div>
             </div>
 
-          <div class="region-card region-card-orange" @click="openNodeDetail('华北2')" style="cursor:pointer">
+          <div class="region-card" @click="openNodeDetail('华北2')" style="cursor:pointer">
             <div class="rc-header">
-                <h3>华北2</h3>
+                <h3><span class="rc-badge rc-badge-orange"></span>华北2</h3>
                 <span class="status-tag status-warning">警告</span>
               </div>
               <div class="rc-body">
@@ -685,7 +685,7 @@ function initNetworkGraph() {
         stroke: (d) => d.style?.stroke || '#d9d9d9',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         radius: (d) => d.style?.radius || 6,
-        padding: [30, 20, 20, 20],
+        padding: [30, 40, 20, 40],
         labelText: (d) => d.data?.label || '',
         labelFontSize: 13,
         labelFontWeight: 'bold',
@@ -697,8 +697,8 @@ function initNetworkGraph() {
     layout: {
       type: 'dagre',
       rankdir: 'TB',
-      nodesep: 20,
-      ranksep: 60,
+      nodesep: 80,
+      ranksep: 80,
     },
     behaviors: ['drag-canvas', 'zoom-canvas'],
   })
@@ -924,14 +924,16 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
-.region-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.rc-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
-.region-card-green .rc-header { background: linear-gradient(135deg, #43a047, #66bb6a); }
-.region-card-orange .rc-header { background: linear-gradient(135deg, #ef6c00, #ffa726); }
-.rc-header h3 { font-size: 16px; font-weight: 600; color: #fff; margin: 0; }
-.status-tag { font-size: 12px; padding: 2px 12px; border-radius: 12px; color: #fff; }
-.status-tag.status-normal { background: rgba(255,255,255,0.25); }
-.status-tag.status-warning { background: rgba(255,255,255,0.25); }
+.region-card { background: #fff; border-radius: 8px; border: 1px solid #e8e8e8; overflow: hidden; }
+.region-card:hover { border-color: #1890ff; box-shadow: 0 2px 8px rgba(24,144,255,0.08); }
+.rc-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #f0f0f0; }
+.rc-badge { display: inline-block; width: 4px; height: 16px; border-radius: 2px; margin-right: 8px; vertical-align: middle; }
+.rc-badge-green { background: #52c41a; }
+.rc-badge-orange { background: #fa8c16; }
+.rc-header h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; display: flex; align-items: center; }
+.status-tag { font-size: 12px; padding: 1px 10px; border-radius: 4px; border: 1px solid; }
+.status-tag.status-normal { background: #f6ffed; color: #52c41a; border-color: #b7eb8f; }
+.status-tag.status-warning { background: #fff7e6; color: #fa8c16; border-color: #ffd591; }
 .rc-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 20px; }
 .rc-section-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 10px; }
 .service-grid { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1066,13 +1068,6 @@ onBeforeUnmount(() => {
 .lg-line.solid-orange { background: #fa8c16; }
 .lg-line.solid-blue { background: #1890ff; }
 .lg-line.solid-green { background: #52c41a; }
-.lg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.lg-dot.dot-red { background: #f5222d; }
-.lg-dot.dot-purple { background: #722ed1; }
-.lg-dot.dot-orange { background: #fa8c16; }
-.lg-dot.dot-green { background: #52c41a; }
-.lg-dot.dot-blue { background: #1890ff; }
-
 .minimap-svg { width: 100%; height: auto; }
 
 @media (max-width: 1024px) {
