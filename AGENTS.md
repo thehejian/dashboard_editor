@@ -54,7 +54,8 @@ src/
 - `import { Graph } from '@antv/g6'`
 - `getChildrenData(comboId)` 返回空数组 → 用 `getNodeData().filter(d => d.combo === id)`
 - `graph.render()` 是异步的，后处理必须在 `.then()` 内
-- 网络拓扑勿用 dagre layout（手动 grid 更干净）：在 node data 中设 `x`/`y`，combo data 中设 `x`/`y`/`style.size`，不传 `layout` 参数
+- 网络拓扑勿用 dagre layout（手动 grid 更干净）：在 node data 的 `style` 中设 `x`/`y`（**不是**顶层属性），combo data 的 `style` 中设 `x`/`y`/`size`，不传 `layout` 参数
+  - G6 v5 从 `datum.style.x / .y` 读取位置，顶层 `x`/`y` 会被忽略
   - combo size 需从子节点 bounds + padding 预计算：`min/max(x ± size/2)` + combo padding
   - 初次渲染后用 `graph.fitView({ padding: 20 })` 对齐画布
 - 节点: `type: 'rect', size: [48, 48]` + FontAwesome `iconFontFamily: 'Font Awesome 6 Free'`

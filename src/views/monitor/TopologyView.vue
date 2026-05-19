@@ -668,27 +668,29 @@ const NET_EDGES = [
 ]
 
 function createNetworkTopoData() {
-  const nodes = NET_NODE_DEFS.map(n => ({
-    ...n,
-    x: NET_LAYOUT[n.id][0],
-    y: NET_LAYOUT[n.id][1],
-  }))
+  const nodes = NET_NODE_DEFS.map(n => {
+    const pos = NET_LAYOUT[n.id]
+    return {
+      ...n,
+      style: { ...n.style, x: pos[0], y: pos[1] },
+    }
+  })
   const combos = NET_COMBO_DEFS.map(c => {
     const children = nodes.filter(n => n.combo === c.id)
     if (!children.length) return c
+    const gx = (d) => d.style.x
+    const gy = (d) => d.style.y
     const half = (d) => (d.style?.size || 48) / 2
-    const l = Math.min(...children.map(n => n.x - half(n)))
-    const r = Math.max(...children.map(n => n.x + half(n)))
-    const t = Math.min(...children.map(n => n.y - half(n)))
-    const b = Math.max(...children.map(n => n.y + half(n)))
-    const cx = (l + r) / 2
-    const cy = (t + b) / 2
+    const l = Math.min(...children.map(n => gx(n) - half(n)))
+    const r = Math.max(...children.map(n => gx(n) + half(n)))
+    const t = Math.min(...children.map(n => gy(n) - half(n)))
+    const b = Math.max(...children.map(n => gy(n) + half(n)))
     return {
       ...c,
-      x: cx,
-      y: cy,
       style: {
         fill: '#fff', stroke: '#e8e8e8', lineWidth: 1.5, radius: 8,
+        x: (l + r) / 2,
+        y: (t + b) / 2,
         size: [r - l + COMBO_PAD[1] + COMBO_PAD[3], b - t + COMBO_PAD[0] + COMBO_PAD[2]],
       }
     }
