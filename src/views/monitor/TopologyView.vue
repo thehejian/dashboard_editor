@@ -724,40 +724,67 @@ function comboChildren(comboId) {
   return networkGraph.getNodeData().filter(d => d.combo === comboId).map(d => d.id)
 }
 
+function getPad() {
+  const cd = networkGraph.getComboData()
+  return cd[0]?.style?.padding?.[1] || 28
+}
+
+function childrenAvgY(ids) {
+  const ys = ids.map(id => networkGraph.getNodeData(id).y).filter(y => y != null)
+  return ys.length ? (Math.min(...ys) + Math.max(...ys)) / 2 : null
+}
+
 function alignNetworkCombos() {
   if (!networkGraph) return
   const comboData = networkGraph.getComboData()
   if (comboData.length < 2) return
-  const centers = comboData.map(c => {
+  const centers = []
+  for (const c of comboData) {
     const children = comboChildren(c.id)
-    const ys = children.map(id => networkGraph.getNodeData(id).y)
-    const cy = (Math.min(...ys) + Math.max(...ys)) / 2
-    return { id: c.id, cy }
-  })
+    if (!children.length) return
+    const cy = childrenAvgY(children)
+    if (cy == null) return
+    centers.push({ id: c.id, cy })
+  }
   const avg = centers.reduce((s, c) => s + c.cy, 0) / centers.length
-  centers.forEach(c => {
+  const tr = {}
+  for (const c of centers) {
     const diff = avg - c.cy
     if (Math.abs(diff) > 1) {
-      comboChildren(c.id).forEach(id => {
-        networkGraph.translateElementBy({ [id]: [0, diff] }, false)
-      })
+      for (const id of comboChildren(c.id)) tr[id] = [0, diff]
     }
-  })
+  }
+  const keys = Object.keys(tr)
+  if (keys.length) networkGraph.translateElementBy(tr, false)
 }
 
 function centerRank0Nodes() {
   if (!networkGraph) return
   const north = comboChildren('region-north')
   const east = comboChildren('region-east')
-  const pad = 28
-  const half = id => (networkGraph.getNodeData(id).style?.size || 48) / 2
-  const leftEdge  = Math.min(...east.map(id => networkGraph.getNodeData(id).x - half(id))) - pad
-  const rightEdge = Math.max(...north.map(id => networkGraph.getNodeData(id).x + half(id))) + pad
-  const cx = (leftEdge + rightEdge) / 2
-  ;['internet', 'border-leaf'].forEach(id => {
+  if (!north.length || !east.length) return
+  const pad = getPad()
+  const getX = id => {
     const d = networkGraph.getNodeData(id)
-    networkGraph.translateElementBy({ [id]: [cx - d.x, 0] }, false)
-  })
+    if (d.x == null) return null
+    return d.x - ((d.style?.size || 48) / 2)
+  }
+  const xs = east.map(getX).concat(north.map(id => {
+    const d = networkGraph.getNodeData(id)
+    if (d.x == null) return null
+    return d.x + ((d.style?.size || 48) / 2)
+  }))
+  if (xs.some(x => x == null)) return
+  const leftEdge  = Math.min(...xs.slice(0, east.length)) - pad
+  const rightEdge = Math.max(...xs.slice(east.length)) + pad
+  const cx = (leftEdge + rightEdge) / 2
+  const tr = {}
+  for (const id of ['internet', 'border-leaf']) {
+    const d = networkGraph.getNodeData(id)
+    if (d.x == null) return
+    tr[id] = [cx - d.x, 0]
+  }
+  networkGraph.translateElementBy(tr, false)
 }
 
 function destroyNetworkGraph() {
