@@ -217,6 +217,60 @@
           <div class="minimap-dot"></div>
         </div>
       </div>
+
+      <div class="node-detail-panel" :class="{ open: nodeDetailPanelOpen }">
+        <div class="node-detail-mask" @click="closeNodeDetailPanel"></div>
+        <div class="node-detail-content">
+          <div class="node-detail-header">
+            <h3><i class="fa-solid fa-server" style="color:#52c41a;margin-right:6px"></i>{{ nodeDetailData?.name || '' }}</h3>
+            <a-button type="text" class="close-btn" @click="closeNodeDetailPanel"><i class="fa-solid fa-xmark"></i></a-button>
+          </div>
+          <div class="node-detail-body">
+            <div class="nd-section">
+              <h4 class="nd-section-title">基本信息</h4>
+              <div class="nd-info-grid">
+                <div class="nd-info-row"><span class="nd-label">类型</span><span class="nd-value">{{ nodeDetailData?.type }}</span></div>
+                <div class="nd-info-row"><span class="nd-label">ID</span><span class="nd-value">{{ nodeDetailData?.id }}</span></div>
+                <div class="nd-info-row"><span class="nd-label">状态</span><span class="nd-value"><span class="status-tag-sm status-nd" :class="'status-nd-' + nodeDetailData?.status">{{ statusLabel(nodeDetailData?.status) }}</span></span></div>
+              </div>
+            </div>
+
+            <div class="nd-section">
+              <h4 class="nd-section-title">物理资源</h4>
+              <div class="nd-phy-hint"><i class="fa-solid fa-computer"></i> 物理服务器 (2个异常)</div>
+              <table class="nd-table">
+                <thead><tr><th>名称</th><th>IP地址</th><th>状态</th></tr></thead>
+                <tbody>
+                  <tr v-for="s in nodeDetailData?.physicalServers || []" :key="s.name">
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.ip }}</td>
+                    <td><span class="status-tag-sm" :class="'status-nd-' + s.status">{{ statusLabel(s.status) }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="nd-section">
+              <h4 class="nd-section-title">云服务 ({{ nodeDetailData?.services?.length || 0 }})</h4>
+              <table class="nd-table">
+                <thead><tr><th>服务名称</th><th>部署主机/POD</th><th>状态</th><th>描述</th></tr></thead>
+                <tbody>
+                  <tr v-for="svc in nodeDetailData?.services || []" :key="svc.name">
+                    <td>{{ svc.name }}</td>
+                    <td>{{ svc.host }}</td>
+                    <td><span class="status-tag-sm" :class="'status-nd-' + svc.status">{{ statusLabel(svc.status) }}</span></td>
+                    <td class="nd-desc">{{ svc.desc }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="node-detail-footer">
+            <a-button type="primary"><i class="fa-solid fa-arrow-down"></i> 下钻查看</a-button>
+            <a-button><i class="fa-regular fa-eye"></i> 查看详情</a-button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -235,9 +289,40 @@ const activeNav = ref('cloud-system')
 const navCollapsed = ref(false)
 const cloudViewCollapsed = ref(false)
 const selectedNodeName = ref('生产云')
+const nodeDetailPanelOpen = ref(false)
+const nodeDetailData = ref(null)
+
+const nodeDetailMap = {
+  华东1: {
+    name: '华东1', type: '节点', id: 'region-huadong1', status: 'normal',
+    physicalServers: [
+      { name: 'app-server-02', ip: '192.168.1.104', status: 'warning' },
+      { name: 'mq-server-01', ip: '192.168.1.109', status: 'error' },
+    ],
+    services: [
+      { name: 'ECS', host: 'ecs-controller-01', status: 'normal', desc: '弹性计算服务' },
+      { name: 'RDS', host: 'rds-manager-01', status: 'normal', desc: '关系型数据库服务' },
+      { name: 'OSS', host: 'oss-server-01', status: 'normal', desc: '对象存储服务' },
+      { name: 'SLB', host: 'slb-controller-01', status: 'warning', desc: '负载均衡服务' },
+      { name: 'Redis', host: 'redis-cluster-01', status: 'normal', desc: '缓存服务' },
+    ],
+  },
+}
+
+function statusLabel(s) {
+  return ({ normal: '正常', warning: '警告', error: '异常' })[s] || s || ''
+}
 
 function onNodeSelect(name) {
   selectedNodeName.value = name
+  if (nodeDetailMap[name]) {
+    nodeDetailData.value = nodeDetailMap[name]
+    nodeDetailPanelOpen.value = true
+  }
+}
+
+function closeNodeDetailPanel() {
+  nodeDetailPanelOpen.value = false
 }
 
 const placeholderText = computed(() => {
@@ -580,6 +665,68 @@ onBeforeUnmount(() => {
 .minimap-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 12px; font-weight: 600; color: var(--text); }
 .minimap-body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100px; }
 .minimap-dot { width: 12px; height: 12px; border-radius: 50%; background: #1890ff; }
+
+/* ── node detail panel ── */
+.node-detail-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 1050; pointer-events: none; opacity: 0;
+  transition: opacity 0.3s;
+}
+.node-detail-panel.open { pointer-events: auto; opacity: 1; }
+.node-detail-mask {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background: rgba(0,0,0,0.3);
+}
+.node-detail-content {
+  position: absolute; top: 0; right: -500px;
+  width: 500px; height: 100%; background: #fff;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column;
+  transition: right 0.3s;
+}
+.node-detail-panel.open .node-detail-content { right: 0; }
+.node-detail-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+}
+.node-detail-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.node-detail-header .close-btn { font-size: 16px; color: #8c8c8c; }
+.node-detail-header .close-btn:hover { color: #1890ff; }
+.node-detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+.nd-section { margin-bottom: 24px; }
+.nd-section-title {
+  font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 12px;
+  padding-left: 10px; border-left: 3px solid #1890ff;
+}
+.nd-info-grid { display: flex; flex-direction: column; gap: 8px; }
+.nd-info-row { display: flex; align-items: center; gap: 12px; }
+.nd-label { font-size: 12px; color: #8c8c8c; min-width: 48px; }
+.nd-value { font-size: 13px; color: var(--text); }
+.nd-phy-hint { font-size: 13px; color: #fa8c16; margin-bottom: 10px; }
+.nd-phy-hint i { margin-right: 6px; }
+.nd-table { width: 100%; border-collapse: collapse; }
+.nd-table th {
+  font-size: 12px; font-weight: 600; color: #8c8c8c;
+  text-align: left; padding: 8px 10px; background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+.nd-table td {
+  font-size: 13px; color: var(--text); padding: 10px;
+  border-bottom: 1px solid #f5f5f5;
+}
+.nd-table tbody tr:last-child td { border-bottom: none; }
+.nd-desc { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8c8c8c; }
+.status-tag-sm {
+  display: inline-block; font-size: 11px; padding: 1px 8px;
+  border-radius: 4px; font-weight: 500;
+}
+.status-nd-normal { background: #f6ffed; color: #52c41a; }
+.status-nd-warning { background: #fff7e6; color: #fa8c16; }
+.status-nd-error { background: #fff1f0; color: #f5222d; }
+.node-detail-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 16px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0;
+}
 
 @media (max-width: 1024px) {
   .region-cards { grid-template-columns: 1fr; }
