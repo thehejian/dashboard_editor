@@ -669,7 +669,7 @@ function initNetworkGraph() {
         iconFontWeight: 900,
         iconText: (d) => d.iconText || '',
         iconFill: '#fff',
-        iconFontSize: 32,
+        iconFontSize: 24,
       }
     },
     edge: {
@@ -678,7 +678,6 @@ function initNetworkGraph() {
         stroke: (d) => d.style?.stroke || '#d9d9d9',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         lineDash: (d) => d.style?.lineDash || undefined,
-        endArrow: true,
         labelText: (d) => d.data?.label || '',
         labelFontSize: 10,
         labelFill: '#666',
@@ -698,8 +697,8 @@ function initNetworkGraph() {
         labelFontSize: 13,
         labelFontWeight: 'bold',
         labelFill: '#333',
-        labelPlacement: 'top-left',
-        labelOffsetY: -10,
+        labelPlacement: 'bottom',
+        labelOffsetY: 10,
       }
     },
     layout: {
@@ -714,31 +713,56 @@ function initNetworkGraph() {
   networkGraph.render()
 
   alignNetworkCombos()
-  networkGraph.on('afterlayout', () => alignNetworkCombos())
+  centerRank0Nodes()
+  networkGraph.on('afterlayout', () => {
+    alignNetworkCombos()
+    centerRank0Nodes()
+  })
 }
 
 function alignNetworkCombos() {
   if (!networkGraph) return
   const comboData = networkGraph.getComboData()
   if (comboData.length < 2) return
-  const tops = comboData.map(c => {
+  const centers = comboData.map(c => {
     const children = networkGraph.getChildrenData(c.id).map(d => d.id || d)
-    const topY = Math.min(...children.map(id => {
-      const d = networkGraph.getNodeData(id)
-      return d.y - (d.style?.size || 44) / 2
-    }))
-    return { id: c.id, topY }
+    const ys = children.map(id => networkGraph.getNodeData(id).y)
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2
+    return { id: c.id, cy }
   })
-  const minTop = Math.min(...tops.map(t => t.topY))
-  tops.forEach(t => {
-    const diff = minTop - t.topY
+  const avg = centers.reduce((s, c) => s + c.cy, 0) / centers.length
+  centers.forEach(c => {
+    const diff = avg - c.cy
     if (Math.abs(diff) > 1) {
-      const children = networkGraph.getChildrenData(t.id).map(d => d.id || d)
+      const children = networkGraph.getChildrenData(c.id).map(d => d.id || d)
       const tr = {}
       children.forEach(id => { tr[id] = [0, diff] })
       networkGraph.translateElementBy(tr, false)
     }
   })
+}
+
+function centerRank0Nodes() {
+  if (!networkGraph) return
+  const childrenEast = networkGraph.getChildrenData('region-east').map(d => d.id || d)
+  const childrenNorth = networkGraph.getChildrenData('region-north').map(d => d.id || d)
+  const pad = 28
+  const half = d => (d.style?.size || 48) / 2
+  const leftEdge = Math.min(...childrenEast.map(id => {
+    const d = networkGraph.getNodeData(id)
+    return d.x - half(d)
+  })) - pad
+  const rightEdge = Math.max(...childrenNorth.map(id => {
+    const d = networkGraph.getNodeData(id)
+    return d.x + half(d)
+  })) + pad
+  const cx = (leftEdge + rightEdge) / 2
+  const internet = networkGraph.getNodeData('internet')
+  const border = networkGraph.getNodeData('border-leaf')
+  const tr = {}
+  tr['internet'] = [cx - internet.x, 0]
+  tr['border-leaf'] = [cx - border.x, 0]
+  networkGraph.translateElementBy(tr, false)
 }
 
 function destroyNetworkGraph() {
