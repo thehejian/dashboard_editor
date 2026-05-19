@@ -154,7 +154,7 @@ function confirmCreate() {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 24px;
+  padding: 11px 24px;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
   flex-shrink: 0;
