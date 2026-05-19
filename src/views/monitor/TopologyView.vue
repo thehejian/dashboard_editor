@@ -222,7 +222,7 @@
         <div class="node-detail-mask" @click="closeNodeDetailPanel"></div>
         <div class="node-detail-content">
           <div class="node-detail-header">
-            <h3><i class="fa-solid fa-server" style="color:#52c41a;margin-right:6px"></i>{{ nodeDetailData?.name || '' }}</h3>
+            <h3>{{ nodeDetailData?.name || '' }}</h3>
             <a-button type="text" class="close-btn" @click="closeNodeDetailPanel"><i class="fa-solid fa-xmark"></i></a-button>
           </div>
           <div class="node-detail-body">
@@ -231,43 +231,57 @@
               <div class="nd-info-grid">
                 <div class="nd-info-row"><span class="nd-label">类型</span><span class="nd-value">{{ nodeDetailData?.type }}</span></div>
                 <div class="nd-info-row"><span class="nd-label">ID</span><span class="nd-value">{{ nodeDetailData?.id }}</span></div>
-                <div class="nd-info-row"><span class="nd-label">状态</span><span class="nd-value"><span class="status-tag-sm status-nd" :class="'status-nd-' + nodeDetailData?.status">{{ statusLabel(nodeDetailData?.status) }}</span></span></div>
+                <div class="nd-info-row"><span class="nd-label">状态</span><span class="nd-value"><span class="status-tag-sm" :class="'status-nd-' + nodeDetailData?.status">{{ statusLabel(nodeDetailData?.status) }}</span></span></div>
               </div>
             </div>
 
             <div class="nd-section">
-              <h4 class="nd-section-title">物理资源</h4>
-              <div class="nd-phy-hint"><i class="fa-solid fa-computer"></i> 物理服务器 (2个异常)</div>
-              <table class="nd-table">
-                <thead><tr><th>名称</th><th>IP地址</th><th>状态</th></tr></thead>
-                <tbody>
-                  <tr v-for="s in nodeDetailData?.physicalServers || []" :key="s.name">
-                    <td>{{ s.name }}</td>
-                    <td>{{ s.ip }}</td>
-                    <td><span class="status-tag-sm" :class="'status-nd-' + s.status">{{ statusLabel(s.status) }}</span></td>
-                  </tr>
-                </tbody>
-              </table>
+              <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.phy = !ndSectionOpen.phy">
+                <i class="fa-solid" :class="ndSectionOpen.phy ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                物理资源
+              </h4>
+              <template v-if="ndSectionOpen.phy">
+                <div class="nd-phy-hint">物理服务器 ({{ abnormalCount(nodeDetailData?.physicalServers) }}个异常)</div>
+                <a-input-search v-model:value="ndPhysicalSearch" placeholder="搜索物理服务器..." class="nd-search" />
+                <table class="nd-table">
+                  <thead><tr><th>名称</th><th>IP地址</th><th>状态</th></tr></thead>
+                  <tbody>
+                    <tr v-for="s in paginatedPhysicalData" :key="s.name">
+                      <td><a class="nd-link">{{ s.name }}</a></td>
+                      <td>{{ s.ip }}</td>
+                      <td><span class="status-tag-sm" :class="'status-nd-' + s.status">{{ statusLabel(s.status) }}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <a-pagination v-model:current="ndPhysicalPage" :total="filteredPhysicalData.length" :pageSize="5" size="small" showSizeChanger :pageSizeOptions="['5', '10']" style="margin-top:8px;text-align:right" />
+              </template>
             </div>
 
             <div class="nd-section">
-              <h4 class="nd-section-title">云服务 ({{ nodeDetailData?.services?.length || 0 }})</h4>
-              <table class="nd-table">
-                <thead><tr><th>服务名称</th><th>部署主机/POD</th><th>状态</th><th>描述</th></tr></thead>
-                <tbody>
-                  <tr v-for="svc in nodeDetailData?.services || []" :key="svc.name">
-                    <td>{{ svc.name }}</td>
-                    <td>{{ svc.host }}</td>
-                    <td><span class="status-tag-sm" :class="'status-nd-' + svc.status">{{ statusLabel(svc.status) }}</span></td>
-                    <td class="nd-desc">{{ svc.desc }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.svc = !ndSectionOpen.svc">
+                <i class="fa-solid" :class="ndSectionOpen.svc ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                云服务 ({{ nodeDetailData?.services?.length || 0 }})
+              </h4>
+              <template v-if="ndSectionOpen.svc">
+                <a-input-search v-model:value="ndServiceSearch" placeholder="搜索服务..." class="nd-search" />
+                <table class="nd-table">
+                  <thead><tr><th>服务名称</th><th>部署主机/POD</th><th>状态</th><th>描述</th></tr></thead>
+                  <tbody>
+                    <tr v-for="svc in paginatedServiceData" :key="svc.name">
+                      <td><a class="nd-link">{{ svc.name }}</a></td>
+                      <td>{{ svc.host }}</td>
+                      <td><span class="status-tag-sm" :class="'status-nd-' + svc.status">{{ statusLabel(svc.status) }}</span></td>
+                      <td class="nd-desc">{{ svc.desc }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <a-pagination v-model:current="ndServicePage" :total="filteredServiceData.length" :pageSize="5" size="small" showSizeChanger :pageSizeOptions="['5', '10']" style="margin-top:8px;text-align:right" />
+              </template>
             </div>
           </div>
           <div class="node-detail-footer">
-            <a-button type="primary"><i class="fa-solid fa-arrow-down"></i> 下钻查看</a-button>
-            <a-button><i class="fa-regular fa-eye"></i> 查看详情</a-button>
+            <a-button type="primary">下钻查看</a-button>
+            <a-button>查看详情</a-button>
           </div>
         </div>
       </div>
@@ -276,7 +290,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Graph } from '@antv/g6'
 import TreeNode from './TreeNode.vue'
 
@@ -292,32 +306,84 @@ const selectedNodeName = ref('生产云')
 const nodeDetailPanelOpen = ref(false)
 const nodeDetailData = ref(null)
 
+const statusOrder = { error: 0, warning: 1, normal: 2 }
+
+const ndSectionOpen = reactive({ phy: true, svc: true })
+const ndPhysicalSearch = ref('')
+const ndServiceSearch = ref('')
+const ndPhysicalPage = ref(1)
+const ndServicePage = ref(1)
+
+const filteredPhysicalData = computed(() => {
+  const list = nodeDetailData.value?.physicalServers || []
+  const kw = ndPhysicalSearch.value.toLowerCase()
+  return kw ? list.filter(s => s.name.toLowerCase().includes(kw) || s.ip.includes(kw)) : list
+})
+const sortedPhysicalData = computed(() =>
+  filteredPhysicalData.value.slice().sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
+)
+const filteredServiceData = computed(() => {
+  const list = nodeDetailData.value?.services || []
+  const kw = ndServiceSearch.value.toLowerCase()
+  return kw ? list.filter(s => s.name.toLowerCase().includes(kw) || s.desc.includes(kw)) : list
+})
+const sortedServiceData = computed(() =>
+  filteredServiceData.value.slice().sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
+)
+
+const paginatedPhysicalData = computed(() => {
+  const start = (ndPhysicalPage.value - 1) * 5
+  return sortedPhysicalData.value.slice(start, start + 5)
+})
+const paginatedServiceData = computed(() => {
+  const start = (ndServicePage.value - 1) * 5
+  return sortedServiceData.value.slice(start, start + 5)
+})
+
+function abnormalCount(list) {
+  return list?.filter(s => s.status === 'error' || s.status === 'warning').length || 0
+}
+
 const nodeDetailMap = {
   华东1: {
     name: '华东1', type: '节点', id: 'region-huadong1', status: 'normal',
     physicalServers: [
-      { name: 'app-server-02', ip: '192.168.1.104', status: 'warning' },
       { name: 'mq-server-01', ip: '192.168.1.109', status: 'error' },
+      { name: 'app-server-02', ip: '192.168.1.104', status: 'warning' },
+      { name: 'web-server-01', ip: '192.168.1.101', status: 'normal' },
+      { name: 'db-master-01', ip: '192.168.1.201', status: 'normal' },
+      { name: 'cache-node-01', ip: '192.168.1.50', status: 'normal' },
+      { name: 'lb-01', ip: '192.168.1.10', status: 'normal' },
+      { name: 'monitor-01', ip: '192.168.1.200', status: 'normal' },
     ],
     services: [
+      { name: 'SLB', host: 'slb-controller-01', status: 'warning', desc: '负载均衡服务' },
       { name: 'ECS', host: 'ecs-controller-01', status: 'normal', desc: '弹性计算服务' },
       { name: 'RDS', host: 'rds-manager-01', status: 'normal', desc: '关系型数据库服务' },
       { name: 'OSS', host: 'oss-server-01', status: 'normal', desc: '对象存储服务' },
-      { name: 'SLB', host: 'slb-controller-01', status: 'warning', desc: '负载均衡服务' },
       { name: 'Redis', host: 'redis-cluster-01', status: 'normal', desc: '缓存服务' },
+      { name: 'MNS', host: 'mns-server-01', status: 'normal', desc: '消息通知服务' },
+      { name: 'DTS', host: 'dts-worker-01', status: 'normal', desc: '数据传输服务' },
+      { name: 'CDN', host: 'cdn-edge-01', status: 'normal', desc: '内容分发服务' },
     ],
   },
   华北2: {
     name: '华北2', type: '节点', id: 'region-huabei2', status: 'warning',
     physicalServers: [
-      { name: 'web-server-01', ip: '192.168.2.101', status: 'warning' },
       { name: 'db-server-01', ip: '192.168.2.201', status: 'error' },
+      { name: 'web-server-01', ip: '192.168.2.101', status: 'warning' },
+      { name: 'web-server-02', ip: '192.168.2.102', status: 'normal' },
+      { name: 'app-node-01', ip: '192.168.2.50', status: 'normal' },
+      { name: 'cache-01', ip: '192.168.2.60', status: 'normal' },
+      { name: 'gw-01', ip: '192.168.2.1', status: 'normal' },
     ],
     services: [
+      { name: 'Kafka', host: 'kafka-huabei-01', status: 'error', desc: '消息队列服务' },
       { name: 'ECS', host: 'ecs-huabei-01', status: 'warning', desc: '弹性计算服务' },
       { name: 'RDS', host: 'rds-huabei-01', status: 'normal', desc: '关系型数据库服务' },
       { name: 'OSS', host: 'oss-huabei-01', status: 'normal', desc: '对象存储服务' },
-      { name: 'Kafka', host: 'kafka-huabei-01', status: 'error', desc: '消息队列服务' },
+      { name: 'Redis', host: 'redis-huabei-01', status: 'normal', desc: '缓存服务' },
+      { name: 'SLB', host: 'slb-huabei-01', status: 'normal', desc: '负载均衡服务' },
     ],
   },
 }
@@ -712,14 +778,18 @@ onBeforeUnmount(() => {
 .nd-section { margin-bottom: 24px; }
 .nd-section-title {
   font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 12px;
-  padding-left: 10px; border-left: 3px solid #1890ff;
 }
+.nd-collapsible { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
+.nd-collapsible i { font-size: 10px; color: var(--text-sec); width: 12px; flex-shrink: 0; }
+.nd-collapsible:hover { color: #1890ff; }
 .nd-info-grid { display: flex; flex-direction: column; gap: 8px; }
 .nd-info-row { display: flex; align-items: center; gap: 12px; }
 .nd-label { font-size: 12px; color: #8c8c8c; min-width: 48px; }
 .nd-value { font-size: 13px; color: var(--text); }
 .nd-phy-hint { font-size: 13px; color: #fa8c16; margin-bottom: 10px; }
-.nd-phy-hint i { margin-right: 6px; }
+.nd-search { margin-bottom: 8px; width: 100%; }
+.nd-link { color: #1890ff; cursor: pointer; text-decoration: none; }
+.nd-link:hover { text-decoration: underline; }
 .nd-table { width: 100%; border-collapse: collapse; }
 .nd-table th {
   font-size: 12px; font-weight: 600; color: #8c8c8c;
