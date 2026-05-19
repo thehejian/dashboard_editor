@@ -258,6 +258,27 @@
             </div>
 
             <div class="nd-section">
+              <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.az = !ndSectionOpen.az">
+                <i class="fa-solid" :class="ndSectionOpen.az ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                可用分区 ({{ nodeDetailData?.availabilityZones?.length || 0 }})
+              </h4>
+              <template v-if="ndSectionOpen.az">
+                <a-input-search v-model:value="ndAzSearch" placeholder="搜索可用分区..." class="nd-search" />
+                <table class="nd-table">
+                  <thead><tr><th>可用分区名称</th><th>状态</th><th>描述</th></tr></thead>
+                  <tbody>
+                    <tr v-for="az in paginatedAzData" :key="az.name">
+                      <td><a class="nd-link">{{ az.name }}</a></td>
+                      <td><span class="status-tag-sm" :class="'status-nd-' + az.status">{{ statusLabel(az.status) }}</span></td>
+                      <td class="nd-desc">{{ az.desc }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <a-pagination v-model:current="ndAzPage" :total="filteredAzData.length" :pageSize="5" size="small" showSizeChanger :pageSizeOptions="['5', '10']" style="margin-top:8px;text-align:right" />
+              </template>
+            </div>
+
+            <div class="nd-section">
               <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.svc = !ndSectionOpen.svc">
                 <i class="fa-solid" :class="ndSectionOpen.svc ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
                 云服务 ({{ nodeDetailData?.services?.length || 0 }})
@@ -308,10 +329,12 @@ const nodeDetailData = ref(null)
 
 const statusOrder = { error: 0, warning: 1, normal: 2 }
 
-const ndSectionOpen = reactive({ phy: true, svc: true })
+const ndSectionOpen = reactive({ phy: true, az: true, svc: true })
 const ndPhysicalSearch = ref('')
+const ndAzSearch = ref('')
 const ndServiceSearch = ref('')
 const ndPhysicalPage = ref(1)
+const ndAzPage = ref(1)
 const ndServicePage = ref(1)
 
 const filteredPhysicalData = computed(() => {
@@ -322,6 +345,19 @@ const filteredPhysicalData = computed(() => {
 const sortedPhysicalData = computed(() =>
   filteredPhysicalData.value.slice().sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
 )
+const filteredAzData = computed(() => {
+  const list = nodeDetailData.value?.availabilityZones || []
+  const kw = ndAzSearch.value.toLowerCase()
+  return kw ? list.filter(a => a.name.toLowerCase().includes(kw) || a.desc.toLowerCase().includes(kw)) : list
+})
+const sortedAzData = computed(() =>
+  filteredAzData.value.slice().sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
+)
+const paginatedAzData = computed(() => {
+  const start = (ndAzPage.value - 1) * 5
+  return sortedAzData.value.slice(start, start + 5)
+})
+
 const filteredServiceData = computed(() => {
   const list = nodeDetailData.value?.services || []
   const kw = ndServiceSearch.value.toLowerCase()
@@ -347,6 +383,14 @@ function abnormalCount(list) {
 const nodeDetailMap = {
   华东1: {
     name: '华东1', type: '节点', id: 'region-huadong1', status: 'normal',
+    availabilityZones: [
+      { name: '可用区A', status: 'normal', desc: '华东1-可用区A' },
+      { name: '可用区B', status: 'normal', desc: '华东1-可用区B' },
+      { name: '可用区C', status: 'warning', desc: '华东1-可用区C' },
+      { name: '可用区D', status: 'normal', desc: '华东1-可用区D' },
+      { name: '可用区E', status: 'normal', desc: '华东1-可用区E' },
+      { name: '可用区F', status: 'normal', desc: '华东1-可用区F' },
+    ],
     physicalServers: [
       { name: 'mq-server-01', ip: '192.168.1.109', status: 'error' },
       { name: 'app-server-02', ip: '192.168.1.104', status: 'warning' },
@@ -369,6 +413,11 @@ const nodeDetailMap = {
   },
   华北2: {
     name: '华北2', type: '节点', id: 'region-huabei2', status: 'warning',
+    availabilityZones: [
+      { name: '可用区A', status: 'warning', desc: '华北2-可用区A' },
+      { name: '可用区B', status: 'normal', desc: '华北2-可用区B' },
+      { name: '可用区C', status: 'normal', desc: '华北2-可用区C' },
+    ],
     physicalServers: [
       { name: 'db-server-01', ip: '192.168.2.201', status: 'error' },
       { name: 'web-server-01', ip: '192.168.2.101', status: 'warning' },
