@@ -20,6 +20,10 @@
     </aside>
 
     <main class="topology-main">
+      <div class="topology-title">
+        <h2>{{ selectedNodeName }}</h2>
+      </div>
+
       <div class="topology-header">
         <div class="topology-tabs">
           <button class="tab-btn" :class="{ active: topoTab === 'resource' }" @click="topoTab = 'resource'">资源拓扑</button>
@@ -70,10 +74,6 @@
             </a-dropdown>
           </div>
         </div>
-      </div>
-
-      <div class="topology-title">
-        <h2>{{ selectedNodeName }}</h2>
       </div>
 
       <div class="topology-body">
@@ -475,13 +475,12 @@ onBeforeUnmount(() => {
 
 /* ── page title ── */
 .topology-title {
-  padding: 10px 20px;
+  padding: 12px 20px 8px;
   background: #fff;
-  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 .topology-title h2 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text);
   margin: 0;
