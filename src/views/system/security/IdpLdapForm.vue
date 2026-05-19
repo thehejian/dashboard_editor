@@ -62,12 +62,15 @@
           <a-form-item label="启用TLS" required>
             <a-switch v-model:checked="form.tlsEnabled" />
           </a-form-item>
-          <a-form-item label="TLS版本">
+          <a-form-item required>
+            <template #label>
+              TLS版本
+              <a-tooltip title="选择 TLS 协议版本，建议使用 TLSv1.3"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+            </template>
             <a-select v-model:value="form.tlsVersion" placeholder="请选择" style="width:200px">
               <a-select-option value="TLSv1.2">TLSv1.2</a-select-option>
               <a-select-option value="TLSv1.3">TLSv1.3</a-select-option>
             </a-select>
-            <a-tooltip title="选择 TLS 协议版本，建议使用 TLSv1.3"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
           </a-form-item>
           <a-form-item label="证书" required>
             <a-button size="small">添加文件</a-button>
@@ -96,9 +99,12 @@
           <a-form-item label="用户对象类名" required>
             <a-input v-model:value="form.userObjectClass" placeholder="请输入" />
           </a-form-item>
-          <a-form-item label="用户唯一标识" required>
+          <a-form-item required>
+            <template #label>
+              用户唯一标识
+              <a-tooltip title="用于唯一标识用户的属性，如 uid 或 cn"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+            </template>
             <a-input v-model:value="form.userUniqueId" placeholder="请输入" />
-            <a-tooltip title="用于唯一标识用户的属性，如 uid 或 cn"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
           </a-form-item>
           <a-form-item label="开启同步" required>
             <a-switch v-model:checked="form.syncEnabled" />
@@ -120,9 +126,12 @@
             <div class="card-section">
               <div class="card-label"><span class="required-mark">*</span> 同步用户手机</div>
               <div class="card-body">
-                <a-form-item label="用户手机属性">
+                <a-form-item>
+                  <template #label>
+                    用户手机属性
+                    <a-tooltip title="LDAP 中存储手机号的属性字段名"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+                  </template>
                   <a-input v-model:value="form.userPhoneAttr" />
-                  <a-tooltip title="LDAP 中存储手机号的属性字段名"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
                 </a-form-item>
                 <a-form-item label="区号">
                   <a-space>
@@ -137,11 +146,14 @@
                   </a-space>
                   <div class="form-hint">如果XXX Server不支持同步手机号区号信息，则需要手工指定区号，才能正确同步手机号信息。否则会因为手机号信息不完整，导致部分云服务使用短信通知相关功能失败</div>
                 </a-form-item>
-                <a-form-item label="用户手机号码格式">
+                <a-form-item>
+                  <template #label>
+                    用户手机号码格式
+                    <a-tooltip title="手机号码的存储格式"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+                  </template>
                   <a-select v-model:value="form.phoneFormat" style="width:200px">
                     <a-select-option value="手机号码">手机号码</a-select-option>
                   </a-select>
-                  <a-tooltip title="手机号码的存储格式"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
                 </a-form-item>
               </div>
             </div>
@@ -149,9 +161,12 @@
             <div class="card-section">
               <div class="card-label"><span class="required-mark">*</span> 同步用户邮箱</div>
               <div class="card-body">
-                <a-form-item label="用户邮箱属性名称">
+                <a-form-item>
+                  <template #label>
+                    用户邮箱属性名称
+                    <a-tooltip title="LDAP 中存储邮箱的属性字段名"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+                  </template>
                   <a-input v-model:value="form.userEmailAttr" />
-                  <a-tooltip title="LDAP 中存储邮箱的属性字段名"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
                 </a-form-item>
               </div>
             </div>
@@ -179,63 +194,101 @@
               </div>
             </div>
 
-            <a-form-item label="目标租户" required>
+            <a-form-item required>
+              <template #label>
+                目标租户
+                <a-tooltip title="选择同步数据的目标租户"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+              </template>
               <a-select v-model:value="form.targetTenant" style="width:200px">
                 <a-select-option value="租户01">租户01</a-select-option>
                 <a-select-option value="租户02">租户02</a-select-option>
               </a-select>
-              <a-tooltip title="选择同步数据的目标租户"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
             </a-form-item>
-            <a-form-item label="BindDN" required>
+            <a-form-item required>
+              <template #label>
+                BindDN
+                <a-tooltip title="应用服务器作为'代理人'使用的服务账号，用于发起查询，而非用户本人的账号"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+              </template>
               <a-input v-model:value="form.bindDn" placeholder="请输入" />
-              <a-tooltip title="应用服务器作为'代理人'使用的服务账号，用于发起查询，而非用户本人的账号"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
               <div class="form-hint">应用服务器作为"代理人"使用的服务账号，用于发起查询，而非用户本人的账号</div>
             </a-form-item>
-            <a-form-item label="Bind密码" required>
+            <a-form-item required>
+              <template #label>
+                Bind密码
+                <a-tooltip title="Bind 服务账号的密码"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+              </template>
               <a-input-password v-model:value="form.bindPassword" placeholder="******" />
-              <a-tooltip title="Bind 服务账号的密码"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
             </a-form-item>
-            <a-form-item label="BaseDN" required>
+            <a-form-item required>
+              <template #label>
+                BaseDN
+                <a-tooltip title="搜索的基准 DN"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+              </template>
               <a-input v-model:value="form.baseDn" placeholder="ou=groups,dc=company,dc=com" />
-              <a-tooltip title="搜索的基准 DN"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
             </a-form-item>
-            <a-form-item label="用户属性" required>
-              <a-select v-model:value="form.userAttribute" style="width:200px">
-                <a-select-option value="cn">cn</a-select-option>
-                <a-select-option value="uid">uid</a-select-option>
-                <a-select-option value="sAMAccountName">sAMAccountName</a-select-option>
-              </a-select>
-              <a-tooltip title="LDAP 用户条目中标识用户名的属性"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
-            </a-form-item>
-            <a-form-item label="用户组根DN">
-              <a-input v-model:value="form.groupRootDn" placeholder="请输入" />
-              <a-tooltip title="用户组在 LDAP 目录树中的位置"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
-            </a-form-item>
-            <a-form-item label="用户组成员属性名称">
-              <a-input v-model:value="form.groupMemberAttr" placeholder="请输入" />
-            </a-form-item>
-            <a-form-item label="用户组描述属性名称">
-              <a-input v-model:value="form.groupDescAttr" placeholder="请输入" />
-            </a-form-item>
-            <a-form-item label="用户组属性">
-              <a-select v-model:value="form.groupAttribute" style="width:200px">
-                <a-select-option value="cn">cn</a-select-option>
-                <a-select-option value="name">name</a-select-option>
-              </a-select>
-              <a-tooltip title="LDAP 用户组条目中标识组名的属性"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
-            </a-form-item>
-            <a-form-item label="用户组对象类">
-              <a-input v-model:value="form.groupObjectClass" placeholder="groupOfNames" />
-              <a-tooltip title="LDAP 用户组条目的对象类"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
-            </a-form-item>
-            <a-form-item label="查询条件">
+
+            <template v-if="form.syncMode === 'user' || form.syncMode === 'user-and-group'">
+              <a-form-item required>
+                <template #label>
+                  用户属性
+                  <a-tooltip title="LDAP 用户条目中标识用户名的属性"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+                </template>
+                <a-select v-model:value="form.userAttribute" style="width:200px">
+                  <a-select-option value="cn">cn</a-select-option>
+                  <a-select-option value="uid">uid</a-select-option>
+                  <a-select-option value="sAMAccountName">sAMAccountName</a-select-option>
+                </a-select>
+              </a-form-item>
+            </template>
+
+            <template v-if="form.syncMode === 'group' || form.syncMode === 'user-and-group'">
+              <a-form-item>
+                <template #label>
+                  用户组根DN
+                  <a-tooltip title="用户组在 LDAP 目录树中的位置"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+                </template>
+                <a-input v-model:value="form.groupRootDn" placeholder="请输入" />
+              </a-form-item>
+              <a-form-item label="用户组成员属性名称">
+                <a-input v-model:value="form.groupMemberAttr" placeholder="请输入" />
+              </a-form-item>
+              <a-form-item label="用户组描述属性名称">
+                <a-input v-model:value="form.groupDescAttr" placeholder="请输入" />
+              </a-form-item>
+              <a-form-item>
+                <template #label>
+                  用户组属性
+                  <a-tooltip title="LDAP 用户组条目中标识组名的属性"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+                </template>
+                <a-select v-model:value="form.groupAttribute" style="width:200px">
+                  <a-select-option value="cn">cn</a-select-option>
+                  <a-select-option value="name">name</a-select-option>
+                </a-select>
+              </a-form-item>
+              <a-form-item>
+                <template #label>
+                  用户组对象类
+                  <a-tooltip title="LDAP 用户组条目的对象类"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+                </template>
+                <a-input v-model:value="form.groupObjectClass" placeholder="groupOfNames" />
+              </a-form-item>
+            </template>
+
+            <a-form-item>
+              <template #label>
+                查询条件
+                <a-tooltip title="LDAP 搜索过滤器"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+              </template>
               <a-input v-model:value="form.queryFilter" placeholder="objectClass=groupOfNames" />
-              <a-tooltip title="LDAP 搜索过滤器"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
             </a-form-item>
 
             <div class="section-divider"></div>
 
-            <a-form-item label="同步方式" required>
+            <a-form-item required>
+              <template #label>
+                同步方式
+                <a-tooltip title="选择数据同步的执行方式"><i class="fa-regular fa-circle-question" style="margin-left:4px;color:var(--text-ter);cursor:help"></i></a-tooltip>
+              </template>
               <div class="sync-method-group">
                 <label class="sync-method-option" :class="{ selected: form.syncMethod === 'periodic' }">
                   <input type="radio" v-model="form.syncMethod" value="periodic" />
@@ -252,7 +305,6 @@
                   </div>
                 </label>
               </div>
-              <a-tooltip title="选择数据同步的执行方式"><i class="fa-regular fa-circle-question" style="margin-left:6px;color:var(--text-ter);cursor:help"></i></a-tooltip>
             </a-form-item>
           </template>
         </a-form>
@@ -264,11 +316,23 @@
             <a-switch v-model:checked="form.autoCreateUser" />
             <span style="margin-left:8px;font-size:13px;color:var(--text-sec)">开启后，用户首次通过此身份提供商登录时将自动创建本地账号</span>
           </a-form-item>
+          <template v-if="form.autoCreateUser">
+            <a-form-item label="所属租户">
+              <a-select v-model:value="form.autoCreateTenant" style="width:200px">
+                <a-select-option value="租户01">租户01</a-select-option>
+                <a-select-option value="租户02">租户02</a-select-option>
+              </a-select>
+            </a-form-item>
+          </template>
         </a-form>
       </a-collapse-panel>
 
       <a-collapse-panel key="advanced" header="高级设置" :force-render="true">
         <a-form layout="vertical">
+          <a-form-item label="本地认证">
+            <a-switch v-model:checked="form.localAuth" />
+            <span style="margin-left:8px;font-size:13px;color:var(--text-sec)">开启后支持本地账号密码认证</span>
+          </a-form-item>
           <a-form-item label="连接超时（秒）">
             <a-input-number v-model:value="form.connectionTimeout" :min="5" :max="300" style="width:200px" />
           </a-form-item>
@@ -327,6 +391,8 @@ const form = reactive({
   queryFilter: 'objectClass=groupOfNames',
   syncMethod: 'periodic',
   autoCreateUser: false,
+  autoCreateTenant: '租户01',
+  localAuth: false,
   connectionTimeout: 30,
   pageSize: 100,
 })
@@ -350,6 +416,7 @@ defineExpose({ form, validate })
 .ldap-form :deep(.ant-collapse-header) { font-weight: 600; font-size: 14px; padding-left: 0 !important; }
 .ldap-form :deep(.ant-collapse-content-box) { padding-left: 0 !important; }
 .ldap-form :deep(.ant-collapse-item) { border-bottom: 1px solid var(--border); }
+.ldap-form :deep(.ant-form-item) { margin-bottom: 16px; }
 .icon-upload-area { display: flex; flex-direction: column; gap: 8px; }
 .icon-preview { width: 60px; height: 60px; border-radius: 8px; background: var(--brand-subtle); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--brand); }
 .icon-actions { display: flex; gap: 8px; }
@@ -358,7 +425,7 @@ defineExpose({ form, validate })
 .form-hint { font-size: 11px; color: var(--text-ter); margin-top: 4px; line-height: 1.5; }
 .card-section { border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; background: var(--bg); }
 .card-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
-.card-body .ant-form-item { margin-bottom: 12px; }
+:deep(.card-body .ant-form-item) { margin-bottom: 12px; }
 .sync-mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 .sync-mode-card { border: 1px solid var(--border); border-radius: 6px; padding: 14px; cursor: pointer; transition: all 0.2s; }
 .sync-mode-card:hover { border-color: var(--brand); }
