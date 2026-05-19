@@ -416,7 +416,7 @@ defineExpose({ form, validate })
 .ldap-form :deep(.ant-collapse-header) { font-weight: 600; font-size: 14px; padding-left: 0 !important; }
 .ldap-form :deep(.ant-collapse-content-box) { padding-left: 0 !important; }
 .ldap-form :deep(.ant-collapse-item) { border-bottom: 1px solid var(--border); }
-.ldap-form :deep(.ant-form-item) { margin-bottom: 16px; }
+.ldap-form :deep(.ant-form-item) { margin-bottom: 20px; }
 .icon-upload-area { display: flex; flex-direction: column; gap: 8px; }
 .icon-preview { width: 60px; height: 60px; border-radius: 8px; background: var(--brand-subtle); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--brand); }
 .icon-actions { display: flex; gap: 8px; }

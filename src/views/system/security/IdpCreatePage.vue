@@ -154,8 +154,9 @@ function confirmCreate() {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-bottom: 16px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--border);
+  background: var(--bg);
   flex-shrink: 0;
 }
 .create-title {
@@ -166,14 +167,16 @@ function confirmCreate() {
 .create-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 0;
+  padding: 24px;
+  background: var(--bg-sec);
 }
 .create-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 16px;
+  padding: 16px 24px;
   border-top: 1px solid var(--border);
+  background: var(--bg);
   flex-shrink: 0;
 }
 .protocol-grid {
