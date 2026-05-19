@@ -23,8 +23,8 @@ const routes = [
   {
     path: '/system/security',
     component: () => import('../views/system/SecurityView.vue'),
-    redirect: '/system/security/users',
     children: [
+      { path: '', redirect: '/system/security/users' },
       { path: 'users', component: () => import('../views/system/security/UserManagement.vue') },
       { path: 'user-groups', component: () => import('../views/system/security/UserGroupsView.vue') },
       { path: 'policies', component: () => import('../views/system/security/PoliciesView.vue') },
