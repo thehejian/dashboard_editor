@@ -20,7 +20,8 @@ const routes = [
   { path: '/ops/logs', name: 'ops-logs', component: () => import('../views/ops/LogsView.vue') },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
 
-  { path: '/system/users', name: 'system-users', component: () => import('../views/system/UsersView.vue') },
+  { path: '/system/security', name: 'system-security', component: () => import('../views/system/SecurityView.vue') },
+  { path: '/system/users', redirect: '/system/security' },
   { path: '/system/config', name: 'system-config', component: () => import('../views/system/SystemConfigView.vue') },
 ]
 

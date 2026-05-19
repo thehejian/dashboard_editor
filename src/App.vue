@@ -67,7 +67,7 @@
             </span>
             <template #overlay>
               <a-menu @click="handleNavClick">
-                <a-menu-item key="/system/users">用户权限</a-menu-item>
+                <a-menu-item key="/system/security">安全管理</a-menu-item>
                 <a-menu-item key="/system/config">系统配置</a-menu-item>
               </a-menu>
             </template>
