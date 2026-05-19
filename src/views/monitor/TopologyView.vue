@@ -652,11 +652,12 @@ function initNetworkGraph() {
     autoFit: 'view',
     data: networkTopoData,
     node: {
-      type: 'circle',
+      type: 'rect',
       style: {
-        size: (d) => d.style?.size || 44,
-        fill: 'transparent',
+        size: (d) => d.style?.size || 48,
+        fill: (d) => d.style?.fill === '#f5222d' ? '#f5222d' : '#1890ff',
         stroke: 'transparent',
+        radius: 8,
         labelText: (d) => d.data?.label || '',
         labelPlacement: 'bottom',
         labelOffsetY: 6,
@@ -667,8 +668,8 @@ function initNetworkGraph() {
         iconFontFamily: 'Font Awesome 6 Free',
         iconFontWeight: 900,
         iconText: (d) => d.iconText || '',
-        iconFill: (d) => d.style?.fill === '#f5222d' ? '#f5222d' : '#1890ff',
-        iconFontSize: (d) => (d.style?.size || 44) >= 52 ? 30 : 26,
+        iconFill: '#fff',
+        iconFontSize: 32,
       }
     },
     edge: {
