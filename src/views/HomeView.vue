@@ -1179,7 +1179,7 @@ const refreshCard = (card) => {
 </script>
 
 <style scoped>
-.home-view { padding: 24px; min-height: 100%; }
+.home-view { padding: 16px 24px 24px; min-height: 100%; }
 .kpi-card {
   padding: 16px 20px;
   border-radius: 12px;
