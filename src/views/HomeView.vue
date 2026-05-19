@@ -1,15 +1,6 @@
 <template>
   <div class="home-view">
     <a-row :gutter="[16, 16]">
-      <a-col :span="24">
-        <div class="welcome-bar">
-          <div class="welcome-text">
-            <h2>欢迎回来，管理员</h2>
-            <p>这里是今天的系统概览</p>
-          </div>
-        </div>
-      </a-col>
-
       <a-col :xs="12" :sm="12" :md="6" v-for="card in kpiCards" :key="card.title">
         <div class="kpi-card" :class="card.bgClass">
           <div class="card-header">
@@ -1189,10 +1180,6 @@ const refreshCard = (card) => {
 
 <style scoped>
 .home-view { padding: 24px; min-height: 100%; }
-.welcome-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.welcome-text h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
-.welcome-text p { color: var(--text-secondary); margin: 0; }
-
 .kpi-card {
   padding: 16px 20px;
   border-radius: 12px;
