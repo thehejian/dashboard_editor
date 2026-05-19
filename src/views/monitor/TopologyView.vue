@@ -345,8 +345,15 @@ const filteredPhysicalData = computed(() => {
 const sortedPhysicalData = computed(() =>
   filteredPhysicalData.value.slice().sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
 )
+function getAzListFromRegion(regionName) {
+  const region = treeData.flatMap(c => c.children || []).find(r => r.name === regionName)
+  return (region?.children || [])
+    .filter(c => c.name.startsWith('可用区'))
+    .map(c => ({ name: c.name, status: c.status, desc: `${regionName}-${c.name}` }))
+}
+
 const filteredAzData = computed(() => {
-  const list = nodeDetailData.value?.availabilityZones || []
+  const list = getAzListFromRegion(nodeDetailData.value?.name || '')
   const kw = ndAzSearch.value.toLowerCase()
   return kw ? list.filter(a => a.name.toLowerCase().includes(kw) || a.desc.toLowerCase().includes(kw)) : list
 })
@@ -383,14 +390,6 @@ function abnormalCount(list) {
 const nodeDetailMap = {
   华东1: {
     name: '华东1', type: '节点', id: 'region-huadong1', status: 'normal',
-    availabilityZones: [
-      { name: '可用区A', status: 'normal', desc: '华东1-可用区A' },
-      { name: '可用区B', status: 'normal', desc: '华东1-可用区B' },
-      { name: '可用区C', status: 'warning', desc: '华东1-可用区C' },
-      { name: '可用区D', status: 'normal', desc: '华东1-可用区D' },
-      { name: '可用区E', status: 'normal', desc: '华东1-可用区E' },
-      { name: '可用区F', status: 'normal', desc: '华东1-可用区F' },
-    ],
     physicalServers: [
       { name: 'mq-server-01', ip: '192.168.1.109', status: 'error' },
       { name: 'app-server-02', ip: '192.168.1.104', status: 'warning' },
@@ -413,11 +412,6 @@ const nodeDetailMap = {
   },
   华北2: {
     name: '华北2', type: '节点', id: 'region-huabei2', status: 'warning',
-    availabilityZones: [
-      { name: '可用区A', status: 'warning', desc: '华北2-可用区A' },
-      { name: '可用区B', status: 'normal', desc: '华北2-可用区B' },
-      { name: '可用区C', status: 'normal', desc: '华北2-可用区C' },
-    ],
     physicalServers: [
       { name: 'db-server-01', ip: '192.168.2.201', status: 'error' },
       { name: 'web-server-01', ip: '192.168.2.101', status: 'warning' },
