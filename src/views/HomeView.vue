@@ -561,6 +561,7 @@ function renderHealthTrendChart() {
     .style('fill', '#fff')
     .style('lineWidth', 1.5)
     .style('size', 4)
+    .tooltip(false)
 
   healthTrendChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
@@ -669,6 +670,7 @@ function renderAlertDetailChart() {
     .encode('color', 'type')
     .style('fillOpacity', 0.08)
     .style('shape', 'smooth')
+    .tooltip(false)
 
   alertDetailChart.line()
     .encode('x', 'day')
@@ -685,6 +687,7 @@ function renderAlertDetailChart() {
     .style('fill', '#fff')
     .style('lineWidth', 1.5)
     .style('size', 4)
+    .tooltip(false)
 
   alertDetailChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
@@ -743,6 +746,7 @@ function renderEventDetailChart() {
     .encode('color', 'type')
     .style('fillOpacity', 0.08)
     .style('shape', 'smooth')
+    .tooltip(false)
 
   eventDetailChart.line()
     .encode('x', 'day')
@@ -759,6 +763,7 @@ function renderEventDetailChart() {
     .style('fill', '#fff')
     .style('lineWidth', 1.5)
     .style('size', 4)
+    .tooltip(false)
 
   eventDetailChart.legend('color', { position: 'bottom', layout: { justifyContent: 'center' }, itemSpacing: 16 })
 
@@ -915,6 +920,7 @@ function renderTrendSingleChart() {
     .encode('x', 'day')
     .encode('y', 'value')
     .style('shape', 'smooth')
+    .tooltip(false)
 
   trendSingleChart.line()
     .encode('x', 'day')
@@ -925,6 +931,7 @@ function renderTrendSingleChart() {
   trendSingleChart.point()
     .encode('x', 'day')
     .encode('y', 'value')
+    .tooltip(false)
 
   trendSingleChart.render()
 }
@@ -946,6 +953,7 @@ function renderResourceTrendChart() {
     .encode('x', 'day')
     .encode('y', 'value')
     .style('shape', 'smooth')
+    .tooltip(false)
 
   resourceTrendChart.line()
     .encode('x', 'day')
@@ -956,6 +964,7 @@ function renderResourceTrendChart() {
   resourceTrendChart.point()
     .encode('x', 'day')
     .encode('y', 'value')
+    .tooltip(false)
 
   resourceTrendChart.render()
 }
@@ -1145,6 +1154,7 @@ function renderAlertTrendChart() {
     .encode('y', 'value')
     .style('fill', 'l(0) 0:#ff4d4f30 1:#ff4d4f05')
     .style('shape', 'smooth')
+    .tooltip(false)
 
   alertTrendChart.line()
     .encode('x', 'date')
@@ -1161,6 +1171,7 @@ function renderAlertTrendChart() {
     .style('stroke', '#fff')
     .style('lineWidth', 2)
     .style('size', 5)
+    .tooltip(false)
 
   alertTrendChart.render()
 }
