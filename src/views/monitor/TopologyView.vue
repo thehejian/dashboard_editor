@@ -236,31 +236,31 @@
             </div>
 
             <div class="nd-section">
-              <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.phy = !ndSectionOpen.phy">
-                <i class="fa-solid" :class="ndSectionOpen.phy ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
-                物理资源
+              <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.svc = !ndSectionOpen.svc">
+                <i class="fa-solid" :class="ndSectionOpen.svc ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                云服务 (<span class="nd-abnormal-count">{{ abnormalCount(nodeDetailData?.services) }}</span>/{{ nodeDetailData?.services?.length || 0 }})
               </h4>
-              <template v-if="ndSectionOpen.phy">
-                <div class="nd-phy-hint">物理服务器 ({{ abnormalCount(nodeDetailData?.physicalServers) }}个异常)</div>
-                <a-input-search v-model:value="ndPhysicalSearch" placeholder="搜索物理服务器..." class="nd-search" />
+              <template v-if="ndSectionOpen.svc">
+                <a-input-search v-model:value="ndServiceSearch" placeholder="搜索服务..." class="nd-search" />
                 <table class="nd-table">
-                  <thead><tr><th>名称</th><th>IP地址</th><th>状态</th></tr></thead>
+                  <thead><tr><th>服务名称</th><th>部署主机/POD</th><th>状态</th><th>描述</th></tr></thead>
                   <tbody>
-                    <tr v-for="s in paginatedPhysicalData" :key="s.name">
-                      <td><a class="nd-link">{{ s.name }}</a></td>
-                      <td>{{ s.ip }}</td>
-                      <td><span class="status-tag-sm" :class="'status-nd-' + s.status">{{ statusLabel(s.status) }}</span></td>
+                    <tr v-for="svc in paginatedServiceData" :key="svc.name">
+                      <td><a class="nd-link">{{ svc.name }}</a></td>
+                      <td>{{ svc.host }}</td>
+                      <td><span class="status-tag-sm" :class="'status-nd-' + svc.status">{{ statusLabel(svc.status) }}</span></td>
+                      <td class="nd-desc">{{ svc.desc }}</td>
                     </tr>
                   </tbody>
                 </table>
-                <a-pagination v-model:current="ndPhysicalPage" :total="filteredPhysicalData.length" :pageSize="5" size="small" showSizeChanger :pageSizeOptions="['5', '10']" style="margin-top:8px;text-align:right" />
+                <a-pagination v-model:current="ndServicePage" :total="filteredServiceData.length" :pageSize="5" size="small" showSizeChanger :pageSizeOptions="['5', '10']" style="margin-top:8px;text-align:right" />
               </template>
             </div>
 
             <div class="nd-section">
               <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.az = !ndSectionOpen.az">
                 <i class="fa-solid" :class="ndSectionOpen.az ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
-                可用分区 ({{ nodeDetailData?.availabilityZones?.length || 0 }})
+                可用分区 (<span class="nd-abnormal-count">{{ abnormalCount(getAzListFromRegion(nodeDetailData?.name || '')) }}</span>/{{ getAzListFromRegion(nodeDetailData?.name || '').length }})
               </h4>
               <template v-if="ndSectionOpen.az">
                 <a-input-search v-model:value="ndAzSearch" placeholder="搜索可用分区..." class="nd-search" />
@@ -279,24 +279,23 @@
             </div>
 
             <div class="nd-section">
-              <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.svc = !ndSectionOpen.svc">
-                <i class="fa-solid" :class="ndSectionOpen.svc ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
-                云服务 ({{ nodeDetailData?.services?.length || 0 }})
+              <h4 class="nd-section-title nd-collapsible" @click="ndSectionOpen.phy = !ndSectionOpen.phy">
+                <i class="fa-solid" :class="ndSectionOpen.phy ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                物理资源 (<span class="nd-abnormal-count">{{ abnormalCount(nodeDetailData?.physicalServers) }}</span>/{{ nodeDetailData?.physicalServers?.length || 0 }})
               </h4>
-              <template v-if="ndSectionOpen.svc">
-                <a-input-search v-model:value="ndServiceSearch" placeholder="搜索服务..." class="nd-search" />
+              <template v-if="ndSectionOpen.phy">
+                <a-input-search v-model:value="ndPhysicalSearch" placeholder="搜索物理服务器..." class="nd-search" />
                 <table class="nd-table">
-                  <thead><tr><th>服务名称</th><th>部署主机/POD</th><th>状态</th><th>描述</th></tr></thead>
+                  <thead><tr><th>名称</th><th>IP地址</th><th>状态</th></tr></thead>
                   <tbody>
-                    <tr v-for="svc in paginatedServiceData" :key="svc.name">
-                      <td><a class="nd-link">{{ svc.name }}</a></td>
-                      <td>{{ svc.host }}</td>
-                      <td><span class="status-tag-sm" :class="'status-nd-' + svc.status">{{ statusLabel(svc.status) }}</span></td>
-                      <td class="nd-desc">{{ svc.desc }}</td>
+                    <tr v-for="s in paginatedPhysicalData" :key="s.name">
+                      <td><a class="nd-link">{{ s.name }}</a></td>
+                      <td>{{ s.ip }}</td>
+                      <td><span class="status-tag-sm" :class="'status-nd-' + s.status">{{ statusLabel(s.status) }}</span></td>
                     </tr>
                   </tbody>
                 </table>
-                <a-pagination v-model:current="ndServicePage" :total="filteredServiceData.length" :pageSize="5" size="small" showSizeChanger :pageSizeOptions="['5', '10']" style="margin-top:8px;text-align:right" />
+                <a-pagination v-model:current="ndPhysicalPage" :total="filteredPhysicalData.length" :pageSize="5" size="small" showSizeChanger :pageSizeOptions="['5', '10']" style="margin-top:8px;text-align:right" />
               </template>
             </div>
           </div>
@@ -829,7 +828,7 @@ onBeforeUnmount(() => {
 .nd-info-row { display: flex; align-items: center; gap: 12px; }
 .nd-label { font-size: 12px; color: #8c8c8c; min-width: 48px; }
 .nd-value { font-size: 13px; color: var(--text); }
-.nd-phy-hint { font-size: 13px; color: #fa8c16; margin-bottom: 10px; }
+.nd-abnormal-count { color: #f5222d; }
 .nd-search { margin-bottom: 8px; width: 100%; }
 .nd-link { color: #1890ff; cursor: pointer; text-decoration: none; }
 .nd-link:hover { text-decoration: underline; }
