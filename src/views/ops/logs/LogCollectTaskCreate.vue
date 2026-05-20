@@ -74,13 +74,12 @@
                       </template>
                       <span v-else style="color:var(--text-ter)">暂无</span>
                     </template>
-                    <template v-if="column.key === 'logFormat' && !isCloudService">
-                      <a-switch
-                        :checked="record.logFormat === '完整格式'"
-                        @change="(v) => record.logFormat = v ? '完整格式' : '精简格式'"
-                        size="small"
-                      />
-                      <span style="margin-left:6px;font-size:12px;color:var(--text-sec)">{{ record.logFormat }}</span>
+                    <template v-if="column.key === 'logFormat' && form.resourceType === 'physical'">
+                      <a-select :value="record.logFormat" @change="(v) => record.logFormat = v" size="small" style="width:110px">
+                        <a-select-option value="RFC3164">RFC3164</a-select-option>
+                        <a-select-option value="RFC5424">RFC5424</a-select-option>
+                        <a-select-option value="自定义">自定义</a-select-option>
+                      </a-select>
                     </template>
                     <template v-if="column.key === 'action'">
                       <template v-if="isCloudService">
@@ -103,7 +102,7 @@
               </div>
             </a-form-item>
 
-            <a-form-item v-if="!isCloudService" label="日志范围">
+            <a-form-item v-if="form.resourceType === 'cloud-resource'" label="日志范围">
               <a-table
                 :data-source="logScopes"
                 :columns="logScopeColumns"
@@ -114,12 +113,10 @@
               >
                 <template #bodyCell="{ column, record }">
                   <template v-if="column.key === 'collectionScope'">
-                    <a-switch
-                      :checked="record.collectionScope === '全量'"
-                      @change="(v) => record.collectionScope = v ? '全量' : '异常'"
-                      size="small"
-                    />
-                    <span style="margin-left:6px;font-size:12px;color:var(--text-sec)">{{ record.collectionScope }}</span>
+                    <a-select :value="record.collectionScope" @change="(v) => record.collectionScope = v" size="small" style="width:90px">
+                      <a-select-option value="全量">全量</a-select-option>
+                      <a-select-option value="异常">异常</a-select-option>
+                    </a-select>
                   </template>
                   <template v-if="column.key === 'action'">
                     <a-button v-if="record.source === '自定义'" type="link" size="small" danger @click="deleteLogScope(record.id)">删除</a-button>
@@ -492,6 +489,14 @@ const objectColumns = computed(() => {
       { title: '操作', key: 'action', width: 180 },
     ]
   }
+  if (form.resourceType === 'cloud-resource') {
+    return [
+      { title: '名称', dataIndex: 'title', key: 'name', width: 140 },
+      { title: 'ID', dataIndex: 'id', key: 'id', width: 160 },
+      { title: 'IP地址', dataIndex: 'ip', key: 'ip', width: 140 },
+      { title: '操作', key: 'action', width: 100 },
+    ]
+  }
   return [
     { title: '名称', dataIndex: 'title', key: 'name', width: 140 },
     { title: 'ID', dataIndex: 'id', key: 'id', width: 160 },
@@ -606,6 +611,14 @@ function confirmObjects() {
           description: '',
           selectedPathIds: [],
         })
+      } else if (form.resourceType === 'cloud-resource') {
+        selectedObjects.value.push({
+          key,
+          title: info?.title || key,
+          parentTitle: parent,
+          id: '',
+          ip: '',
+        })
       } else {
         selectedObjects.value.push({
           key,
@@ -614,7 +627,7 @@ function confirmObjects() {
           id: '',
           managementIp: '',
           deviceModel: '',
-          logFormat: '精简格式',
+          logFormat: 'RFC3164',
         })
       }
       existingKeys.add(key)
@@ -847,7 +860,7 @@ function handleSubmit() {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .section-title {
   font-size: 15px;
