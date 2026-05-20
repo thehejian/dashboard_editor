@@ -60,11 +60,19 @@
                   :pagination="false"
                   row-key="key"
                   size="small"
-                  :scroll="{ x: 700 }"
+                  :scroll="{ x: 780 }"
                 >
                   <template #bodyCell="{ column, record }">
-                    <template v-if="column.key === 'pathCount'">
-                      <a @click="openPathModal(record)">{{ record.selectedPathIds.length }}</a>
+                    <template v-if="column.key === 'pathTags'">
+                      <template v-if="record.selectedPathIds.length">
+                        <a-tag
+                          v-for="pid in record.selectedPathIds"
+                          :key="pid"
+                          style="cursor:pointer;margin-bottom:2px"
+                          @click="showPathDetail(getPathObj(record.key, pid))"
+                        >{{ getPathObj(record.key, pid)?.fileName }}</a-tag>
+                      </template>
+                      <span v-else style="color:var(--text-ter)">暂无</span>
                     </template>
                     <template v-if="column.key === 'action'">
                       <a-button type="link" size="small" @click="openPathModal(record)">添加路径</a-button>
@@ -139,21 +147,21 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:visible="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="900px" :footer="null" @cancel="showPathModal = false">
+    <a-modal v-model:visible="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="1200px" :footer="null" @cancel="showPathModal = false">
       <div v-if="currentPathObj" class="path-transfer">
         <div class="transfer-layout">
           <div class="transfer-panel">
             <div class="transfer-panel-header">可选路径</div>
             <div style="padding:8px">
+              <a-input-search v-model:value="availPathSearch" placeholder="搜索路径" size="small" style="margin-bottom:8px" />
               <a-table
-                :data-source="availablePaths"
+                :data-source="filteredAvailablePaths"
                 :columns="pathColumns"
                 :pagination="false"
                 size="small"
                 row-key="id"
-                :scroll="{ y: 280 }"
-                :row-class="(r) => pathSelectedIds.has(r.id) ? 'path-row-selected' : ''"
-                @row-click="(r) => togglePathSelect(r.id)"
+                :scroll="{ y: 260 }"
+                @row-click="(r) => selectPath(r.id)"
               />
               <a-button type="dashed" block size="small" style="margin-top:8px" @click="openAddCustomPath">
                 <i class="fa-solid fa-plus"></i> 新增自定义路径
@@ -164,22 +172,24 @@
           <div class="transfer-panel">
             <div class="transfer-panel-header">已选路径 ({{ currentPathObj.selectedPathIds.length }})</div>
             <div style="padding:8px">
+              <a-input-search v-model:value="selPathSearch" placeholder="搜索路径" size="small" style="margin-bottom:8px" />
               <a-table
-                :data-source="selectedPaths"
+                v-if="currentPathObj.selectedPathIds.length"
+                :data-source="filteredSelectedPaths"
                 :columns="pathColumns"
                 :pagination="false"
                 size="small"
                 row-key="id"
-                :scroll="{ y: 280 }"
+                :scroll="{ y: 260 }"
                 @row-click="(r) => removeSelectedPath(r.id)"
               />
-              <div v-if="!currentPathObj.selectedPathIds.length" class="transfer-empty">暂无选择</div>
+              <div v-else class="transfer-empty">暂无选择</div>
             </div>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;gap:8px;padding:16px 0 0;border-top:1px solid var(--border);margin-top:8px">
           <a-button @click="showPathModal = false">取消</a-button>
-          <a-button type="primary" @click="confirmPaths">确定</a-button>
+          <a-button type="primary" @click="showPathModal = false">确定</a-button>
         </div>
       </div>
     </a-modal>
@@ -199,6 +209,15 @@
           </a-select>
         </a-form-item>
       </a-form>
+    </a-modal>
+
+    <a-modal v-model:visible="showPathDetailModal" title="路径详情" width="500px" :footer="null">
+      <a-descriptions v-if="detailPath" :column="1" bordered size="small">
+        <a-descriptions-item label="日志路径">{{ detailPath.path }}</a-descriptions-item>
+        <a-descriptions-item label="日志文件名称">{{ detailPath.fileName }}</a-descriptions-item>
+        <a-descriptions-item label="日志类型">{{ detailPath.type }}</a-descriptions-item>
+        <a-descriptions-item label="来源">{{ detailPath.source }}</a-descriptions-item>
+      </a-descriptions>
     </a-modal>
   </div>
 </template>
@@ -231,7 +250,7 @@ const objectColumns = [
   { title: '对象名称', dataIndex: 'title', key: 'name', width: 140 },
   { title: '所属云服务', dataIndex: 'parentTitle', key: 'service', width: 140 },
   { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
-  { title: '关联日志路径数量', key: 'pathCount', width: 140 },
+  { title: '关联日志路径数量', key: 'pathTags', width: 220 },
   { title: '操作', key: 'action', width: 180 },
 ]
 
@@ -315,6 +334,15 @@ function filterTree(nodes, keyword) {
   }, [])
 }
 
+function getAllPathsFor(key) {
+  const presets = presetPaths[key] || []
+  return [...presets, ...customPaths.value]
+}
+
+function getPathObj(key, pid) {
+  return getAllPathsFor(key).find(p => p.id === pid)
+}
+
 const showObjectModal = ref(false)
 const checkedKeys = ref([])
 const srcSearch = ref('')
@@ -393,48 +421,66 @@ const pagedObjects = computed(() => {
 
 const showPathModal = ref(false)
 const currentPathObj = ref(null)
-const pathSelectedIds = ref(new Set())
+const availPathSearch = ref('')
+const selPathSearch = ref('')
 
 function openPathModal(obj) {
   currentPathObj.value = obj
-  pathSelectedIds.value = new Set(obj.selectedPathIds)
+  availPathSearch.value = ''
+  selPathSearch.value = ''
   showPathModal.value = true
+}
+
+function currentObjPaths() {
+  if (!currentPathObj.value) return []
+  const obj = selectedObjects.value.find(o => o.key === currentPathObj.value.key)
+  return obj ? obj.selectedPathIds : []
 }
 
 const availablePaths = computed(() => {
   if (!currentPathObj.value) return []
-  const presets = presetPaths[currentPathObj.value.key] || []
-  const all = [...presets, ...customPaths.value]
-  return all.filter(p => !currentPathObj.value.selectedPathIds.includes(p.id))
+  const ids = currentObjPaths()
+  const all = getAllPathsFor(currentPathObj.value.key)
+  return all.filter(p => !ids.includes(p.id))
+})
+
+const filteredAvailablePaths = computed(() => {
+  if (!availPathSearch.value) return availablePaths.value
+  const kw = availPathSearch.value.toLowerCase()
+  return availablePaths.value.filter(p =>
+    p.path.toLowerCase().includes(kw) || p.fileName.toLowerCase().includes(kw)
+  )
 })
 
 const selectedPaths = computed(() => {
   if (!currentPathObj.value) return []
-  const presets = presetPaths[currentPathObj.value.key] || []
-  const all = [...presets, ...customPaths.value]
-  return all.filter(p => currentPathObj.value.selectedPathIds.includes(p.id))
+  const ids = currentObjPaths()
+  const all = getAllPathsFor(currentPathObj.value.key)
+  return all.filter(p => ids.includes(p.id))
 })
 
-function togglePathSelect(id) {
-  if (pathSelectedIds.value.has(id)) {
-    pathSelectedIds.value.delete(id)
-  } else {
-    pathSelectedIds.value.add(id)
+const filteredSelectedPaths = computed(() => {
+  if (!selPathSearch.value) return selectedPaths.value
+  const kw = selPathSearch.value.toLowerCase()
+  return selectedPaths.value.filter(p =>
+    p.path.toLowerCase().includes(kw) || p.fileName.toLowerCase().includes(kw)
+  )
+})
+
+function selectPath(id) {
+  if (!currentPathObj.value) return
+  const obj = selectedObjects.value.find(o => o.key === currentPathObj.value.key)
+  if (obj && !obj.selectedPathIds.includes(id)) {
+    obj.selectedPathIds = [...obj.selectedPathIds, id]
   }
 }
 
 function removeSelectedPath(id) {
-  if (currentPathObj.value) {
-    currentPathObj.value.selectedPathIds = currentPathObj.value.selectedPathIds.filter(i => i !== id)
-    pathSelectedIds.value = new Set(currentPathObj.value.selectedPathIds)
+  if (!currentPathObj.value) return
+  const obj = selectedObjects.value.find(o => o.key === currentPathObj.value.key)
+  if (obj) {
+    obj.selectedPathIds = obj.selectedPathIds.filter(i => i !== id)
   }
-}
-
-function confirmPaths() {
-  if (currentPathObj.value) {
-    currentPathObj.value.selectedPathIds = [...pathSelectedIds.value]
-  }
-  showPathModal.value = false
 }
 
 const showAddCustomPath = ref(false)
@@ -475,6 +521,15 @@ function deleteCustomPath(id) {
   for (const obj of selectedObjects.value) {
     obj.selectedPathIds = obj.selectedPathIds.filter(i => i !== id)
   }
+}
+
+const showPathDetailModal = ref(false)
+const detailPath = ref(null)
+
+function showPathDetail(pathObj) {
+  if (!pathObj) return
+  detailPath.value = pathObj
+  showPathDetailModal.value = true
 }
 
 function goBack() {
@@ -548,7 +603,7 @@ function handleSubmit() {
   color: var(--text-ter);
 }
 .section-title.collapsible + div {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 .transfer-layout {
   display: flex;
@@ -585,9 +640,6 @@ function handleSubmit() {
   width: 1px;
   background: var(--border);
   margin: 0 8px;
-}
-:deep(.path-row-selected) {
-  background: var(--brand-subtle);
 }
 :deep(.ant-table-row) {
   cursor: pointer;
