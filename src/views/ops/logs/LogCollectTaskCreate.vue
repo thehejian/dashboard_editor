@@ -171,21 +171,19 @@
               v-model:checkedKeys="checkedKeys"
               :tree-data="currentTree"
               checkable
-              check-strictly
               :default-expand-all="true"
             />
           </div>
         </div>
         <div class="transfer-divider"></div>
         <div class="transfer-panel">
-          <div class="transfer-panel-header">已选对象 ({{ checkedLeafKeys.length }})</div>
+          <div class="transfer-panel-header">已选对象 ({{ checkedKeys.length }})</div>
           <a-input-search v-model:value="dstSearch" placeholder="搜索" size="small" style="margin:8px 12px;width:calc(100% - 24px)" />
           <div class="transfer-tree-wrap">
             <a-tree
               v-model:checkedKeys="checkedKeys"
               :tree-data="filteredDstTree"
               checkable
-              check-strictly
               :default-expand-all="true"
             />
           </div>
@@ -558,10 +556,8 @@ const dstSearch = ref('')
 
 const filteredSrcTree = computed(() => filterTree(currentTree.value, srcSearch.value))
 
-const checkedLeafKeys = computed(() => checkedKeys.value.filter(k => allLeafKeys.value.includes(k)))
-
 const filteredDstTree = computed(() => {
-  const selectedSet = new Set(checkedLeafKeys.value)
+  const selectedSet = new Set(checkedKeys.value)
   function prune(nodes) {
     return nodes.reduce((acc, n) => {
       const node = { ...n }
@@ -594,7 +590,7 @@ function openObjectModal() {
 const selectedObjects = ref([])
 
 function confirmObjects() {
-  const selectedKeys = checkedLeafKeys.value
+  const selectedKeys = checkedKeys.value.filter(k => allLeafKeys.value.includes(k))
   const existingKeys = new Set(selectedObjects.value.map(o => o.key))
   const tree = currentTree.value
 
