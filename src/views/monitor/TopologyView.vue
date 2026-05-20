@@ -695,11 +695,12 @@ function initNetworkGraph() {
       }
     },
     edge: {
-      type: 'cubic',
+      type: 'polyline',
       style: {
         stroke: (d) => d.style?.stroke || '#d9d9d9',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         lineDash: (d) => d.style?.lineDash || undefined,
+        radius: 16,
         labelText: (d) => d.data?.label || '',
         labelFontSize: 10,
         labelFill: '#666',
