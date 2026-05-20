@@ -5,18 +5,18 @@
       <a-button type="primary">新建目的地</a-button>
     </div>
     <div class="filter-bar">
-      <a-input-search v-model:value="search" placeholder="综合搜索名称/地址" style="width: 280px" />
-      <a-select v-model:value="type" placeholder="目的地类型" style="width: 130px" size="small" allowClear>
+      <a-select v-model:value="type" placeholder="目的地类型" style="width: 130px" allowClear>
         <a-select-option value="Kafka">Kafka</a-select-option>
         <a-select-option value="Syslog">Syslog</a-select-option>
         <a-select-option value="HTTP">HTTP</a-select-option>
         <a-select-option value="ES">Elasticsearch</a-select-option>
         <a-select-option value="S3">S3</a-select-option>
       </a-select>
-      <a-select v-model:value="connectStatus" placeholder="连通状态" style="width: 110px" size="small" allowClear>
+      <a-select v-model:value="connectStatus" placeholder="连通状态" style="width: 110px" allowClear>
         <a-select-option value="可用">可用</a-select-option>
         <a-select-option value="不可用">不可用</a-select-option>
       </a-select>
+      <a-input-search v-model:value="search" placeholder="综合搜索名称/地址" style="width: 280px" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
@@ -60,3 +60,8 @@ const columns = [
   { title: '操作', key: 'action', width: 170 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+</style>

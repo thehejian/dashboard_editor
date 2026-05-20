@@ -5,12 +5,12 @@
       <a-button type="primary">新建下载任务</a-button>
     </div>
     <div class="filter-bar">
-      <a-input-search v-model:value="search" placeholder="综合搜索任务名/来源" style="width: 280px" />
-      <a-select v-model:value="status" placeholder="状态" style="width: 120px" size="small" allowClear>
+      <a-select v-model:value="status" placeholder="状态" style="width: 120px" allowClear>
         <a-select-option value="pending">生成中</a-select-option>
         <a-select-option value="done">已完成</a-select-option>
         <a-select-option value="fail">失败</a-select-option>
       </a-select>
+      <a-input-search v-model:value="search" placeholder="综合搜索任务名/来源" style="width: 280px" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
@@ -52,3 +52,8 @@ const columns = [
   { title: '操作', key: 'action', width: 130 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+</style>

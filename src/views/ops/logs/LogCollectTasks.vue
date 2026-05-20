@@ -5,31 +5,31 @@
       <a-button type="primary">新建任务</a-button>
     </div>
     <div class="filter-bar">
-      <a-input-search v-model:value="search" placeholder="综合搜索任务名/采集对象" style="width: 280px" />
-      <a-select v-model:value="scene" placeholder="场景类型" style="width: 130px" size="small" allowClear>
+      <a-select v-model:value="scene" placeholder="场景类型" style="width: 130px" allowClear>
         <a-select-option value="异常日志">异常日志</a-select-option>
         <a-select-option value="全量日志">全量日志</a-select-option>
         <a-select-option value="自定义">自定义</a-select-option>
       </a-select>
-      <a-select v-model:value="status" placeholder="状态" style="width: 100px" size="small" allowClear>
+      <a-select v-model:value="status" placeholder="状态" style="width: 100px" allowClear>
         <a-select-option value="启用">启用</a-select-option>
         <a-select-option value="停用">停用</a-select-option>
       </a-select>
-      <a-select v-model:value="resourceType1" placeholder="资源类型" style="width: 130px" size="small" allowClear>
+      <a-select v-model:value="resourceType1" placeholder="资源类型" style="width: 130px" allowClear>
         <a-select-option value="云服务">云服务</a-select-option>
         <a-select-option value="云资源">云资源</a-select-option>
         <a-select-option value="物理资源">物理资源</a-select-option>
       </a-select>
-      <a-select v-model:value="resourceType2" placeholder="资源细类" style="width: 120px" size="small" allowClear>
+      <a-select v-model:value="resourceType2" placeholder="资源细类" style="width: 120px" allowClear>
         <a-select-option value="微服务">微服务</a-select-option>
         <a-select-option value="虚拟机">虚拟机</a-select-option>
         <a-select-option value="交换机">交换机</a-select-option>
       </a-select>
-      <a-select v-model:value="deployStatus" placeholder="下发状态" style="width: 120px" size="small" allowClear>
+      <a-select v-model:value="deployStatus" placeholder="下发状态" style="width: 120px" allowClear>
         <a-select-option value="待下发">待下发</a-select-option>
         <a-select-option value="下发中">下发中</a-select-option>
         <a-select-option value="已下发">已下发</a-select-option>
       </a-select>
+      <a-input-search v-model:value="search" placeholder="综合搜索任务名/采集对象" style="width: 280px" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
@@ -80,3 +80,8 @@ const columns = [
   { title: '操作', key: 'action', width: 180 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+</style>

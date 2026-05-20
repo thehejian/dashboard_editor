@@ -4,20 +4,20 @@
       <h3>运行日志</h3>
     </div>
     <div class="filter-bar">
-      <a-range-picker v-model:value="timeRange" size="small" style="width: 240px" />
-      <a-input-search v-model:value="search" placeholder="综合搜索日志内容" style="width: 300px" />
-      <a-select v-model:value="level" placeholder="级别" style="width: 110px" size="small" allowClear>
+      <a-range-picker v-model:value="timeRange" style="width: 240px" />
+      <a-select v-model:value="level" placeholder="级别" style="width: 110px" allowClear>
         <a-select-option value="info">INFO</a-select-option>
         <a-select-option value="warn">WARN</a-select-option>
         <a-select-option value="error">ERROR</a-select-option>
         <a-select-option value="critical">CRITICAL</a-select-option>
       </a-select>
-      <a-select v-model:value="source" placeholder="来源" style="width: 140px" size="small" allowClear>
+      <a-select v-model:value="source" placeholder="来源" style="width: 140px" allowClear>
         <a-select-option value="api-gateway">API网关</a-select-option>
         <a-select-option value="user-service">用户服务</a-select-option>
         <a-select-option value="monitor">监控服务</a-select-option>
         <a-select-option value="scheduler">调度任务</a-select-option>
       </a-select>
+      <a-input-search v-model:value="search" placeholder="综合搜索日志内容" style="width: 300px" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
@@ -54,3 +54,8 @@ const columns = [
   { title: '操作', key: 'action', width: 70 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+</style>

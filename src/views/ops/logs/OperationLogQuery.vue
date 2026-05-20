@@ -4,19 +4,19 @@
       <h3>操作日志</h3>
     </div>
     <div class="filter-bar">
-      <a-range-picker v-model:value="timeRange" size="small" style="width: 240px" />
-      <a-input-search v-model:value="search" placeholder="综合搜索操作者/资源/操作" style="width: 280px" />
-      <a-select v-model:value="opType" placeholder="操作类型" style="width: 120px" size="small" allowClear>
+      <a-range-picker v-model:value="timeRange" style="width: 240px" />
+      <a-select v-model:value="opType" placeholder="操作类型" style="width: 120px" allowClear>
         <a-select-option value="create">创建</a-select-option>
         <a-select-option value="update">修改</a-select-option>
         <a-select-option value="delete">删除</a-select-option>
         <a-select-option value="query">查询</a-select-option>
       </a-select>
-      <a-select v-model:value="result" placeholder="结果" style="width: 100px" size="small" allowClear>
+      <a-select v-model:value="result" placeholder="结果" style="width: 100px" allowClear>
         <a-select-option value="success">成功</a-select-option>
         <a-select-option value="fail">失败</a-select-option>
         <a-select-option value="exception">异常</a-select-option>
       </a-select>
+      <a-input-search v-model:value="search" placeholder="综合搜索操作者/资源/操作" style="width: 280px" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
@@ -56,3 +56,8 @@ const columns = [
   { title: '操作', key: 'action', width: 80 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+</style>

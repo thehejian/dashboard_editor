@@ -5,16 +5,16 @@
       <a-button type="primary">新建模板</a-button>
     </div>
     <div class="filter-bar">
-      <a-input-search v-model:value="search" placeholder="综合搜索模板名" style="width: 280px" />
-      <a-select v-model:value="scene" placeholder="场景类型" style="width: 130px" size="small" allowClear>
+      <a-select v-model:value="scene" placeholder="场景类型" style="width: 130px" allowClear>
         <a-select-option value="异常日志">异常日志</a-select-option>
         <a-select-option value="全量日志">全量日志</a-select-option>
         <a-select-option value="自定义">自定义</a-select-option>
       </a-select>
-      <a-select v-model:value="sourceType" placeholder="来源" style="width: 100px" size="small" allowClear>
+      <a-select v-model:value="sourceType" placeholder="来源" style="width: 100px" allowClear>
         <a-select-option value="内置">内置</a-select-option>
         <a-select-option value="自定义">自定义</a-select-option>
       </a-select>
+      <a-input-search v-model:value="search" placeholder="综合搜索模板名" style="width: 280px" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
@@ -55,3 +55,8 @@ const columns = [
   { title: '操作', key: 'action', width: 180 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+</style>

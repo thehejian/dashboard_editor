@@ -48,3 +48,7 @@ const form = ref({
   notifyChannels: ['email'],
 })
 </script>
+
+<style scoped>
+.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+</style>

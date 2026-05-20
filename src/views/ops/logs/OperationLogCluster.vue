@@ -13,7 +13,7 @@
         </div>
       </div>
     </div>
-    <div class="page-header" style="margin-top:8px"><h3>节点列表</h3></div>
+    <div class="page-header" style="margin-top:16px"><h3>节点列表</h3></div>
     <a-table :columns="columns" :data-source="nodes" :pagination="{ pageSize: 5 }" row-key="id">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
@@ -51,3 +51,7 @@ const columns = [
   { title: '操作', key: 'action', width: 80 },
 ]
 </script>
+
+<style scoped>
+.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+</style>
