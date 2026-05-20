@@ -59,7 +59,7 @@ src/
   - combo size 需从子节点 bounds + padding 预计算：`min/max(x ± size/2)` + combo padding
   - 初次渲染后用 `graph.fitView({ padding: 20 })` 对齐画布
 - 节点: `type: 'rect', size: [48, 48]` + FontAwesome `iconFontFamily: 'Font Awesome 6 Free'`
-- 网络拓扑连线用 `type: 'cubic'`（三次贝塞尔曲线替代 polyline 直角线，更自然）
+- 网络拓扑连线用 `type: 'cubic-vertical'`（垂直贝塞尔曲线，上下流向走优雅 S 弧）
 - 内置 minimap 插件：`plugins: [{ type: 'minimap', size: [180, 140], padding: 10 }]`
 
 ### Vue Router
