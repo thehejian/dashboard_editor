@@ -225,39 +225,6 @@
         </div>
       </div>
 
-      <div class="minimap-float" v-if="topoTab === 'network'">
-        <div class="minimap-header">
-          <span>缩略图</span>
-        </div>
-        <div class="minimap-body">
-          <svg viewBox="0 0 120 160" class="minimap-svg">
-            <rect x="40" y="0" width="40" height="16" rx="3" fill="#52c41a" opacity="0.8"/>
-            <rect x="20" y="30" width="80" height="20" rx="4" fill="#e6f7ff" stroke="#91d5ff" stroke-width="1"/>
-            <rect x="60" y="30" width="80" height="20" rx="4" fill="#f6ffed" stroke="#b7eb8f" stroke-width="1"/>
-            <circle cx="35" cy="42" r="4" fill="#52c41a"/>
-            <circle cx="50" cy="42" r="4" fill="#52c41a"/>
-            <circle cx="65" cy="42" r="4" fill="#E6A23C"/>
-            <circle cx="80" cy="42" r="4" fill="#52c41a"/>
-            <rect x="10" y="60" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#d9d9d9" stroke-width="0.5"/>
-            <circle cx="30" cy="68" r="3" fill="#52c41a"/>
-            <circle cx="45" cy="68" r="3" fill="#52c41a"/>
-            <circle cx="60" cy="68" r="3" fill="#52c41a"/>
-            <circle cx="75" cy="68" r="3" fill="#52c41a"/>
-            <circle cx="90" cy="68" r="3" fill="#52c41a"/>
-            <rect x="10" y="80" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#d9d9d9" stroke-width="0.5"/>
-            <circle cx="20" cy="88" r="3" fill="#409EFF"/>
-            <circle cx="35" cy="88" r="3" fill="#67C23A"/>
-            <circle cx="50" cy="88" r="3" fill="#909399"/>
-            <circle cx="65" cy="88" r="3" fill="#E6A23C"/>
-            <rect x="10" y="100" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#d9d9d9" stroke-width="0.5"/>
-            <circle cx="20" cy="108" r="3" fill="#409EFF"/>
-            <circle cx="35" cy="108" r="3" fill="#67C23A"/>
-            <circle cx="50" cy="108" r="3" fill="#909399"/>
-            <circle cx="65" cy="108" r="3" fill="#E6A23C"/>
-            <line x1="60" y1="50" x2="60" y2="60" stroke="#d9d9d9" stroke-width="1"/>
-          </svg>
-        </div>
-      </div>
 
       <div class="node-detail-panel" :class="{ open: nodeDetailPanelOpen }">
         <div class="node-detail-mask" @click="closeNodeDetailPanel"></div>
@@ -728,7 +695,7 @@ function initNetworkGraph() {
       }
     },
     edge: {
-      type: 'polyline',
+      type: 'cubic',
       style: {
         stroke: (d) => d.style?.stroke || '#d9d9d9',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
@@ -756,6 +723,18 @@ function initNetworkGraph() {
       }
     },
     behaviors: ['drag-canvas', 'zoom-canvas'],
+    plugins: [
+      {
+        type: 'minimap',
+        size: [180, 140],
+        padding: 10,
+        maskStyle: {
+          fill: 'rgba(24,144,255,0.08)',
+          stroke: '#1890ff',
+          lineWidth: 1.5,
+        },
+      },
+    ],
   })
   networkGraph.render().then(() => {
     networkGraph.fitView({ padding: 20 })
@@ -1023,17 +1002,6 @@ onBeforeUnmount(() => {
   font-size: 11px; color: #fff; font-weight: 600;
 }
 
-/* minimap float */
-.minimap-float {
-  position: fixed; bottom: 24px; right: 24px;
-  background: rgba(255,255,255,0.95); border: 1px solid #e8e8e8;
-  border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  width: 160px; z-index: 100;
-}
-.minimap-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 12px; font-weight: 600; color: var(--text); }
-.minimap-body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100px; }
-.minimap-dot { width: 12px; height: 12px; border-radius: 50%; background: #1890ff; }
-
 /* ── node detail panel ── */
 .node-detail-panel {
   position: fixed; top: 0; right: 0; bottom: 0; left: 0;
@@ -1125,8 +1093,6 @@ onBeforeUnmount(() => {
 .lg-line.solid-orange { background: #fa8c16; }
 .lg-line.solid-blue { background: #1890ff; }
 .lg-line.solid-green { background: #52c41a; }
-.minimap-svg { width: 100%; height: auto; }
-
 @media (max-width: 1024px) {
   .region-cards { grid-template-columns: 1fr; }
   .sidebar-cloud { width: 200px; }
