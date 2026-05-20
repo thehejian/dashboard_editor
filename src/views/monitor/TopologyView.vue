@@ -556,7 +556,7 @@ const g6Data = {
   ]
 }
 
-const NODE_SIZE = { internet: 56, border: 52, spine: 48, tor: 44, server: 40 }
+
 
 const COMBO_PAD = [30, 28, 20, 28] // [top, right, bottom, left]
 
@@ -584,26 +584,26 @@ const NET_LAYOUT = {
 }
 
 const NET_NODE_DEFS = [
-  { id: 'internet', data: { label: 'Internet / 企业专线\n网络' }, iconText: '\uf0ac', style: { fill: '#1890ff', size: NODE_SIZE.internet } },
-  { id: 'border-leaf', data: { label: 'Border Leaf\n192.168.0.1' }, iconText: '\uf6ff', style: { fill: '#1890ff', size: NODE_SIZE.border } },
-  { id: 'mgmt-spine-east', data: { label: '管理核心Spine\n192.1.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-east' },
-  { id: 'biz-spine-east', data: { label: '业务核心Spine\n192.1.0.2' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-east' },
-  { id: 'mgmt-tor-east', data: { label: '管理TOR\n192.1.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
-  { id: 'biz-tor-east', data: { label: '业务TOR\n192.1.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
-  { id: 'storage-tor-east', data: { label: '存储TOR\n192.1.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-east' },
-  { id: 'mgmt-nodes-east', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-  { id: 'network-nodes-east', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-  { id: 'compute-nodes-east', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-  { id: 'storage-nodes-east', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-east' },
-  { id: 'mgmt-spine-north', data: { label: '管理核心Spine\n192.2.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.spine }, combo: 'region-north' },
-  { id: 'biz-spine-north', data: { label: '业务核心Spine\n192.2.0.2' }, iconText: '\uf126', style: { fill: '#f5222d', size: NODE_SIZE.spine }, combo: 'region-north' },
-  { id: 'mgmt-tor-north', data: { label: '管理TOR\n192.2.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
-  { id: 'biz-tor-north', data: { label: '业务TOR\n192.2.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
-  { id: 'storage-tor-north', data: { label: '存储TOR\n192.2.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: NODE_SIZE.tor }, combo: 'region-north' },
-  { id: 'mgmt-nodes-north', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
-  { id: 'network-nodes-north', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
-  { id: 'compute-nodes-north', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
-  { id: 'storage-nodes-north', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: NODE_SIZE.server }, combo: 'region-north' },
+  { id: 'internet', data: { label: 'Internet / 企业专线\n网络' }, iconText: '\uf0ac', style: { fill: '#1890ff', size: 48 } },
+  { id: 'border-leaf', data: { label: 'Border Leaf\n192.168.0.1' }, iconText: '\uf6ff', style: { fill: '#1890ff', size: 48 } },
+  { id: 'mgmt-spine-east', data: { label: '管理核心Spine\n192.1.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'biz-spine-east', data: { label: '业务核心Spine\n192.1.0.2' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'mgmt-tor-east', data: { label: '管理TOR\n192.1.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'biz-tor-east', data: { label: '业务TOR\n192.1.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'storage-tor-east', data: { label: '存储TOR\n192.1.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'mgmt-nodes-east', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'network-nodes-east', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'compute-nodes-east', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'storage-nodes-east', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'mgmt-spine-north', data: { label: '管理核心Spine\n192.2.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'biz-spine-north', data: { label: '业务核心Spine\n192.2.0.2' }, iconText: '\uf126', style: { fill: '#f5222d', size: 48 }, combo: 'region-north' },
+  { id: 'mgmt-tor-north', data: { label: '管理TOR\n192.2.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'biz-tor-north', data: { label: '业务TOR\n192.2.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'storage-tor-north', data: { label: '存储TOR\n192.2.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'mgmt-nodes-north', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'network-nodes-north', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'compute-nodes-north', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'storage-nodes-north', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
 ]
 
 const NET_COMBO_DEFS = [
