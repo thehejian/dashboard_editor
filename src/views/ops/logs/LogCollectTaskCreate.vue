@@ -63,7 +63,7 @@
                   :scroll="{ x: 780 }"
                 >
                   <template #bodyCell="{ column, record }">
-                    <template v-if="column.key === 'pathTags'">
+                    <template v-if="column.key === 'pathTags' && isCloudService">
                       <template v-if="record.selectedPathIds.length">
                         <a-tag
                           v-for="pid in record.selectedPathIds"
@@ -74,8 +74,18 @@
                       </template>
                       <span v-else style="color:var(--text-ter)">暂无</span>
                     </template>
+                    <template v-if="column.key === 'logFormat' && !isCloudService">
+                      <a-switch
+                        :checked="record.logFormat === '完整格式'"
+                        @change="(v) => record.logFormat = v ? '完整格式' : '精简格式'"
+                        size="small"
+                      />
+                      <span style="margin-left:6px;font-size:12px;color:var(--text-sec)">{{ record.logFormat }}</span>
+                    </template>
                     <template v-if="column.key === 'action'">
-                      <a-button type="link" size="small" @click="openPathModal(record)">添加路径</a-button>
+                      <template v-if="isCloudService">
+                        <a-button type="link" size="small" @click="openPathModal(record)">添加路径</a-button>
+                      </template>
                       <a-button type="link" size="small" danger @click="removeObject(record)">删除</a-button>
                     </template>
                   </template>
@@ -91,6 +101,34 @@
                   />
                 </div>
               </div>
+            </a-form-item>
+
+            <a-form-item v-if="!isCloudService" label="日志范围">
+              <a-table
+                :data-source="logScopes"
+                :columns="logScopeColumns"
+                row-key="id"
+                size="small"
+                :pagination="false"
+                :scroll="{ x: 650 }"
+              >
+                <template #bodyCell="{ column, record }">
+                  <template v-if="column.key === 'collectionScope'">
+                    <a-switch
+                      :checked="record.collectionScope === '全量'"
+                      @change="(v) => record.collectionScope = v ? '全量' : '异常'"
+                      size="small"
+                    />
+                    <span style="margin-left:6px;font-size:12px;color:var(--text-sec)">{{ record.collectionScope }}</span>
+                  </template>
+                  <template v-if="column.key === 'action'">
+                    <a-button v-if="record.source === '自定义'" type="link" size="small" danger @click="deleteLogScope(record.id)">删除</a-button>
+                  </template>
+                </template>
+              </a-table>
+              <a-button type="dashed" block size="small" style="margin-top:8px" @click="showAddLogScope = true">
+                <i class="fa-solid fa-plus"></i> 新增日志范围
+              </a-button>
             </a-form-item>
           </a-form>
         </a-collapse-transition>
@@ -129,15 +167,27 @@
           <div class="transfer-panel-header">可选对象</div>
           <a-input-search v-model:value="srcSearch" placeholder="搜索" size="small" style="margin:8px 12px;width:calc(100% - 24px)" />
           <div class="transfer-tree-wrap">
-            <a-tree v-model:checkedKeys="checkedKeys" :tree-data="filteredSrcTree" checkable :default-expand-all="true" />
+            <a-tree
+              v-model:checkedKeys="checkedKeys"
+              :tree-data="currentTree"
+              checkable
+              check-strictly
+              :default-expand-all="true"
+            />
           </div>
         </div>
         <div class="transfer-divider"></div>
         <div class="transfer-panel">
-          <div class="transfer-panel-header">已选对象 ({{ checkedKeys.length }})</div>
+          <div class="transfer-panel-header">已选对象 ({{ checkedLeafKeys.length }})</div>
           <a-input-search v-model:value="dstSearch" placeholder="搜索" size="small" style="margin:8px 12px;width:calc(100% - 24px)" />
           <div class="transfer-tree-wrap">
-            <a-tree v-model:checkedKeys="checkedKeys" :tree-data="filteredDstTree" checkable :default-expand-all="true" />
+            <a-tree
+              v-model:checkedKeys="checkedKeys"
+              :tree-data="filteredDstTree"
+              checkable
+              check-strictly
+              :default-expand-all="true"
+            />
           </div>
         </div>
       </div>
@@ -219,6 +269,23 @@
         <a-descriptions-item label="来源">{{ detailPath.source }}</a-descriptions-item>
       </a-descriptions>
     </a-modal>
+
+    <a-modal v-model:visible="showAddLogScope" title="新增日志范围" width="640px" @ok="saveLogScope" @cancel="showAddLogScope = false">
+      <a-form layout="vertical">
+        <a-form-item label="日志路径" required>
+          <a-input v-model:value="logScopeForm.path" placeholder="/var/log/..." />
+        </a-form-item>
+        <a-form-item label="日志名称" required>
+          <a-input v-model:value="logScopeForm.name" placeholder="如：应用运行日志" />
+        </a-form-item>
+        <a-form-item label="采集范围" required>
+          <a-radio-group v-model:value="logScopeForm.collectionScope">
+            <a-radio value="全量">全量</a-radio>
+            <a-radio value="异常">异常</a-radio>
+          </a-radio-group>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -228,6 +295,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 let customIdCounter = 100
+let scopeIdCounter = 10
 
 const form = reactive({
   name: '',
@@ -246,39 +314,201 @@ const objectKeyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(5)
 
-const objectColumns = [
-  { title: '对象名称', dataIndex: 'title', key: 'name', width: 140 },
-  { title: '所属云服务', dataIndex: 'parentTitle', key: 'service', width: 140 },
-  { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
-  { title: '关联日志路径数量', key: 'pathTags', width: 220 },
-  { title: '操作', key: 'action', width: 180 },
+const isCloudService = computed(() => form.resourceType === 'cloud-service')
+
+const objectTrees = {
+  'cloud-service': [
+    {
+      title: '统一云管（云服务类别）',
+      key: 'root',
+      isLeaf: false,
+      children: [
+        {
+          title: 'ManageOne（云服务）',
+          key: 'manageone',
+          isLeaf: false,
+          children: [
+            { title: '微服务01', key: 'ms-01', isLeaf: true },
+            { title: '微服务02', key: 'ms-02', isLeaf: true },
+            { title: '微服务03', key: 'ms-03', isLeaf: true },
+            { title: '微服务04', key: 'ms-04', isLeaf: true },
+            { title: '微服务05', key: 'ms-05', isLeaf: true },
+          ],
+        },
+      ],
+    },
+  ],
+  'cloud-resource': [
+    {
+      title: '计算',
+      key: 'compute',
+      isLeaf: false,
+      children: [
+        {
+          title: '弹性云服务器',
+          key: 'ecs',
+          isLeaf: false,
+          children: [
+            { title: '弹性云服务器01', key: 'ecs-01', isLeaf: true },
+          ],
+        },
+        {
+          title: '管理虚拟机',
+          key: 'vm-mgmt',
+          isLeaf: false,
+          children: [
+            { title: '管理虚拟机01', key: 'vm-mgmt-01', isLeaf: true },
+          ],
+        },
+      ],
+    },
+    {
+      title: '存储',
+      key: 'storage',
+      isLeaf: false,
+      children: [
+        { title: '存储节点01', key: 'stor-01', isLeaf: true },
+      ],
+    },
+    {
+      title: '网络',
+      key: 'network',
+      isLeaf: false,
+      children: [
+        { title: '网络节点01', key: 'net-01', isLeaf: true },
+      ],
+    },
+  ],
+  'physical': [
+    {
+      title: '服务器',
+      key: 'phy-server',
+      isLeaf: false,
+      children: [
+        { title: '服务器01', key: 'phy-svr-01', isLeaf: true },
+        { title: '服务器02', key: 'phy-svr-02', isLeaf: true },
+      ],
+    },
+    {
+      title: '存储设备',
+      key: 'phy-storage',
+      isLeaf: false,
+      children: [
+        { title: '存储设备01', key: 'phy-sto-01', isLeaf: true },
+        { title: '存储设备02', key: 'phy-sto-02', isLeaf: true },
+      ],
+    },
+    {
+      title: '网络设备',
+      key: 'phy-net',
+      isLeaf: false,
+      children: [
+        {
+          title: '交换机',
+          key: 'phy-switch',
+          isLeaf: false,
+          children: [
+            { title: '交换机01', key: 'phy-sw-01', isLeaf: true },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
+function addDisableCheckbox(nodes) {
+  return nodes.map(n => {
+    const node = { ...n }
+    if (node.children && node.children.length) {
+      node.disableCheckbox = true
+      node.children = addDisableCheckbox(node.children)
+    }
+    return node
+  })
+}
+
+const currentTree = computed(() => {
+  const raw = objectTrees[form.resourceType] || []
+  return addDisableCheckbox(raw)
+})
+
+function getLeafKeys(nodes) {
+  const keys = []
+  for (const n of nodes) {
+    if (n.children && n.children.length) {
+      keys.push(...getLeafKeys(n.children))
+    } else {
+      keys.push(n.key)
+    }
+  }
+  return keys
+}
+
+const allLeafKeys = computed(() => getLeafKeys(currentTree.value))
+
+function getNodeInfo(key, nodes) {
+  for (const n of nodes) {
+    if (n.key === key) return { title: n.title, isLeaf: n.isLeaf }
+    if (n.children) {
+      const r = getNodeInfo(key, n.children)
+      if (r) return r
+    }
+  }
+  return null
+}
+
+function getParentTitle(key, nodes, parentTitle) {
+  for (const n of nodes) {
+    if (n.children) {
+      const found = n.children.find(c => c.key === key || (c.children && c.children.find(cc => cc.key === key)))
+      if (found) return n.title
+      const r = getParentTitle(key, n.children, n.title)
+      if (r) return r
+    }
+  }
+  return parentTitle || ''
+}
+
+const logScopeColumns = [
+  { title: '日志路径', dataIndex: 'path', key: 'path', width: 200 },
+  { title: '日志名称', dataIndex: 'name', key: 'name', width: 140 },
+  { title: '采集范围', key: 'collectionScope', width: 120 },
+  { title: '来源', dataIndex: 'source', key: 'source', width: 100 },
+  { title: '操作', key: 'action', width: 80 },
 ]
+
+const presetLogScopes = [
+  { id: 'ls-1', path: '/var/log/*.log', name: '应用运行日志', collectionScope: '全量', source: '系统预制' },
+  { id: 'ls-2', path: '/var/log/*.err', name: '异常日志', collectionScope: '异常', source: '系统预制' },
+]
+
+const logScopes = ref([...presetLogScopes])
+
+const objectColumns = computed(() => {
+  if (isCloudService.value) {
+    return [
+      { title: '对象名称', dataIndex: 'title', key: 'name', width: 140 },
+      { title: '所属云服务', dataIndex: 'parentTitle', key: 'service', width: 140 },
+      { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
+      { title: '关联日志路径数量', key: 'pathTags', width: 220 },
+      { title: '操作', key: 'action', width: 180 },
+    ]
+  }
+  return [
+    { title: '名称', dataIndex: 'title', key: 'name', width: 140 },
+    { title: 'ID', dataIndex: 'id', key: 'id', width: 160 },
+    { title: '管理IP地址', dataIndex: 'managementIp', key: 'managementIp', width: 140 },
+    { title: '设备型号', dataIndex: 'deviceModel', key: 'deviceModel', width: 130 },
+    { title: '日志格式', key: 'logFormat', width: 120 },
+    { title: '操作', key: 'action', width: 100 },
+  ]
+})
 
 const pathColumns = [
   { title: '日志路径', dataIndex: 'path', key: 'path', width: 180 },
   { title: '日志文件名称', dataIndex: 'fileName', key: 'fileName', width: 140 },
   { title: '日志类型', dataIndex: 'type', key: 'type', width: 100 },
   { title: '来源', dataIndex: 'source', key: 'source', width: 100 },
-]
-
-const objectTree = [
-  {
-    title: '统一云管（云服务类别）',
-    key: 'root',
-    children: [
-      {
-        title: 'ManageOne（云服务）',
-        key: 'manageone',
-        children: [
-          { title: '微服务01', key: 'ms-01' },
-          { title: '微服务02', key: 'ms-02' },
-          { title: '微服务03', key: 'ms-03' },
-          { title: '微服务04', key: 'ms-04' },
-          { title: '微服务05', key: 'ms-05' },
-        ],
-      },
-    ],
-  },
 ]
 
 const presetPaths = {
@@ -304,19 +534,6 @@ const presetPaths = {
 
 const customPaths = ref([])
 
-function getNodeTitle(key) {
-  for (const n of objectTree) {
-    for (const c of n.children || []) {
-      for (const g of c.children || []) {
-        if (g.key === key) return g.title
-      }
-      if (c.key === key) return c.title
-    }
-    if (n.key === key) return n.title
-  }
-  return key
-}
-
 function filterTree(nodes, keyword) {
   if (!keyword) return nodes
   return nodes.reduce((acc, n) => {
@@ -334,24 +551,17 @@ function filterTree(nodes, keyword) {
   }, [])
 }
 
-function getAllPathsFor(key) {
-  const presets = presetPaths[key] || []
-  return [...presets, ...customPaths.value]
-}
-
-function getPathObj(key, pid) {
-  return getAllPathsFor(key).find(p => p.id === pid)
-}
-
 const showObjectModal = ref(false)
 const checkedKeys = ref([])
 const srcSearch = ref('')
 const dstSearch = ref('')
 
-const filteredSrcTree = computed(() => filterTree(objectTree, srcSearch.value))
+const filteredSrcTree = computed(() => filterTree(currentTree.value, srcSearch.value))
+
+const checkedLeafKeys = computed(() => checkedKeys.value.filter(k => allLeafKeys.value.includes(k)))
 
 const filteredDstTree = computed(() => {
-  const selectedKeys = new Set(checkedKeys.value)
+  const selectedSet = new Set(checkedLeafKeys.value)
   function prune(nodes) {
     return nodes.reduce((acc, n) => {
       const node = { ...n }
@@ -363,14 +573,15 @@ const filteredDstTree = computed(() => {
           return acc
         }
       }
-      if (selectedKeys.has(node.key)) {
+      if (selectedSet.has(node.key)) {
         acc.push(node)
       }
       return acc
     }, [])
   }
-  if (!dstSearch.value) return prune(objectTree)
-  return prune(filterTree(objectTree, dstSearch.value))
+  const tree = currentTree.value
+  if (!dstSearch.value) return prune(tree)
+  return prune(filterTree(tree, dstSearch.value))
 })
 
 function openObjectModal() {
@@ -383,20 +594,37 @@ function openObjectModal() {
 const selectedObjects = ref([])
 
 function confirmObjects() {
+  const selectedKeys = checkedLeafKeys.value
   const existingKeys = new Set(selectedObjects.value.map(o => o.key))
-  for (const key of checkedKeys.value) {
+  const tree = currentTree.value
+
+  for (const key of selectedKeys) {
     if (!existingKeys.has(key)) {
-      selectedObjects.value.push({
-        key,
-        title: getNodeTitle(key),
-        parentTitle: 'ManageOne',
-        description: '',
-        selectedPathIds: [],
-      })
+      const info = getNodeInfo(key, tree)
+      const parent = getParentTitle(key, tree)
+      if (isCloudService.value) {
+        selectedObjects.value.push({
+          key,
+          title: info?.title || key,
+          parentTitle: parent,
+          description: '',
+          selectedPathIds: [],
+        })
+      } else {
+        selectedObjects.value.push({
+          key,
+          title: info?.title || key,
+          parentTitle: parent,
+          id: '',
+          managementIp: '',
+          deviceModel: '',
+          logFormat: '精简格式',
+        })
+      }
       existingKeys.add(key)
     }
   }
-  selectedObjects.value = selectedObjects.value.filter(o => checkedKeys.value.includes(o.key))
+  selectedObjects.value = selectedObjects.value.filter(o => selectedKeys.includes(o.key))
   showObjectModal.value = false
   currentPage.value = 1
 }
@@ -410,7 +638,7 @@ const filteredObjects = computed(() => {
   if (!objectKeyword.value) return selectedObjects.value
   const kw = objectKeyword.value.toLowerCase()
   return selectedObjects.value.filter(o =>
-    o.title.toLowerCase().includes(kw) || o.parentTitle.toLowerCase().includes(kw)
+    o.title.toLowerCase().includes(kw) || (o.parentTitle && o.parentTitle.toLowerCase().includes(kw))
   )
 })
 
@@ -430,6 +658,15 @@ function openPathModal(obj) {
   availPathSearch.value = ''
   selPathSearch.value = ''
   showPathModal.value = true
+}
+
+function getAllPathsFor(key) {
+  const presets = presetPaths[key] || []
+  return [...presets, ...customPaths.value]
+}
+
+function getPathObj(key, pid) {
+  return getAllPathsFor(key).find(p => p.id === pid)
 }
 
 function getCurrentObj() {
@@ -542,6 +779,28 @@ function showPathDetail(pathObj) {
   showPathDetailModal.value = true
 }
 
+const showAddLogScope = ref(false)
+const logScopeForm = reactive({ path: '', name: '', collectionScope: '全量' })
+
+function saveLogScope() {
+  if (!logScopeForm.path || !logScopeForm.name) return
+  logScopes.value.push({
+    id: 'ls-c' + (scopeIdCounter++),
+    path: logScopeForm.path,
+    name: logScopeForm.name,
+    collectionScope: logScopeForm.collectionScope,
+    source: '自定义',
+  })
+  logScopeForm.path = ''
+  logScopeForm.name = ''
+  logScopeForm.collectionScope = '全量'
+  showAddLogScope.value = false
+}
+
+function deleteLogScope(id) {
+  logScopes.value = logScopes.value.filter(s => s.id !== id)
+}
+
 function goBack() {
   router.push('/ops/logs/config/tasks')
 }
@@ -592,7 +851,7 @@ function handleSubmit() {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 .section-title {
   font-size: 15px;
