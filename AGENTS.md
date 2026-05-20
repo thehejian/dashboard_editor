@@ -72,6 +72,14 @@ src/
 ### 状态管理
 `useEditorState.js` — `reactive()` 单例，所有组件 `useEditorState()` 共享同一 state。
 
+### 日志管理页面布局（10 子页面 /ops/logs/*）
+- **三层结构**: `.page-header`(标题行) → `.filter-bar`(搜索/筛选) → `a-table`
+- **间距**: page-header → filter-bar = 16px（`.page-header { margin-bottom: 16px }`），filter-bar → table = 16px（`.filter-bar { margin-bottom: 16px }`），filter-bar 内部控件间距 8px（`gap: 8px`）
+- **高度统一**: filter-bar 内 `a-input-search` / `a-range-picker` / `a-select` 全部用默认 32px（**不可**加 `size="small"`）
+- **搜索框位置**: 始终放在 filter-bar 最右边（在所有 select/range-picker 之后）
+- **新建按钮**: 从 page-header 移到 filter-bar 最右侧，用 `style="margin-left: auto"` 右对齐；page-header 仅保留 h3 标题
+- **page-header 同时含 h3+button**: 用 `display: flex; align-items: center; gap: 16px;` 保证同行显示
+
 ### 侧滑面板
 - 面板 top 必须与导航栏 height 一致（48px）
 - Radio 按钮用 `v-model:value` + watch 重置
