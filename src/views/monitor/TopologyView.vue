@@ -572,14 +572,14 @@ const NET_LAYOUT = {
   'network-nodes-north': [300, 640],
   'compute-nodes-north': [360, 640],
   'storage-nodes-north': [510, 640],
-  'mgmt-spine-east':   [690, 340],
-  'biz-spine-east':    [870, 340],
-  'mgmt-tor-east':     [690, 490],
-  'biz-tor-east':      [870, 490],
+  'biz-spine-east':    [690, 340],
+  'mgmt-spine-east':   [870, 340],
+  'biz-tor-east':      [690, 490],
+  'mgmt-tor-east':     [870, 490],
   'storage-tor-east':  [1050, 490],
-  'mgmt-nodes-east':   [690, 640],
-  'network-nodes-east': [840, 640],
-  'compute-nodes-east': [900, 640],
+  'network-nodes-east': [660, 640],
+  'compute-nodes-east': [720, 640],
+  'mgmt-nodes-east':   [870, 640],
   'storage-nodes-east': [1050, 640],
 }
 
@@ -631,7 +631,7 @@ const NET_EDGES = [
   { source: 'biz-tor-north', target: 'network-nodes-north', sourceAnchor: 2, targetAnchor: 0 },
   { source: 'biz-tor-north', target: 'compute-nodes-north', sourceAnchor: 2, targetAnchor: 0 },
   { source: 'storage-tor-north', target: 'storage-nodes-north' },
-  { source: 'biz-spine-east', target: 'biz-spine-north', data: { label: 'Region互联' }, sourceAnchor: 1, targetAnchor: 3, style: { lineDash: [5, 5], stroke: '#fa8c16' } },
+  { source: 'biz-spine-east', target: 'biz-spine-north', type: 'cubic-horizontal', data: { label: 'Region互联' }, sourceAnchor: 1, targetAnchor: 3, style: { lineDash: [5, 5], stroke: '#fa8c16' } },
 ]
 
 function createNetworkTopoData() {
