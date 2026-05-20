@@ -2,7 +2,6 @@
   <div>
     <div class="page-header">
       <h3>日志转发任务</h3>
-      <a-button type="primary">新建任务</a-button>
     </div>
     <div class="filter-bar">
       <a-select v-model:value="targetType" placeholder="目标类型" style="width: 130px" allowClear>
@@ -16,6 +15,7 @@
         <a-select-option value="停用">停用</a-select-option>
       </a-select>
       <a-input-search v-model:value="search" placeholder="综合搜索任务名/目标地址" style="width: 280px" />
+      <a-button type="primary" style="margin-left: auto">新建任务</a-button>
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">

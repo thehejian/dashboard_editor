@@ -2,7 +2,6 @@
   <div>
     <div class="page-header">
       <h3>日志转发目的地</h3>
-      <a-button type="primary">新建目的地</a-button>
     </div>
     <div class="filter-bar">
       <a-select v-model:value="type" placeholder="目的地类型" style="width: 130px" allowClear>
@@ -17,6 +16,7 @@
         <a-select-option value="不可用">不可用</a-select-option>
       </a-select>
       <a-input-search v-model:value="search" placeholder="综合搜索名称/地址" style="width: 280px" />
+      <a-button type="primary" style="margin-left: auto">新建目的地</a-button>
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">

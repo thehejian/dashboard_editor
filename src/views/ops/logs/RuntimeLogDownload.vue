@@ -2,7 +2,6 @@
   <div>
     <div class="page-header">
       <h3>日志下载</h3>
-      <a-button type="primary">新建下载任务</a-button>
     </div>
     <div class="filter-bar">
       <a-select v-model:value="status" placeholder="状态" style="width: 120px" allowClear>
@@ -11,6 +10,7 @@
         <a-select-option value="fail">失败</a-select-option>
       </a-select>
       <a-input-search v-model:value="search" placeholder="综合搜索任务名/来源" style="width: 280px" />
+      <a-button type="primary" style="margin-left: auto">新建下载任务</a-button>
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">

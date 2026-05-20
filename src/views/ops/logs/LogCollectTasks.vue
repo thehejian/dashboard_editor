@@ -2,7 +2,6 @@
   <div>
     <div class="page-header">
       <h3>日志采集任务</h3>
-      <a-button type="primary">新建任务</a-button>
     </div>
     <div class="filter-bar">
       <a-select v-model:value="scene" placeholder="场景类型" style="width: 130px" allowClear>
@@ -30,6 +29,7 @@
         <a-select-option value="已下发">已下发</a-select-option>
       </a-select>
       <a-input-search v-model:value="search" placeholder="综合搜索任务名/采集对象" style="width: 280px" />
+      <a-button type="primary" style="margin-left: auto">新建任务</a-button>
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
