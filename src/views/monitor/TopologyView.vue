@@ -717,7 +717,7 @@ function initNetworkGraph() {
       type: 'rect',
       style: {
         fill: (d) => d.style?.fill || '#fff',
-        stroke: (d) => d.style?.stroke || '#d9d9d9',
+        stroke: (d) => d.style?.stroke || '#bbb',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         lineDash: [5, 5],
         radius: (d) => d.style?.radius || 6,
