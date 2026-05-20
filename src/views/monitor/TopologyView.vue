@@ -695,7 +695,7 @@ function initNetworkGraph() {
       }
     },
     edge: {
-      type: 'arc',
+      type: 'cubic',
       style: {
         stroke: (d) => d.style?.stroke || '#d9d9d9',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
