@@ -7,75 +7,106 @@
 
     <div class="create-body">
       <div class="form-section">
-        <div class="section-title">基本信息</div>
-        <a-form layout="vertical">
-          <a-form-item label="任务名称" required>
-            <a-input v-model:value="form.name" placeholder="请输入" />
-          </a-form-item>
-          <a-form-item label="状态" required>
-            <a-switch v-model:checked="form.status" />
-            <span style="margin-left:8px;font-size:13px;color:var(--text-sec)">{{ form.status ? '启用' : '停用' }}</span>
-          </a-form-item>
-          <a-form-item label="描述">
-            <a-textarea v-model:value="form.description" placeholder="请输入" :maxlength="1000" :show-count="true" />
-          </a-form-item>
-        </a-form>
+        <div class="section-title collapsible" @click="basicOpen = !basicOpen">
+          <span>基本信息</span>
+          <i class="fa-solid" :class="basicOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </div>
+        <a-collapse-transition :open="basicOpen">
+          <a-form layout="vertical">
+            <a-form-item label="任务名称" required>
+              <a-input v-model:value="form.name" placeholder="请输入" />
+            </a-form-item>
+            <a-form-item label="状态" required>
+              <a-switch v-model:checked="form.status" />
+              <span style="margin-left:8px;font-size:13px;color:var(--text-sec)">{{ form.status ? '启用' : '停用' }}</span>
+            </a-form-item>
+            <a-form-item label="描述">
+              <a-textarea v-model:value="form.description" placeholder="请输入" :maxlength="1000" :show-count="true" />
+            </a-form-item>
+          </a-form>
+        </a-collapse-transition>
       </div>
 
       <div class="form-section">
-        <div class="section-title">采集范围</div>
-        <a-form layout="vertical">
-          <a-form-item label="区域" required>
-            <a-select v-model:value="form.region" placeholder="请选择区域" style="width:240px">
-              <a-select-option value="华北2">华北2</a-select-option>
-              <a-select-option value="华东1">华东1</a-select-option>
-              <a-select-option value="华南1">华南1</a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item label="资源类别" required>
-            <a-radio-group v-model:value="form.resourceType" button-style="solid">
-              <a-radio-button value="cloud-service">云服务</a-radio-button>
-              <a-radio-button value="cloud-resource">云资源</a-radio-button>
-              <a-radio-button value="physical">物理资源</a-radio-button>
-            </a-radio-group>
-          </a-form-item>
-          <a-form-item label="采集对象">
-            <a-button @click="openObjectModal">
-              <i class="fa-solid fa-plus" style="margin-right:4px"></i>选择采集对象
-            </a-button>
-            <div v-if="selectedObjects.length" class="selected-objects">
-              <div v-for="obj in selectedObjects" :key="obj.key" class="object-card">
-                <div class="object-info">
-                  <span class="object-name">{{ obj.title }}</span>
-                  <span class="object-parent">{{ obj.parentTitle }}</span>
+        <div class="section-title collapsible" @click="scopeOpen = !scopeOpen">
+          <span>采集范围</span>
+          <i class="fa-solid" :class="scopeOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </div>
+        <a-collapse-transition :open="scopeOpen">
+          <a-form layout="vertical">
+            <a-form-item label="区域" required>
+              <a-select v-model:value="form.region" placeholder="请选择区域" style="width:240px">
+                <a-select-option value="华北2">华北2</a-select-option>
+                <a-select-option value="华东1">华东1</a-select-option>
+                <a-select-option value="华南1">华南1</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="资源类别" required>
+              <a-radio-group v-model:value="form.resourceType" button-style="solid">
+                <a-radio-button value="cloud-service">云服务</a-radio-button>
+                <a-radio-button value="cloud-resource">云资源</a-radio-button>
+                <a-radio-button value="physical">物理资源</a-radio-button>
+              </a-radio-group>
+            </a-form-item>
+            <a-form-item label="采集对象">
+              <a-button @click="openObjectModal"><i class="fa-solid fa-plus" style="margin-right:4px"></i>选择采集对象</a-button>
+              <div v-if="selectedObjects.length" style="margin-top:12px">
+                <div style="display:flex;gap:8px;margin-bottom:12px">
+                  <a-input-search v-model:value="objectKeyword" placeholder="搜索" style="width:320px" />
                 </div>
-                <div class="object-actions">
-                  <a-button type="link" size="small" @click="openPathModal(obj)">
-                    <i class="fa-solid fa-gear" style="margin-right:4px"></i>配置路径
-                  </a-button>
-                  <a-tag v-if="obj.selectedPathIds.length">{{ obj.selectedPathIds.length }} 条路径</a-tag>
-                  <a-button type="link" size="small" danger @click="removeObject(obj)">删除</a-button>
+                <a-table
+                  :data-source="pagedObjects"
+                  :columns="objectColumns"
+                  :pagination="false"
+                  row-key="key"
+                  size="small"
+                  :scroll="{ x: 700 }"
+                >
+                  <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'pathCount'">
+                      <a @click="openPathModal(record)">{{ record.selectedPathIds.length }}</a>
+                    </template>
+                    <template v-if="column.key === 'action'">
+                      <a-button type="link" size="small" @click="openPathModal(record)">添加路径</a-button>
+                      <a-button type="link" size="small" danger @click="removeObject(record)">删除</a-button>
+                    </template>
+                  </template>
+                </a-table>
+                <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                  <a-pagination
+                    v-model:current="currentPage"
+                    :page-size="pageSize"
+                    :total="filteredObjects.length"
+                    show-size-changer
+                    show-total
+                    size="small"
+                  />
                 </div>
               </div>
-            </div>
-          </a-form-item>
-        </a-form>
+            </a-form-item>
+          </a-form>
+        </a-collapse-transition>
       </div>
 
       <div class="form-section">
-        <div class="section-title">转发目的地</div>
-        <a-form layout="vertical">
-          <a-form-item label="转发通道">
-            <a-space>
-              <a-select v-model:value="form.destination" placeholder="请选择" style="width:240px">
-                <a-select-option value="kafka-01">Kafka-日志集群</a-select-option>
-                <a-select-option value="es-01">ES-日志存储</a-select-option>
-                <a-select-option value="syslog-01">Syslog-审计中心</a-select-option>
-              </a-select>
-              <a-button>新建通道</a-button>
-            </a-space>
-          </a-form-item>
-        </a-form>
+        <div class="section-title collapsible" @click="destOpen = !destOpen">
+          <span>转发目的地</span>
+          <i class="fa-solid" :class="destOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </div>
+        <a-collapse-transition :open="destOpen">
+          <a-form layout="vertical">
+            <a-form-item label="转发通道">
+              <a-space>
+                <a-select v-model:value="form.destination" placeholder="请选择" style="width:240px">
+                  <a-select-option value="kafka-01">Kafka-日志集群</a-select-option>
+                  <a-select-option value="es-01">ES-日志存储</a-select-option>
+                  <a-select-option value="syslog-01">Syslog-审计中心</a-select-option>
+                </a-select>
+                <a-button>新建通道</a-button>
+              </a-space>
+            </a-form-item>
+          </a-form>
+        </a-collapse-transition>
       </div>
     </div>
 
@@ -90,12 +121,7 @@
           <div class="transfer-panel-header">可选对象</div>
           <a-input-search v-model:value="srcSearch" placeholder="搜索" size="small" style="margin:8px 12px;width:calc(100% - 24px)" />
           <div class="transfer-tree-wrap">
-            <a-tree
-              v-model:checkedKeys="checkedKeys"
-              :tree-data="filteredSrcTree"
-              checkable
-              :default-expand-all="true"
-            />
+            <a-tree v-model:checkedKeys="checkedKeys" :tree-data="filteredSrcTree" checkable :default-expand-all="true" />
           </div>
         </div>
         <div class="transfer-divider"></div>
@@ -103,12 +129,7 @@
           <div class="transfer-panel-header">已选对象 ({{ checkedKeys.length }})</div>
           <a-input-search v-model:value="dstSearch" placeholder="搜索" size="small" style="margin:8px 12px;width:calc(100% - 24px)" />
           <div class="transfer-tree-wrap">
-            <a-tree
-              v-model:checkedKeys="checkedKeys"
-              :tree-data="filteredDstTree"
-              checkable
-              :default-expand-all="true"
-            />
+            <a-tree v-model:checkedKeys="checkedKeys" :tree-data="filteredDstTree" checkable :default-expand-all="true" />
           </div>
         </div>
       </div>
@@ -118,55 +139,40 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:visible="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="800px" :footer="null" @cancel="showPathModal = false">
+    <a-modal v-model:visible="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="900px" :footer="null" @cancel="showPathModal = false">
       <div v-if="currentPathObj" class="path-transfer">
         <div class="transfer-layout">
           <div class="transfer-panel">
             <div class="transfer-panel-header">可选路径</div>
-            <div class="path-available-list">
-              <div
-                v-for="p in availablePaths"
-                :key="p.id"
-                class="path-item"
-                :class="{ selected: pathSelectedIds.has(p.id) }"
-                @click="togglePathSelect(p.id)"
-              >
-                <div class="path-item-main">
-                  <span class="path-dir">{{ p.path }}</span>
-                  <span class="path-file">{{ p.fileName }}</span>
-                  <a-tag :color="p.type === '运行日志' ? 'blue' : 'orange'" style="font-size:11px;line-height:18px">{{ p.type }}</a-tag>
-                  <a-tag v-if="p.source === '自定义'" style="font-size:11px;line-height:18px;border-color:var(--brand);color:var(--brand)">{{ p.source }}</a-tag>
-                  <a-tag v-else style="font-size:11px;line-height:18px">{{ p.source }}</a-tag>
-                </div>
-                <div class="path-item-actions" v-if="p.source === '自定义'" @click.stop>
-                  <a-button type="link" size="small" @click="editCustomPath(p)">编辑</a-button>
-                  <a-button type="link" size="small" danger @click="deleteCustomPath(p.id)">删除</a-button>
-                </div>
-              </div>
+            <div style="padding:8px">
+              <a-table
+                :data-source="availablePaths"
+                :columns="pathColumns"
+                :pagination="false"
+                size="small"
+                row-key="id"
+                :scroll="{ y: 280 }"
+                :row-class="(r) => pathSelectedIds.has(r.id) ? 'path-row-selected' : ''"
+                @row-click="(r) => togglePathSelect(r.id)"
+              />
+              <a-button type="dashed" block size="small" style="margin-top:8px" @click="openAddCustomPath">
+                <i class="fa-solid fa-plus"></i> 新增自定义路径
+              </a-button>
             </div>
-            <a-button type="dashed" block size="small" style="margin-top:8px" @click="showAddCustomPath = true">
-              <i class="fa-solid fa-plus"></i> 新增自定义路径
-            </a-button>
           </div>
           <div class="transfer-divider"></div>
           <div class="transfer-panel">
             <div class="transfer-panel-header">已选路径 ({{ currentPathObj.selectedPathIds.length }})</div>
-            <div class="path-available-list">
-              <div
-                v-for="p in selectedPaths"
-                :key="p.id"
-                class="path-item selected"
-                @click="removeSelectedPath(p.id)"
-              >
-                <div class="path-item-main">
-                  <span class="path-dir">{{ p.path }}</span>
-                  <span class="path-file">{{ p.fileName }}</span>
-                  <a-tag :color="p.type === '运行日志' ? 'blue' : 'orange'" style="font-size:11px;line-height:18px">{{ p.type }}</a-tag>
-                  <a-tag v-if="p.source === '自定义'" style="font-size:11px;line-height:18px;border-color:var(--brand);color:var(--brand)">{{ p.source }}</a-tag>
-                  <a-tag v-else style="font-size:11px;line-height:18px">{{ p.source }}</a-tag>
-                </div>
-                <span style="font-size:11px;color:var(--text-ter);margin-left:auto">点击移除</span>
-              </div>
+            <div style="padding:8px">
+              <a-table
+                :data-source="selectedPaths"
+                :columns="pathColumns"
+                :pagination="false"
+                size="small"
+                row-key="id"
+                :scroll="{ y: 280 }"
+                @row-click="(r) => removeSelectedPath(r.id)"
+              />
               <div v-if="!currentPathObj.selectedPathIds.length" class="transfer-empty">暂无选择</div>
             </div>
           </div>
@@ -213,6 +219,29 @@ const form = reactive({
   destination: null,
 })
 
+const basicOpen = ref(true)
+const scopeOpen = ref(true)
+const destOpen = ref(true)
+
+const objectKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(5)
+
+const objectColumns = [
+  { title: '对象名称', dataIndex: 'title', key: 'name', width: 140 },
+  { title: '所属云服务', dataIndex: 'parentTitle', key: 'service', width: 140 },
+  { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
+  { title: '关联日志路径数量', key: 'pathCount', width: 140 },
+  { title: '操作', key: 'action', width: 180 },
+]
+
+const pathColumns = [
+  { title: '日志路径', dataIndex: 'path', key: 'path', width: 180 },
+  { title: '日志文件名称', dataIndex: 'fileName', key: 'fileName', width: 140 },
+  { title: '日志类型', dataIndex: 'type', key: 'type', width: 100 },
+  { title: '来源', dataIndex: 'source', key: 'source', width: 100 },
+]
+
 const objectTree = [
   {
     title: '统一云管（云服务类别）',
@@ -256,12 +285,6 @@ const presetPaths = {
 
 const customPaths = ref([])
 
-const allPaths = computed(() => {
-  if (!currentPathObj.value) return []
-  const presets = presetPaths[currentPathObj.value.key] || []
-  return [...presets, ...customPaths.value]
-})
-
 function getNodeTitle(key) {
   for (const n of objectTree) {
     for (const c of n.children || []) {
@@ -273,17 +296,6 @@ function getNodeTitle(key) {
     if (n.key === key) return n.title
   }
   return key
-}
-
-function findNode(key, nodes) {
-  for (const n of nodes) {
-    if (n.key === key) return n
-    if (n.children) {
-      const found = findNode(key, n.children)
-      if (found) return found
-    }
-  }
-  return null
 }
 
 function filterTree(nodes, keyword) {
@@ -340,6 +352,8 @@ function openObjectModal() {
   showObjectModal.value = true
 }
 
+const selectedObjects = ref([])
+
 function confirmObjects() {
   const existingKeys = new Set(selectedObjects.value.map(o => o.key))
   for (const key of checkedKeys.value) {
@@ -348,6 +362,7 @@ function confirmObjects() {
         key,
         title: getNodeTitle(key),
         parentTitle: 'ManageOne',
+        description: '',
         selectedPathIds: [],
       })
       existingKeys.add(key)
@@ -355,13 +370,26 @@ function confirmObjects() {
   }
   selectedObjects.value = selectedObjects.value.filter(o => checkedKeys.value.includes(o.key))
   showObjectModal.value = false
+  currentPage.value = 1
 }
-
-const selectedObjects = ref([])
 
 function removeObject(obj) {
   selectedObjects.value = selectedObjects.value.filter(o => o.key !== obj.key)
+  currentPage.value = 1
 }
+
+const filteredObjects = computed(() => {
+  if (!objectKeyword.value) return selectedObjects.value
+  const kw = objectKeyword.value.toLowerCase()
+  return selectedObjects.value.filter(o =>
+    o.title.toLowerCase().includes(kw) || o.parentTitle.toLowerCase().includes(kw)
+  )
+})
+
+const pagedObjects = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredObjects.value.slice(start, start + pageSize.value)
+})
 
 const showPathModal = ref(false)
 const currentPathObj = ref(null)
@@ -413,6 +441,14 @@ const showAddCustomPath = ref(false)
 const editingCustomPathId = ref(null)
 const customForm = reactive({ path: '', fileName: '', type: '运行日志' })
 
+function openAddCustomPath() {
+  editingCustomPathId.value = null
+  customForm.path = ''
+  customForm.fileName = ''
+  customForm.type = '运行日志'
+  showAddCustomPath.value = true
+}
+
 function saveCustomPath() {
   if (!customForm.path || !customForm.fileName) return
   if (editingCustomPathId.value) {
@@ -431,19 +467,7 @@ function saveCustomPath() {
       source: '自定义',
     })
   }
-  customForm.path = ''
-  customForm.fileName = ''
-  customForm.type = '运行日志'
-  editingCustomPathId.value = null
   showAddCustomPath.value = false
-}
-
-function editCustomPath(p) {
-  editingCustomPathId.value = p.id
-  customForm.path = p.path
-  customForm.fileName = p.fileName
-  customForm.type = p.type
-  showAddCustomPath.value = true
 }
 
 function deleteCustomPath(id) {
@@ -509,46 +533,22 @@ function handleSubmit() {
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
 }
-.selected-objects {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.object-card {
+.section-title.collapsible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
+  cursor: pointer;
+  user-select: none;
 }
-.object-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.object-name {
+.section-title.collapsible i {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-}
-.object-parent {
-  font-size: 12px;
   color: var(--text-ter);
-  background: var(--bg-sec);
-  padding: 1px 8px;
-  border-radius: 4px;
 }
-.object-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.section-title.collapsible + div {
+  margin-top: 20px;
 }
 .transfer-layout {
   display: flex;
@@ -586,53 +586,10 @@ function handleSubmit() {
   background: var(--border);
   margin: 0 8px;
 }
-.path-available-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 8px;
-  min-height: 220px;
-  max-height: 360px;
+:deep(.path-row-selected) {
+  background: var(--brand-subtle);
 }
-.path-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  margin-bottom: 6px;
+:deep(.ant-table-row) {
   cursor: pointer;
-  transition: all 0.15s;
-  gap: 8px;
-}
-.path-item:hover {
-  border-color: var(--brand);
-  background: var(--brand-subtle);
-}
-.path-item.selected {
-  border-color: var(--brand);
-  background: var(--brand-subtle);
-}
-.path-item-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  flex: 1;
-  min-width: 0;
-}
-.path-dir {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text);
-  font-family: monospace;
-}
-.path-file {
-  font-size: 12px;
-  color: var(--text-sec);
-  font-family: monospace;
-}
-.path-item-actions {
-  flex-shrink: 0;
 }
 </style>
