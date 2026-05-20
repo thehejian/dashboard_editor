@@ -612,18 +612,26 @@ const NET_COMBO_DEFS = [
 ]
 
 const NET_EDGES = [
-  { source: 'internet', target: 'border-leaf', style: { stroke: '#d9d9d9', lineWidth: 2 } },
-  { source: 'border-leaf', target: 'mgmt-spine-east', data: { label: '管理通道' }, sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'border-leaf', target: 'biz-spine-east', data: { label: '业务平面' }, sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'biz-spine-east', target: 'storage-tor-east', data: { label: '存储平面' }, sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'biz-tor-east', target: 'network-nodes-east', sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'biz-tor-east', target: 'compute-nodes-east', sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'border-leaf', target: 'mgmt-spine-north', data: { label: '管理通道' }, sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'border-leaf', target: 'biz-spine-north', data: { label: '业务平面' }, sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'biz-spine-north', target: 'storage-tor-north', data: { label: '存储平面' }, sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'biz-tor-north', target: 'network-nodes-north', sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'biz-tor-north', target: 'compute-nodes-north', sourceAnchor: [0.5, 1], targetAnchor: [0.5, 0] },
-  { source: 'biz-spine-east', target: 'biz-spine-north', type: 'cubic-horizontal', data: { label: 'Region互联' }, sourceAnchor: [1, 0.5], targetAnchor: [0, 0.5], style: { lineDash: [5, 5], stroke: '#fa8c16' } },
+  { source: 'internet', target: 'border-leaf', style: { stroke: '#d9d9d9', lineWidth: 2 }, sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'border-leaf', target: 'mgmt-spine-east', data: { label: '管理通道' }, sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'border-leaf', target: 'biz-spine-east', data: { label: '业务平面' }, sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'mgmt-spine-east', target: 'mgmt-tor-east', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-spine-east', target: 'biz-tor-east', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-spine-east', target: 'storage-tor-east', data: { label: '存储平面' }, sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'mgmt-tor-east', target: 'mgmt-nodes-east', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-tor-east', target: 'network-nodes-east', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-tor-east', target: 'compute-nodes-east', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'storage-tor-east', target: 'storage-nodes-east', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'border-leaf', target: 'mgmt-spine-north', data: { label: '管理通道' }, sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'border-leaf', target: 'biz-spine-north', data: { label: '业务平面' }, sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'mgmt-spine-north', target: 'mgmt-tor-north', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-spine-north', target: 'biz-tor-north', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-spine-north', target: 'storage-tor-north', data: { label: '存储平面' }, sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'mgmt-tor-north', target: 'mgmt-nodes-north', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-tor-north', target: 'network-nodes-north', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-tor-north', target: 'compute-nodes-north', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'storage-tor-north', target: 'storage-nodes-north', sourceAnchor: 2, targetAnchor: 0 },
+  { source: 'biz-spine-east', target: 'biz-spine-north', type: 'cubic-horizontal', data: { label: 'Region互联' }, sourceAnchor: 1, targetAnchor: 3, style: { lineDash: [5, 5], stroke: '#fa8c16' } },
 ]
 
 function createNetworkTopoData() {
@@ -684,7 +692,13 @@ function initNetworkGraph() {
         iconText: (d) => d.iconText || '',
         iconFill: '#fff',
         iconFontSize: 24,
-      }
+      },
+      anchorPoints: [
+        [0.5, 0],  // 0: top center
+        [1, 0.5],  // 1: right center
+        [0.5, 1],  // 2: bottom center
+        [0, 0.5],  // 3: left center
+      ]
     },
     edge: {
       type: 'cubic-vertical',
@@ -703,7 +717,7 @@ function initNetworkGraph() {
       type: 'rect',
       style: {
         fill: (d) => d.style?.fill || '#fff',
-        stroke: (d) => d.style?.stroke || '#e8e8e8',
+        stroke: (d) => d.style?.stroke || '#d9d9d9',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         lineDash: [5, 5],
         radius: (d) => d.style?.radius || 6,
