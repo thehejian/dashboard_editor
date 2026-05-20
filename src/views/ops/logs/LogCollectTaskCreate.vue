@@ -423,6 +423,7 @@ const showPathModal = ref(false)
 const currentPathObj = ref(null)
 const availPathSearch = ref('')
 const selPathSearch = ref('')
+const pathVersion = ref(0)
 
 function openPathModal(obj) {
   currentPathObj.value = obj
@@ -431,20 +432,22 @@ function openPathModal(obj) {
   showPathModal.value = true
 }
 
-function currentObjPaths() {
-  if (!currentPathObj.value) return []
-  const obj = selectedObjects.value.find(o => o.key === currentPathObj.value.key)
-  return obj ? obj.selectedPathIds : []
+function getCurrentObj() {
+  if (!currentPathObj.value) return null
+  return selectedObjects.value.find(o => o.key === currentPathObj.value.key) || null
 }
 
 const availablePaths = computed(() => {
+  pathVersion.value
   if (!currentPathObj.value) return []
-  const ids = currentObjPaths()
+  const obj = getCurrentObj()
+  if (!obj) return []
   const all = getAllPathsFor(currentPathObj.value.key)
-  return all.filter(p => !ids.includes(p.id))
+  return all.filter(p => !obj.selectedPathIds.includes(p.id))
 })
 
 const filteredAvailablePaths = computed(() => {
+  pathVersion.value
   if (!availPathSearch.value) return availablePaths.value
   const kw = availPathSearch.value.toLowerCase()
   return availablePaths.value.filter(p =>
@@ -453,13 +456,16 @@ const filteredAvailablePaths = computed(() => {
 })
 
 const selectedPaths = computed(() => {
+  pathVersion.value
   if (!currentPathObj.value) return []
-  const ids = currentObjPaths()
+  const obj = getCurrentObj()
+  if (!obj) return []
   const all = getAllPathsFor(currentPathObj.value.key)
-  return all.filter(p => ids.includes(p.id))
+  return all.filter(p => obj.selectedPathIds.includes(p.id))
 })
 
 const filteredSelectedPaths = computed(() => {
+  pathVersion.value
   if (!selPathSearch.value) return selectedPaths.value
   const kw = selPathSearch.value.toLowerCase()
   return selectedPaths.value.filter(p =>
@@ -469,17 +475,19 @@ const filteredSelectedPaths = computed(() => {
 
 function selectPath(id) {
   if (!currentPathObj.value) return
-  const obj = selectedObjects.value.find(o => o.key === currentPathObj.value.key)
+  const obj = getCurrentObj()
   if (obj && !obj.selectedPathIds.includes(id)) {
     obj.selectedPathIds = [...obj.selectedPathIds, id]
+    pathVersion.value++
   }
 }
 
 function removeSelectedPath(id) {
   if (!currentPathObj.value) return
-  const obj = selectedObjects.value.find(o => o.key === currentPathObj.value.key)
+  const obj = getCurrentObj()
   if (obj) {
     obj.selectedPathIds = obj.selectedPathIds.filter(i => i !== id)
+    pathVersion.value++
   }
 }
 
@@ -513,6 +521,7 @@ function saveCustomPath() {
       source: '自定义',
     })
   }
+  pathVersion.value++
   showAddCustomPath.value = false
 }
 
@@ -521,6 +530,7 @@ function deleteCustomPath(id) {
   for (const obj of selectedObjects.value) {
     obj.selectedPathIds = obj.selectedPathIds.filter(i => i !== id)
   }
+  pathVersion.value++
 }
 
 const showPathDetailModal = ref(false)
