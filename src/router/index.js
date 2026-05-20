@@ -28,6 +28,7 @@ const routes = [
       { path: 'runtime/query', component: () => import('../views/ops/logs/RuntimeLogQuery.vue') },
       { path: 'runtime/download', component: () => import('../views/ops/logs/RuntimeLogDownload.vue') },
       { path: 'config/tasks', component: () => import('../views/ops/logs/LogCollectTasks.vue') },
+      { path: 'config/tasks/create', component: () => import('../views/ops/logs/LogCollectTaskCreate.vue') },
       { path: 'config/forward', component: () => import('../views/ops/logs/LogForwardTasks.vue') },
       { path: 'config/templates', component: () => import('../views/ops/logs/LogCollectTemplates.vue') },
       { path: 'config/destinations', component: () => import('../views/ops/logs/LogForwardDestinations.vue') },

@@ -29,7 +29,7 @@
         <a-select-option value="已下发">已下发</a-select-option>
       </a-select>
       <a-input-search v-model:value="search" placeholder="综合搜索任务名/采集对象" style="width: 280px" />
-      <a-button type="primary" style="margin-left: auto">新建任务</a-button>
+      <a-button type="primary" style="margin-left: auto" @click="goCreate">新建任务</a-button>
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
       <template #bodyCell="{ column, record }">
@@ -54,6 +54,8 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const search = ref('')
 const scene = ref(null)
 const status = ref(null)
@@ -79,6 +81,9 @@ const columns = [
   { title: '最后采集时间', dataIndex: 'lastCollect', width: 170 },
   { title: '操作', key: 'action', width: 180 },
 ]
+function goCreate() {
+  router.push('/ops/logs/config/tasks/create')
+}
 </script>
 
 <style scoped>

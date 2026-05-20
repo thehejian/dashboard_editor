@@ -35,7 +35,7 @@
         block-node
       />
     </div>
-    <div class="log-content">
+    <div class="log-content" :class="{ 'create-mode': isCreatePage }">
       <router-view />
     </div>
   </div>
@@ -82,7 +82,13 @@ const treeData = [
   },
 ]
 
-const selectedKeys = computed(() => [route.path])
+const isCreatePage = computed(() => route.path.includes('/tasks/create'))
+
+const selectedKeys = computed(() => {
+  const p = route.path
+  if (p.includes('/tasks/create')) return ['/ops/logs/config/tasks']
+  return [p]
+})
 
 function onSelect(keys) {
   if (keys.length && keys[0] !== route.path) {
@@ -103,7 +109,13 @@ function flatTree(nodes, depth = 0) {
 }
 const flatItems = computed(() => flatTree(treeData).filter(i => i.depth > 0))
 
-watch(() => route.path, (p) => { mobileRoute.value = p }, { immediate: true })
+watch(() => route.path, (p) => {
+  if (p.includes('/tasks/create')) {
+    mobileRoute.value = '/ops/logs/config/tasks'
+  } else {
+    mobileRoute.value = p
+  }
+}, { immediate: true })
 
 function onMobileSelect(key) {
   if (key && key !== route.path) {
@@ -124,6 +136,7 @@ function onMobileSelectTree(keys) {
 .sidebar-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); padding: 0 16px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .sidebar-title i { font-size: 14px; color: var(--brand); }
 .log-content { flex: 1; overflow-y: auto; padding: 24px; }
+.log-content.create-mode { padding: 0; }
 .log-mobile-nav { display: none; }
 .log-mobile-sidebar { display: none; }
 .log-mobile-mask { display: none; }
