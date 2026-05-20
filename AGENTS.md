@@ -52,6 +52,7 @@ src/
 
 ### G6 v5
 - `import { Graph } from '@antv/g6'`
+- **G6 v5 无 `sourceAnchor`/`targetAnchor`/`anchorPoints`**（v4 语法，被忽略）。改用 **port 系统**：node style 定义 `ports: [{ key: 'top', placement: [0.5, 0], r: 0 }]`（`r: 0` 不可见），edge data 设 `sourcePort: 'bottom'`/`targetPort: 'top'`
 - `getChildrenData(comboId)` 返回空数组 → 用 `getNodeData().filter(d => d.combo === id)`
 - `graph.render()` 是异步的，后处理必须在 `.then()` 内
 - 网络拓扑勿用 dagre layout（手动 grid 更干净）：在 node data 的 `style` 中设 `x`/`y`（**不是**顶层属性），combo data 的 `style` 中设 `x`/`y`/`size`，不传 `layout` 参数
