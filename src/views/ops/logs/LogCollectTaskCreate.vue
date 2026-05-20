@@ -159,7 +159,7 @@
       <a-button type="primary" @click="handleSubmit">确定</a-button>
     </div>
 
-    <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="800px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
+    <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="1100px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
       <div class="transfer-layout">
         <div class="transfer-panel">
           <div class="transfer-panel-header">可选对象</div>
