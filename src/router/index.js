@@ -17,7 +17,23 @@ const routes = [
   { path: '/resource/changes', name: 'resource-changes', component: () => import('../views/resource/ChangesView.vue') },
 
   { path: '/ops/jobs', name: 'ops-jobs', component: () => import('../views/ops/JobsView.vue') },
-  { path: '/ops/logs', name: 'ops-logs', component: () => import('../views/ops/LogsView.vue') },
+  {
+    path: '/ops/logs',
+    component: () => import('../views/ops/OpsLogManageView.vue'),
+    children: [
+      { path: '', redirect: '/ops/logs/operation/query' },
+      { path: 'operation/query', component: () => import('../views/ops/logs/OperationLogQuery.vue') },
+      { path: 'operation/config', component: () => import('../views/ops/logs/OperationLogConfig.vue') },
+      { path: 'operation/cluster', component: () => import('../views/ops/logs/OperationLogCluster.vue') },
+      { path: 'runtime/query', component: () => import('../views/ops/logs/RuntimeLogQuery.vue') },
+      { path: 'runtime/download', component: () => import('../views/ops/logs/RuntimeLogDownload.vue') },
+      { path: 'config/tasks', component: () => import('../views/ops/logs/LogCollectTasks.vue') },
+      { path: 'config/forward', component: () => import('../views/ops/logs/LogForwardTasks.vue') },
+      { path: 'config/templates', component: () => import('../views/ops/logs/LogCollectTemplates.vue') },
+      { path: 'config/destinations', component: () => import('../views/ops/logs/LogForwardDestinations.vue') },
+      { path: 'config/download-settings', component: () => import('../views/ops/logs/LogDownloadConfig.vue') },
+    ],
+  },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
 
   {
