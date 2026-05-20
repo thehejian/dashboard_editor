@@ -602,8 +602,8 @@ const NET_LAYOUT = {
   'biz-tor-north':      [330, 490],
   'storage-tor-north':  [510, 490],
   'mgmt-nodes-north':   [150, 640],
-  'network-nodes-north': [310, 640],
-  'compute-nodes-north': [350, 640],
+  'network-nodes-north': [300, 640],
+  'compute-nodes-north': [360, 640],
   'storage-nodes-north': [510, 640],
   'mgmt-spine-east':   [690, 340],
   'biz-spine-east':    [870, 340],
@@ -611,8 +611,8 @@ const NET_LAYOUT = {
   'biz-tor-east':      [870, 490],
   'storage-tor-east':  [1050, 490],
   'mgmt-nodes-east':   [690, 640],
-  'network-nodes-east': [850, 640],
-  'compute-nodes-east': [890, 640],
+  'network-nodes-east': [840, 640],
+  'compute-nodes-east': [900, 640],
   'storage-nodes-east': [1050, 640],
 }
 
