@@ -11,7 +11,7 @@
           <span>基本信息</span>
           <i class="fa-solid" :class="basicOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
         </div>
-        <a-collapse-transition :open="basicOpen">
+        <div v-show="basicOpen" class="collapse-content">
           <a-form layout="vertical">
             <a-form-item label="任务名称" required>
               <a-input v-model:value="form.name" placeholder="请输入" />
@@ -24,7 +24,7 @@
               <a-textarea v-model:value="form.description" placeholder="请输入" :maxlength="1000" :show-count="true" />
             </a-form-item>
           </a-form>
-        </a-collapse-transition>
+        </div>
       </div>
 
       <div class="form-section">
@@ -32,7 +32,7 @@
           <span>采集范围</span>
           <i class="fa-solid" :class="scopeOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
         </div>
-        <a-collapse-transition :open="scopeOpen">
+        <div v-show="scopeOpen" class="collapse-content">
           <a-form layout="vertical">
             <a-form-item label="区域" required>
               <a-select v-model:value="form.region" placeholder="请选择区域" style="width:240px">
@@ -129,7 +129,7 @@
               </a-button>
             </a-form-item>
           </a-form>
-        </a-collapse-transition>
+        </div>
       </div>
 
       <div class="form-section">
@@ -137,7 +137,7 @@
           <span>转发目的地</span>
           <i class="fa-solid" :class="destOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
         </div>
-        <a-collapse-transition :open="destOpen">
+        <div v-show="destOpen" class="collapse-content">
           <a-form layout="vertical">
             <a-form-item label="转发通道">
               <a-space>
@@ -150,7 +150,7 @@
               </a-space>
             </a-form-item>
           </a-form>
-        </a-collapse-transition>
+        </div>
       </div>
     </div>
 
@@ -159,17 +159,21 @@
       <a-button type="primary" @click="handleSubmit">确定</a-button>
     </div>
 
-    <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="720px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
+    <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="800px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
       <div class="transfer-layout">
         <div class="transfer-panel">
           <div class="transfer-panel-header">可选对象</div>
           <a-input-search v-model:value="srcSearch" placeholder="搜索" size="small" style="margin:8px 12px;width:calc(100% - 24px)" />
           <div class="transfer-tree-wrap">
-            <a-tree
-              v-model:checkedKeys="checkedKeys"
-              :tree-data="currentTree"
-              checkable
-              :default-expand-all="true"
+            <a-table
+              :columns="treeTableColumns"
+              :data-source="filteredSrcTree"
+              :rowSelection="treeRowSelection"
+              row-key="key"
+              :pagination="false"
+              size="small"
+              :scroll="{ y: 300 }"
+              :customRow="(r) => ({ onClick: () => toggleTreeKey(r.key) })"
             />
           </div>
         </div>
@@ -178,11 +182,14 @@
           <div class="transfer-panel-header">已选对象 ({{ checkedKeys.length }})</div>
           <a-input-search v-model:value="dstSearch" placeholder="搜索" size="small" style="margin:8px 12px;width:calc(100% - 24px)" />
           <div class="transfer-tree-wrap">
-            <a-tree
-              v-model:checkedKeys="checkedKeys"
-              :tree-data="filteredDstTree"
-              checkable
-              :default-expand-all="true"
+            <a-table
+              :columns="treeTableColumns"
+              :data-source="filteredDstTree"
+              row-key="key"
+              :pagination="false"
+              size="small"
+              :scroll="{ y: 300 }"
+              :customRow="(r) => ({ onClick: () => toggleTreeKey(r.key) })"
             />
           </div>
         </div>
@@ -203,7 +210,7 @@
                 size="small"
                 row-key="id"
                 :scroll="{ y: 260 }"
-                @row-click="(r) => selectPath(r.id)"
+                :customRow="(r) => ({ onClick: () => selectPath(r.id) })"
               />
               <a-button type="dashed" block size="small" style="margin-top:8px" @click="openAddCustomPath">
                 <i class="fa-solid fa-plus"></i> 新增自定义路径
@@ -223,7 +230,7 @@
                 size="small"
                 row-key="id"
                 :scroll="{ y: 260 }"
-                @row-click="(r) => removeSelectedPath(r.id)"
+                :customRow="(r) => ({ onClick: () => removeSelectedPath(r.id) })"
               />
               <div v-else class="transfer-empty">暂无选择</div>
             </div>
@@ -317,11 +324,11 @@ const objectTrees = {
           key: 'manageone',
           isLeaf: false,
           children: [
-            { title: '微服务01', key: 'ms-01', isLeaf: true },
-            { title: '微服务02', key: 'ms-02', isLeaf: true },
-            { title: '微服务03', key: 'ms-03', isLeaf: true },
-            { title: '微服务04', key: 'ms-04', isLeaf: true },
-            { title: '微服务05', key: 'ms-05', isLeaf: true },
+            { title: '微服务01', key: 'ms-01', isLeaf: true, parentTitle: 'ManageOne' },
+            { title: '微服务02', key: 'ms-02', isLeaf: true, parentTitle: 'ManageOne' },
+            { title: '微服务03', key: 'ms-03', isLeaf: true, parentTitle: 'ManageOne' },
+            { title: '微服务04', key: 'ms-04', isLeaf: true, parentTitle: 'ManageOne' },
+            { title: '微服务05', key: 'ms-05', isLeaf: true, parentTitle: 'ManageOne' },
           ],
         },
       ],
@@ -338,7 +345,7 @@ const objectTrees = {
           key: 'ecs',
           isLeaf: false,
           children: [
-            { title: '弹性云服务器01', key: 'ecs-01', isLeaf: true },
+            { title: '弹性云服务器01', key: 'ecs-01', isLeaf: true, id: 'ecs-001', ip: '192.168.1.10' },
           ],
         },
         {
@@ -346,7 +353,7 @@ const objectTrees = {
           key: 'vm-mgmt',
           isLeaf: false,
           children: [
-            { title: '管理虚拟机01', key: 'vm-mgmt-01', isLeaf: true },
+            { title: '管理虚拟机01', key: 'vm-mgmt-01', isLeaf: true, id: 'vm-001', ip: '192.168.2.10' },
           ],
         },
       ],
@@ -356,7 +363,7 @@ const objectTrees = {
       key: 'storage',
       isLeaf: false,
       children: [
-        { title: '存储节点01', key: 'stor-01', isLeaf: true },
+        { title: '存储节点01', key: 'stor-01', isLeaf: true, id: 'stor-001', ip: '192.168.3.10' },
       ],
     },
     {
@@ -364,7 +371,7 @@ const objectTrees = {
       key: 'network',
       isLeaf: false,
       children: [
-        { title: '网络节点01', key: 'net-01', isLeaf: true },
+        { title: '网络节点01', key: 'net-01', isLeaf: true, id: 'net-001', ip: '192.168.4.10' },
       ],
     },
   ],
@@ -374,8 +381,8 @@ const objectTrees = {
       key: 'phy-server',
       isLeaf: false,
       children: [
-        { title: '服务器01', key: 'phy-svr-01', isLeaf: true },
-        { title: '服务器02', key: 'phy-svr-02', isLeaf: true },
+        { title: '服务器01', key: 'phy-svr-01', isLeaf: true, id: 'phy-001', managementIp: '10.0.1.10', deviceModel: 'RH2288H' },
+        { title: '服务器02', key: 'phy-svr-02', isLeaf: true, id: 'phy-002', managementIp: '10.0.1.11', deviceModel: 'TaiShan 200' },
       ],
     },
     {
@@ -383,8 +390,8 @@ const objectTrees = {
       key: 'phy-storage',
       isLeaf: false,
       children: [
-        { title: '存储设备01', key: 'phy-sto-01', isLeaf: true },
-        { title: '存储设备02', key: 'phy-sto-02', isLeaf: true },
+        { title: '存储设备01', key: 'phy-sto-01', isLeaf: true, id: 'phy-003', managementIp: '10.0.2.10', deviceModel: 'OceanStor 5500' },
+        { title: '存储设备02', key: 'phy-sto-02', isLeaf: true, id: 'phy-004', managementIp: '10.0.2.11', deviceModel: 'OceanStor 5500' },
       ],
     },
     {
@@ -397,7 +404,7 @@ const objectTrees = {
           key: 'phy-switch',
           isLeaf: false,
           children: [
-            { title: '交换机01', key: 'phy-sw-01', isLeaf: true },
+            { title: '交换机01', key: 'phy-sw-01', isLeaf: true, id: 'phy-005', managementIp: '10.0.3.10', deviceModel: 'CE6850' },
           ],
         },
       ],
@@ -405,21 +412,7 @@ const objectTrees = {
   ],
 }
 
-function addDisableCheckbox(nodes) {
-  return nodes.map(n => {
-    const node = { ...n }
-    if (node.children && node.children.length) {
-      node.disableCheckbox = true
-      node.children = addDisableCheckbox(node.children)
-    }
-    return node
-  })
-}
-
-const currentTree = computed(() => {
-  const raw = objectTrees[form.resourceType] || []
-  return addDisableCheckbox(raw)
-})
+const currentTree = computed(() => objectTrees[form.resourceType] || [])
 
 function getLeafKeys(nodes) {
   const keys = []
@@ -434,6 +427,154 @@ function getLeafKeys(nodes) {
 }
 
 const allLeafKeys = computed(() => getLeafKeys(currentTree.value))
+
+function filterTree(nodes, keyword) {
+  if (!keyword) return nodes
+  return nodes.reduce((acc, n) => {
+    const node = { ...n }
+    const match = node.title.includes(keyword)
+    let children
+    if (node.children) {
+      children = filterTree(node.children, keyword)
+    }
+    if (match || (children && children.length)) {
+      if (children) node.children = children
+      acc.push(node)
+    }
+    return acc
+  }, [])
+}
+
+const treeTableColumns = computed(() => {
+  if (isCloudService.value) {
+    return [
+      { title: '名称', dataIndex: 'title', key: 'name', ellipsis: true },
+      { title: '所属云服务', dataIndex: 'parentTitle', key: 'parent', ellipsis: true },
+    ]
+  }
+  if (form.resourceType === 'cloud-resource') {
+    return [
+      { title: '名称', dataIndex: 'title', key: 'name', ellipsis: true },
+      { title: 'ID', dataIndex: 'id', key: 'id', ellipsis: true },
+      { title: 'IP地址', dataIndex: 'ip', key: 'ip', ellipsis: true },
+    ]
+  }
+  return [
+    { title: '名称', dataIndex: 'title', key: 'name', ellipsis: true },
+    { title: 'ID', dataIndex: 'id', key: 'id', ellipsis: true },
+    { title: '管理IP', dataIndex: 'managementIp', key: 'managementIp', ellipsis: true },
+    { title: '设备型号', dataIndex: 'deviceModel', key: 'deviceModel', ellipsis: true },
+  ]
+})
+
+const showObjectModal = ref(false)
+const checkedKeys = ref([])
+const srcSearch = ref('')
+const dstSearch = ref('')
+
+const filteredSrcTree = computed(() => filterTree(currentTree.value, srcSearch.value))
+
+const treeRowSelection = computed(() => ({
+  selectedRowKeys: checkedKeys.value,
+  onChange: (keys) => { checkedKeys.value = keys },
+  getCheckboxProps: (record) => ({
+    disabled: !record.isLeaf,
+  }),
+}))
+
+function toggleTreeKey(key) {
+  if (!allLeafKeys.value.includes(key)) return
+  const idx = checkedKeys.value.indexOf(key)
+  if (idx >= 0) {
+    checkedKeys.value = checkedKeys.value.filter(k => k !== key)
+  } else {
+    checkedKeys.value = [...checkedKeys.value, key]
+  }
+}
+
+function getSelectedTreeData() {
+  const selectedSet = new Set(checkedKeys.value)
+  function prune(nodes) {
+    return nodes.reduce((acc, n) => {
+      const node = { ...n }
+      if (node.children) {
+        const children = prune(node.children)
+        if (children.length) {
+          node.children = children
+          acc.push(node)
+          return acc
+        }
+      }
+      if (selectedSet.has(node.key)) {
+        acc.push(node)
+      }
+      return acc
+    }, [])
+  }
+  return prune(currentTree.value)
+}
+
+const filteredDstTree = computed(() => {
+  const data = getSelectedTreeData()
+  if (!dstSearch.value) return data
+  return filterTree(data, dstSearch.value)
+})
+
+function openObjectModal() {
+  checkedKeys.value = selectedObjects.value.map(o => o.key)
+  srcSearch.value = ''
+  dstSearch.value = ''
+  showObjectModal.value = true
+}
+
+const selectedObjects = ref([])
+
+function confirmObjects() {
+  const selectedKeys = checkedKeys.value.filter(k => allLeafKeys.value.includes(k))
+  const existingKeys = new Set(selectedObjects.value.map(o => o.key))
+  const tree = currentTree.value
+
+  for (const key of selectedKeys) {
+    if (!existingKeys.has(key)) {
+      const info = getNodeInfo(key, tree)
+      const parent = getParentTitle(key, tree)
+      if (isCloudService.value) {
+        selectedObjects.value.push({
+          key,
+          title: info?.title || key,
+          parentTitle: parent,
+          description: '',
+          selectedPathIds: [],
+        })
+      } else if (form.resourceType === 'cloud-resource') {
+        const num = objIdCounter++
+        selectedObjects.value.push({
+          key,
+          title: info?.title || key,
+          parentTitle: parent,
+          id: `res-${String(num).padStart(3, '0')}`,
+          ip: `192.168.${(num % 255) + 1}.${(num * 7) % 255 + 1}`,
+        })
+      } else {
+        const num = objIdCounter++
+        const models = ['RH2288H', 'TaiShan 200', 'FusionServer Pro']
+        selectedObjects.value.push({
+          key,
+          title: info?.title || key,
+          parentTitle: parent,
+          id: `phy-${String(num).padStart(3, '0')}`,
+          managementIp: `10.0.${(num % 255) + 1}.${(num * 3) % 255 + 1}`,
+          deviceModel: models[(num - 1) % models.length],
+          logFormat: 'RFC3164',
+        })
+      }
+      existingKeys.add(key)
+    }
+  }
+  selectedObjects.value = selectedObjects.value.filter(o => selectedKeys.includes(o.key))
+  showObjectModal.value = false
+  currentPage.value = 1
+}
 
 function getNodeInfo(key, nodes) {
   for (const n of nodes) {
@@ -462,6 +603,24 @@ function getParentTitle(key, nodes) {
   }
   return ''
 }
+
+function removeObject(obj) {
+  selectedObjects.value = selectedObjects.value.filter(o => o.key !== obj.key)
+  currentPage.value = 1
+}
+
+const filteredObjects = computed(() => {
+  if (!objectKeyword.value) return selectedObjects.value
+  const kw = objectKeyword.value.toLowerCase()
+  return selectedObjects.value.filter(o =>
+    o.title.toLowerCase().includes(kw) || (o.parentTitle && o.parentTitle.toLowerCase().includes(kw))
+  )
+})
+
+const pagedObjects = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredObjects.value.slice(start, start + pageSize.value)
+})
 
 const logScopeColumns = [
   { title: '日志路径', dataIndex: 'path', key: 'path', width: 200 },
@@ -536,129 +695,6 @@ const presetPaths = {
 
 const customPaths = ref([])
 
-function filterTree(nodes, keyword) {
-  if (!keyword) return nodes
-  return nodes.reduce((acc, n) => {
-    const node = { ...n }
-    const match = node.title.includes(keyword)
-    let children
-    if (node.children) {
-      children = filterTree(node.children, keyword)
-    }
-    if (match || (children && children.length)) {
-      if (children) node.children = children
-      acc.push(node)
-    }
-    return acc
-  }, [])
-}
-
-const showObjectModal = ref(false)
-const checkedKeys = ref([])
-const srcSearch = ref('')
-const dstSearch = ref('')
-
-const filteredSrcTree = computed(() => filterTree(currentTree.value, srcSearch.value))
-
-const filteredDstTree = computed(() => {
-  const selectedSet = new Set(checkedKeys.value)
-  function prune(nodes) {
-    return nodes.reduce((acc, n) => {
-      const node = { ...n }
-      if (node.children) {
-        const children = prune(node.children)
-        if (children.length) {
-          node.children = children
-          acc.push(node)
-          return acc
-        }
-      }
-      if (selectedSet.has(node.key)) {
-        acc.push(node)
-      }
-      return acc
-    }, [])
-  }
-  const tree = currentTree.value
-  if (!dstSearch.value) return prune(tree)
-  return prune(filterTree(tree, dstSearch.value))
-})
-
-function openObjectModal() {
-  checkedKeys.value = selectedObjects.value.map(o => o.key)
-  srcSearch.value = ''
-  dstSearch.value = ''
-  showObjectModal.value = true
-}
-
-const selectedObjects = ref([])
-
-function confirmObjects() {
-  const selectedKeys = checkedKeys.value.filter(k => allLeafKeys.value.includes(k))
-  const existingKeys = new Set(selectedObjects.value.map(o => o.key))
-  const tree = currentTree.value
-
-  for (const key of selectedKeys) {
-    if (!existingKeys.has(key)) {
-      const info = getNodeInfo(key, tree)
-      const parent = getParentTitle(key, tree)
-      if (isCloudService.value) {
-        selectedObjects.value.push({
-          key,
-          title: info?.title || key,
-          parentTitle: parent,
-          description: '',
-          selectedPathIds: [],
-        })
-      } else if (form.resourceType === 'cloud-resource') {
-        const num = objIdCounter++
-        selectedObjects.value.push({
-          key,
-          title: info?.title || key,
-          parentTitle: parent,
-          id: `res-${String(num).padStart(3, '0')}`,
-          ip: `192.168.${(num % 255) + 1}.${(num * 7) % 255 + 1}`,
-        })
-      } else {
-        const num = objIdCounter++
-        const models = ['RH2288H', 'TaiShan 200', 'FusionServer Pro']
-        const modelIndex = (num - 1) % models.length
-        selectedObjects.value.push({
-          key,
-          title: info?.title || key,
-          parentTitle: parent,
-          id: `phy-${String(num).padStart(3, '0')}`,
-          managementIp: `10.0.${(num % 255) + 1}.${(num * 3) % 255 + 1}`,
-          deviceModel: models[modelIndex],
-          logFormat: 'RFC3164',
-        })
-      }
-      existingKeys.add(key)
-    }
-  }
-  selectedObjects.value = selectedObjects.value.filter(o => selectedKeys.includes(o.key))
-  showObjectModal.value = false
-  currentPage.value = 1
-}
-
-function removeObject(obj) {
-  selectedObjects.value = selectedObjects.value.filter(o => o.key !== obj.key)
-  currentPage.value = 1
-}
-
-const filteredObjects = computed(() => {
-  if (!objectKeyword.value) return selectedObjects.value
-  const kw = objectKeyword.value.toLowerCase()
-  return selectedObjects.value.filter(o =>
-    o.title.toLowerCase().includes(kw) || (o.parentTitle && o.parentTitle.toLowerCase().includes(kw))
-  )
-})
-
-const pagedObjects = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredObjects.value.slice(start, start + pageSize.value)
-})
-
 function getAllPathsFor(key) {
   const presets = presetPaths[key] || []
   return [...presets, ...customPaths.value]
@@ -725,9 +761,7 @@ function selectPath(id) {
   if (!ids.includes(id)) {
     pathSelectedIds.value = { ...pathSelectedIds.value, [key]: [...ids, id] }
     const obj = selectedObjects.value.find(o => o.key === key)
-    if (obj) {
-      obj.selectedPathIds = [...(obj.selectedPathIds || []), id]
-    }
+    if (obj) obj.selectedPathIds = [...(obj.selectedPathIds || []), id]
   }
 }
 
@@ -738,9 +772,7 @@ function removeSelectedPath(id) {
   const next = ids.filter(i => i !== id)
   pathSelectedIds.value = { ...pathSelectedIds.value, [key]: next }
   const obj = selectedObjects.value.find(o => o.key === key)
-  if (obj) {
-    obj.selectedPathIds = next
-  }
+  if (obj) obj.selectedPathIds = next
 }
 
 function confirmPaths() {
@@ -748,9 +780,7 @@ function confirmPaths() {
     const key = currentPathObj.value.key
     const ids = pathSelectedIds.value[key] || []
     const obj = selectedObjects.value.find(o => o.key === key)
-    if (obj) {
-      obj.selectedPathIds = [...ids]
-    }
+    if (obj) obj.selectedPathIds = [...ids]
   }
   showPathModal.value = false
 }
@@ -808,7 +838,10 @@ const showAddLogScope = ref(false)
 const logScopeForm = reactive({ path: '', name: '', collectionScope: '全量' })
 
 function saveLogScope() {
-  if (!logScopeForm.path || !logScopeForm.name) return
+  if (!logScopeForm.path || !logScopeForm.name) {
+    showAddLogScope.value = false
+    return
+  }
   logScopes.value.push({
     id: 'ls-c' + (scopeIdCounter++),
     path: logScopeForm.path,
@@ -884,6 +917,7 @@ function handleSubmit() {
   color: var(--text);
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
 }
 .section-title.collapsible {
   display: flex;
@@ -895,9 +929,6 @@ function handleSubmit() {
 .section-title.collapsible i {
   font-size: 13px;
   color: var(--text-ter);
-}
-.section-title.collapsible + div {
-  margin-top: 16px;
 }
 .transfer-layout {
   display: flex;
