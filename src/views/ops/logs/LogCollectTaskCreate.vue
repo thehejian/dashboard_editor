@@ -102,7 +102,8 @@
               </div>
             </a-form-item>
 
-            <a-form-item v-if="form.resourceType === 'cloud-resource'" label="日志范围">
+            <a-form-item v-if="form.resourceType === 'cloud-resource' && selectedObjects.length" label="日志范围">
+              <div style="font-size:12px;color:var(--text-ter);margin-bottom:8px">日志范围针对所选的全部云资源实例生效</div>
               <a-table
                 :data-source="logScopes"
                 :columns="logScopeColumns"
@@ -158,7 +159,7 @@
       <a-button type="primary" @click="handleSubmit">确定</a-button>
     </div>
 
-    <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="720px" @cancel="showObjectModal = false" :footer="null">
+    <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="720px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
       <div class="transfer-layout">
         <div class="transfer-panel">
           <div class="transfer-panel-header">可选对象</div>
@@ -186,13 +187,9 @@
           </div>
         </div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding:16px 0 0;border-top:1px solid var(--border);margin-top:8px">
-        <a-button @click="showObjectModal = false">取消</a-button>
-        <a-button type="primary" @click="confirmObjects">确定</a-button>
-      </div>
     </a-modal>
 
-    <a-modal v-model:visible="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="1200px" :footer="null" @cancel="showPathModal = false">
+    <a-modal v-model:visible="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="1200px" :cancelText="'取消'" :okText="'确定'" @ok="confirmPaths" @cancel="showPathModal = false">
       <div v-if="currentPathObj" class="path-transfer">
         <div class="transfer-layout">
           <div class="transfer-panel">
@@ -232,14 +229,10 @@
             </div>
           </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;padding:16px 0 0;border-top:1px solid var(--border);margin-top:8px">
-          <a-button @click="showPathModal = false">取消</a-button>
-          <a-button type="primary" @click="showPathModal = false">确定</a-button>
-        </div>
       </div>
     </a-modal>
 
-    <a-modal v-model:visible="showAddCustomPath" title="新增自定义路径" width="640px" @ok="saveCustomPath" @cancel="showAddCustomPath = false">
+    <a-modal v-model:visible="showAddCustomPath" title="新增自定义路径" width="640px" :cancelText="'取消'" :okText="'确定'" @ok="saveCustomPath" @cancel="showAddCustomPath = false">
       <a-form layout="vertical">
         <a-form-item label="日志路径" required>
           <a-input v-model:value="customForm.path" placeholder="/var/log/..." />
@@ -265,7 +258,7 @@
       </a-descriptions>
     </a-modal>
 
-    <a-modal v-model:visible="showAddLogScope" title="新增日志范围" width="640px" @ok="saveLogScope" @cancel="showAddLogScope = false">
+    <a-modal v-model:visible="showAddLogScope" title="新增日志范围" width="640px" :cancelText="'取消'" :okText="'确定'" @ok="saveLogScope" @cancel="showAddLogScope = false">
       <a-form layout="vertical">
         <a-form-item label="日志路径" required>
           <a-input v-model:value="logScopeForm.path" placeholder="/var/log/..." />
@@ -291,6 +284,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 let customIdCounter = 100
 let scopeIdCounter = 10
+let objIdCounter = 1
 
 const form = reactive({
   name: '',
@@ -452,16 +446,21 @@ function getNodeInfo(key, nodes) {
   return null
 }
 
-function getParentTitle(key, nodes, parentTitle) {
+function getParentTitle(key, nodes) {
   for (const n of nodes) {
     if (n.children) {
-      const found = n.children.find(c => c.key === key || (c.children && c.children.find(cc => cc.key === key)))
-      if (found) return n.title
-      const r = getParentTitle(key, n.children, n.title)
+      const allChildKeys = new Set()
+      function collectKeys(nn) {
+        if (nn.children) nn.children.forEach(collectKeys)
+        else allChildKeys.add(nn.key)
+      }
+      n.children.forEach(collectKeys)
+      if (allChildKeys.has(key)) return n.title
+      const r = getParentTitle(key, n.children)
       if (r) return r
     }
   }
-  return parentTitle || ''
+  return ''
 }
 
 const logScopeColumns = [
@@ -612,21 +611,25 @@ function confirmObjects() {
           selectedPathIds: [],
         })
       } else if (form.resourceType === 'cloud-resource') {
+        const num = objIdCounter++
         selectedObjects.value.push({
           key,
           title: info?.title || key,
           parentTitle: parent,
-          id: '',
-          ip: '',
+          id: `res-${String(num).padStart(3, '0')}`,
+          ip: `192.168.${(num % 255) + 1}.${(num * 7) % 255 + 1}`,
         })
       } else {
+        const num = objIdCounter++
+        const models = ['RH2288H', 'TaiShan 200', 'FusionServer Pro']
+        const modelIndex = (num - 1) % models.length
         selectedObjects.value.push({
           key,
           title: info?.title || key,
           parentTitle: parent,
-          id: '',
-          managementIp: '',
-          deviceModel: '',
+          id: `phy-${String(num).padStart(3, '0')}`,
+          managementIp: `10.0.${(num % 255) + 1}.${(num * 3) % 255 + 1}`,
+          deviceModel: models[modelIndex],
           logFormat: 'RFC3164',
         })
       }
@@ -656,19 +659,6 @@ const pagedObjects = computed(() => {
   return filteredObjects.value.slice(start, start + pageSize.value)
 })
 
-const showPathModal = ref(false)
-const currentPathObj = ref(null)
-const availPathSearch = ref('')
-const selPathSearch = ref('')
-const pathVersion = ref(0)
-
-function openPathModal(obj) {
-  currentPathObj.value = obj
-  availPathSearch.value = ''
-  selPathSearch.value = ''
-  showPathModal.value = true
-}
-
 function getAllPathsFor(key) {
   const presets = presetPaths[key] || []
   return [...presets, ...customPaths.value]
@@ -678,22 +668,34 @@ function getPathObj(key, pid) {
   return getAllPathsFor(key).find(p => p.id === pid)
 }
 
-function getCurrentObj() {
-  if (!currentPathObj.value) return null
-  return selectedObjects.value.find(o => o.key === currentPathObj.value.key) || null
+const showPathModal = ref(false)
+const currentPathObj = ref(null)
+const availPathSearch = ref('')
+const selPathSearch = ref('')
+const pathSelectedIds = ref({})
+
+function openPathModal(obj) {
+  currentPathObj.value = obj
+  const key = obj.key
+  pathSelectedIds.value = { ...pathSelectedIds.value, [key]: [...(obj.selectedPathIds || [])] }
+  availPathSearch.value = ''
+  selPathSearch.value = ''
+  showPathModal.value = true
+}
+
+function currentSelectedIds() {
+  if (!currentPathObj.value) return []
+  return pathSelectedIds.value[currentPathObj.value.key] || []
 }
 
 const availablePaths = computed(() => {
-  pathVersion.value
+  const ids = currentSelectedIds()
   if (!currentPathObj.value) return []
-  const obj = getCurrentObj()
-  if (!obj) return []
   const all = getAllPathsFor(currentPathObj.value.key)
-  return all.filter(p => !obj.selectedPathIds.includes(p.id))
+  return all.filter(p => !ids.includes(p.id))
 })
 
 const filteredAvailablePaths = computed(() => {
-  pathVersion.value
   if (!availPathSearch.value) return availablePaths.value
   const kw = availPathSearch.value.toLowerCase()
   return availablePaths.value.filter(p =>
@@ -702,16 +704,13 @@ const filteredAvailablePaths = computed(() => {
 })
 
 const selectedPaths = computed(() => {
-  pathVersion.value
+  const ids = currentSelectedIds()
   if (!currentPathObj.value) return []
-  const obj = getCurrentObj()
-  if (!obj) return []
   const all = getAllPathsFor(currentPathObj.value.key)
-  return all.filter(p => obj.selectedPathIds.includes(p.id))
+  return all.filter(p => ids.includes(p.id))
 })
 
 const filteredSelectedPaths = computed(() => {
-  pathVersion.value
   if (!selPathSearch.value) return selectedPaths.value
   const kw = selPathSearch.value.toLowerCase()
   return selectedPaths.value.filter(p =>
@@ -721,20 +720,39 @@ const filteredSelectedPaths = computed(() => {
 
 function selectPath(id) {
   if (!currentPathObj.value) return
-  const obj = getCurrentObj()
-  if (obj && !obj.selectedPathIds.includes(id)) {
-    obj.selectedPathIds = [...obj.selectedPathIds, id]
-    pathVersion.value++
+  const key = currentPathObj.value.key
+  const ids = pathSelectedIds.value[key] || []
+  if (!ids.includes(id)) {
+    pathSelectedIds.value = { ...pathSelectedIds.value, [key]: [...ids, id] }
+    const obj = selectedObjects.value.find(o => o.key === key)
+    if (obj) {
+      obj.selectedPathIds = [...(obj.selectedPathIds || []), id]
+    }
   }
 }
 
 function removeSelectedPath(id) {
   if (!currentPathObj.value) return
-  const obj = getCurrentObj()
+  const key = currentPathObj.value.key
+  const ids = pathSelectedIds.value[key] || []
+  const next = ids.filter(i => i !== id)
+  pathSelectedIds.value = { ...pathSelectedIds.value, [key]: next }
+  const obj = selectedObjects.value.find(o => o.key === key)
   if (obj) {
-    obj.selectedPathIds = obj.selectedPathIds.filter(i => i !== id)
-    pathVersion.value++
+    obj.selectedPathIds = next
   }
+}
+
+function confirmPaths() {
+  if (currentPathObj.value) {
+    const key = currentPathObj.value.key
+    const ids = pathSelectedIds.value[key] || []
+    const obj = selectedObjects.value.find(o => o.key === key)
+    if (obj) {
+      obj.selectedPathIds = [...ids]
+    }
+  }
+  showPathModal.value = false
 }
 
 const showAddCustomPath = ref(false)
@@ -767,7 +785,6 @@ function saveCustomPath() {
       source: '自定义',
     })
   }
-  pathVersion.value++
   showAddCustomPath.value = false
 }
 
@@ -776,7 +793,6 @@ function deleteCustomPath(id) {
   for (const obj of selectedObjects.value) {
     obj.selectedPathIds = obj.selectedPathIds.filter(i => i !== id)
   }
-  pathVersion.value++
 }
 
 const showPathDetailModal = ref(false)
