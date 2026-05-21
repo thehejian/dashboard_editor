@@ -697,6 +697,7 @@ function initNetworkGraph() {
         iconText: (d) => d.iconText || '',
         iconFill: '#fff',
         iconFontSize: 24,
+        zIndex: 10,
         ports: [
           { key: 'top', placement: [0.5, 0], r: 0 },
           { key: 'right', placement: [1, 0.5], r: 0 },
