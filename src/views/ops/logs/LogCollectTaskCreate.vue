@@ -969,4 +969,21 @@ function handleSubmit() {
 :deep(.ant-table-row) {
   cursor: pointer;
 }
+@media (max-width: 768px) {
+  .create-header { padding: 11px 12px; }
+  .create-title { font-size: 14px; }
+  .create-body { padding: 12px; }
+  .create-footer { padding: 12px; }
+  .form-section { padding: 16px; margin-bottom: 12px; }
+  .section-title { font-size: 14px; margin-bottom: 12px; }
+  .transfer-layout { flex-direction: column; }
+  .transfer-divider { width: 100%; height: 1px; margin: 8px 0; }
+  .transfer-panel { min-height: 200px; }
+  :deep(.ant-modal) { width: 95% !important; max-width: 1100px; margin: 0 auto; }
+  :deep(.ant-modal-body) { padding: 12px; }
+  :deep(.ant-radio-group) { display: flex; flex-wrap: wrap; gap: 8px; }
+  :deep(.ant-radio-group .ant-radio-button-wrapper) { flex: 1; text-align: center; }
+  :deep(.ant-form-item .ant-select),
+  :deep(.ant-form-item .ant-input-search) { width: 100% !important; }
+}
 </style>

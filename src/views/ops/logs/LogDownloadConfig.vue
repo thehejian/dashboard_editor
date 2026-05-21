@@ -4,7 +4,7 @@
       <h3>日志下载配置</h3>
       <a-button type="primary">保存</a-button>
     </div>
-    <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 14 }" style="max-width: 720px">
+    <a-form :label-col="labelCol" :wrapper-col="wrapperCol" :style="formStyle">
       <a-form-item label="下载留存天数">
         <a-input-number v-model:value="form.retentionDays" :min="1" :max="90" style="width: 120px" /> 天
       </a-form-item>
@@ -48,7 +48,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+const isMobile = computed(() => window.innerWidth <= 768)
+const labelCol = computed(() => isMobile.value ? { span: 24 } : { span: 6 })
+const wrapperCol = computed(() => isMobile.value ? { span: 24 } : { span: 14 })
+const formStyle = computed(() => ({ maxWidth: isMobile.value ? '100%' : '720px' }))
 const form = ref({
   retentionDays: 7,
   maxFileSize: '500',
@@ -61,4 +65,9 @@ const form = ref({
 
 <style scoped>
 .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 768px) {
+  .page-header { flex-wrap: wrap; }
+  .page-header h3 { font-size: 15px; margin-bottom: 8px; }
+  .page-header :deep(.ant-btn) { width: 100%; }
+}
 </style>

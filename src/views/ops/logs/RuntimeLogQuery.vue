@@ -19,7 +19,7 @@
       </a-select>
       <a-input-search v-model:value="search" placeholder="综合搜索日志内容" style="width: 300px" />
     </div>
-    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
+    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id" :scroll="{ x: 700 }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'level'">
           <a-tag :color="record.level === 'error' ? 'red' : record.level === 'warn' ? 'orange' : record.level === 'critical' ? 'magenta' : 'blue'">{{ record.level.toUpperCase() }}</a-tag>
@@ -58,4 +58,11 @@ const columns = [
 <style scoped>
 .page-header { margin-bottom: 16px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+@media (max-width: 768px) {
+  .filter-bar { flex-wrap: wrap; }
+  .filter-bar :deep(.ant-select),
+  .filter-bar :deep(.ant-input-search),
+  .filter-bar :deep(.ant-picker) { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .page-header h3 { font-size: 15px; }
+}
 </style>

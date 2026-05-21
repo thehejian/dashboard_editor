@@ -12,7 +12,7 @@
       <a-input-search v-model:value="search" placeholder="综合搜索任务名/来源" style="width: 280px" />
       <a-button type="primary" style="margin-left: auto">新建下载任务</a-button>
     </div>
-    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
+    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id" :scroll="{ x: 800 }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'format'">
           <a-tag>{{ record.format }}</a-tag>
@@ -56,4 +56,12 @@ const columns = [
 <style scoped>
 .page-header { margin-bottom: 16px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+@media (max-width: 768px) {
+  .filter-bar { flex-wrap: wrap; }
+  .filter-bar :deep(.ant-select),
+  .filter-bar :deep(.ant-input-search),
+  .filter-bar :deep(.ant-btn) { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .filter-bar :deep(.ant-btn[style*="margin-left"]) { margin-left: 0 !important; }
+  .page-header h3 { font-size: 15px; }
+}
 </style>

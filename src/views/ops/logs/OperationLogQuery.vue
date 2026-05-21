@@ -18,7 +18,7 @@
       </a-select>
       <a-input-search v-model:value="search" placeholder="综合搜索操作者/资源/操作" style="width: 280px" />
     </div>
-    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
+    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id" :scroll="{ x: 700 }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'opType'">
           <a-tag :color="record.opType === 'delete' ? 'red' : record.opType === 'create' ? 'green' : record.opType === 'update' ? 'orange' : 'blue'">{{ {create:'创建',update:'修改',delete:'删除',query:'查询'}[record.opType] }}</a-tag>
@@ -60,4 +60,11 @@ const columns = [
 <style scoped>
 .page-header { margin-bottom: 16px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+@media (max-width: 768px) {
+  .filter-bar { flex-wrap: wrap; }
+  .filter-bar :deep(.ant-select),
+  .filter-bar :deep(.ant-input-search),
+  .filter-bar :deep(.ant-picker) { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .page-header h3 { font-size: 15px; }
+}
 </style>

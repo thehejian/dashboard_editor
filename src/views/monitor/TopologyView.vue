@@ -655,7 +655,7 @@ function createNetworkTopoData() {
     return {
       ...c,
       style: {
-        fill: '#fff', stroke: '#e8e8e8', lineWidth: 1.5, radius: 8,
+        fill: '#fff', stroke: '#d9d9d9', lineWidth: 1.5, radius: 8,
         x: (l + r) / 2,
         y: (t + b) / 2,
         size: [r - l + COMBO_PAD[1] + COMBO_PAD[3], b - t + COMBO_PAD[0] + COMBO_PAD[2]],
@@ -693,10 +693,10 @@ function initNetworkGraph() {
         iconFill: '#fff',
         iconFontSize: 24,
         ports: [
-          { key: 'top', placement: [0.5, 0], r: 0 },
-          { key: 'right', placement: [1, 0.5], r: 0 },
-          { key: 'bottom', placement: [0.5, 1], r: 0 },
-          { key: 'left', placement: [0, 0.5], r: 0 },
+          { key: 'top', placement: [0.5, 0] },
+          { key: 'right', placement: [1, 0.5] },
+          { key: 'bottom', placement: [0.5, 1] },
+          { key: 'left', placement: [0, 0.5] },
         ]
       }
     },
@@ -709,15 +709,18 @@ function initNetworkGraph() {
         labelText: (d) => d.data?.label || '',
         labelFontSize: 10,
         labelFill: '#666',
+        labelBackground: true,
         labelBackgroundFill: '#fff',
-        labelBackgroundOpacity: 0.8,
+        labelBackgroundOpacity: 0.9,
+        labelBackgroundRadius: 4,
+        labelPadding: [2, 6],
       }
     },
     combo: {
       type: 'rect',
       style: {
         fill: (d) => d.style?.fill || '#fff',
-        stroke: (d) => d.style?.stroke || '#bbb',
+        stroke: (d) => d.style?.stroke || '#d9d9d9',
         lineWidth: (d) => d.style?.lineWidth || 1.5,
         lineDash: [5, 5],
         radius: (d) => d.style?.radius || 6,

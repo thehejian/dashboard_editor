@@ -14,7 +14,7 @@
       </div>
     </div>
     <div class="page-header" style="margin-top:16px"><h3>节点列表</h3></div>
-    <a-table :columns="columns" :data-source="nodes" :pagination="{ pageSize: 5 }" row-key="id">
+    <a-table :columns="columns" :data-source="nodes" :pagination="{ pageSize: 5 }" row-key="id" :scroll="{ x: 600 }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
           <a-tag :color="record.status === 'online' ? 'green' : 'red'">{{ record.status === 'online' ? '在线' : '离线' }}</a-tag>
@@ -54,4 +54,8 @@ const columns = [
 
 <style scoped>
 .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 768px) {
+  .page-header h3 { font-size: 15px; }
+  .page-header :deep(.ant-btn) { font-size: 12px; padding: 4px 8px; }
+}
 </style>
