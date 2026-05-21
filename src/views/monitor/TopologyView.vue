@@ -676,7 +676,7 @@ function initNetworkGraph() {
     node: {
       type: 'rect',
       style: {
-        size: (d) => d.style?.size || 48,
+        size: (d) => d.style?.size || 40,
         fill: (d) => d.style?.fill === '#f5222d' ? '#f5222d' : '#1890ff',
         stroke: 'transparent',
         radius: 8,
