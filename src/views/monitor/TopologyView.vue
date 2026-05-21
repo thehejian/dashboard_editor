@@ -682,7 +682,7 @@ function initNetworkGraph() {
         radius: 8,
         labelText: (d) => d.data?.label || '',
         labelPlacement: 'bottom',
-        labelOffsetY: 6,
+        labelOffsetY: 14,
         labelFontSize: 10,
         labelLineHeight: 14,
         labelFill: '#333',
