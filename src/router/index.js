@@ -59,6 +59,7 @@ const routes = [
       { path: 'roles', component: () => import('../views/system/security/RolesView.vue') },
       { path: 'resource-groups', component: () => import('../views/system/security/ResourceGroupsView.vue') },
       { path: 'app-integration', component: () => import('../views/system/security/AppIntegrationView.vue') },
+      { path: 'app-integration/create', component: () => import('../views/system/security/AppCreatePage.vue') },
       { path: 'idp', component: () => import('../views/system/security/IdentityProvidersView.vue') },
       { path: 'idp/create', component: () => import('../views/system/security/IdpCreatePage.vue') },
       { path: 'integration-accounts', component: () => import('../views/system/security/IntegrationAccountsView.vue') },

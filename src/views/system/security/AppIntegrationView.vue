@@ -4,7 +4,7 @@
       <h3>应用集成</h3>
     </div>
     <div class="button-row">
-      <a-button type="primary">创建</a-button>
+      <a-button type="primary" @click="router.push('/system/security/app-integration/create')">创建</a-button>
       <a-button>导出元数据</a-button>
       <a-button>导出配置</a-button>
     </div>
@@ -43,6 +43,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const search = ref('')
 const filterTenant = ref(null)
