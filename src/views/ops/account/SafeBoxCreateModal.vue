@@ -432,4 +432,12 @@ function handleDone() {
   padding: 16px 24px;
   border-top: 1px solid var(--border);
 }
+
+@media (max-width: 768px) {
+  .dual-panel { flex-direction: column; min-height: auto; }
+  .card-group { flex-direction: column; }
+  .perm-section { flex-direction: column; gap: 16px; }
+  .perm-checkbox-group { flex-wrap: wrap; }
+  .error-banner { flex-direction: column; }
+}
 </style>

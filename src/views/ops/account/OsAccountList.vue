@@ -79,4 +79,14 @@ const data = ref([
 :deep(.ant-table-tbody > tr > td) { font-size: 13px; }
 :deep(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafafa; }
 :deep(.ant-table-tbody > tr:hover > td) { background: var(--brand-subtle) !important; }
+
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .page-header h3 { font-size: 16px; }
+  .page-header .ant-btn { width: 100%; }
+  .button-row { flex-wrap: wrap; }
+  .button-row .ant-btn { flex: 1; min-width: 0; }
+  .search-row .ant-input-search { width: 100% !important; }
+  .ant-table { overflow-x: auto; }
+}
 </style>
