@@ -1352,9 +1352,48 @@ const refreshCard = (card) => {
   .ci-label:empty, .ci-value:empty { display: none; }
 }
 
+@media (max-width: 768px) {
+  .detail-panel-content {
+    width: 85%;
+    right: -85%;
+  }
+  .detail-panel.open .detail-panel-content {
+    right: 0;
+  }
+  .detail-header {
+    padding: 12px 16px;
+  }
+  .detail-header h3 {
+    font-size: 15px;
+  }
+  .detail-body {
+    padding: 16px;
+  }
+  .time-tabs { margin-bottom: 16px; }
+  .time-tabs :deep(.ant-radio-group) {
+    flex-wrap: wrap;
+  }
+  .time-tabs :deep(.ant-radio-button-wrapper) {
+    flex: 1 1 45%;
+    min-width: 45%;
+    text-align: center;
+    font-size: 12px;
+  }
+  .detail-chart {
+    margin-bottom: 16px;
+  }
+  .detail-kpi {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
 @media (max-width: 480px) {
   .detail-kpi { grid-template-columns: 1fr; }
-  .detail-panel-content { right: -100%; }
+  .detail-panel-content {
+    width: 100%;
+    right: -100%;
+  }
 }
 
 .detail-panel {
