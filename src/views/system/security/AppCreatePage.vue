@@ -2,7 +2,6 @@
   <div class="create-page">
     <div class="create-header">
       <a-button type="text" @click="goBack"><i class="fa-solid fa-arrow-left"></i></a-button>
-      <span class="header-sep">|</span>
       <span class="create-title">创建应用</span>
     </div>
 
@@ -37,7 +36,8 @@
           </div>
           <div class="collapsible-body">
             <a-form layout="vertical">
-              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 所属租户">
+              <a-form-item>
+                <template #label><span class="red">*</span> 所属租户</template>
                 <a-select v-model:value="form.tenant" placeholder="请选择">
                   <a-select-option value="租户01">租户01</a-select-option>
                   <a-select-option value="租户02">租户02</a-select-option>
@@ -48,7 +48,7 @@
               <a-form-item label="图标">
                 <div class="icon-field">
                   <div class="icon-box">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                       <rect x="3" y="3" width="7" height="7" rx="1.5"/>
                       <rect x="14" y="3" width="7" height="7" rx="1.5"/>
                       <rect x="3" y="14" width="7" height="7" rx="1.5"/>
@@ -61,7 +61,8 @@
                 </div>
               </a-form-item>
 
-              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 名称">
+              <a-form-item>
+                <template #label><span class="red">*</span> 名称</template>
                 <a-input v-model:value="form.name" placeholder="app01" />
                 <span class="form-hint">同一租户下，名称不允许重复；只能由英文字母(不区分大小写)、数字组成</span>
               </a-form-item>
@@ -70,7 +71,8 @@
                 <a-input v-model:value="form.displayName" placeholder="app01" />
               </a-form-item>
 
-              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 应用类型">
+              <a-form-item>
+                <template #label><span class="red">*</span> 应用类型</template>
                 <div class="app-type-group">
                   <label class="app-type-radio" :class="{ selected: form.appType === 'web' }" @click="form.appType = 'web'">
                     <a-radio :checked="form.appType === 'web'" @click.stop />
@@ -89,20 +91,62 @@
                 </div>
               </a-form-item>
 
-              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 状态">
+              <a-form-item>
+                <template #label><span class="red">*</span> 状态</template>
                 <a-switch v-model:checked="form.enabled" />
               </a-form-item>
 
-              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 访问令牌有效期">
+              <a-form-item>
+                <template #label><span class="red">*</span> 访问令牌有效期</template>
                 <a-input-number v-model:value="form.tokenExpire" :min="900" :max="10800" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" />
                 <span class="form-hint">可设置 900 秒 ~ 10800 秒</span>
               </a-form-item>
 
-              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 刷新令牌有效期">
+              <a-form-item>
+                <template #label><span class="red">*</span> 刷新令牌有效期</template>
                 <a-input-number v-model:value="form.refreshTokenExpire" :min="7200" :max="31536000" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" />
                 <span class="form-hint">可设置 7200 秒 ~ 31536000 秒</span>
               </a-form-item>
             </a-form>
+
+            <div class="section">
+              <div class="section-title"><span class="red">*</span> 授权范围</div>
+              <div class="scope-list">
+                <label class="scope-item" v-for="s in visibleScopes" :key="s.value">
+                  <a-checkbox v-model:checked="s.checked" />
+                  <div class="scope-content">
+                    <span class="scope-value">{{ s.value }}</span>
+                    <span class="scope-desc">{{ s.desc }}</span>
+                  </div>
+                </label>
+              </div>
+              <a class="scope-toggle" @click="scopeMore = !scopeMore">
+                <i class="fa-solid" :class="scopeMore ? 'fa-eye-slash' : 'fa-eye'"></i>
+                {{ scopeMore ? '收起' : '查看更多' }}
+              </a>
+            </div>
+
+            <div class="section">
+              <div class="section-title"><span class="red">*</span> 创建快捷入口 <a-tooltip title="创建后在门户首页快捷入口处显示"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
+              <a-radio-group v-model:value="form.quickEntry">
+                <a-radio value="yes">是</a-radio>
+                <a-radio value="no">否</a-radio>
+              </a-radio-group>
+            </div>
+
+            <div class="section">
+              <div class="section-title"><span class="red">*</span> 创建快捷入口场景分组 <a-tooltip title="选择快捷入口所属分组"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
+              <a-radio-group v-model:value="form.shortcutGroup">
+                <a-radio value="服务中心">服务中心</a-radio>
+                <a-radio value="运维中心">运维中心</a-radio>
+                <a-radio value="运营指挥中心">运营指挥中心</a-radio>
+              </a-radio-group>
+            </div>
+
+            <div class="section">
+              <div class="section-title">描述</div>
+              <a-textarea v-model:value="form.description" placeholder="请输入" :maxlength="1000" :show-count="true" :rows="4" />
+            </div>
           </div>
         </div>
 
@@ -113,7 +157,7 @@
           </div>
           <div class="collapsible-body">
             <div class="redirect-section">
-              <div class="redirect-title"><span style="color:red">*</span> 重定向地址列表</div>
+              <div class="redirect-title"><span class="red">*</span> 重定向地址列表</div>
               <div class="redirect-row header-row">
                 <span class="redirect-url-label">重定向地址</span>
                 <span class="redirect-action-label">操作</span>
@@ -125,45 +169,6 @@
               <a-button type="dashed" block style="margin-top: 8px" @click="showRedirectModal = true">+ 添加</a-button>
             </div>
           </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title"><span style="color:red">*</span> 授权范围</div>
-          <div class="scope-list">
-            <label class="scope-item" v-for="s in visibleScopes" :key="s.value">
-              <a-checkbox v-model:checked="s.checked" />
-              <div class="scope-content">
-                <span class="scope-value">{{ s.value }}</span>
-                <span class="scope-desc">{{ s.desc }}</span>
-              </div>
-            </label>
-          </div>
-          <a class="scope-toggle" @click="scopeMore = !scopeMore">
-            <i class="fa-solid" :class="scopeMore ? 'fa-eye-slash' : 'fa-eye'"></i>
-            {{ scopeMore ? '收起' : '查看更多' }}
-          </a>
-        </div>
-
-        <div class="section">
-          <div class="section-title"><span style="color:red">*</span> 创建快捷入口 <a-tooltip title="创建后在门户首页快捷入口处显示"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
-          <a-radio-group v-model:value="form.quickEntry">
-            <a-radio value="yes">是</a-radio>
-            <a-radio value="no">否</a-radio>
-          </a-radio-group>
-        </div>
-
-        <div class="section">
-          <div class="section-title"><span style="color:red">*</span> 创建快捷入口场景分组 <a-tooltip title="选择快捷入口所属分组"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
-          <a-radio-group v-model:value="form.shortcutGroup">
-            <a-radio value="服务中心">服务中心</a-radio>
-            <a-radio value="运维中心">运维中心</a-radio>
-            <a-radio value="运营指挥中心">运营指挥中心</a-radio>
-          </a-radio-group>
-        </div>
-
-        <div class="section">
-          <div class="section-title">描述</div>
-          <a-textarea v-model:value="form.description" placeholder="请输入" :maxlength="1000" :show-count="true" :rows="4" />
         </div>
       </template>
     </div>
@@ -179,7 +184,7 @@
       </template>
     </div>
 
-    <a-modal v-model:open="showRedirectModal" title="添加重定向地址" :footer="null" :width="480" @ok="addRedirectUrl">
+    <a-modal v-model:open="showRedirectModal" title="添加重定向地址" :footer="null" :width="480">
       <a-input v-model:value="newRedirectUrl" placeholder="https://example.com/callback" />
       <div style="margin-top: 16px; text-align: right">
         <a-button style="margin-right: 8px" @click="showRedirectModal = false">取消</a-button>
@@ -216,8 +221,6 @@ const form = reactive({
   enabled: true,
   tokenExpire: 3600,
   refreshTokenExpire: 2592000,
-  callbackUrl: '',
-  callbackRegion: 'Region01',
   quickEntry: 'yes',
   shortcutGroup: '服务中心',
   description: '',
@@ -237,11 +240,10 @@ const scopes = ref([
 ])
 
 const visibleScopes = computed(() => {
-  const always = scopes.value.filter(s => s.value === 'mo/unisso' || s.value === 'mo/uan/safebox')
   if (scopeMore.value) {
     return scopes.value
   }
-  return always
+  return scopes.value.filter(s => s.value === 'mo/unisso' || s.value === 'mo/uan/safebox')
 })
 
 function addRedirectUrl() {
@@ -268,34 +270,25 @@ function confirmCreate() {
   height: 100%;
   min-height: 0;
 }
-
 .create-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding: 11px 24px;
   border-bottom: 1px solid var(--border);
   background: #fff;
   flex-shrink: 0;
-}
-.header-sep {
-  color: var(--border);
-  font-size: 16px;
-  font-weight: 200;
 }
 .create-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--text);
 }
-
 .create-steps {
   padding: 16px 24px;
-  background: #fff;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-
 .create-body {
   flex: 1;
   overflow-y: auto;
@@ -357,7 +350,6 @@ function confirmCreate() {
   user-select: none;
   background: var(--bg);
   border-bottom: 1px solid transparent;
-  transition: border-color 0.2s;
 }
 .collapsible-header i {
   font-size: 12px;
@@ -418,7 +410,6 @@ function confirmCreate() {
   border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
 }
 .app-type-radio.selected {
   border-color: var(--brand);
@@ -528,8 +519,6 @@ function confirmCreate() {
   color: #8c8c8c;
 }
 .scope-toggle {
-  display: block;
-  text-align: center;
   padding: 8px;
   font-size: 13px;
   color: var(--brand);
@@ -553,4 +542,6 @@ function confirmCreate() {
   background: #fff;
   flex-shrink: 0;
 }
+
+.red { color: red; }
 </style>
