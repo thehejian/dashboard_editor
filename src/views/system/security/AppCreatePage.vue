@@ -98,13 +98,19 @@
 
               <a-form-item>
                 <template #label><span class="red">*</span> 访问令牌有效期</template>
-                <a-input-number v-model:value="form.tokenExpire" :min="900" :max="10800" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" />
+                <div class="input-unit-row">
+                  <a-input-number v-model:value="form.tokenExpire" :min="900" :max="10800" :step="1" />
+                  <span class="unit-label">秒</span>
+                </div>
                 <span class="form-hint">可设置 900 秒 ~ 10800 秒</span>
               </a-form-item>
 
               <a-form-item>
                 <template #label><span class="red">*</span> 刷新令牌有效期</template>
-                <a-input-number v-model:value="form.refreshTokenExpire" :min="7200" :max="31536000" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" />
+                <div class="input-unit-row">
+                  <a-input-number v-model:value="form.refreshTokenExpire" :min="7200" :max="31536000" :step="1" />
+                  <span class="unit-label">秒</span>
+                </div>
                 <span class="form-hint">可设置 7200 秒 ~ 31536000 秒</span>
               </a-form-item>
             </a-form>
@@ -389,6 +395,16 @@ function confirmCreate() {
   padding: 0;
 }
 
+.input-unit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.unit-label {
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+}
 .form-hint {
   display: block;
   font-size: 12px;
