@@ -39,7 +39,7 @@ const routes = [
     path: '/ops/account',
     component: () => import('../views/ops/account/AccountView.vue'),
     children: [
-      { path: '', redirect: '/ops/account/safebox' },
+      { path: '', redirect: '/ops/account/os/list' },
       { path: 'os/list', component: () => import('../views/ops/account/OsAccountList.vue') },
       { path: 'os/policy', component: () => import('../views/ops/account/OsAccountPolicy.vue') },
       { path: 'os/thirdparty', component: () => import('../views/ops/account/ThirdPartyMgmt.vue') },
