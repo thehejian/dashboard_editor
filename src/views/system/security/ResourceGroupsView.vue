@@ -2,12 +2,15 @@
   <div>
     <div class="page-header">
       <h3>资源组</h3>
-      <a-button type="primary">新增资源组</a-button>
     </div>
-    <div class="filter-bar">
-      <a-input-search v-model:value="search" placeholder="搜索资源组名称" style="width: 280px" />
+    <div class="button-row">
+      <a-button>新增资源组</a-button>
+      <a-button>删除</a-button>
     </div>
-    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
+    <div class="filter-row">
+      <a-input-search v-model:value="search" placeholder="搜索资源组名称" />
+    </div>
+    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }" row-key="id">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'action'">
           <a-button type="link" size="small">管理资源</a-button>
@@ -37,3 +40,14 @@ const columns = [
   { title: '操作', key: 'action', width: 200 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.page-header h3 { font-size: 18px; font-weight: 600; margin: 0; }
+.button-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.filter-row { margin-bottom: 16px; }
+:deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
+:deep(.ant-table-tbody > tr > td) { font-size: 13px; }
+:deep(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafafa; }
+:deep(.ant-table-tbody > tr:hover > td) { background: var(--brand-subtle) !important; }
+</style>

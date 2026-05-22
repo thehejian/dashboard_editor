@@ -2,18 +2,21 @@
   <div>
     <div class="page-header">
       <h3>身份提供商</h3>
-      <a-button type="primary" @click="goCreate">创建身份提供商</a-button>
     </div>
-    <div class="filter-bar">
-      <a-select v-model:value="filterType" placeholder="协议类型" allowClear style="width:140px">
+    <div class="button-row">
+      <a-button type="primary" @click="goCreate">创建身份提供商</a-button>
+      <a-button>删除</a-button>
+    </div>
+    <div class="filter-row">
+      <a-select v-model:value="filterType" placeholder="协议类型" style="width: 160px" allowClear>
         <a-select-option value="SAML">SAML 2.0</a-select-option>
         <a-select-option value="CAS">CAS 2.0</a-select-option>
         <a-select-option value="LDAP">LDAP</a-select-option>
         <a-select-option value="OAuth">OAuth 2.0</a-select-option>
       </a-select>
-      <a-input-search v-model:value="search" placeholder="搜索提供商名称" style="width:240px" />
+      <a-input-search v-model:value="search" placeholder="搜索提供商名称" />
     </div>
-    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
+    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }" row-key="id">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'protocol'">
           <a-tag>{{ record.protocol }}</a-tag>
@@ -78,3 +81,15 @@ function exportProvider(r) {
   URL.revokeObjectURL(url)
 }
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.page-header h3 { font-size: 18px; font-weight: 600; margin: 0; }
+.button-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.filter-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.filter-row .ant-input-search { flex: 1; }
+:deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
+:deep(.ant-table-tbody > tr > td) { font-size: 13px; }
+:deep(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafafa; }
+:deep(.ant-table-tbody > tr:hover > td) { background: var(--brand-subtle) !important; }
+</style>
