@@ -560,4 +560,16 @@ function confirmCreate() {
 }
 
 .red { color: red; }
+
+@media (max-width: 768px) {
+  .create-header { padding: 11px 16px; }
+  .create-steps { padding: 12px 16px; }
+  .create-body { padding: 16px; }
+  .create-footer { padding: 12px 16px; }
+  .create-footer .ant-btn { flex: 1; }
+  .protocol-list { flex-direction: column; }
+  .collapsible-body { padding: 12px 16px; }
+  .icon-field { width: 100%; }
+  .input-unit-row .ant-input-number { width: 100% !important; }
+}
 </style>

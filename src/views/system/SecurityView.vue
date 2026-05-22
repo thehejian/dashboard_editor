@@ -270,6 +270,13 @@ function onMobileSelectTree(keys) {
   .filter-bar .ant-select,
   .filter-bar input,
   .filter-bar .ant-input-affix-wrapper { width: 100% !important; }
+  .button-row { flex-wrap: wrap; }
+  .button-row .ant-btn { flex: 1; min-width: 0; }
+  .filter-row { flex-direction: column; gap: 8px; }
+  .filter-row .ant-input-search,
+  .filter-row .ant-select,
+  .filter-row .ant-input-affix-wrapper { width: 100% !important; }
+  .search-row .ant-input-search { width: 100% !important; }
   .ant-table { overflow-x: auto; }
   .ant-table-body { overflow-x: auto !important; }
 }

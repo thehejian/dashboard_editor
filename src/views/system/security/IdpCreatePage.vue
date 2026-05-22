@@ -242,4 +242,12 @@ function confirmCreate() {
   color: var(--text-ter);
   margin-top: 4px;
 }
+
+@media (max-width: 768px) {
+  .protocol-grid { grid-template-columns: 1fr; }
+  .create-header { padding: 11px 16px; }
+  .create-body { padding: 16px; }
+  .create-footer { padding: 12px 16px; }
+  .create-footer .ant-btn { flex: 1; }
+}
 </style>
