@@ -54,7 +54,7 @@ const treeData = [
     key: '/system/security/tenant',
     selectable: false,
     children: [
-      { title: '用户管理', key: '/system/security/users', isLeaf: true },
+      { title: '用户', key: '/system/security/users', isLeaf: true },
     ],
   },
   {
@@ -62,9 +62,9 @@ const treeData = [
     key: '/system/security/auth',
     selectable: false,
     children: [
-      { title: '用户组管理', key: '/system/security/user-groups', isLeaf: true },
-      { title: '策略管理', key: '/system/security/policies', isLeaf: true },
-      { title: '角色管理', key: '/system/security/roles', isLeaf: true },
+      { title: '用户组', key: '/system/security/user-groups', isLeaf: true },
+      { title: '策略', key: '/system/security/policies', isLeaf: true },
+      { title: '角色', key: '/system/security/roles', isLeaf: true },
       { title: '资源组', key: '/system/security/resource-groups', isLeaf: true },
     ],
   },
@@ -73,7 +73,7 @@ const treeData = [
     key: '/system/security/integration',
     selectable: false,
     children: [
-      { title: '应用集成管理', key: '/system/security/app-integration', isLeaf: true },
+      { title: '应用集成', key: '/system/security/app-integration', isLeaf: true },
       { title: '身份提供商', key: '/system/security/idp', isLeaf: true },
       { title: '集成账号', key: '/system/security/integration-accounts', isLeaf: true },
     ],

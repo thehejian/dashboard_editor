@@ -1,17 +1,20 @@
 <template>
   <div>
     <div class="page-header">
-      <h3>策略管理</h3>
-      <a-button type="primary">新增策略</a-button>
+      <h3>策略</h3>
     </div>
-    <div class="filter-bar">
-      <a-select v-model:value="filterType" placeholder="策略类型" style="width: 140px" allowClear>
+    <div class="button-row">
+      <a-button>新增策略</a-button>
+      <a-button>删除</a-button>
+    </div>
+    <div class="filter-row">
+      <a-select v-model:value="filterType" placeholder="策略类型" style="width: 160px" allowClear>
         <a-select-option value="system">系统策略</a-select-option>
         <a-select-option value="custom">自定义策略</a-select-option>
       </a-select>
-      <a-input-search v-model:value="search" placeholder="搜索策略名称" style="width: 240px" />
+      <a-input-search v-model:value="search" placeholder="搜索策略名称" />
     </div>
-    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id">
+    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }" row-key="id">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'type'">
           <a-tag :color="record.type === 'system' ? 'blue' : 'orange'">{{ record.type === 'system' ? '系统' : '自定义' }}</a-tag>
@@ -44,3 +47,15 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 </script>
+
+<style scoped>
+.page-header { margin-bottom: 16px; }
+.page-header h3 { font-size: 18px; font-weight: 600; margin: 0; }
+.button-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.filter-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.filter-row .ant-input-search { flex: 1; }
+:deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
+:deep(.ant-table-tbody > tr > td) { font-size: 13px; }
+:deep(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafafa; }
+:deep(.ant-table-tbody > tr:hover > td) { background: var(--brand-subtle) !important; }
+</style>
