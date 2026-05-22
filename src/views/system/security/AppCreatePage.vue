@@ -6,16 +6,11 @@
       <span class="create-title">创建应用</span>
     </div>
 
-    <div class="step-bar">
-      <div class="step-item" :class="{ active: step === 1, done: step > 1 }">
-        <div class="step-circle" :class="{ active: step === 1, done: step > 1 }">1</div>
-        <span class="step-label" :class="{ active: step === 1, done: step > 1 }">选择应用协议模板</span>
-      </div>
-      <div class="step-connector" :class="{ active: step > 1 }"></div>
-      <div class="step-item" :class="{ active: step === 2 }">
-        <div class="step-circle" :class="{ active: step === 2 }">2</div>
-        <span class="step-label" :class="{ active: step === 2 }">编辑应用信息</span>
-      </div>
+    <div class="create-steps">
+      <a-steps :current="step - 1" size="small">
+        <a-step title="选择应用协议模板" />
+        <a-step title="编辑应用信息" />
+      </a-steps>
     </div>
 
     <div class="create-body">
@@ -35,75 +30,107 @@
       </template>
 
       <template v-if="step === 2">
-        <div class="step2-header">
-          <span class="step2-title">基本信息</span>
+        <div class="collapsible-section" :class="{ open: basicOpen }">
+          <div class="collapsible-header" @click="basicOpen = !basicOpen">
+            <i class="fa-solid" :class="basicOpen ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            <span>基本信息</span>
+          </div>
+          <div class="collapsible-body">
+            <a-form layout="vertical">
+              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 所属租户">
+                <a-select v-model:value="form.tenant" placeholder="请选择">
+                  <a-select-option value="租户01">租户01</a-select-option>
+                  <a-select-option value="租户02">租户02</a-select-option>
+                  <a-select-option value="租户03">租户03</a-select-option>
+                </a-select>
+              </a-form-item>
+
+              <a-form-item label="图标">
+                <div class="icon-field">
+                  <div class="icon-box">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                      <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                      <line x1="6.5" y1="10" x2="6.5" y2="14"/>
+                      <line x1="17.5" y1="10" x2="17.5" y2="14"/>
+                    </svg>
+                  </div>
+                  <a-button type="link" class="icon-change">更换图标</a-button>
+                </div>
+              </a-form-item>
+
+              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 名称">
+                <a-input v-model:value="form.name" placeholder="app01" />
+                <span class="form-hint">同一租户下，名称不允许重复；只能由英文字母(不区分大小写)、数字组成</span>
+              </a-form-item>
+
+              <a-form-item label="显示名称">
+                <a-input v-model:value="form.displayName" placeholder="app01" />
+              </a-form-item>
+
+              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 应用类型">
+                <div class="app-type-group">
+                  <label class="app-type-radio" :class="{ selected: form.appType === 'web' }" @click="form.appType = 'web'">
+                    <a-radio :checked="form.appType === 'web'" @click.stop />
+                    <div class="app-type-content">
+                      <span class="app-type-label">Web应用</span>
+                      <span class="app-type-desc">建立SSO关系：指基于浏览器交互的网络应用。应用通过浏览器交互，获得用户授权访问用户的资源。用户资源可以是应用本身管理的用户资源，也可以是其他服务通过 API 暴露的用户资源</span>
+                    </div>
+                  </label>
+                  <label class="app-type-radio" :class="{ selected: form.appType === 'server' }" @click="form.appType = 'server'">
+                    <a-radio :checked="form.appType === 'server'" @click.stop />
+                    <div class="app-type-content">
+                      <span class="app-type-label">Server应用</span>
+                      <span class="app-type-desc">指非用户授权的请求方与接收放数据交换场景。通过标准协议 API 等形式进行帐号等基础数据的交换。当前主要用来支持基于 SCIM 的数据同步场景</span>
+                    </div>
+                  </label>
+                </div>
+              </a-form-item>
+
+              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 状态">
+                <a-switch v-model:checked="form.enabled" />
+              </a-form-item>
+
+              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 访问令牌有效期">
+                <a-input-number v-model:value="form.tokenExpire" :min="900" :max="10800" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" />
+                <span class="form-hint">可设置 900 秒 ~ 10800 秒</span>
+              </a-form-item>
+
+              <a-form-item label="<span style=&quot;color:red&quot;>*</span> 刷新令牌有效期">
+                <a-input-number v-model:value="form.refreshTokenExpire" :min="7200" :max="31536000" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" />
+                <span class="form-hint">可设置 7200 秒 ~ 31536000 秒</span>
+              </a-form-item>
+            </a-form>
+          </div>
         </div>
 
-        <a-form layout="vertical">
-          <a-form-item label="* 所属租户">
-            <a-select v-model:value="form.tenant" placeholder="请选择">
-              <a-select-option value="租户01">租户01</a-select-option>
-              <a-select-option value="租户02">租户02</a-select-option>
-              <a-select-option value="租户03">租户03</a-select-option>
-            </a-select>
-          </a-form-item>
-
-          <a-form-item label="图标">
-            <div class="icon-field">
-              <div class="icon-box">
-                <i class="fa-solid fa-hexagon-nodes"></i>
+        <div class="collapsible-section" :class="{ open: protocolOpen }">
+          <div class="collapsible-header" @click="protocolOpen = !protocolOpen">
+            <i class="fa-solid" :class="protocolOpen ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            <span>协议信息</span>
+          </div>
+          <div class="collapsible-body">
+            <div class="redirect-section">
+              <div class="redirect-title"><span style="color:red">*</span> 重定向地址列表</div>
+              <div class="redirect-row header-row">
+                <span class="redirect-url-label">重定向地址</span>
+                <span class="redirect-action-label">操作</span>
               </div>
-              <a-button type="link" class="icon-change">更换图标</a-button>
+              <div class="redirect-row" v-for="(url, i) in redirectUrls" :key="i">
+                <span class="redirect-url">{{ url }}</span>
+                <a-button type="link" size="small" danger @click="redirectUrls.splice(i, 1)">删除</a-button>
+              </div>
+              <a-button type="dashed" block style="margin-top: 8px" @click="showRedirectModal = true">+ 添加</a-button>
             </div>
-          </a-form-item>
-
-          <a-form-item label="* 名称">
-            <a-input v-model:value="form.name" placeholder="app01" />
-            <span class="form-hint">同一租户下，名称不允许重复；只能由英文字母(不区分大小写)、数字组成</span>
-          </a-form-item>
-
-          <a-form-item label="显示名称">
-            <a-input v-model:value="form.displayName" placeholder="app01" />
-          </a-form-item>
-
-          <a-form-item label="* 应用类型">
-            <div class="app-type-group">
-              <label class="app-type-radio" :class="{ selected: form.appType === 'web' }" @click="form.appType = 'web'">
-                <a-radio :checked="form.appType === 'web'" @click.stop />
-                <div class="app-type-content">
-                  <span class="app-type-label">Web应用</span>
-                  <span class="app-type-desc">建立SSO关系：指基于浏览器交互的网络应用。应用通过浏览器交互，获得用户授权访问用户的资源。用户资源可以是应用本身管理的用户资源，也可以是其他服务通过 API 暴露的用户资源</span>
-                </div>
-              </label>
-              <label class="app-type-radio" :class="{ selected: form.appType === 'server' }" @click="form.appType = 'server'">
-                <a-radio :checked="form.appType === 'server'" @click.stop />
-                <div class="app-type-content">
-                  <span class="app-type-label">Server应用</span>
-                  <span class="app-type-desc">指非用户授权的请求方与接收放数据交换场景。通过标准协议 API 等形式进行帐号等基础数据的交换。当前主要用来支持基于 SCIM 的数据同步场景</span>
-                </div>
-              </label>
-            </div>
-          </a-form-item>
-
-          <a-form-item label="* 状态">
-            <a-switch v-model:checked="form.enabled" />
-          </a-form-item>
-
-          <a-form-item label="* 访问令牌有效期">
-            <a-input-number v-model:value="form.tokenExpire" :min="900" :max="10800" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" style="width: 200px" />
-            <span class="form-hint">可设置 900 秒 ~ 10800 秒</span>
-          </a-form-item>
-
-          <a-form-item label="* 刷新令牌有效期">
-            <a-input-number v-model:value="form.refreshTokenExpire" :min="7200" :max="31536000" :step="1" :formatter="v => `${v} 秒`" :parser="v => v.replace(/[^\d]/g, '')" style="width: 200px" />
-            <span class="form-hint">可设置 7200 秒 ~ 31536000 秒</span>
-          </a-form-item>
-        </a-form>
+          </div>
+        </div>
 
         <div class="section">
-          <div class="section-title">* 授权范围</div>
+          <div class="section-title"><span style="color:red">*</span> 授权范围</div>
           <div class="scope-list">
-            <label class="scope-item" v-for="s in scopes" :key="s.value">
+            <label class="scope-item" v-for="s in visibleScopes" :key="s.value">
               <a-checkbox v-model:checked="s.checked" />
               <div class="scope-content">
                 <span class="scope-value">{{ s.value }}</span>
@@ -111,28 +138,14 @@
               </div>
             </label>
           </div>
-          <a class="collapse-btn" @click="scopesExpanded = !scopesExpanded">{{ scopesExpanded ? '∧ 收起' : '∨ 展开' }}</a>
+          <a class="scope-toggle" @click="scopeMore = !scopeMore">
+            <i class="fa-solid" :class="scopeMore ? 'fa-eye-slash' : 'fa-eye'"></i>
+            {{ scopeMore ? '收起' : '查看更多' }}
+          </a>
         </div>
 
         <div class="section">
-          <div class="section-title">* 回调地址</div>
-          <div class="callback-list">
-            <div class="callback-row">
-              <span class="callback-col-label">访问地址</span>
-              <span class="callback-col-label">所属区域</span>
-            </div>
-            <div class="callback-row callback-input-row">
-              <a-input v-model:value="form.callbackUrl" placeholder="http://wenote.com" />
-              <a-select v-model:value="form.callbackRegion" style="width: 160px">
-                <a-select-option value="Region01">Region01</a-select-option>
-                <a-select-option value="Region02">Region02</a-select-option>
-              </a-select>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">* 创建快捷入口 <a-tooltip title="创建后在门户首页快捷入口处显示"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
+          <div class="section-title"><span style="color:red">*</span> 创建快捷入口 <a-tooltip title="创建后在门户首页快捷入口处显示"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
           <a-radio-group v-model:value="form.quickEntry">
             <a-radio value="yes">是</a-radio>
             <a-radio value="no">否</a-radio>
@@ -140,7 +153,7 @@
         </div>
 
         <div class="section">
-          <div class="section-title">* 创建快捷入口场景分组 <a-tooltip title="选择快捷入口所属分组"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
+          <div class="section-title"><span style="color:red">*</span> 创建快捷入口场景分组 <a-tooltip title="选择快捷入口所属分组"><i class="fa-regular fa-circle-question" style="color: #8c8c8c; font-size: 14px; cursor: help;"></i></a-tooltip></div>
           <a-radio-group v-model:value="form.shortcutGroup">
             <a-radio value="服务中心">服务中心</a-radio>
             <a-radio value="运维中心">运维中心</a-radio>
@@ -165,17 +178,29 @@
         <a-button type="primary" @click="confirmCreate">完成</a-button>
       </template>
     </div>
+
+    <a-modal v-model:open="showRedirectModal" title="添加重定向地址" :footer="null" :width="480" @ok="addRedirectUrl">
+      <a-input v-model:value="newRedirectUrl" placeholder="https://example.com/callback" />
+      <div style="margin-top: 16px; text-align: right">
+        <a-button style="margin-right: 8px" @click="showRedirectModal = false">取消</a-button>
+        <a-button type="primary" :disabled="!newRedirectUrl" @click="addRedirectUrl">确定</a-button>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const step = ref(1)
-const selectedProtocol = ref('SAML')
-const scopesExpanded = ref(true)
+const selectedProtocol = ref('OAuth')
+const basicOpen = ref(true)
+const protocolOpen = ref(true)
+const scopeMore = ref(false)
+const showRedirectModal = ref(false)
+const newRedirectUrl = ref('')
 
 const protocols = [
   { value: 'SAML', label: 'SAML', desc: 'SAML（Security Assertion Markup Language，安全断言标记语言，版本2.0）基于XML协议，使用包含断言（Assertion）的安全令牌，在授权方（本系统）和消费方（应用）之前传递身份信息，实现基于网络跨域的单点登录。SAML协议是成熟的认证协议，在国内外的公有云和私有云中有非常广泛的运用。' },
@@ -198,16 +223,34 @@ const form = reactive({
   description: '',
 })
 
+const redirectUrls = ref(['https://app01.example.com/callback'])
+
 const scopes = ref([
+  { value: 'mo/unisso', desc: 'Web App如果需要使用ID Token换取IAM Token，则必须取得该授权', checked: false },
+  { value: 'mo/uan/safebox', desc: '访问账号保管箱中机密信息的权限，包括查询账号机密信息列表、查询指定账号机密信息', checked: false },
   { value: 'openid', desc: '获取用户标识符 (sub) 的权限', checked: true },
   { value: 'profile', desc: '获取用户基本信息的权限，包括用户名、邮箱等', checked: true },
   { value: 'offline_access', desc: '获取刷新令牌 (refresh token) 的权限，用于在访问令牌过期后获取新的访问令牌', checked: true },
-  { value: 'mo/unisso', desc: 'Web App如果需要使用ID Token换取IAM Token，则必须取得该授权', checked: false },
-  { value: 'mo/uan/safebox', desc: '访问账号保管箱中机密信息的权限，包括查询账号机密信息列表、查询指定账号机密信息', checked: false },
   { value: 'email', desc: '获取用户邮箱信息的权限', checked: false },
   { value: 'address', desc: '获取用户地址信息的权限', checked: false },
   { value: 'phone', desc: '获取用户电话信息的权限', checked: false },
 ])
+
+const visibleScopes = computed(() => {
+  const always = scopes.value.filter(s => s.value === 'mo/unisso' || s.value === 'mo/uan/safebox')
+  if (scopeMore.value) {
+    return scopes.value
+  }
+  return always
+})
+
+function addRedirectUrl() {
+  if (newRedirectUrl.value) {
+    redirectUrls.value.push(newRedirectUrl.value)
+    newRedirectUrl.value = ''
+    showRedirectModal.value = false
+  }
+}
 
 function goBack() {
   router.push('/system/security/app-integration')
@@ -234,7 +277,6 @@ function confirmCreate() {
   border-bottom: 1px solid var(--border);
   background: #fff;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .header-sep {
   color: var(--border);
@@ -244,65 +286,14 @@ function confirmCreate() {
 .create-title {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
-.step-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  padding: 20px 24px;
+.create-steps {
+  padding: 16px 24px;
   background: #fff;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-}
-.step-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.step-circle {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  background: #e8e8e8;
-  color: #bfbfbf;
-  transition: all 0.2s;
-}
-.step-circle.active {
-  background: #262626;
-  color: #fff;
-}
-.step-circle.done {
-  background: var(--brand);
-  color: #fff;
-}
-.step-label {
-  font-size: 14px;
-  color: #bfbfbf;
-  transition: all 0.2s;
-}
-.step-label.active {
-  color: #262626;
-  font-weight: 600;
-}
-.step-label.done {
-  color: var(--brand);
-}
-.step-connector {
-  width: 60px;
-  height: 1px;
-  background: #e8e8e8;
-  margin: 0 16px;
-  transition: all 0.2s;
-}
-.step-connector.active {
-  background: var(--brand);
 }
 
 .create-body {
@@ -338,7 +329,7 @@ function confirmCreate() {
 .protocol-name {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text);
   margin-bottom: 10px;
 }
 .protocol-desc {
@@ -347,40 +338,71 @@ function confirmCreate() {
   line-height: 1.7;
 }
 
-.step2-header {
-  margin-bottom: 24px;
+.collapsible-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  margin-bottom: 16px;
+  overflow: hidden;
 }
-.step2-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1a1a;
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
 }
+.collapsible-header i {
+  font-size: 12px;
+  color: #8c8c8c;
+  width: 12px;
+}
+.collapsible-section.open .collapsible-header {
+  border-bottom-color: var(--border);
+}
+.collapsible-body {
+  display: none;
+  padding: 16px 24px;
+}
+.collapsible-section.open .collapsible-body {
+  display: block;
+}
+
+.icon-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 80px;
+}
+.icon-box {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.icon-change {
+  font-size: 12px;
+  padding: 0;
+}
+
 .form-hint {
   display: block;
   font-size: 12px;
   color: #8c8c8c;
   margin-top: 4px;
   line-height: 1.5;
-}
-
-.icon-field {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.icon-box {
-  width: 48px;
-  height: 48px;
-  background: var(--brand);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 22px;
-}
-.icon-change {
-  font-size: 13px;
 }
 
 .app-type-group {
@@ -418,8 +440,45 @@ function confirmCreate() {
   line-height: 1.6;
 }
 
+.redirect-section {
+  padding: 4px 0;
+}
+.redirect-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.redirect-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.redirect-row:last-child {
+  border-bottom: none;
+}
+.redirect-row.header-row {
+  font-size: 12px;
+  color: #8c8c8c;
+  font-weight: 500;
+  padding-bottom: 8px;
+}
+.redirect-url-label {
+  flex: 1;
+}
+.redirect-action-label {
+  width: 60px;
+  text-align: center;
+}
+.redirect-url {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-all;
+}
+
 .section {
-  margin-top: 28px;
+  margin-top: 20px;
 }
 .section-title {
   font-size: 14px;
@@ -468,43 +527,21 @@ function confirmCreate() {
   font-size: 12px;
   color: #8c8c8c;
 }
-.collapse-btn {
+.scope-toggle {
   display: block;
   text-align: center;
   padding: 8px;
   font-size: 13px;
-  color: #8c8c8c;
+  color: var(--brand);
   cursor: pointer;
   margin-top: 4px;
-}
-.collapse-btn:hover {
-  color: var(--brand);
-}
-
-.callback-list {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fafafa;
-  padding: 12px 16px;
-}
-.callback-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 6px;
 }
-.callback-col-label {
-  flex: 1;
-  font-size: 12px;
-  color: #8c8c8c;
-  font-weight: 500;
-}
-.callback-input-row {
-  margin-top: 8px;
-  gap: 12px;
-}
-.callback-input-row .ant-input {
-  flex: 1;
+.scope-toggle:hover {
+  opacity: 0.8;
 }
 
 .create-footer {
@@ -515,6 +552,5 @@ function confirmCreate() {
   border-top: 1px solid var(--border);
   background: #fff;
   flex-shrink: 0;
-  box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
 }
 </style>

@@ -80,11 +80,12 @@ const treeData = [
   },
 ]
 
-const isCreatePage = computed(() => route.path.includes('/idp/create'))
+const isCreatePage = computed(() => route.path.includes('/idp/create') || route.path.includes('/app-integration/create'))
 
 const selectedKeys = computed(() => {
   const p = route.path
   if (p.startsWith('/system/security/idp/create')) return ['/system/security/idp']
+  if (p.startsWith('/system/security/app-integration/create')) return ['/system/security/app-integration']
   return [p]
 })
 
@@ -110,6 +111,8 @@ const flatItems = computed(() => flatTree(treeData).filter(i => i.depth > 0))
 watch(() => route.path, (p) => {
   if (p.startsWith('/system/security/idp/create')) {
     mobileRoute.value = '/system/security/idp'
+  } else if (p.startsWith('/system/security/app-integration/create')) {
+    mobileRoute.value = '/system/security/app-integration'
   } else {
     mobileRoute.value = p
   }
