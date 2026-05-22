@@ -113,7 +113,7 @@
               <div class="section-title"><span class="red">*</span> 授权范围</div>
               <div class="scope-list">
                 <label class="scope-item" v-for="s in visibleScopes" :key="s.value">
-                  <a-checkbox v-model:checked="s.checked" />
+                  <a-checkbox v-model:checked="s.checked" :disabled="s.value === 'openid'" />
                   <div class="scope-content">
                     <span class="scope-value">{{ s.value }}</span>
                     <span class="scope-desc">{{ s.desc }}</span>
