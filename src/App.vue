@@ -56,6 +56,7 @@
               <a-menu @click="handleNavClick">
                 <a-menu-item key="/ops/jobs">自动作业</a-menu-item>
                 <a-menu-item key="/ops/logs">日志管理</a-menu-item>
+                <a-menu-item key="/ops/account">账号管理</a-menu-item>
                 <a-menu-item key="/ops/inspect">巡检报告</a-menu-item>
               </a-menu>
             </template>

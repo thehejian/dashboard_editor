@@ -35,6 +35,17 @@ const routes = [
       { path: 'config/download-settings', component: () => import('../views/ops/logs/LogDownloadConfig.vue') },
     ],
   },
+  {
+    path: '/ops/account',
+    component: () => import('../views/ops/account/AccountView.vue'),
+    children: [
+      { path: '', redirect: '/ops/account/safebox' },
+      { path: 'os/list', component: () => import('../views/ops/account/OsAccountList.vue') },
+      { path: 'os/policy', component: () => import('../views/ops/account/OsAccountPolicy.vue') },
+      { path: 'os/thirdparty', component: () => import('../views/ops/account/ThirdPartyMgmt.vue') },
+      { path: 'safebox', component: () => import('../views/ops/account/SafeBoxView.vue') },
+    ],
+  },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
 
   {
