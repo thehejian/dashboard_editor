@@ -370,7 +370,7 @@ function confirmCreate() {
 .icon-field {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   width: 80px;
 }
