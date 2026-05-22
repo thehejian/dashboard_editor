@@ -4,7 +4,7 @@
       <h3>策略</h3>
     </div>
     <div class="button-row">
-      <a-button>新增策略</a-button>
+      <a-button>创建策略</a-button>
       <a-button>删除</a-button>
     </div>
     <div class="filter-row">

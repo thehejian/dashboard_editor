@@ -4,7 +4,7 @@
       <h3>用户组</h3>
     </div>
     <div class="button-row">
-      <a-button>新增用户组</a-button>
+      <a-button>创建用户组</a-button>
       <a-button>删除</a-button>
     </div>
     <div class="filter-row">

@@ -4,7 +4,7 @@
       <h3>集成账号</h3>
     </div>
     <div class="button-row">
-      <a-button>新增集成账号</a-button>
+      <a-button>创建集成账号</a-button>
       <a-button>删除</a-button>
     </div>
     <div class="filter-row">
