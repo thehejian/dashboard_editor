@@ -93,42 +93,120 @@ function unitOf(metric) {
   return '%'
 }
 
+const MOCK_RANGES = {
+  'CPU使用率': [10, 95],
+  '内存使用率': [30, 92],
+  '系统负载': [0.5, 8],
+  '运行时间': [86400, 864000],
+  '磁盘使用率': [20, 85],
+  '磁盘读取': [524288, 52428800],
+  '磁盘写入': [262144, 31457280],
+  '网络流入速率': [1048576, 104857600],
+  '网络流出速率': [524288, 52428800],
+  '集群节点数': [3, 12],
+  'Pod总数': [20, 150],
+  '运行中Pod': [15, 130],
+  '异常Pod': [0, 5],
+  '节点CPU使用率': [20, 90],
+  '节点内存使用率': [30, 88],
+  '节点磁盘使用率': [25, 80],
+  '节点网络流入': [2097152, 104857600],
+  '节点网络流出': [1048576, 52428800],
+  '节点负载': [0.5, 10],
+  'Pod运行数': [15, 130],
+  'Pod等待数': [0, 8],
+  'Pod终止数': [0, 5],
+  'Pod重启次数': [0, 30],
+  'OOMKill次数': [0, 5],
+  'CPUThrottling': [0, 50],
+  '容器CPU使用率': [10, 90],
+  '容器内存使用率': [20, 88],
+  '容器网络流入': [1048576, 52428800],
+  '容器网络流出': [524288, 26214400],
+  '容器磁盘读取': [262144, 20971520],
+  '容器磁盘写入': [131072, 10485760],
+  'Pod网络流入速率': [524288, 26214400],
+  'Pod网络流出速率': [262144, 13107200],
+  'Service入口流量': [100, 10000],
+  'IngressQPS': [50, 5000],
+  'Ingress延迟': [50, 2000],
+  'Ingress错误率': [0, 8],
+  'PVC已用容量': [1073741824, 107374182400],
+  'PVC可用容量': [1073741824, 107374182400],
+  '存储请求量': [1073741824, 107374182400],
+  '存储利用率': [10, 90],
+  'Deployment数量': [5, 30],
+  'StatefulSet数量': [2, 15],
+  'DaemonSet数量': [1, 8],
+  '滚动更新中': [0, 3],
+  '就绪副本数': [3, 30],
+  '期望副本数': [3, 30],
+}
+
+function generateMockData(metricName, type, period, unit) {
+  const range = MOCK_RANGES[metricName] || [0, 100]
+  const [min, max] = range
+
+  if (type === 'numeric') {
+    const v = Math.round((min + Math.random() * (max - min)) * 10) / 10
+    return { lastValue: v, points: [{ time: '当前', value: v }], unit }
+  }
+
+  const cfg = PERIOD_CFG[period] || PERIOD_CFG['24h']
+  const count = Math.max(10, Math.floor((cfg.range || 86400) / (cfg.step || 900)))
+  const end = Math.floor(Date.now() / 1000)
+  const start = end - (cfg.range || 86400)
+  const step = (cfg.range || 86400) / count
+
+  const points = []
+  let lastVal = min + Math.random() * (max - min) * 0.3
+  for (let i = 0; i < count; i++) {
+    const t = Math.floor(start + i * step)
+    if (Math.random() < 0.12) {
+      lastVal = min + Math.random() * (max - min)
+    } else {
+      const drift = (Math.random() - 0.5) * (max - min) * 0.12
+      lastVal = Math.max(min, Math.min(max, lastVal + drift))
+    }
+    points.push({ time: fmtTime(t, period), value: Math.round(lastVal * 10) / 10 })
+  }
+
+  return { points, lastValue: points.at(-1).value, unit }
+}
+
 export async function fetchChartData(chart, period = '24h') {
   const metrics = chart.metrics || []
   if (!metrics.length) return null
 
   const metricName = metrics[0]
   const fn = METRIC_PROMQL[metricName]
-  if (!fn) return null
-
   const cfg = PERIOD_CFG[period] || PERIOD_CFG['24h']
+  const unit = unitOf(metricName)
 
-  if (chart.type === 'numeric' || period === 'now') {
-    const results = await q(fn(cfg.rangeStr))
-    if (!results.length) return null
-    const v = parseFloat(results[0].value[1])
-    return {
-      lastValue: v,
-      points: [{ time: '当前', value: Math.round(v * 10) / 10 }],
-      unit: unitOf(metricName),
-    }
+  if (fn) {
+    try {
+      if (chart.type === 'numeric' || period === 'now') {
+        const results = await q(fn(cfg.rangeStr))
+        if (results.length) {
+          const v = parseFloat(results[0].value[1])
+          return { lastValue: v, points: [{ time: '当前', value: Math.round(v * 10) / 10 }], unit }
+        }
+      } else {
+        const end = Math.floor(Date.now() / 1000)
+        const start = end - (cfg.range || 86400)
+        const results = await qr(fn(cfg.rangeStr), start, end, cfg.step)
+        if (results.length) {
+          const points = results[0].values.map(([t, v]) => ({
+            time: fmtTime(t, period),
+            value: Math.round(parseFloat(v) * 10) / 10,
+          }))
+          return { points, lastValue: parseFloat(results[0].values.at(-1)[1]), unit }
+        }
+      }
+    } catch {}
   }
 
-  const end = Math.floor(Date.now() / 1000)
-  const start = end - (cfg.range || 86400)
-  const results = await qr(fn(cfg.rangeStr), start, end, cfg.step)
-
-  if (!results.length) return null
-  const points = results[0].values.map(([t, v]) => ({
-    time: fmtTime(t, period),
-    value: Math.round(parseFloat(v) * 10) / 10,
-  }))
-
-  return {
-    points,
-    lastValue: parseFloat(results[0].values[results[0].values.length - 1][1]),
-    unit: unitOf(metricName),
-  }
+  return generateMockData(metricName, chart.type, period, unit)
 }
 
 export async function fetchSingleMetric(metricName, period = '24h') {

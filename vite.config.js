@@ -25,7 +25,7 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
-    allowedHosts: ['demo3.laohebuhui.dpdns.org'],
+    allowedHosts: ['demo3.laohebuhui.dpdns.org', 'demo4.laohebuhui.dpdns.org'],
     proxy: {
       '/api/v1': {
         target: 'http://192.168.0.155:9090',
