@@ -128,7 +128,7 @@
         @change="onTransferChange"
         :locale="{ itemsUnit: '', notFoundContent: '暂无数据', searchPlaceholder: '搜索' }"
       >
-        <template #children="{ items, direction, selectedKeys, onItemSelect }">
+        <template #children="{ filteredItems, direction, selectedKeys, onItemSelect }">
           <div class="custom-transfer-list">
             <div class="ctl-header">
               <span class="ctl-h-name">账号名称</span>
@@ -137,7 +137,7 @@
             </div>
             <div class="ctl-body">
               <div
-                v-for="item in items"
+                v-for="item in filteredItems"
                 :key="item.key"
                 class="ctl-row"
                 :class="{ active: selectedKeys.includes(item.key) }"
@@ -147,7 +147,7 @@
                 <span class="ctl-desc">{{ item.desc }}</span>
                 <span class="ctl-region">{{ item.region }}</span>
               </div>
-              <div v-if="!items.length" class="ctl-empty">暂无数据</div>
+              <div v-if="!filteredItems.length" class="ctl-empty">暂无数据</div>
             </div>
           </div>
         </template>
@@ -436,6 +436,7 @@ function submit() {
 :deep(.ant-transfer-list-content-item:not(:last-child)) { border: none !important; }
 :deep(.ant-transfer-list-header) { flex-shrink: 0; }
 :deep(.ant-transfer-list-header-selected) { display: none; }
+:deep(.ant-transfer-list-body-customize-wrapper) { flex: 1; min-height: 0; }
 
 :deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
 :deep(.ant-table-tbody > tr > td) { font-size: 13px; }
