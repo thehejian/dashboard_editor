@@ -128,11 +128,27 @@
         @change="onTransferChange"
         :locale="{ itemsUnit: '', notFoundContent: '暂无数据', searchPlaceholder: '搜索' }"
       >
-        <template #render="item">
-          <div class="transfer-item">
-            <span class="ti-name">{{ item.title }}</span>
-            <span class="ti-desc">{{ item.desc }}</span>
-            <span class="ti-region">{{ item.region }}</span>
+        <template #children="{ items, direction, selectedKeys, onItemSelect }">
+          <div class="custom-transfer-list">
+            <div class="ctl-header">
+              <span class="ctl-h-name">账号名称</span>
+              <span class="ctl-h-desc">描述</span>
+              <span class="ctl-h-region">所属Region</span>
+            </div>
+            <div class="ctl-body">
+              <div
+                v-for="item in items"
+                :key="item.key"
+                class="ctl-row"
+                :class="{ active: selectedKeys.includes(item.key) }"
+                @click="onItemSelect(item.key)"
+              >
+                <span class="ctl-name">{{ item.title }}</span>
+                <span class="ctl-desc">{{ item.desc }}</span>
+                <span class="ctl-region">{{ item.region }}</span>
+              </div>
+              <div v-if="!items.length" class="ctl-empty">暂无数据</div>
+            </div>
           </div>
         </template>
       </a-transfer>
@@ -369,37 +385,57 @@ function submit() {
 
 .red { color: red; }
 
-:deep(.transfer-item) {
+:deep(.custom-transfer-list) {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  height: 100%;
+}
+:deep(.ctl-header) {
+  display: grid;
+  grid-template-columns: 120px 1fr 80px;
   gap: 12px;
-  width: 100%;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c8c8c;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+:deep(.ctl-body) {
+  flex: 1;
+  overflow-y: auto;
+}
+:deep(.ctl-row) {
+  display: grid;
+  grid-template-columns: 120px 1fr 80px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f5f5f5;
+}
+:deep(.ctl-row:hover) { background: #fafafa; }
+:deep(.ctl-row.active) { background: var(--brand-subtle); }
+:deep(.ctl-name) { font-weight: 600; color: var(--text); }
+:deep(.ctl-desc) { color: #8c8c8c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:deep(.ctl-region) { color: var(--text); font-size: 13px; }
+:deep(.ctl-empty) {
+  padding: 24px;
+  text-align: center;
+  color: #8c8c8c;
   font-size: 13px;
 }
-:deep(.ti-name) {
-  font-weight: 600;
-  color: var(--text);
-  min-width: 100px;
-  flex-shrink: 0;
-}
-:deep(.ti-desc) {
-  color: #8c8c8c;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-:deep(.ti-region) {
-  color: var(--brand);
-  font-size: 12px;
-  background: var(--brand-subtle);
-  padding: 1px 8px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-:deep(.ant-transfer-list-content-item) {
-  padding: 8px 12px !important;
-}
+:deep(.ant-transfer-list) { display: flex; flex-direction: column; }
+:deep(.ant-transfer-list-body) { flex: 1; display: flex; flex-direction: column; }
+:deep(.ant-transfer-list-body-search-wrapper) { flex-shrink: 0; }
+:deep(.ant-transfer-list-content) { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+:deep(.ant-transfer-list-content-item) { padding: 0 !important; min-height: auto !important; border: none !important; }
+:deep(.ant-transfer-list-content-item:not(:last-child)) { border: none !important; }
+:deep(.ant-transfer-list-header) { flex-shrink: 0; }
+:deep(.ant-transfer-list-header-selected) { display: none; }
 
 :deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
 :deep(.ant-table-tbody > tr > td) { font-size: 13px; }
