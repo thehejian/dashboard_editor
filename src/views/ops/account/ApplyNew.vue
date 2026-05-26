@@ -2,15 +2,20 @@
   <div>
     <div class="page-header">
       <h3>账号申请</h3>
-      <a-button type="primary" @click="$router.push('/ops/account/apply/create')">账号申请</a-button>
     </div>
     <div class="tab-bar">
-      <a-radio-group v-model:value="activeTab" button-style="solid" size="small">
-        <a-radio-button value="apply">申请</a-radio-button>
-        <a-radio-button value="urge">催办</a-radio-button>
-        <a-radio-button value="extend">延期</a-radio-button>
-        <a-radio-button value="delete">删除</a-radio-button>
-      </a-radio-group>
+      <a-button
+        :type="activeTab === 'apply' ? 'primary' : 'default'"
+        @click="activeTab = 'apply'; $router.push('/ops/account/apply/create')">申请</a-button>
+      <a-button
+        :type="activeTab === 'urge' ? 'primary' : 'default'"
+        @click="activeTab = 'urge'">催办</a-button>
+      <a-button
+        :type="activeTab === 'extend' ? 'primary' : 'default'"
+        @click="activeTab = 'extend'">延期</a-button>
+      <a-button
+        :type="activeTab === 'delete' ? 'primary' : 'default'"
+        @click="activeTab = 'delete'">删除</a-button>
     </div>
     <div class="search-row">
       <a-input-search v-model:value="search" placeholder="请输入关键字搜索">
@@ -33,7 +38,6 @@
         <template v-if="column.key === 'status'">
           <span class="status-cell">
             <span class="status-dot" :class="'dot-' + record.statusDot"></span>
-            <i v-if="record.statusIcon" :class="record.statusIcon" style="font-size:13px"></i>
             {{ record.statusLabel }}
           </span>
         </template>
@@ -63,16 +67,16 @@ const selectedRowKeys = ref([])
 function onSelectChange(keys) { selectedRowKeys.value = keys }
 
 const allData = ref([
-  { id: 1, orderId: 'CS202201181564', status: 'completed', statusDot: 'green', statusIcon: '', statusLabel: '已完成', type: '一键登录', handler: '王嘉怡 w00657412', createdAt: '2023-02-06 12:00:00', finishedAt: '2023-02-06 12:30:00', tab: 'apply' },
-  { id: 2, orderId: 'CS202201181514', status: 'pending', statusDot: 'blue', statusIcon: 'fa-solid fa-rotate', statusLabel: '审批中', type: '账号密码', handler: '李四 l00451234', createdAt: '2023-02-06 11:00:00', finishedAt: '--', tab: 'apply' },
-  { id: 3, orderId: 'CS202201181500', status: 'completed', statusDot: 'green', statusIcon: '', statusLabel: '已完成', type: '账号回收', handler: '王嘉怡 w00657412', createdAt: '2023-02-05 14:00:00', finishedAt: '2023-02-05 14:20:00', tab: 'apply' },
-  { id: 4, orderId: 'CS202201181490', status: 'pending', statusDot: 'blue', statusIcon: 'fa-solid fa-rotate', statusLabel: '审批中', type: 'OP账号登录', handler: '赵七 z00765432', createdAt: '2023-02-05 09:30:00', finishedAt: '--', tab: 'apply' },
-  { id: 5, orderId: 'CS202201181480', status: 'rejected', statusDot: 'red', statusIcon: '', statusLabel: '已拒绝', type: '一键登录', handler: '--', createdAt: '2023-02-04 16:00:00', finishedAt: '2023-02-04 16:10:00', tab: 'apply' },
-  { id: 6, orderId: 'CS202201181470', status: 'urged', statusDot: 'yellow', statusIcon: 'fa-solid fa-bell', statusLabel: '已催办', type: '账号密码', handler: '王五 w00554321', createdAt: '2023-02-03 10:00:00', finishedAt: '--', tab: 'urge' },
-  { id: 7, orderId: 'CS202201181460', status: 'urged', statusDot: 'yellow', statusIcon: 'fa-solid fa-bell', statusLabel: '已催办', type: '一键登录', handler: '孙八 s00876543', createdAt: '2023-02-02 15:00:00', finishedAt: '--', tab: 'urge' },
-  { id: 8, orderId: 'CS202201181450', status: 'extended', statusDot: 'blue', statusIcon: '', statusLabel: '已延期', type: '账号密码', handler: '周九 z00987654', createdAt: '2023-01-30 08:00:00', finishedAt: '--', tab: 'extend' },
-  { id: 9, orderId: 'CS202201181440', status: 'extended', statusDot: 'blue', statusIcon: '', statusLabel: '已延期', type: 'OP账号登录', handler: '吴十 w01098765', createdAt: '2023-01-28 13:00:00', finishedAt: '--', tab: 'extend' },
-  { id: 10, orderId: 'CS202201181430', status: 'deleted', statusDot: 'red', statusIcon: '', statusLabel: '已删除', type: '账号回收', handler: '系统', createdAt: '2023-01-25 11:00:00', finishedAt: '2023-01-25 11:05:00', tab: 'delete' },
+  { id: 1, orderId: 'CS202201181564', status: 'completed', statusDot: 'green', statusLabel: '已完成', type: '一键登录', handler: '王嘉怡 w00657412', createdAt: '2023-02-06 12:00:00', finishedAt: '2023-02-06 12:30:00', tab: 'apply' },
+  { id: 2, orderId: 'CS202201181514', status: 'pending', statusDot: 'blue', statusLabel: '审批中', type: '账号密码', handler: '李四 l00451234', createdAt: '2023-02-06 11:00:00', finishedAt: '--', tab: 'apply' },
+  { id: 3, orderId: 'CS202201181500', status: 'completed', statusDot: 'green', statusLabel: '已完成', type: '账号回收', handler: '王嘉怡 w00657412', createdAt: '2023-02-05 14:00:00', finishedAt: '2023-02-05 14:20:00', tab: 'apply' },
+  { id: 4, orderId: 'CS202201181490', status: 'pending', statusDot: 'blue', statusLabel: '审批中', type: 'OP账号登录', handler: '赵七 z00765432', createdAt: '2023-02-05 09:30:00', finishedAt: '--', tab: 'apply' },
+  { id: 5, orderId: 'CS202201181480', status: 'rejected', statusDot: 'red', statusLabel: '已拒绝', type: '一键登录', handler: '--', createdAt: '2023-02-04 16:00:00', finishedAt: '2023-02-04 16:10:00', tab: 'apply' },
+  { id: 6, orderId: 'CS202201181470', status: 'urged', statusDot: 'yellow', statusLabel: '已催办', type: '账号密码', handler: '王五 w00554321', createdAt: '2023-02-03 10:00:00', finishedAt: '--', tab: 'urge' },
+  { id: 7, orderId: 'CS202201181460', status: 'urged', statusDot: 'yellow', statusLabel: '已催办', type: '一键登录', handler: '孙八 s00876543', createdAt: '2023-02-02 15:00:00', finishedAt: '--', tab: 'urge' },
+  { id: 8, orderId: 'CS202201181450', status: 'extended', statusDot: 'blue', statusLabel: '已延期', type: '账号密码', handler: '周九 z00987654', createdAt: '2023-01-30 08:00:00', finishedAt: '--', tab: 'extend' },
+  { id: 9, orderId: 'CS202201181440', status: 'extended', statusDot: 'blue', statusLabel: '已延期', type: 'OP账号登录', handler: '吴十 w01098765', createdAt: '2023-01-28 13:00:00', finishedAt: '--', tab: 'extend' },
+  { id: 10, orderId: 'CS202201181430', status: 'deleted', statusDot: 'red', statusLabel: '已删除', type: '账号回收', handler: '系统', createdAt: '2023-01-25 11:00:00', finishedAt: '2023-01-25 11:05:00', tab: 'delete' },
 ])
 
 const columns = [
@@ -93,7 +97,8 @@ const filteredData = computed(() => {
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-header h3 { font-size: 18px; font-weight: 600; margin: 0; color: var(--text); }
-.tab-bar { margin-bottom: 12px; }
+.tab-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+.tab-bar .ant-btn { height: 32px; padding: 0 16px; }
 .search-row { margin-bottom: 16px; }
 .search-row :deep(.ant-input-search) { width: 100%; }
 .link-blue { color: var(--brand); cursor: pointer; font-size: 13px; }
@@ -111,9 +116,8 @@ const filteredData = computed(() => {
 @media (max-width: 768px) {
   .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
   .page-header h3 { font-size: 16px; }
-  .page-header .ant-btn { width: 100%; }
-  .tab-bar :deep(.ant-radio-group) { width: 100%; display: flex; }
-  .tab-bar :deep(.ant-radio-button-wrapper) { flex: 1; text-align: center; font-size: 12px; }
+  .tab-bar { flex-wrap: wrap; }
+  .tab-bar .ant-btn { flex: 1; min-width: 0; text-align: center; }
   .search-row .ant-input-search { width: 100% !important; }
   .ant-table { overflow-x: auto; }
 }

@@ -18,7 +18,7 @@
             </a-form-item>
 
             <a-form-item label="使用人">
-              <a-select v-model:value="form.users" mode="multiple" placeholder="请选择使用人" :max-tag-count="1" :max-tag-text-length="10">
+              <a-select v-model:value="form.users" mode="multiple" placeholder="请选择使用人" :max-tag-count="1">
                 <a-select-option v-for="u in userOptions" :key="u" :value="u">{{ u }}</a-select-option>
               </a-select>
               <span class="form-hint">已选 {{ form.users.length }} 人，最多可添加 10 人</span>
@@ -78,13 +78,13 @@
         <div class="collapsible-body">
           <div class="select-account-area">
             <div class="select-account-top">
-              <a-button type="primary" ghost @click="showSelectModal = true">选择</a-button>
+              <a-button type="primary" ghost @click="showTransfer = true">选择</a-button>
               <div class="select-info">
                 <span>当前已选择数 {{ selectedAccounts.length }}</span>
                 <span class="select-divider">|</span>
                 <span>最多可选择数 {{ maxSelect }}</span>
               </div>
-              <a-button type="link" class="clear-btn" @click="selectedAccounts = []">清空</a-button>
+              <a-button type="link" class="clear-btn" @click="selectedAccounts = []; targetKeys = []">清空</a-button>
             </div>
             <a-table
               :columns="accountColumns"
@@ -116,30 +116,21 @@
       <a-button type="primary" @click="submit">提交</a-button>
     </div>
 
-    <a-modal v-model:open="showSelectModal" title="选择账号" :footer="null" :width="680">
-      <div class="select-search-row">
-        <a-input-search v-model:value="accountSearch" placeholder="请输入关键字搜索" />
-      </div>
-      <a-table
-        :columns="accountSelectColumns"
-        :data-source="availableAccounts"
-        :pagination="{ pageSize: 5 }"
-        row-key="id"
-        size="small"
-        :row-selection="{ type: 'checkbox', selectedRowKeys: selectedAccountKeys, onChange: onAccountSelectChange }"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'name'">
-            <a class="link-blue">{{ record.name }}</a>
-          </template>
-          <template v-if="column.key === 'status'">
-            <span class="status-cell"><span class="status-dot dot-green"></span>{{ record.statusLabel }}</span>
-          </template>
-        </template>
-      </a-table>
+    <a-modal v-model:open="showTransfer" title="选择账号" :footer="null" :width="800" :destroy-on-close="true">
+      <a-transfer
+        v-model:target-keys="targetKeys"
+        :data-source="transferData"
+        :titles="['可选账号', '已选账号']"
+        :list-style="{ width: '340px', height: '400px' }"
+        :show-search="true"
+        :filter-option="filterTransfer"
+        :render="renderTransfer"
+        :disabled="selectedAccounts.length >= maxSelect"
+        @change="onTransferChange"
+      />
       <div style="margin-top: 16px; text-align: right">
-        <a-button style="margin-right: 8px" @click="showSelectModal = false">取消</a-button>
-        <a-button type="primary" @click="confirmSelectAccount">确定</a-button>
+        <a-button style="margin-right: 8px" @click="showTransfer = false">取消</a-button>
+        <a-button type="primary" @click="confirmTransfer">确定</a-button>
       </div>
     </a-modal>
   </div>
@@ -170,20 +161,55 @@ const form = reactive({
 
 const userOptions = ['zhangsan', 'lisi', 'wangwu', 'zhaoliu', 'sunqi']
 
-const showSelectModal = ref(false)
-const accountSearch = ref('')
-const selectedAccountKeys = ref([])
-
-const availableAccounts = ref([
-  { id: 1, name: 'op_svc_sdr', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_sdr', app: 'FusionSphere', subApp: 'APICOM', desc: '--', statusLabel: '正常' },
-  { id: 2, name: 'op_svc_ecs', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_ecs', app: 'FusionSphere', subApp: 'APICOM', desc: '--', statusLabel: '正常' },
-  { id: 3, name: 'op_svc_obs', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_obs', app: 'FusionSphere', subApp: 'OBS', desc: '对象存储服务', statusLabel: '正常' },
-  { id: 4, name: 'op_svc_vpc', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_vpc', app: 'FusionSphere', subApp: 'VPC', desc: '--', statusLabel: '正常' },
-  { id: 5, name: 'op_svc_iam', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_iam', app: 'FusionSphere', subApp: 'IAM', desc: '身份认证服务', statusLabel: '检测中' },
-  { id: 6, name: 'op_svc_dns', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_dns', app: 'FusionSphere', subApp: 'DNS', desc: '--', statusLabel: '无法访问' },
+const showTransfer = ref(false)
+const targetKeys = ref([])
+const transferData = ref([
+  { key: '1', title: 'op_svc_sdr', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_sdr', app: 'FusionSphere', subApp: 'APICOM', desc: '--', statusLabel: '正常' },
+  { key: '2', title: 'op_svc_ecs', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_ecs', app: 'FusionSphere', subApp: 'APICOM', desc: '--', statusLabel: '正常' },
+  { key: '3', title: 'op_svc_obs', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_obs', app: 'FusionSphere', subApp: 'OBS', desc: '对象存储服务', statusLabel: '正常' },
+  { key: '4', title: 'op_svc_vpc', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_vpc', app: 'FusionSphere', subApp: 'VPC', desc: '--', statusLabel: '正常' },
+  { key: '5', title: 'op_svc_iam', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_iam', app: 'FusionSphere', subApp: 'IAM', desc: '身份认证服务', statusLabel: '检测中' },
+  { key: '6', title: 'op_svc_dns', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_dns', app: 'FusionSphere', subApp: 'DNS', desc: '--', statusLabel: '无法访问' },
+  { key: '7', title: 'op_svc_lb', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_lb', app: 'FusionSphere', subApp: 'ELB', desc: '负载均衡服务', statusLabel: '正常' },
+  { key: '8', title: 'op_svc_cdn', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_cdn', app: 'FusionSphere', subApp: 'CDN', desc: '--', statusLabel: '正常' },
 ])
 
 const selectedAccounts = ref([])
+
+function filterTransfer(inputValue, item) {
+  return item.title.indexOf(inputValue) !== -1 || item.desc.indexOf(inputValue) !== -1
+}
+
+function renderTransfer(item) {
+  return item.title
+}
+
+function onTransferChange(nextTargetKeys, direction, moveKeys) {
+  targetKeys.value = nextTargetKeys
+}
+
+function confirmTransfer() {
+  const newItems = transferData.value.filter(d => targetKeys.value.includes(d.key))
+  const existingIds = new Set(selectedAccounts.value.map(a => a.id))
+  selectedAccounts.value = newItems.map(d => ({
+    id: d.key,
+    name: d.title,
+    mgmtStatus: d.mgmtStatus,
+    acctType: d.acctType,
+    tenant: d.tenant,
+    app: d.app,
+    subApp: d.subApp,
+    desc: d.desc,
+    statusLabel: d.statusLabel,
+  }))
+  showTransfer.value = false
+}
+
+function removeAccount(record) {
+  const idx = selectedAccounts.value.findIndex(a => a.id === record.id)
+  if (idx !== -1) selectedAccounts.value.splice(idx, 1)
+  targetKeys.value = selectedAccounts.value.map(a => String(a.id))
+}
 
 const accountColumns = [
   { title: '账号名', dataIndex: 'name', key: 'name' },
@@ -196,39 +222,6 @@ const accountColumns = [
   { title: '描述', dataIndex: 'desc', key: 'desc' },
   { title: '操作', key: 'action', width: 60 },
 ]
-
-const accountSelectColumns = [
-  { title: '账号名', dataIndex: 'name', key: 'name' },
-  { title: '状态', dataIndex: 'statusLabel', key: 'status', width: 80 },
-  { title: '管理状态', dataIndex: 'mgmtStatus', key: 'mgmtStatus' },
-  { title: '账号类型', dataIndex: 'acctType', key: 'acctType' },
-  { title: '所属租户', dataIndex: 'tenant', key: 'tenant' },
-  { title: '应用/云服务', dataIndex: 'app', key: 'app' },
-  { title: '子应用/云服务', dataIndex: 'subApp', key: 'subApp' },
-  { title: '描述', dataIndex: 'desc', key: 'desc' },
-]
-
-function removeAccount(record) {
-  const idx = selectedAccounts.value.findIndex(a => a.id === record.id)
-  if (idx !== -1) selectedAccounts.value.splice(idx, 1)
-}
-
-function onAccountSelectChange(keys) {
-  selectedAccountKeys.value = keys
-}
-
-function confirmSelectAccount() {
-  const newItems = availableAccounts.value.filter(a => selectedAccountKeys.value.includes(a.id))
-  const existingIds = new Set(selectedAccounts.value.map(a => a.id))
-  for (const item of newItems) {
-    if (!existingIds.has(item.id) && selectedAccounts.value.length < maxSelect) {
-      selectedAccounts.value.push(item)
-      existingIds.add(item.id)
-    }
-  }
-  showSelectModal.value = false
-  selectedAccountKeys.value = []
-}
 
 function goBack() {
   router.push('/ops/account/apply/history')
@@ -350,9 +343,6 @@ function submit() {
   color: #8c8c8c;
   padding: 8px 0;
   text-align: right;
-}
-.select-search-row {
-  margin-bottom: 12px;
 }
 
 .status-cell { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }

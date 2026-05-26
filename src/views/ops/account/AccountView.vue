@@ -35,7 +35,7 @@
         block-node
       />
     </div>
-    <div class="account-content">
+    <div class="account-content" :class="{ 'create-mode': isCreatePage }">
       <router-view />
     </div>
   </div>
@@ -47,6 +47,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
+
+const isCreatePage = computed(() => route.path.includes('/ops/account/apply/create'))
 
 const treeData = [
   {
@@ -188,6 +190,10 @@ function onMobileSelectTree(keys) {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+}
+.account-content.create-mode {
+  overflow: hidden;
+  padding: 0;
 }
 .account-mobile-nav { display: none; }
 .account-mobile-sidebar { display: none; }
