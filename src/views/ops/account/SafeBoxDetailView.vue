@@ -1,11 +1,5 @@
 <template>
   <div class="detail-page">
-    <div class="detail-header">
-      <a-button type="text" @click="$router.back()"><i class="fa-solid fa-arrow-left"></i></a-button>
-      <span class="detail-title">账号保管箱详情</span>
-      <a-button class="edit-btn">修改</a-button>
-    </div>
-
     <div class="info-card">
       <div class="info-row">
         <div class="info-col">
@@ -49,14 +43,7 @@
       </a-radio-group>
     </div>
 
-    <div class="filter-bar">
-      <a-input-search v-model:value="search" placeholder="输入关键字搜索、过滤" style="width: 100%" />
-      <div class="filter-icons">
-        <i class="fa-regular fa-circle-question"></i>
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <i class="fa-solid fa-gear"></i>
-      </div>
-    </div>
+    <a-input-search v-model:value="search" placeholder="输入关键字搜索、过滤" style="width: 100%; margin-bottom: 12px" />
 
     <a-table
       :columns="columns"
@@ -96,7 +83,7 @@ const activeTab = ref('scope')
 
 const columns = [
   { title: '账号名', dataIndex: 'accountName', key: 'accountName', sorter: true },
-  { title: '账号状态', dataIndex: 'accountStatusLabel', key: 'accountStatus', width: 110 },
+  { title: '账号状态', dataIndex: 'accountStatusLabel', key: 'accountStatus', width: 110, filters: [{ text: '检测中', value: 'checking' }, { text: '正常', value: 'normal' }], onFilter: (value, record) => record.accountStatus === value },
   { title: '管理状态', dataIndex: 'mgmtStatus', key: 'mgmtStatus', width: 100 },
   { title: '资源IP', dataIndex: 'resourceIp', key: 'resourceIp', sorter: true },
   { title: '资源名称', dataIndex: 'resourceName', key: 'resourceName', sorter: true },
@@ -110,7 +97,7 @@ const columns = [
 ]
 
 const data = ref([
-  { id: 1, accountName: 'root', accountStatus: 'checking', accountStatusLabel: '检测中', mgmtStatus: '已纳管', resourceIp: '152.212.146.235', resourceName: 'HelpCenter-System01', deviceType: '虚拟机', osType: 'Euler2.13', region: '华北一区', app: 'HCC Turnkey', changeStatus: '', changeStatusLabel: '--', lastLogin: '2023/03/14 12:34:51', description: '考虑到对系统安全的影响...' },
+  { id: 1, accountName: 'root', accountStatus: 'checking', accountStatusLabel: '● 检测中', mgmtStatus: '已纳管', resourceIp: '152.212.146.235', resourceName: 'HelpCenter-System01', deviceType: '虚拟机', osType: 'Euler2.13', region: '华北一区', app: 'HCC Turnkey', changeStatus: '', changeStatusLabel: '--', lastLogin: '2023/03/14 12:34:51', description: '考虑到对系统安全的影响...' },
   { id: 2, accountName: 'sopuser', accountStatus: 'normal', accountStatusLabel: '● 正常', mgmtStatus: '已保存', resourceIp: '226.17.91.9', resourceName: 'HelpCenter-System02', deviceType: '--', osType: '--', region: '华北一区', app: 'ConsoleFramework', changeStatus: 'success', changeStatusLabel: '● 修改成功', lastLogin: '2023/03/14 12:34:51', description: '在安装HCC Turnkey过程中创...' },
   { id: 3, accountName: 'root', accountStatus: 'normal', accountStatusLabel: '● 正常', mgmtStatus: '第三方纳管', resourceIp: '252.80.153.155', resourceName: 'HelpCenter_DC1-System01', deviceType: '虚拟机', osType: 'Ubuntu 22.04', region: '华南二区', app: 'FusionCare', changeStatus: 'success', changeStatusLabel: '● 延期成功', lastLogin: '2023/04/16 17:01:37', description: '--' },
   { id: 4, accountName: 'opsadmin', accountStatus: 'normal', accountStatusLabel: '● 正常', mgmtStatus: '未纳管', resourceIp: '133.180.193.241', resourceName: 'HelpCenter_DC1-System02', deviceType: '虚拟机', osType: 'Ubuntu 22.04', region: '华南二区', app: 'APIGateway', changeStatus: 'fail', changeStatusLabel: '○ 失败', lastLogin: '2020/10/13 18:15:48', description: '--' },
@@ -123,28 +110,7 @@ const data = ref([
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-}
-.detail-header .ant-btn[type="text"] {
-  color: var(--text);
-  font-size: 16px;
-}
-.detail-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-  flex: 1;
-}
-.edit-btn {
-  border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 24px;
 }
 
 .info-card {
@@ -200,31 +166,5 @@ const data = ref([
 
 .tab-bar {
   margin-bottom: 12px;
-}
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-  align-items: center;
-}
-.filter-icons {
-  display: flex;
-  gap: 12px;
-  color: #8c8c8c;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-:deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 12px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
-:deep(.ant-table-tbody > tr > td) { font-size: 13px; }
-:deep(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafafa; }
-:deep(.ant-table-tbody > tr:hover > td) { background: var(--brand-subtle) !important; }
-:deep(.ant-pagination) { margin-top: 16px; }
-
-@media (max-width: 768px) {
-  .info-row { flex-direction: column; gap: 16px; }
-  .detail-header { flex-wrap: wrap; }
-  .filter-bar { flex-direction: column; align-items: stretch; }
-  .filter-icons { justify-content: flex-end; }
 }
 </style>

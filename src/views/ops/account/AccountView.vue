@@ -35,7 +35,12 @@
         block-node
       />
     </div>
-    <div class="account-content" :class="{ 'create-mode': isCreatePage }">
+    <div class="account-content" :class="{ 'create-mode': isCreatePage, 'detail-mode': isDetailPage }">
+      <div v-if="isDetailPage" class="detail-header">
+        <a-button type="text" @click="$router.back()"><i class="fa-solid fa-arrow-left"></i></a-button>
+        <span class="detail-title">账号保管箱详情</span>
+        <a-button class="edit-btn">修改</a-button>
+      </div>
       <router-view />
     </div>
   </div>
@@ -49,6 +54,7 @@ const route = useRoute()
 const router = useRouter()
 
 const isCreatePage = computed(() => route.path.includes('/ops/account/apply/create'))
+const isDetailPage = computed(() => route.path === '/ops/account/safebox/detail')
 
 const treeData = [
   {
@@ -194,6 +200,33 @@ function onMobileSelectTree(keys) {
 .account-content.create-mode {
   overflow: hidden;
   padding: 0;
+}
+.account-content.detail-mode {
+  padding: 0;
+}
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 54px;
+  padding: 0 24px;
+  margin: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+.detail-header .ant-btn[type="text"] {
+  color: var(--text);
+  font-size: 16px;
+}
+.detail-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+.edit-btn {
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .account-mobile-nav { display: none; }
 .account-mobile-sidebar { display: none; }
