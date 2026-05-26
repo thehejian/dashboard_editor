@@ -19,7 +19,7 @@
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'name'">
-          <a class="link-blue">{{ record.name }}</a>
+          <a class="link-blue" @click="$router.push('/ops/account/safebox/detail')">{{ record.name }}</a>
         </template>
         <template v-if="column.key === 'status'">
           <span class="status-cell"><span class="status-dot dot-green"></span>{{ record.statusLabel }}</span>

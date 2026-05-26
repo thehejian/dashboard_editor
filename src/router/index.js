@@ -58,6 +58,7 @@ const routes = [
       { path: 'config/esight-bmc', component: () => import('../views/ops/account/ConfigEsightBmc.vue') },
       { path: 'config/snapshot', component: () => import('../views/ops/account/ConfigSnapshot.vue') },
       { path: 'safebox', component: () => import('../views/ops/account/SafeBoxView.vue') },
+      { path: 'safebox/detail', component: () => import('../views/ops/account/SafeBoxDetailView.vue') },
     ],
   },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
