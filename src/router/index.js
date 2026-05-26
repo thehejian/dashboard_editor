@@ -53,6 +53,7 @@ const routes = [
       { path: 'device/policy', component: () => import('../views/ops/account/DeviceAccountPolicy.vue') },
       { path: 'apply/history', component: () => import('../views/ops/account/ApplyHistory.vue') },
       { path: 'apply/new', component: () => import('../views/ops/account/ApplyNew.vue') },
+      { path: 'apply/create', component: () => import('../views/ops/account/ApplyCreatePage.vue') },
       { path: 'config/backup', component: () => import('../views/ops/account/ConfigBackup.vue') },
       { path: 'config/esight-bmc', component: () => import('../views/ops/account/ConfigEsightBmc.vue') },
       { path: 'config/snapshot', component: () => import('../views/ops/account/ConfigSnapshot.vue') },
