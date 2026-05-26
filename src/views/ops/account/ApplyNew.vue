@@ -79,10 +79,25 @@ const allData = ref([
   { id: 10, orderId: 'CS202201181430', status: 'deleted', statusDot: 'red', statusLabel: '已删除', type: '账号回收', handler: '系统', createdAt: '2023-01-25 11:00:00', finishedAt: '2023-01-25 11:05:00', tab: 'delete' },
 ])
 
+const statusFilters = [
+  { text: '已完成', value: 'completed' },
+  { text: '审批中', value: 'pending' },
+  { text: '已拒绝', value: 'rejected' },
+  { text: '已催办', value: 'urged' },
+  { text: '已延期', value: 'extended' },
+  { text: '已删除', value: 'deleted' },
+]
+const typeFilters = [
+  { text: '一键登录', value: '一键登录' },
+  { text: '账号密码', value: '账号密码' },
+  { text: 'OP账号登录', value: 'OP账号登录' },
+  { text: '账号回收', value: '账号回收' },
+]
+
 const columns = [
   { title: '工单ID', dataIndex: 'orderId', key: 'orderId', sorter: true },
-  { title: '工单状态', dataIndex: 'statusLabel', key: 'status', width: 100 },
-  { title: '工单类型', dataIndex: 'type', key: 'type' },
+  { title: '工单状态', dataIndex: 'statusLabel', key: 'status', width: 100, filters: statusFilters, onFilter: (value, record) => record.status === value },
+  { title: '工单类型', dataIndex: 'type', key: 'type', filters: typeFilters, onFilter: (value, record) => record.type === value },
   { title: '当前处理人', dataIndex: 'handler', key: 'handler' },
   { title: '申请时间', dataIndex: 'createdAt', key: 'createdAt', sorter: true },
   { title: '审批完成时间', dataIndex: 'finishedAt', key: 'finishedAt', sorter: true },

@@ -116,18 +116,26 @@
       <a-button type="primary" @click="submit">提交</a-button>
     </div>
 
-    <a-modal v-model:open="showTransfer" title="选择账号" :footer="null" :width="800" :destroy-on-close="true">
+    <a-modal v-model:open="showTransfer" title="选择账号" :footer="null" :width="860" :destroy-on-close="true">
       <a-transfer
         v-model:target-keys="targetKeys"
         :data-source="transferData"
         :titles="['可选账号', '已选账号']"
-        :list-style="{ width: '340px', height: '400px' }"
+        :list-style="{ width: '380px', height: '440px' }"
         :show-search="true"
         :filter-option="filterTransfer"
-        :render="renderTransfer"
         :disabled="selectedAccounts.length >= maxSelect"
         @change="onTransferChange"
-      />
+        :locale="{ itemsUnit: '', notFoundContent: '暂无数据', searchPlaceholder: '搜索' }"
+      >
+        <template #render="item">
+          <div class="transfer-item">
+            <span class="ti-name">{{ item.title }}</span>
+            <span class="ti-desc">{{ item.desc }}</span>
+            <span class="ti-region">{{ item.region }}</span>
+          </div>
+        </template>
+      </a-transfer>
       <div style="margin-top: 16px; text-align: right">
         <a-button style="margin-right: 8px" @click="showTransfer = false">取消</a-button>
         <a-button type="primary" @click="confirmTransfer">确定</a-button>
@@ -164,24 +172,20 @@ const userOptions = ['zhangsan', 'lisi', 'wangwu', 'zhaoliu', 'sunqi']
 const showTransfer = ref(false)
 const targetKeys = ref([])
 const transferData = ref([
-  { key: '1', title: 'op_svc_sdr', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_sdr', app: 'FusionSphere', subApp: 'APICOM', desc: '--', statusLabel: '正常' },
-  { key: '2', title: 'op_svc_ecs', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_ecs', app: 'FusionSphere', subApp: 'APICOM', desc: '--', statusLabel: '正常' },
-  { key: '3', title: 'op_svc_obs', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_obs', app: 'FusionSphere', subApp: 'OBS', desc: '对象存储服务', statusLabel: '正常' },
-  { key: '4', title: 'op_svc_vpc', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_vpc', app: 'FusionSphere', subApp: 'VPC', desc: '--', statusLabel: '正常' },
-  { key: '5', title: 'op_svc_iam', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_iam', app: 'FusionSphere', subApp: 'IAM', desc: '身份认证服务', statusLabel: '检测中' },
-  { key: '6', title: 'op_svc_dns', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_dns', app: 'FusionSphere', subApp: 'DNS', desc: '--', statusLabel: '无法访问' },
-  { key: '7', title: 'op_svc_lb', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_lb', app: 'FusionSphere', subApp: 'ELB', desc: '负载均衡服务', statusLabel: '正常' },
-  { key: '8', title: 'op_svc_cdn', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_cdn', app: 'FusionSphere', subApp: 'CDN', desc: '--', statusLabel: '正常' },
+  { key: '1', title: 'op_svc_sdr', region: 'Region-A', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_sdr', app: 'FusionSphere', subApp: 'APICOM', statusLabel: '正常' },
+  { key: '2', title: 'op_svc_ecs', region: 'Region-A', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_ecs', app: 'FusionSphere', subApp: 'APICOM', statusLabel: '正常' },
+  { key: '3', title: 'op_svc_obs', region: 'Region-B', desc: '对象存储服务', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_obs', app: 'FusionSphere', subApp: 'OBS', statusLabel: '正常' },
+  { key: '4', title: 'op_svc_vpc', region: 'Region-A', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_vpc', app: 'FusionSphere', subApp: 'VPC', statusLabel: '正常' },
+  { key: '5', title: 'op_svc_iam', region: 'Region-B', desc: '身份认证服务', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_iam', app: 'FusionSphere', subApp: 'IAM', statusLabel: '检测中' },
+  { key: '6', title: 'op_svc_dns', region: 'Region-C', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_dns', app: 'FusionSphere', subApp: 'DNS', statusLabel: '无法访问' },
+  { key: '7', title: 'op_svc_lb', region: 'Region-A', desc: '负载均衡服务', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_lb', app: 'FusionSphere', subApp: 'ELB', statusLabel: '正常' },
+  { key: '8', title: 'op_svc_cdn', region: 'Region-C', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_cdn', app: 'FusionSphere', subApp: 'CDN', statusLabel: '正常' },
 ])
 
 const selectedAccounts = ref([])
 
 function filterTransfer(inputValue, item) {
-  return item.title.indexOf(inputValue) !== -1 || item.desc.indexOf(inputValue) !== -1
-}
-
-function renderTransfer(item) {
-  return item.title
+  return item.title.indexOf(inputValue) !== -1 || item.desc.indexOf(inputValue) !== -1 || item.region.indexOf(inputValue) !== -1
 }
 
 function onTransferChange(nextTargetKeys, direction, moveKeys) {
@@ -194,6 +198,7 @@ function confirmTransfer() {
   selectedAccounts.value = newItems.map(d => ({
     id: d.key,
     name: d.title,
+    region: d.region,
     mgmtStatus: d.mgmtStatus,
     acctType: d.acctType,
     tenant: d.tenant,
@@ -363,6 +368,38 @@ function submit() {
 }
 
 .red { color: red; }
+
+:deep(.transfer-item) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  font-size: 13px;
+}
+:deep(.ti-name) {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+:deep(.ti-desc) {
+  color: #8c8c8c;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:deep(.ti-region) {
+  color: var(--brand);
+  font-size: 12px;
+  background: var(--brand-subtle);
+  padding: 1px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+:deep(.ant-transfer-list-content-item) {
+  padding: 8px 12px !important;
+}
 
 :deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
 :deep(.ant-table-tbody > tr > td) { font-size: 13px; }
