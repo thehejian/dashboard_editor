@@ -128,9 +128,14 @@
         @change="onTransferChange"
         :locale="{ itemsUnit: '', notFoundContent: '暂无数据', searchPlaceholder: '搜索' }"
       >
-        <template #children="{ filteredItems, direction, selectedKeys, onItemSelect }">
+        <template #children="{ filteredItems, direction, selectedKeys, onItemSelect, onItemSelectAll }">
           <div class="custom-transfer-list">
             <div class="ctl-header">
+              <a-checkbox
+                :indeterminate="selectedKeys.length > 0 && selectedKeys.length < filteredItems.length"
+                :checked="filteredItems.length > 0 && selectedKeys.length === filteredItems.length"
+                @change="(e) => { const keys = e.target.checked ? filteredItems.map(i => i.key) : []; onItemSelectAll(keys, e.target.checked) }"
+              />
               <span class="ctl-h-name">账号名称</span>
               <span class="ctl-h-desc">描述</span>
               <span class="ctl-h-region">所属Region</span>
@@ -143,6 +148,7 @@
                 :class="{ active: selectedKeys.includes(item.key) }"
                 @click="onItemSelect(item.key)"
               >
+                <a-checkbox :checked="selectedKeys.includes(item.key)" @click.stop @change="onItemSelect(item.key)" />
                 <span class="ctl-name">{{ item.title }}</span>
                 <span class="ctl-desc">{{ item.desc }}</span>
                 <span class="ctl-region">{{ item.region }}</span>
@@ -392,8 +398,9 @@ function submit() {
 }
 :deep(.ctl-header) {
   display: grid;
-  grid-template-columns: 120px 1fr 80px;
-  gap: 12px;
+  grid-template-columns: 32px 120px 1fr 80px;
+  gap: 8px;
+  align-items: center;
   padding: 10px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -408,8 +415,8 @@ function submit() {
 }
 :deep(.ctl-row) {
   display: grid;
-  grid-template-columns: 120px 1fr 80px;
-  gap: 12px;
+  grid-template-columns: 32px 120px 1fr 80px;
+  gap: 8px;
   align-items: center;
   padding: 10px 12px;
   font-size: 13px;
