@@ -79,7 +79,7 @@
         <a-dropdown :trigger="['click']" class="user-dropdown">
           <div class="avatar">A</div>
           <template #overlay>
-            <a-menu>
+            <a-menu @click="handleUserMenuClick">
               <a-menu-item disabled>
                 <div class="user-info">
                   <div class="user-name">管理员</div>
@@ -87,11 +87,10 @@
                 </div>
               </a-menu-item>
               <a-menu-divider />
-              <a-menu-item key="todo"><i class="fa-solid fa-list-check"></i> 待办 <span class="menu-badge">3</span></a-menu-item>
-              <a-menu-item key="apply"><i class="fa-solid fa-file-signature"></i> 申请</a-menu-item>
+              <a-menu-item key="/ops/settings/todo"><i class="fa-solid fa-list-check"></i> 待办 <span class="menu-badge">3</span></a-menu-item>
+              <a-menu-item key="/ops/settings/apply"><i class="fa-solid fa-file-signature"></i> 申请</a-menu-item>
               <a-menu-divider />
-              <a-menu-item key="profile"><i class="fa-regular fa-user"></i> 个人中心</a-menu-item>
-              <a-menu-item key="settings"><i class="fa-solid fa-gear"></i> 个人设置</a-menu-item>
+              <a-menu-item key="/ops/settings/profile"><i class="fa-regular fa-user"></i> 个人设置</a-menu-item>
               <a-menu-divider />
               <a-menu-item key="logout" danger><i class="fa-solid fa-right-from-bracket"></i> 退出登录</a-menu-item>
             </a-menu>
@@ -216,6 +215,13 @@ const activeNav = ref('')
 const openNav = (name) => { activeNav.value = activeNav.value === name ? '' : name }
 
 const handleNavClick = ({ key }) => { router.push(key); activeNav.value = '' }
+
+const handleUserMenuClick = ({ key }) => {
+  if (key === 'logout') {
+    return
+  }
+  router.push(key)
+}
 
 const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate, createNewDashboard } = useEditorState()
 const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport()

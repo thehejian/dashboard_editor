@@ -61,6 +61,16 @@ const routes = [
     ],
   },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
+  {
+    path: '/ops/settings',
+    component: () => import('../views/ops/settings/SettingsView.vue'),
+    children: [
+      { path: '', redirect: '/ops/settings/todo' },
+      { path: 'todo', component: () => import('../views/ops/settings/TodoView.vue') },
+      { path: 'apply', component: () => import('../views/ops/settings/ApplyListView.vue') },
+      { path: 'profile', component: () => import('../views/ops/settings/ProfileView.vue') },
+    ],
+  },
 
   {
     path: '/system/security',
