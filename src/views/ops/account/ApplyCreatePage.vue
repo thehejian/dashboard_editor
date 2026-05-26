@@ -245,7 +245,7 @@ const accountColumns = [
 ]
 
 function goBack() {
-  router.push('/ops/account/apply/history')
+  router.push('/ops/account/apply/new')
 }
 
 function submit() {
