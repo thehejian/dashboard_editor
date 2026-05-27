@@ -25,7 +25,7 @@
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'name'">
-          <a class="link-blue">{{ record.name }}</a>
+          <a class="link-blue" @click="router.push('/system/security/app-integration/detail?id=' + record.id)">{{ record.name }}</a>
           <span v-if="record.tag" class="name-tag">{{ record.tag }}</span>
         </template>
         <template v-if="column.key === 'status'">

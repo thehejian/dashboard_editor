@@ -35,7 +35,12 @@
         block-node
       />
     </div>
-    <div class="security-content" :class="{ 'create-mode': isCreatePage }">
+    <div class="security-content" :class="{ 'create-mode': isCreatePage, 'detail-mode': isDetailPage }">
+      <div v-if="isDetailPage" class="detail-header">
+        <a-button type="text" @click="$router.back()"><i class="fa-solid fa-arrow-left"></i></a-button>
+        <span class="detail-title">应用详情</span>
+        <a-button class="edit-btn">修改</a-button>
+      </div>
       <router-view />
     </div>
   </div>
@@ -81,11 +86,13 @@ const treeData = [
 ]
 
 const isCreatePage = computed(() => route.path.includes('/idp/create') || route.path.includes('/app-integration/create'))
+const isDetailPage = computed(() => route.path === '/system/security/app-integration/detail')
 
 const selectedKeys = computed(() => {
   const p = route.path
   if (p.startsWith('/system/security/idp/create')) return ['/system/security/idp']
   if (p.startsWith('/system/security/app-integration/create')) return ['/system/security/app-integration']
+  if (p === '/system/security/app-integration/detail') return ['/system/security/app-integration']
   return [p]
 })
 
@@ -112,6 +119,8 @@ watch(() => route.path, (p) => {
   if (p.startsWith('/system/security/idp/create')) {
     mobileRoute.value = '/system/security/idp'
   } else if (p.startsWith('/system/security/app-integration/create')) {
+    mobileRoute.value = '/system/security/app-integration'
+  } else if (p === '/system/security/app-integration/detail') {
     mobileRoute.value = '/system/security/app-integration'
   } else {
     mobileRoute.value = p
@@ -165,6 +174,34 @@ function onMobileSelectTree(keys) {
 .security-content.create-mode {
   overflow: hidden;
   padding: 0;
+}
+.security-content.detail-mode {
+  padding: 0;
+  background: #f5f5f5;
+}
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 54px;
+  padding: 0 24px;
+  margin: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+.detail-header .ant-btn[type="text"] {
+  color: var(--text);
+  font-size: 16px;
+}
+.detail-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+.edit-btn {
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .security-mobile-nav { display: none; }
 .security-mobile-sidebar { display: none; }
