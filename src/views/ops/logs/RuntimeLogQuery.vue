@@ -1,68 +1,148 @@
 <template>
   <div>
     <div class="page-header">
-      <h3>运行日志</h3>
+      <h3>日志查询<small style="font-size: 13px; color: #999; font-weight: normal; margin-left: 8px;">(870版本暂不开发)</small></h3>
     </div>
-    <div class="filter-bar">
-      <a-range-picker v-model:value="timeRange" style="width: 240px" />
-      <a-select v-model:value="level" placeholder="级别" style="width: 110px" allowClear>
-        <a-select-option value="info">INFO</a-select-option>
-        <a-select-option value="warn">WARN</a-select-option>
-        <a-select-option value="error">ERROR</a-select-option>
-        <a-select-option value="critical">CRITICAL</a-select-option>
-      </a-select>
-      <a-select v-model:value="source" placeholder="来源" style="width: 140px" allowClear>
-        <a-select-option value="api-gateway">API网关</a-select-option>
-        <a-select-option value="user-service">用户服务</a-select-option>
-        <a-select-option value="monitor">监控服务</a-select-option>
-        <a-select-option value="scheduler">调度任务</a-select-option>
-      </a-select>
-      <a-input-search v-model:value="search" placeholder="综合搜索日志内容" style="width: 300px" />
-    </div>
-    <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id" :scroll="{ x: 700 }">
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'level'">
-          <a-tag :color="record.level === 'error' ? 'red' : record.level === 'warn' ? 'orange' : record.level === 'critical' ? 'magenta' : 'blue'">{{ record.level.toUpperCase() }}</a-tag>
-        </template>
-        <template v-if="column.key === 'action'">
-          <a-button type="link" size="small">查看</a-button>
-        </template>
-      </template>
-    </a-table>
+    <a-tabs v-model:activeKey="activeTab" class="log-tabs">
+      <a-tab-pane key="cloud" tab="云平台日志">
+        <div class="filter-item">
+          <label>区域</label>
+          <a-select placeholder="请选择" style="width: 200px" allowClear>
+            <a-select-option value="cn-hangzhou">cn-hangzhou</a-select-option>
+            <a-select-option value="cn-shanghai">cn-shanghai</a-select-option>
+            <a-select-option value="cn-beijing">cn-beijing</a-select-option>
+          </a-select>
+        </div>
+        <div class="filter-item">
+          <label>筛选类型</label>
+          <div class="btn-group">
+            <a-button v-for="t in filterTypes" :key="t.value" :type="cloudForm.filterType === t.value ? 'primary' : 'default'" @click="cloudForm.filterType = t.value">{{ t.label }}</a-button>
+          </div>
+        </div>
+        <div class="filter-item">
+          <label>子类型</label>
+          <div class="btn-group">
+            <a-button v-for="t in subTypes" :key="t.value" :type="cloudForm.subType === t.value ? 'primary' : 'default'" @click="cloudForm.subType = t.value">{{ t.label }}</a-button>
+            <a-button type="link" size="small" style="color: #007DFF; padding: 0 8px;">更多 <i class="fa-solid fa-chevron-up" style="font-size: 10px;"></i></a-button>
+          </div>
+        </div>
+
+        <a-table :columns="logColumns" :data-source="cloudData" :pagination="cloudPagination" row-key="id" :scroll="{ x: 600 }">
+          <template #bodyCell="{ column, record, index }">
+            <template v-if="column.key === 'time'">
+              <span>{{ index + 1 }}. {{ record.time }}</span>
+            </template>
+            <template v-if="column.key === 'content'">
+              <span style="font-size: 12px; font-family: monospace; word-break: break-all;">{{ record.content }}</span>
+            </template>
+          </template>
+        </a-table>
+      </a-tab-pane>
+      <a-tab-pane key="tenant" tab="租户日志">
+        <a-row :gutter="16" style="margin-bottom: 16px;">
+          <a-col :span="12">
+            <div class="filter-field"><label>区域</label><a-select placeholder="请选择" style="width: 100%" allowClear><a-select-option value="cn-hangzhou">cn-hangzhou</a-select-option><a-select-option value="cn-shanghai">cn-shanghai</a-select-option></a-select></div>
+          </a-col>
+          <a-col :span="12">
+            <div class="filter-field"><label>租户</label><a-select placeholder="请选择" style="width: 100%" allowClear><a-select-option value="tenant-001">tenant-001</a-select-option><a-select-option value="tenant-002">tenant-002</a-select-option></a-select></div>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16" style="margin-bottom: 16px;">
+          <a-col :span="12">
+            <div class="filter-field"><label>日志组</label><a-select v-model:value="tenantForm.logGroup" style="width: 100%"><a-select-option value="Lts-group">Lts-group</a-select-option><a-select-option value="app-group">app-group</a-select-option></a-select></div>
+          </a-col>
+          <a-col :span="12">
+            <div class="filter-field"><label>日志流</label><a-select v-model:value="tenantForm.logStream" style="width: 100%"><a-select-option value="Lts-stream">Lts-stream</a-select-option><a-select-option value="app-stream">app-stream</a-select-option></a-select></div>
+          </a-col>
+        </a-row>
+        <div class="search-bar-wrapper" style="margin-bottom: 16px;">
+          <div class="search-bar-inner">
+            <a-tag closable style="margin: 2px;">hostIp/001</a-tag>
+            <a-tag closable style="margin: 2px;">hostIdIP: 192.168.0.161</a-tag>
+            <a-tag closable style="margin: 2px;">resource_id: iZbp1hwwt3nzf8ej1322c1Z</a-tag>
+            <a-input placeholder="输入关键字搜索、过滤" :bordered="false" style="flex: 1; min-width: 150px;" />
+            <div class="search-icons">
+              <i class="fa-solid fa-magnifying-glass" style="color: #999; cursor: pointer; padding: 0 6px;"></i>
+              <i class="fa-solid fa-rotate" style="color: #999; cursor: pointer; padding: 0 6px;"></i>
+              <i class="fa-solid fa-gear" style="color: #999; cursor: pointer; padding: 0 6px;"></i>
+            </div>
+          </div>
+        </div>
+        <a-table :columns="logColumns" :data-source="tenantLogData" :pagination="tenantPagination" row-key="id" :scroll="{ x: 600 }">
+          <template #bodyCell="{ column, record, index }">
+            <template v-if="column.key === 'time'">
+              <span>{{ index + 1 }}. {{ record.time }}</span>
+            </template>
+            <template v-if="column.key === 'content'">
+              <span style="font-size: 12px; font-family: monospace; word-break: break-all;">{{ record.content }}</span>
+            </template>
+          </template>
+        </a-table>
+      </a-tab-pane>
+    </a-tabs>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-const search = ref('')
-const timeRange = ref(null)
-const level = ref(null)
-const source = ref(null)
-const data = ref([
-  { id: 1, time: '2026-05-20 14:35:20', level: 'error', source: 'user-service', instance: '10.0.1.5', message: 'Connection timeout to database db-primary' },
-  { id: 2, time: '2026-05-20 14:34:15', level: 'warn', source: 'scheduler', instance: '10.0.1.8', message: 'Task queue is accumulating (142 pending)' },
-  { id: 3, time: '2026-05-20 14:33:10', level: 'info', source: 'api-gateway', instance: '10.0.1.1', message: 'User admin logged in from 192.168.1.100' },
-  { id: 4, time: '2026-05-20 14:32:00', level: 'critical', source: 'monitor', instance: '10.0.1.12', message: 'Disk usage on /data exceeds 95%' },
-  { id: 5, time: '2026-05-20 14:30:45', level: 'info', source: 'user-service', instance: '10.0.1.5', message: 'Password change request processed for user ops1' },
-])
-const columns = [
-  { title: '时间', dataIndex: 'time', width: 170 },
-  { title: '级别', key: 'level', width: 90 },
-  { title: '来源服务', dataIndex: 'source' },
-  { title: '实例', dataIndex: 'instance', width: 110 },
-  { title: '日志内容', dataIndex: 'message', ellipsis: true },
-  { title: '操作', key: 'action', width: 70 },
+import { ref, reactive } from 'vue'
+
+const activeTab = ref('cloud')
+
+const filterTypes = [
+  { label: '云服务', value: 'cloud' },
+  { label: '云资源', value: 'resource' },
+  { label: '物理资源', value: 'physical' },
 ]
+
+const subTypes = [
+  { label: 'ECS', value: 'ecs' },
+  { label: 'IMS', value: 'ims' },
+  { label: '选项3', value: 'opt3' },
+  { label: '选项4', value: 'opt4' },
+  { label: '选项5', value: 'opt5' },
+  { label: '选项6', value: 'opt6' },
+  { label: '选项7', value: 'opt7' },
+  { label: '选项8', value: 'opt8' },
+]
+
+const cloudForm = reactive({ filterType: 'cloud', subType: 'ecs', timeRange: '1h' })
+const tenantForm = reactive({ logGroup: 'Lts-group', logStream: 'Lts-stream' })
+
+const logColumns = [
+  { title: '时间', key: 'time', width: 220, sorter: true },
+  { title: '日志内容', key: 'content', ellipsis: true },
+]
+
+const cloudData = ref([
+  { id: 1, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hww13nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://auth:8080/auth/checkLogin  flags:1  host:mall-auth-c7559575b-rtszq  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable  attribute:{}  content:http://auth:8080/auth/checkLogin  flags:1  host:mall-auth-c7559575b-rtszq ...展开' },
+  { id: 2, time: '2024/12/28 17:56:19.507', content: 'hostId: 002  hostIdIP: 192.168.0.162  resource_id: iZbp1hww13nzf8ej1322c2Z  pathFile: cn-hangzhou.192.168.0.162  attribute:{}  content:http://order:8080/order/list  flags:1  host:mall-order-c7559575b-abcd  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable ...展开' },
+  { id: 3, time: '2024/12/28 17:56:19.507', content: 'hostId: 003  hostIdIP: 192.168.0.163  resource_id: iZbp1hww13nzf8ej1322c3Z  pathFile: cn-hangzhou.192.168.0.163  attribute:{}  content:http://user:8080/user/info  flags:1  host:mall-user-c7559575b-efgh  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable ...展开' },
+  { id: 4, time: '2024/12/28 17:56:19.507', content: 'hostId: 004  hostIdIP: 192.168.0.164  resource_id: iZbp1hww13nzf8ej1322c4Z  pathFile: cn-hangzhou.192.168.0.164  attribute:{}  content:http://pay:8080/pay/callback  flags:1  host:mall-pay-c7559575b-ijkl  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable ...展开' },
+])
+
+const tenantLogData = ref([
+  { id: 1, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://auth:8080/auth/checkLogin  flags:1  host:mall-auth-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
+  { id: 2, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://auth:8080/auth/logout  flags:1  host:mall-auth-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
+  { id: 3, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://order:8080/order/create  flags:1  host:mall-order-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
+  { id: 4, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://user:8080/user/register  flags:1  host:mall-user-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
+])
+
+const cloudPagination = { pageSize: 10, total: 153, showTotal: total => `总条数：${total}`, showSizeChanger: true, current: 14 }
+const tenantPagination = { pageSize: 10, total: 153, showTotal: total => `总条数：${total}`, showSizeChanger: true, current: 14 }
 </script>
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
-.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.page-header h3 { color: #007DFF; }
+.filter-item { margin-bottom: 12px; }
+.filter-item label { display: block; margin-bottom: 4px; font-size: 14px; color: #333; }
+.btn-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.filter-field label { display: block; margin-bottom: 4px; font-size: 14px; color: #333; }
+
 @media (max-width: 768px) {
-  .filter-bar { flex-wrap: wrap; }
-  .filter-bar :deep(.ant-select),
-  .filter-bar :deep(.ant-input-search),
-  .filter-bar :deep(.ant-picker) { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .filter-item { flex-direction: column; align-items: flex-start; }
+  .filter-item label { width: auto; text-align: left; }
   .page-header h3 { font-size: 15px; }
+  .filter-field { margin-bottom: 8px; }
 }
 </style>
