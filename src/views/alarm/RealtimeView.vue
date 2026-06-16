@@ -32,7 +32,7 @@
       :row-selection="{ selectedRowKeys: selectedKeys, onChange: function(keys) { selectedKeys = keys } }"
       row-key="id"
       :row-class-name="function(record) { return 'row-' + record.level }"
-      :scroll="{ x: 1200 }"
+      :scroll="{ x: 1200, y: scrollY }"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'level'">
@@ -177,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const filterLevel = ref('')
 const searchText = ref('')
@@ -185,6 +185,7 @@ const selectedKeys = ref([])
 const detailVisible = ref(false)
 const currentAlert = ref(null)
 const activeDetailTab = ref('info')
+const scrollY = ref(500)
 
 const detailTabs = [
   { key: 'info', label: '告警详情和处理建议' },
@@ -266,14 +267,26 @@ const openDetail = function(alert) {
   activeDetailTab.value = 'info'
   detailVisible.value = true
 }
+
+function updateScrollY() {
+  scrollY.value = window.innerHeight - 310
+}
+
+onMounted(function() {
+  updateScrollY()
+  window.addEventListener('resize', updateScrollY)
+})
+onUnmounted(function() {
+  window.removeEventListener('resize', updateScrollY)
+})
 </script>
 
 <style scoped>
-.page-view { padding: 24px; max-width: 1400px; margin: 0 auto; position: relative; overflow-x: auto; }
-.page-header { margin-bottom: 16px; }
+.page-view { display: flex; flex-direction: column; padding: 16px 24px 0; height: 100%; }
+.page-header { margin-bottom: 16px; flex-shrink: 0; }
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
 
-.alert-stats { display: flex; gap: 16px; margin-bottom: 16px; }
+.alert-stats { display: flex; gap: 16px; margin-bottom: 16px; flex-shrink: 0; }
 .stat-item { flex: 1; padding: 16px; background: #fff; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; }
 .stat-item:hover { border-color: var(--brand); }
 .stat-item.active { border-color: var(--brand); background: var(--brand-subtle); }
@@ -283,7 +296,7 @@ const openDetail = function(alert) {
 .stat-value { display: block; font-size: 28px; font-weight: 600; }
 .stat-label { font-size: 12px; color: var(--text-secondary); }
 
-.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; justify-content: flex-end; }
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; justify-content: flex-end; flex-shrink: 0; }
 
 .level-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 .level-dot.critical { background: #f5222d; }
@@ -300,6 +313,9 @@ const openDetail = function(alert) {
 .row-critical { background: #fff1f0; }
 .row-warning { background: #fff7e6; }
 
+:deep(.ant-table-wrapper) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+:deep(.ant-table) { flex: 1; min-height: 0; }
+:deep(.ant-table-container) { flex: 1; min-height: 0; }
 :deep(.ant-table-thead > tr > th) { background: #fafafa; font-weight: 600; }
 :deep(.ant-table-row) { cursor: pointer; }
 :deep(.ant-table-row:hover td) { background: #e6f7ff !important; }
