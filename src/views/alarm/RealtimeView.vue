@@ -28,10 +28,11 @@
     <a-table
       :columns="columns"
       :data-source="filteredAlerts"
-      :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }"
-      :row-selection="{ selectedRowKeys: selectedKeys, onChange: (keys) => selectedKeys = keys }"
+      :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: (total) => '共 ' + total + ' 条' }"
+      :row-selection="{ selectedRowKeys: selectedKeys, onChange: function(keys) { selectedKeys = keys } }"
       row-key="id"
-      :row-class-name="({ record }) => `row-${record.level}`"
+      :row-class-name="function(record) { return 'row-' + record.level }"
+      :scroll="{ x: 1200 }"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'level'">
@@ -64,7 +65,7 @@
       <div class="detail-mask" @click="detailVisible = false"></div>
       <div class="detail-panel-content">
         <div class="detail-header">
-          <h3>{{ currentAlert?.title || '告警详情' }}</h3>
+          <h3>{{ currentAlert ? currentAlert.title : '告警详情' }}</h3>
           <button class="close-btn" @click="detailVisible = false">
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -78,7 +79,6 @@
             </button>
           </div>
 
-          <!-- 告警详情和处理建议 -->
           <div v-if="activeDetailTab === 'info'" class="tab-panel">
             <div class="detail-kpi">
               <div class="kpi-item">
@@ -122,7 +122,6 @@
             </div>
           </div>
 
-          <!-- 维护经验 -->
           <div v-if="activeDetailTab === 'experience'" class="tab-panel">
             <div class="empty-state">
               <i class="fa-solid fa-book"></i>
@@ -130,7 +129,6 @@
             </div>
           </div>
 
-          <!-- 最近2个月处理记录 -->
           <div v-if="activeDetailTab === 'history'" class="tab-panel">
             <a-table
               :columns="historyRecordColumns"
@@ -152,7 +150,6 @@
             </a-table>
           </div>
 
-          <!-- 告警处理与告警帮助 -->
           <div v-if="activeDetailTab === 'help'" class="tab-panel">
             <div class="help-section">
               <h4><i class="fa-solid fa-headset"></i> 告警处理流程</h4>
@@ -217,7 +214,7 @@ const alertHistoryRecords = ref([
 ])
 
 const columns = [
-  { title: '级别', dataIndex: 'level', key: 'level', width: 120, sorter: (a, b) => { const order = { critical: 0, warning: 1, info: 2 }; return order[a.level] - order[b.level]; } },
+  { title: '级别', dataIndex: 'level', key: 'level', width: 120, sorter: function(a, b) { var order = { critical: 0, warning: 1, info: 2 }; return order[a.level] - order[b.level]; } },
   { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
   { title: '资源', dataIndex: 'resource', key: 'resource', ellipsis: true },
   { title: '触发时间', dataIndex: 'triggerTime', key: 'triggerTime', width: 180 },
@@ -234,37 +231,37 @@ const historyRecordColumns = [
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
 ]
 
-const getCountByLevel = (level) => {
-  return realtimeAlerts.value.filter(a => a.level === level).length
+const getCountByLevel = function(level) {
+  return realtimeAlerts.value.filter(function(a) { return a.level === level; }).length
 }
 
-const filteredAlerts = computed(() => {
-  let list = realtimeAlerts.value
+const filteredAlerts = computed(function() {
+  var list = realtimeAlerts.value
   if (filterLevel.value) {
-    list = list.filter(a => a.level === filterLevel.value)
+    list = list.filter(function(a) { return a.level === filterLevel.value; })
   }
   if (searchText.value) {
-    const kw = searchText.value.toLowerCase()
-    list = list.filter(a => a.title.toLowerCase().includes(kw) || a.resource.toLowerCase().includes(kw))
+    var kw = searchText.value.toLowerCase()
+    list = list.filter(function(a) { return a.title.toLowerCase().includes(kw) || a.resource.toLowerCase().includes(kw); })
   }
   return list
 })
 
-const getLevelColor = (level) => {
-  const map = { critical: 'red', warning: 'orange', info: 'blue' }
+const getLevelColor = function(level) {
+  var map = { critical: 'red', warning: 'orange', info: 'blue' }
   return map[level] || 'default'
 }
 
-const getLevelText = (level) => {
-  const map = { critical: '紧急', warning: '重要', info: '次要' }
+const getLevelText = function(level) {
+  var map = { critical: '紧急', warning: '重要', info: '次要' }
   return map[level] || level
 }
 
-const handleAlert = (id) => {
-  realtimeAlerts.value = realtimeAlerts.value.filter(a => a.id !== id)
+const handleAlert = function(id) {
+  realtimeAlerts.value = realtimeAlerts.value.filter(function(a) { return a.id !== id; })
 }
 
-const openDetail = (alert) => {
+const openDetail = function(alert) {
   currentAlert.value = alert
   activeDetailTab.value = 'info'
   detailVisible.value = true
@@ -272,12 +269,12 @@ const openDetail = (alert) => {
 </script>
 
 <style scoped>
-.page-view { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.page-view { padding: 24px; max-width: 1400px; margin: 0 auto; position: relative; overflow-x: auto; }
 .page-header { margin-bottom: 16px; }
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
 
 .alert-stats { display: flex; gap: 16px; margin-bottom: 16px; }
-.stat-item { flex: 1; padding: 16px; background: var(--bg-card); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; }
+.stat-item { flex: 1; padding: 16px; background: #fff; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; }
 .stat-item:hover { border-color: var(--brand); }
 .stat-item.active { border-color: var(--brand); background: var(--brand-subtle); }
 .stat-item.critical { border-left: 3px solid #f5222d; }
