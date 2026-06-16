@@ -148,7 +148,7 @@
                 :class="{ active: selectedKeys.includes(item.key) }"
                 @click="onItemSelect(item.key)"
               >
-                <a-checkbox :checked="selectedKeys.includes(item.key)" @click.stop @change="onItemSelect(item.key)" />
+                <a-checkbox :checked="selectedKeys.includes(item.key)" />
                 <span class="ctl-name">{{ item.title }}</span>
                 <span class="ctl-desc">{{ item.desc }}</span>
                 <span class="ctl-region">{{ item.region }}</span>

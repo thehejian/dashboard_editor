@@ -1,86 +1,84 @@
 # AGENTS.md — Dashboard Editor
 
-Vue 3 + Vite 运维监控系统。单页 → 多路由（~20 routes），Alarm/Monitor/Resource/Ops/System 五大模块 + Home 首页。
+Vue 3 + Vite 运维监控系统。约 25 页面，5 大模块（首页/告警/监控/资源/运维/系统）。
 
 ## 命令
 
 ```bash
-npm run dev     # Vite 开发服务器 (host 0.0.0.0)
-npm run build   # 构建 dist/
-npm run preview
-cd server && npm run dev  # Express 后端
+npm run dev         # Vite dev server (host 0.0.0.0, port 5173)
+npm run build       # 构建 dist/
+cd server && npm run dev  # Express 后端 (node --watch)
 ```
 
-无 lint/typecheck/测试命令。
+无 lint/typecheck/测试命令。SPA 需服务端配置 `createWebHistory()` fallback。
 
-## 路由结构
+## Dev 注意事项
 
-`src/router/index.js`: 扁平 lazy-loaded routes。
-- `/` — HomeView.vue (首页 KPI + G2 图表 + 告警表格)
-- `/alarm/realtime|history|config`
-- `/monitor/dashboard|resource|config|topology`
-- `/resource/list|topology|changes`
-- `/ops/jobs|logs|inspect`
-- `/system/security/*` — 嵌套路由，SecurityView.vue 带左树导航 + `<router-view>`。子路由用 `path: ''` + `redirect` 做默认页（redirect 不能与 children 同层级）
-- `/system/config`
-- `/system/users` — 重定向到 `/system/security`
+- Vite 内置 Basic Auth 中间件：`admin` / `745544752`
+- API 代理：`/api/v1` → `http://192.168.0.155:9090`（`vite.config.js:28-34`）
+- Font Awesome 6 通过 `index.html` CDN 引入（非 npm），请勿 npm install
+- 无 Vuex/Pinia，全局状态用 `composables/useEditorState.js` 的 `reactive()` 单例
 
-## 目录
+## 路由
 
+`src/router/index.js` — 扁平 lazy-loaded routes + 3 组嵌套路由。
+
+| 模块 | 嵌套 | 父容器 |
+|---|---|---|
+| OpsLogManageView `/ops/logs/*` | 10 子页 + 左树导航 | `OpsLogManageView.vue` |
+| AccountView `/ops/account/*` | 17 子页 + 左树导航 | `AccountView.vue` |
+| SecurityView `/system/security/*` | 9 子页 + 左树导航 | `SecurityView.vue` |
+| SettingsView `/ops/settings/*` | 3 子页 + 左树导航 | `SettingsView.vue` |
+
+`redirect` 不能与 `children` 同层级 → 用 `{ path: '', redirect: '...' }`。
+
+## 布局约定
+
+- 导航栏 `height: 48px`，子页内容 `calc(100vh - 48px)`
+- 左侧导航宽 200px，右内容区 `padding: 24px`
+- 嵌套路由父容器：sidebar + `<router-view />`，mobile 用 `a-select` 替代
+- 全屏创建页：父容器加 `.create-mode` class（`padding: 0; overflow: hidden`）
+- 详情页：父容器加 `.detail-mode` class（`padding: 0`），`detail-header` 在父层级渲染（height: 54px, bg: #fff）
+- CSS 变量在 `App.vue:282-293` 定义（`--brand: #007DFF`, `--text`, `--border` 等）
+
+### 列表页模板
+
+```html
+<div class="page-header"><h3>标题</h3></div>
+<div class="filter-bar"><!-- a-select, a-range-picker, a-input-search --></div>
+<a-table ... />
 ```
-src/
-├── composables/
-│   ├── useEditorState.js   # reactive 单例 (仪表盘编辑器状态)
-│   ├── usePrometheus.js    # Prometheus API 查询 + METRIC_PROMQL 映射
-│   └── useExport.js        # html2canvas + jsPDF 导出
-├── components/             # 编辑器组件 (ChartGrid, ConfigPanel, MultiSelect, ChartRenderer)
-└── views/
-    ├── HomeView.vue        # 首页
-    ├── monitor/TopologyView.vue  # 云系统树 + G6 网络拓扑 (1164 lines)
-    ├── security/IdpCreatePage.vue  # 独立全屏创建页 (非 Modal)
-    └── security/IdpLdapForm.vue    # LDAP 配置表单 (6 折叠区块 + 三模式条件字段)
-```
 
-## 关键约定
+- 搜索框始终在 filter-bar 最右侧
+- 新建按钮 right-aligned 用 `margin-left: auto`
+- filter-bar 控件全部默认 32px（不加 `size="small"`）
+- 间距：header→bar=16px, bar→table=16px, 内部 gap=8px
 
-### G2 5 (AntV)
-- `chart.render()` 是 **async** — post-processing 必须 `.then()`
-- 多 mark 去重：area/point 加 `.tooltip(false)`，仅 line 保留 `.tooltip({ title, items })`
-- Tooltip 在 `overflow: auto` 容器内被裁剪 → `mount: 'body'` + `css: { '.g2-tooltip': { 'z-index': '9999' } }`（默认 z-index=8，侧滑面板 z-index=1050）
-- 环形图图例居中：`layout: { justifyContent: 'center' }`（`itemAlign: 'center'` 无效）
-- 完全移除轴：`chart.axis('x', false)`；保留轴：不调 `.axis()` 用默认
+## 关键框架 Quirks
+
+### G2 5
+- `chart.render()` 是 async — post-processing 必须 `.then()`
+- 多 mark 去重：area/point 加 `.tooltip(false)`，仅 line 保留
+- Tooltip 在 `overflow: auto` 内被裁剪 → `mount: 'body'` + `z-index: 9999`
+- 环形图图例居中：`layout: { justifyContent: 'center' }`
 
 ### G6 v5
 - `import { Graph } from '@antv/g6'`
-- **G6 v5 无 `sourceAnchor`/`targetAnchor`/`anchorPoints`**（v4 语法，被忽略）。改用 **port 系统**：node style 定义 `ports: [{ key: 'top', placement: [0.5, 0], r: 0 }]`（`r: 0` 不可见），edge data 设 `sourcePort: 'bottom'`/`targetPort: 'top'`
-- `getChildrenData(comboId)` 返回空数组 → 用 `getNodeData().filter(d => d.combo === id)`
-- `graph.render()` 是异步的，后处理必须在 `.then()` 内
-- 网络拓扑勿用 dagre layout（手动 grid 更干净）：在 node data 的 `style` 中设 `x`/`y`（**不是**顶层属性），combo data 的 `style` 中设 `x`/`y`/`size`，不传 `layout` 参数
-  - G6 v5 从 `datum.style.x / .y` 读取位置，顶层 `x`/`y` 会被忽略
-  - combo size 需从子节点 bounds + padding 预计算：`min/max(x ± size/2)` + combo padding
-  - 初次渲染后用 `graph.fitView({ padding: 20 })` 对齐画布
-- 节点: `type: 'rect', size: [48, 48]` + FontAwesome `iconFontFamily: 'Font Awesome 6 Free'`
-- 网络拓扑连线用 `type: 'cubic-vertical'`（垂直贝塞尔曲线，上下流向走优雅 S 弧）
-- 内置 minimap 插件：`plugins: [{ type: 'minimap', size: [180, 140], padding: 10 }]`
+- 无 `sourceAnchor`/`anchorPoints`（v4）。改用 **port 系统**：`ports: [{ key: 'top', placement: [0.5, 0], r: 0 }]`
+- `getChildrenData(comboId)` 返回空 — 用 `getNodeData().filter(d => d.combo === id)`
+- `graph.render()` 是 async
+- 手动 grid 布局（勿用 dagre）：坐标放 `datum.style.x/y`，非顶层属性
+- 连线用 `type: 'cubic-vertical'`，节点 `type: 'rect'` + FontAwesome `iconFontFamily: 'Font Awesome 6 Free'`
 
-### Vue Router
-- `redirect` 不能与 `children` 同层级 → 用 `{ path: '', redirect: '...' }`
+## Skills 安装规范
 
-### API 代理
-`vite.config.js`: `/api/v1` → `http://192.168.0.155:9090`
+- 全局级别 skills 统一安装到 `~/.agents/skills/`，不要放其他目录
+- 每个 SKILL.md 必须在 YAML frontmatter 中定义 `commands: [/xxx]` 字段，否则在 OpenCode GUI 中不显示为 `/command` 风格，只能靠 description 做 intent-based 自动匹配
+- 安装新 skill 后需在下一次新会话中生效，无热加载
 
-### 状态管理
-`useEditorState.js` — `reactive()` 单例，所有组件 `useEditorState()` 共享同一 state。
+## 项目特点
 
-### 日志管理页面布局（10 子页面 /ops/logs/*）
-- **三层结构**: `.page-header`(标题行) → `.filter-bar`(搜索/筛选) → `a-table`
-- **间距**: page-header → filter-bar = 16px（`.page-header { margin-bottom: 16px }`），filter-bar → table = 16px（`.filter-bar { margin-bottom: 16px }`），filter-bar 内部控件间距 8px（`gap: 8px`）
-- **高度统一**: filter-bar 内 `a-input-search` / `a-range-picker` / `a-select` 全部用默认 32px（**不可**加 `size="small"`）
-- **搜索框位置**: 始终放在 filter-bar 最右边（在所有 select/range-picker 之后）
-- **新建按钮**: 从 page-header 移到 filter-bar 最右侧，用 `style="margin-left: auto"` 右对齐；page-header 仅保留 h3 标题
-- **page-header 同时含 h3+button**: 用 `display: flex; align-items: center; gap: 16px;` 保证同行显示
-
-### 侧滑面板
-- 面板 top 必须与导航栏 height 一致（48px）
-- Radio 按钮用 `v-model:value` + watch 重置
-- 如果面板内 G2 tooltip 不显示 → `mount: 'body'` + 高 z-index
+- Ant Design Vue v4.2.6 全量引入（`main.js` 全局注册）
+- 数据 mock 直接写死在 views 文件中，无独立 mock 层
+- Server 端 Express + PostgreSQL + OpenAI（`server/server.js`）
+- `.opencode/` 在 `.gitignore` 中，不提交
