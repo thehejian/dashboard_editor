@@ -54,7 +54,22 @@ cd server && npm run dev  # Express 后端 (node --watch)
 - filter-bar 控件全部默认 32px（不加 `size="small"`）
 - 间距：header→bar=16px, bar→table=16px, 内部 gap=8px
 
-## 关键框架 Quirks
+## 调试经验
+
+### 页面空白排查 checklist
+
+1. **先确认是 HMR 问题还是代码问题** — curl `http://admin:745544752@localhost:5173/src/views/xxx.vue` 看编译 JS 是否正常。如果 curl 返回正确但浏览器 DOM 为空，刷新页面（非 HMR）看是否恢复。HMR 可能静默失效，特别是大文件重写后。
+2. **最小化还原法** — 不要一次性写完整组件。先写最简单的 `<a-table :columns="..." :data-source="..." />` 确认路由能渲染，然后逐步加功能。每一步都确认可渲染再加下一步。
+3. **出问题时看 network 面板** — 浏览器是否真的发请求加载了该组件。如果 network 里没有该 `.vue` 的请求，说明组件根本没被加载（路由匹配失败或懒加载异常）。
+4. **`a-table` 的 `:row-class-name`** — Ant Design Vue v4 签名是 `(record, index)`，不是 `({ record })`。解构写法会静默导致 render 失败，不报 console 错误。
+5. **避免在 template 绑定中用箭头函数** — 某些 AntD 回调签名预期是普通函数。用 `function() {}` 比 `() => {}` 更安全。
+6. **CSS 变量未定义不会报错** — `var(--bg-card)` 如果没定义，属性值退化为空字符串，可能导致背景透明但元素仍在。这不影响渲染，只影响视觉。
+7. **position: fixed + overflow 的组合** — 如果父容器有 `overflow: auto/hidden`，`position: fixed` 子元素可能被裁剪。fixed 元素应挂在 body 层级或设置足够高的 z-index。
+
+### Tab 间距计算
+- `a-tabs` 与顶部间距：`.ant-tabs-nav` 的 `margin-top` 不能直接设为目标间距，因为 `.ant-tabs-tab` 自带 `padding-top: 12px`。
+- 正确公式：`nav margin-top = 目标间距 - tab padding-top`。例如目标 16px → `margin-top: 4px`（4 + 12 = 16）。
+- 父容器的 `padding-top` 不应参与间距，否则会叠加。应设 `padding-top: 0`，靠 tabs-nav 的 `margin-top` 统一管理。
 
 ### G2 5
 - `chart.render()` 是 async — post-processing 必须 `.then()`

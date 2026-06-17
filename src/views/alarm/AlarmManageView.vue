@@ -107,7 +107,7 @@ function onMobileSelectTree(keys) {
 .sidebar-title { display: flex; align-items: baseline; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text); padding: 0 16px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .sidebar-title i { font-size: 14px; color: var(--brand); }
 .sidebar-subtitle { font-size: 11px; color: var(--brand); font-weight: 400; }
-.alarm-content { flex: 1; overflow-y: auto; padding: 24px; }
+.alarm-content { flex: 1; overflow-y: auto; padding: 0 24px 24px; }
 .alarm-mobile-nav { display: none; }
 .alarm-mobile-sidebar { display: none; }
 .alarm-mobile-mask { display: none; }

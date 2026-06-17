@@ -11,7 +11,7 @@
             </a-select>
             <a-input-search v-model:value="searchText" placeholder="搜索告警名称、资源" class="search-input" />
             <a-button class="mute-btn"><i class="fa-solid fa-volume-off"></i></a-button>
-            <a-select v-model:value="refreshInterval" style="width:130px" size="small">
+            <a-select v-model:value="refreshInterval" style="width:130px">
               <a-select-option :value="30">30秒刷新</a-select-option>
               <a-select-option :value="60">60秒刷新</a-select-option>
               <a-select-option :value="0">不刷新</a-select-option>
@@ -532,7 +532,7 @@ onBeforeUnmount(function() {
 <style scoped>
 .page-view { display: flex; flex-direction: column; height: 100%; }
 .page-view :deep(.ant-tabs) { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.page-view :deep(.ant-tabs-nav) { margin: 16px 0 !important; }
+.page-view :deep(.ant-tabs-nav) { margin: 4px 0 16px 0 !important; }
 .page-view :deep(.ant-tabs-content-holder) { flex: 1; min-height: 0; overflow: auto; padding: 0; }
 .page-view :deep(.ant-tabs-content) { height: 100%; }
 .page-view :deep(.ant-tabs-tabpane) { height: 100%; }
