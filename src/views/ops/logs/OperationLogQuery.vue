@@ -117,8 +117,22 @@ const timeBtns = [
 const adminForm = reactive({ logType: null, timeBtn: '1hour', hostname: '', detail: '' })
 const tenantForm = reactive({ timeBtn: '1hour' })
 
-const adminData = ref([])
-const tenantData = ref([])
+const adminData = ref([
+  { id: 1, hostname: 'server-001', detail: '用户admin登录系统', time: '2026-06-17 10:00:00', protocol: 'HTTPS' },
+  { id: 2, hostname: 'api-gateway', detail: '更新路由配置', time: '2026-06-17 09:30:00', protocol: 'HTTPS' },
+  { id: 3, hostname: 'db-primary', detail: '执行ALTER TABLE', time: '2026-06-17 08:00:00', protocol: 'MySQL' },
+  { id: 4, hostname: 'k8s-node-02', detail: 'Pod重建', time: '2026-06-17 08:45:00', protocol: 'K8s API' },
+])
+const tenantData = ref([
+  { id: 5, event: 'LOGIN', resource: '系统', level: 'INFO', result: '成功', user: 'admin', ip: '10.0.0.1', time: '2026-06-17 10:00:00', trace: 'trace-001' },
+  { id: 6, event: 'UPDATE', resource: '路由表', level: 'INFO', result: '成功', user: '张伟', ip: '10.0.0.5', time: '2026-06-17 09:30:00', trace: 'trace-002' },
+  { id: 7, event: 'DDL', resource: 'orders表', level: 'WARN', result: '成功', user: '赵敏', ip: '10.0.0.8', time: '2026-06-17 08:00:00', trace: 'trace-003' },
+  { id: 8, event: 'RESTART', resource: 'payment-service', level: 'INFO', result: '触发', user: '系统', ip: '10.0.4.12', time: '2026-06-17 08:45:00', trace: 'trace-004' },
+  { id: 9, event: 'PASSWORD_CHANGE', resource: 'root', level: 'WARN', result: '成功', user: 'admin', ip: '10.0.0.1', time: '2026-06-16 23:00:00', trace: 'trace-005' },
+  { id: 10, event: 'CREATE_USER', resource: 'ops_deploy', level: 'INFO', result: '成功', user: 'admin', ip: '10.0.0.1', time: '2026-06-16 22:00:00', trace: 'trace-006' },
+  { id: 11, event: 'UPDATE', resource: 'rate_limit', level: 'INFO', result: '成功', user: '李娜', ip: '10.0.0.6', time: '2026-06-16 15:00:00', trace: 'trace-007' },
+  { id: 12, event: 'SELECT', resource: 'slow_log', level: 'INFO', result: '成功', user: '赵敏', ip: '10.0.0.8', time: '2026-06-16 14:00:00', trace: 'trace-008' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

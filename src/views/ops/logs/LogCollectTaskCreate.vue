@@ -156,7 +156,7 @@
 
     <div class="create-footer">
       <a-button @click="goBack">取消</a-button>
-      <a-button type="primary" @click="handleSubmit">确定</a-button>
+      <a-button type="primary" :loading="submitting" @click="handleSubmit">确定</a-button>
     </div>
 
     <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="1100px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
@@ -287,6 +287,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 
 const router = useRouter()
 let customIdCounter = 100
@@ -863,8 +864,43 @@ function goBack() {
   router.push('/ops/logs/config/tasks')
 }
 
-function handleSubmit() {
-  goBack()
+const submitting = ref(false)
+
+async function handleSubmit() {
+  if (!form.name) {
+    message.warning('请输入任务名称')
+    return
+  }
+  if (!form.region) {
+    message.warning('请选择区域')
+    return
+  }
+  submitting.value = true
+  try {
+    const body = {
+      name: form.name,
+      scene: form.resourceType,
+      enabled: form.status,
+      target: form.destination || '',
+      region: form.region,
+    }
+    const res = await fetch('/api/cmdb/log_collect_tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await res.json()
+    if (json.success) {
+      message.success('采集任务创建成功')
+      goBack()
+    } else {
+      message.error(json.error || '创建失败')
+    }
+  } catch (e) {
+    message.error('网络错误')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

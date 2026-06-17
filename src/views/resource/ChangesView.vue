@@ -26,7 +26,11 @@ import { ref, onMounted } from 'vue'
 
 const changeType = ref(null)
 const range = ref(null)
-const changes = ref([])
+const changes = ref([
+  { id: 1, type: '配置变更', resource: 'server-001', detail: '内存扩容 32G→64G', operator: '张伟', time: '2026-06-15 22:00:00' },
+  { id: 2, type: '版本升级', resource: 'api-gateway', detail: 'Kong 3.3→3.4', operator: '李娜', time: '2026-06-14 14:30:00' },
+  { id: 3, type: '配置变更', resource: '订单服务中心', detail: 'JVM参数优化', operator: '张伟', time: '2026-06-13 11:00:00' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

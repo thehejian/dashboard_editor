@@ -43,7 +43,12 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status' },
   { title: '操作', key: 'action', width: 120 },
 ]
-const data = ref([])
+const data = ref([
+  { id: 1, name: '数据库默认策略', minLen: '16', expireDays: 60, lockThreshold: 3, lockDuration: 60, timeout: 10, scope: '全部数据库', status: 'green', statusLabel: '启用' },
+  { id: 2, name: 'MySQL专用策略', minLen: '14', expireDays: 90, lockThreshold: 5, lockDuration: 30, timeout: 15, scope: 'MySQL实例', status: 'green', statusLabel: '启用' },
+  { id: 3, name: 'Oracle生产策略', minLen: '20', expireDays: 30, lockThreshold: 3, lockDuration: 120, timeout: 5, scope: 'Oracle生产库', status: 'yellow', statusLabel: '停用' },
+  { id: 4, name: 'Redis开发策略', minLen: '10', expireDays: 180, lockThreshold: 10, lockDuration: 15, timeout: 30, scope: 'Redis开发环境', status: 'green', statusLabel: '启用' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

@@ -33,8 +33,14 @@
 import { ref, onMounted } from 'vue'
 
 const activeKey = ref('users')
-const users = ref([])
-const roles = ref([])
+const users = ref([
+  { id: 1, username: 'admin', name: '管理员', email: 'admin@company.com', role: '超级管理员', enabled: true },
+  { id: 2, username: 'ops1', name: '运维人员', email: 'ops1@company.com', role: '运维', enabled: true },
+])
+const roles = ref([
+  { id: 1, name: '超级管理员', description: '拥有所有系统权限', userCount: 1 },
+  { id: 2, name: '运维', description: '运维管理权限', userCount: 3 },
+])
 const loading = ref(false)
 
 onMounted(async () => {

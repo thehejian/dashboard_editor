@@ -150,12 +150,28 @@ const logSearch = ref('')
 const logModalVisible = ref(false)
 const logContent = ref('')
 
-const runningJobs = ref([])
-const jobHistory = ref([])
-const scripts = ref([])
-const logs = ref([])
+const runningJobs = ref([
+  { id: 1, name: '数据库巡检', target: 'db-primary, db-replica-02', progress: 65, startTime: '2026-06-17 10:30:00' },
+  { id: 2, name: '安全扫描', target: '华北区域一', progress: 30, startTime: '2026-06-17 10:00:00' },
+])
+const jobHistory = ref([
+  { id: 1, name: '全量备份', target: 'db-primary', startTime: '2026-06-17 02:00:00', endTime: '2026-06-17 02:45:00', duration: '45分钟', status: 'success' },
+  { id: 2, name: '日志清理', target: 'log-collector', startTime: '2026-06-17 03:00:00', endTime: '2026-06-17 03:12:00', duration: '12分钟', status: 'success' },
+])
+const scripts = ref([
+  { id: 1, name: '健康检查脚本', description: '系统健康状态巡检', type: 'Shell', updateTime: '2026-06-01' },
+  { id: 2, name: '日志清理脚本', description: '过期日志自动清理', type: 'Python', updateTime: '2026-05-15' },
+])
+const logs = ref([
+  { id: 1, level: 'INFO', source: 'server-001', time: '2026-06-17 10:30:00', message: '巡检任务完成' },
+  { id: 2, level: 'WARN', source: 'db-primary', time: '2026-06-17 10:28:00', message: '磁盘使用率 92%' },
+  { id: 3, level: 'ERROR', source: 'api-gateway', time: '2026-06-17 10:25:00', message: '响应超时 2500ms' },
+])
 const inspectStats = ref({ total: 5, running: 1, done: 12, issues: 3 })
-const inspectPlans = ref([])
+const inspectPlans = ref([
+  { id: 1, name: '每日巡检', description: '数据库每日健康巡检', schedule: '每天 09:00', targetCount: 5, status: 'active' },
+  { id: 2, name: '安全合规巡检', description: '安全基线检查', schedule: '每周一 10:00', targetCount: 20, status: 'active' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

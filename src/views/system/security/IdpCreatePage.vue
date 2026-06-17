@@ -103,7 +103,7 @@
       </template>
       <template v-if="createStep === 2">
         <a-button @click="createStep = 1">上一步</a-button>
-        <a-button type="primary" @click="confirmCreate">确定</a-button>
+        <a-button type="primary" :loading="submitting" @click="confirmCreate">确定</a-button>
       </template>
     </div>
   </div>
@@ -112,6 +112,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 import IdpLdapForm from './IdpLdapForm.vue'
 
 const router = useRouter()
@@ -135,11 +136,41 @@ function goBack() {
   router.push('/system/security/idp')
 }
 
-function confirmCreate() {
+const submitting = ref(false)
+
+async function confirmCreate() {
   if (selectedProtocol.value === 'LDAP' && ldapFormRef.value) {
-    ldapFormRef.value.validate()
+    const valid = ldapFormRef.value.validate()
+    if (!valid) return
   }
-  goBack()
+  submitting.value = true
+  try {
+    const name = selectedProtocol.value === 'LDAP' && ldapFormRef.value
+      ? ldapFormRef.value.form?.name || ''
+      : simpleForm.name
+    const body = {
+      name: name || `${selectedProtocol.value} IdP`,
+      protocol: selectedProtocol.value,
+      status: 'active',
+      description: simpleForm.desc || '',
+    }
+    const res = await fetch('/api/cmdb/identity_providers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await res.json()
+    if (json.success) {
+      message.success('身份提供商创建成功')
+      goBack()
+    } else {
+      message.error(json.error || '创建失败')
+    }
+  } catch (e) {
+    message.error('网络错误')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

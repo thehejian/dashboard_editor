@@ -113,8 +113,18 @@ const logColumns = [
   { title: '日志内容', key: 'content', ellipsis: true },
 ]
 
-const cloudData = ref([])
-const tenantLogData = ref([])
+const cloudData = ref([
+  { id: 1, time: '2026-06-17 10:32:00', content: '[ERROR] cpu usage exceeds 95% on server-001' },
+  { id: 2, time: '2026-06-17 10:30:00', content: '[WARN] memory usage 82% on app-server-03' },
+  { id: 3, time: '2026-06-17 10:28:00', content: '[ERROR] disk usage 92% on db-primary' },
+  { id: 4, time: '2026-06-17 10:25:00', content: '[INFO] nginx access log rotated' },
+])
+const tenantLogData = ref([
+  { id: 5, time: '2026-06-17 10:20:00', content: '[ERROR] connection timeout to kafka broker 2' },
+  { id: 6, time: '2026-06-17 10:15:00', content: '[WARN] response time 2450ms on api-gateway' },
+  { id: 7, time: '2026-06-17 10:00:00', content: '[INFO] backup task completed successfully' },
+  { id: 8, time: '2026-06-17 09:55:00', content: '[ERROR] replication lag 35s on db-replica-02' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

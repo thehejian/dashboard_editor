@@ -158,13 +158,14 @@
       <a-button @click="$emit('close')">取消</a-button>
       <a-button :disabled="step === 0" @click="prevStep">上一步</a-button>
       <a-button v-if="step < 3" type="primary" @click="nextStep">下一步</a-button>
-      <a-button v-else type="primary" @click="handleDone">完成</a-button>
+      <a-button v-else type="primary" :loading="submitting" @click="handleDone">完成</a-button>
     </div>
   </a-modal>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { message } from 'ant-design-vue'
 
 const emit = defineEmits(['close'])
 
@@ -192,6 +193,7 @@ const rightSelected = ref([])
 const leftApps = ref([])
 const rightApps = ref([])
 const loading = ref(false)
+const submitting = ref(false)
 
 onMounted(async () => {
   loading.value = true
@@ -251,8 +253,33 @@ function prevStep() {
   if (step.value > 0) step.value--
 }
 
-function handleDone() {
-  emit('close')
+async function handleDone() {
+  submitting.value = true
+  try {
+    const body = {
+      name: form.name,
+      status: form.enabled ? 'active' : 'disabled',
+      scope: form.scope,
+      permissions: form.permType === 'readonly' ? 'readonly' : 'query,fix,modify',
+      description: form.description,
+    }
+    const res = await fetch('/api/cmdb/safeboxes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await res.json()
+    if (json.success) {
+      message.success('保管箱创建成功')
+      emit('close')
+    } else {
+      message.error(json.error || '创建失败')
+    }
+  } catch (e) {
+    message.error('网络错误')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

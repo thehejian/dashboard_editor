@@ -51,7 +51,13 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([])
+const data = ref([
+  { id: 1, title: '处理数据库主从延迟告警', source: '告警系统', priority: 'critical', priorityLabel: '紧急', deadline: '2026-06-17 12:00:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-06-17 10:00:00' },
+  { id: 2, title: '更新SSL证书', source: '运维计划', priority: 'high', priorityLabel: '高', deadline: '2026-06-20 18:00:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-06-17 08:00:00' },
+  { id: 3, title: 'Q2机房巡检报告', source: '管理任务', priority: 'normal', priorityLabel: '普通', deadline: '2026-06-30 18:00:00', status: 'in_progress', statusLabel: '进行中', createdAt: '2026-06-15 09:00:00' },
+  { id: 4, title: '安全基线合规检查', source: '安全组', priority: 'high', priorityLabel: '高', deadline: '2026-06-25 18:00:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-06-14 10:00:00' },
+  { id: 5, title: '升级Kong网关到3.6', source: '版本计划', priority: 'low', priorityLabel: '低', deadline: '2026-07-15 18:00:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-06-13 16:00:00' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

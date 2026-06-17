@@ -45,7 +45,13 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status' },
   { title: '操作', key: 'action', width: 120 },
 ]
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'db_readonly', resType: 'MySQL', reason: '日常查询需要', applicant: '张三', approver: '李运维', createdAt: '2026/05/21 10:30:00', status: 'green', statusLabel: '已通过' },
+  { id: 2, name: 'op_developer', resType: 'OP账号', reason: '开发环境部署', applicant: '王五', approver: '李运维', createdAt: '2026/05/20 14:15:00', status: 'yellow', statusLabel: '审批中' },
+  { id: 3, name: 'ssh_bastion', resType: '操作系统', reason: '堡垒机接入', applicant: '赵六', approver: '--', createdAt: '2026/05/19 09:00:00', status: 'red', statusLabel: '已拒绝' },
+  { id: 4, name: 'kafka_producer', resType: '中间件', reason: '消息生产接入', applicant: '张三', approver: '李运维', createdAt: '2026/05/18 16:45:00', status: 'green', statusLabel: '已通过' },
+  { id: 5, name: 'switch_viewer', resType: '网络设备', reason: '巡检需要', applicant: '王五', approver: '--', createdAt: '2026/05/17 11:20:00', status: 'yellow', statusLabel: '审批中' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

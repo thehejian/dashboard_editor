@@ -43,7 +43,12 @@ import { ref, onMounted } from 'vue'
 const search = ref('')
 const targetType = ref(null)
 const enabled = ref(null)
-const data = ref([])
+const data = ref([
+  { id: 1, name: '应用到日志中心', targetType: 'Kafka', targetAddr: 'kafka-prod-01:9092', forwardContent: ['app-*', 'nginx-*'], enabled: true, lastForward: '2026-06-17 10:30:00' },
+  { id: 2, name: 'DB日志到ELK', targetType: 'Elasticsearch', targetAddr: 'es-prod-01:9200', forwardContent: ['mysql-slow', 'mysql-error'], enabled: true, lastForward: '2026-06-17 10:28:00' },
+  { id: 3, name: '安全日志到SIEM', targetType: 'Syslog', targetAddr: 'siem-01:514', forwardContent: ['auth-*', 'audit-*'], enabled: true, lastForward: '2026-06-17 10:30:00' },
+  { id: 4, name: '调试日志丢弃', targetType: 'DevNull', targetAddr: 'file://dev/null', forwardContent: ['debug-*'], enabled: false, lastForward: null },
+])
 const loading = ref(false)
 
 onMounted(async () => {

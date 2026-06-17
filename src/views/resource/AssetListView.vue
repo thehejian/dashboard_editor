@@ -28,7 +28,10 @@ import { ref, onMounted } from 'vue'
 const filterType = ref(null)
 const filterStatus = ref(null)
 const search = ref('')
-const assets = ref([])
+const assets = ref([
+  { id: 1, name: 'web-server-001', ip: '10.0.2.10', type: 'server', status: 'running', region: '华北区域一' },
+  { id: 2, name: 'db-primary', ip: '10.0.3.20', type: 'database', status: 'running', region: '华东区域一' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

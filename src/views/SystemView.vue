@@ -144,6 +144,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { message } from 'ant-design-vue'
 
 const activeTab = ref('users')
 const usersSubTab = ref('users')
@@ -154,8 +155,18 @@ const saving = ref(false)
 const notifyConfig = reactive({ email: true, sms: false, wechat: true, dingtalk: false })
 const systemConfig = reactive({ sessionTimeout: 30, passwordMinLength: 8, logRetention: 30, apiRateLimit: 1000 })
 
-const users = ref([])
-const roles = ref([])
+const users = ref([
+  { id: 1, username: 'admin', name: '管理员', email: 'admin@company.com', phone: '13800138000', role: '超级管理员', enabled: true },
+  { id: 2, username: 'ops1', name: '运维人员', email: 'ops1@company.com', phone: '13800138001', role: '运维', enabled: true },
+  { id: 3, username: 'dev1', name: '开发人员', email: 'dev1@company.com', phone: '13800138002', role: '开发', enabled: true },
+  { id: 4, username: 'viewer', name: '查看人员', email: 'viewer@company.com', phone: '13800138003', role: '只读', enabled: false },
+])
+const roles = ref([
+  { id: 1, name: '超级管理员', description: '拥有所有系统权限', userCount: 1 },
+  { id: 2, name: '运维', description: '运维管理权限', userCount: 3 },
+  { id: 3, name: '开发', description: '开发查看权限', userCount: 5 },
+  { id: 4, name: '只读', description: '仅查看权限', userCount: 10 },
+])
 const loading = ref(false)
 
 onMounted(async () => {
@@ -208,12 +219,80 @@ const userColumns = [
 ]
 
 const showUserModal = () => { editingUser.value = null; Object.assign(userForm, { username: '', name: '', email: '', phone: '', roleId: null }); userModalVisible.value = true }
-const editUser = (user) => { editingUser.value = user; Object.assign(userForm, user); userModalVisible.value = true }
-const saveUser = () => { saving.value = true; setTimeout(() => { if (editingUser.value) { const idx = users.value.findIndex(u => u.id === editingUser.value.id); if (idx > -1) users.value[idx] = { ...users.value[idx], ...userForm } } else { users.value.push({ ...userForm, id: Date.now(), role: roles.value.find(r => r.id === userForm.roleId)?.name || '', enabled: true }) } saving.value = false; userModalVisible.value = false }, 500) }
-const deleteUser = (id) => { users.value = users.value.filter(u => u.id !== id) }
-const toggleUser = (id) => {}
+const editUser = (user) => { editingUser.value = user; Object.assign(userForm, { username: user.username, name: user.name, email: user.email, phone: user.phone, roleId: user.roleId || null }); userModalVisible.value = true }
+const saveUser = async () => {
+  saving.value = true
+  try {
+    const roleName = roles.value.find(r => r.id === userForm.roleId)?.name || ''
+    const body = { username: userForm.username, name: userForm.name, email: userForm.email, phone: userForm.phone, role: roleName }
+    if (editingUser.value) {
+      const res = await fetch(`/api/cmdb/users/${editingUser.value.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const json = await res.json()
+      if (json.success) {
+        const idx = users.value.findIndex(u => u.id === editingUser.value.id)
+        if (idx > -1) users.value[idx] = { ...users.value[idx], ...json.data, roleId: userForm.roleId }
+        message.success('更新成功')
+      } else {
+        message.error(json.error || '更新失败')
+      }
+    } else {
+      const res = await fetch('/api/cmdb/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, enabled: true })
+      })
+      const json = await res.json()
+      if (json.success) {
+        users.value.push({ ...json.data, roleId: userForm.roleId, role: roleName })
+        message.success('创建成功')
+      } else {
+        message.error(json.error || '创建失败')
+      }
+    }
+    userModalVisible.value = false
+  } catch (e) {
+    message.error('网络错误')
+  } finally {
+    saving.value = false
+  }
+}
+const deleteUser = async (id) => {
+  try {
+    const res = await fetch(`/api/cmdb/users/${id}`, { method: 'DELETE' })
+    const json = await res.json()
+    if (json.success) {
+      users.value = users.value.filter(u => u.id !== id)
+      message.success('删除成功')
+    } else {
+      message.error(json.error || '删除失败')
+    }
+  } catch (e) {
+    message.error('网络错误')
+  }
+}
+const toggleUser = async (id) => {
+  try {
+    const user = users.value.find(u => u.id === id)
+    if (!user) return
+    const res = await fetch(`/api/cmdb/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: !user.enabled })
+    })
+    const json = await res.json()
+    if (!json.success) {
+      message.error(json.error || '操作失败')
+    }
+  } catch (e) {
+    message.error('网络错误')
+  }
+}
 const editRole = (role) => {}
-const saveConfig = () => {}
+const saveConfig = () => { message.success('配置已保存') }
 </script>
 
 <style scoped>

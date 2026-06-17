@@ -113,7 +113,7 @@
 
     <div class="create-footer">
       <a-button @click="goBack">取消</a-button>
-      <a-button type="primary" @click="submit">提交</a-button>
+      <a-button type="primary" :loading="submitting" @click="submit">提交</a-button>
     </div>
 
     <a-modal v-model:open="showTransfer" title="选择账号" :footer="null" :width="860" :destroy-on-close="true">
@@ -169,6 +169,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 
 const router = useRouter()
 const maxSelect = 4
@@ -196,6 +197,7 @@ const targetKeys = ref([])
 const transferData = ref([])
 const selectedAccounts = ref([])
 const loading = ref(false)
+const submitting = ref(false)
 
 onMounted(async () => {
   loading.value = true
@@ -273,8 +275,39 @@ function goBack() {
   router.push('/ops/account/apply/new')
 }
 
-function submit() {
-  goBack()
+async function submit() {
+  if (!form.reason) {
+    message.warning('请填写申请原因')
+    return
+  }
+  submitting.value = true
+  try {
+    const body = {
+      title: `账号申请 - ${new Date().toLocaleDateString()}`,
+      type: form.accountType,
+      res_type: form.applyType,
+      reason: form.reason,
+      handler: form.users.join(', '),
+      status: 'pending',
+      status_label: '待审批',
+    }
+    const res = await fetch('/api/cmdb/app_orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await res.json()
+    if (json.success) {
+      message.success('提交成功')
+      goBack()
+    } else {
+      message.error(json.error || '提交失败')
+    }
+  } catch (e) {
+    message.error('网络错误')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

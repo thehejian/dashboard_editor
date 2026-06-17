@@ -61,7 +61,10 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'Turnkey', status: 'enabled', statusLabel: '已启用', scope: '全部账号', permissions: '查看，修正，修改', createdAt: '2023/03/14 12:34:51', updatedAt: '2023/03/14 12:34:51', app: 'Turnkey', description: '部署、升级、扩容期间使用' },
+  { id: 2, name: '兴业银行', status: 'enabled', statusLabel: '已启用', scope: '全部操作系统账号', permissions: '只读', createdAt: '2020/10/13 18:15:48', updatedAt: '2020/10/13 18:15:48', app: '兴业银行', description: '--' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

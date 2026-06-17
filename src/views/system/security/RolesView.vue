@@ -25,7 +25,12 @@
 import { ref, onMounted } from 'vue'
 
 const search = ref('')
-const data = ref([])
+const data = ref([
+  { id: 1, name: '超级管理员', desc: '系统最高权限', users: 1, created: '2024-01-01' },
+  { id: 2, name: '运维工程师', desc: '日常运维操作', users: 3, created: '2024-01-01' },
+  { id: 3, name: '开发工程师', desc: '应用开发和部署', users: 5, created: '2024-01-01' },
+  { id: 4, name: '安全审计员', desc: '安全审计和合规', users: 2, created: '2024-03-01' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

@@ -44,7 +44,13 @@ const columns = [
   { title: '上次更新', dataIndex: 'lastUpdate', key: 'lastUpdate', sorter: true },
   { title: '操作', key: 'action', width: 150 },
 ]
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'Server-001', devType: '华为RH2288H', bmcIp: '10.0.100.1', firmware: 'iBMC V3.0', status: 'green', statusLabel: '已同步', lastUpdate: '2026/05/22 02:00:00' },
+  { id: 2, name: 'Server-002', devType: '华为RH2288H', bmcIp: '10.0.100.2', firmware: 'iBMC V3.0', status: 'green', statusLabel: '已同步', lastUpdate: '2026/05/22 02:00:00' },
+  { id: 3, name: 'Server-003', devType: '浪潮NF5280', bmcIp: '10.0.100.3', firmware: 'BMC V2.5', status: 'red', statusLabel: '密码过期', lastUpdate: '2025/12/01 02:00:00' },
+  { id: 4, name: 'Server-004', devType: '华为RH2288H', bmcIp: '10.0.100.4', firmware: 'iBMC V3.1', status: 'yellow', statusLabel: '同步中', lastUpdate: '2026/05/22 02:05:00' },
+  { id: 5, name: 'Server-005', devType: '戴尔R750', bmcIp: '10.0.100.5', firmware: 'iDRAC 9', status: 'red', statusLabel: '对接失败', lastUpdate: '2026/04/15 02:00:00' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

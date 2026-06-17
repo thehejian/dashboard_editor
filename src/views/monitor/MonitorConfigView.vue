@@ -49,7 +49,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const metrics = ref([])
+const metrics = ref([
+  { id: 1, name: 'CPU使用率', type: '系统指标', enabled: true },
+  { id: 2, name: '内存使用率', type: '系统指标', enabled: true },
+  { id: 3, name: '磁盘使用率', type: '系统指标', enabled: true },
+  { id: 4, name: '网络吞吐', type: '网络指标', enabled: true },
+])
 const loading = ref(false)
 
 onMounted(async () => {

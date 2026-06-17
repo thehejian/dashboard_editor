@@ -41,7 +41,12 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const search = ref('')
 const filterType = ref(null)
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'LDAP', protocol: 'LDAP', status: 'active', statusLabel: '已启用', created: '2024-01-01', updated: '2024-06-01', desc: '公司LDAP目录服务' },
+  { id: 2, name: 'SAML2', protocol: 'SAML 2.0', status: 'active', statusLabel: '已启用', created: '2024-02-01', updated: '2024-06-01', desc: '统一身份认证SAML2' },
+  { id: 3, name: 'OIDC', protocol: 'OpenID Connect', status: 'active', statusLabel: '已启用', created: '2024-03-01', updated: '2024-06-01', desc: '基于OIDC的单点登录' },
+  { id: 4, name: 'CAS', protocol: 'CAS 3.0', status: 'inactive', statusLabel: '已停用', created: '2024-01-01', updated: '2024-03-01', desc: '旧版SSO协议' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

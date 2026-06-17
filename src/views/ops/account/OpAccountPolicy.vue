@@ -43,7 +43,12 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status' },
   { title: '操作', key: 'action', width: 120 },
 ]
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'OP平台默认策略', minLen: '12', expireDays: 90, lockThreshold: 5, lockDuration: 30, timeout: 15, mfa: '开启', status: 'green', statusLabel: '启用' },
+  { id: 2, name: '管理员策略', minLen: '16', expireDays: 60, lockThreshold: 3, lockDuration: 60, timeout: 10, mfa: '强制', status: 'green', statusLabel: '启用' },
+  { id: 3, name: '审计员策略', minLen: '12', expireDays: 90, lockThreshold: 5, lockDuration: 30, timeout: 20, mfa: '可选', status: 'yellow', statusLabel: '停用' },
+  { id: 4, name: 'API机器人策略', minLen: '20', expireDays: 365, lockThreshold: 10, lockDuration: 15, timeout: 60, mfa: '关闭', status: 'green', statusLabel: '启用' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

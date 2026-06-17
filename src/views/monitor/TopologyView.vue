@@ -583,9 +583,30 @@ const NET_LAYOUT = {
   'mgmt-nodes-east':   [1050, 640],
 }
 
-const NET_NODE_DEFS = ref([])
-const NET_COMBO_DEFS = ref([])
-const NET_EDGES = ref([])
+const NET_NODE_DEFS = ref([
+  { id: '1', data: { label: 'SLB-prod' }, iconText: 'fa-sliders-h', combo: 'region-beijing', style: { x: 100, y: 50 } },
+  { id: '2', data: { label: 'SLB-east' }, iconText: 'fa-sliders-h', combo: 'region-shanghai', style: { x: 600, y: 50 } },
+  { id: '3', data: { label: 'server-001' }, iconText: 'fa-server', combo: 'region-beijing', style: { x: 80, y: 200 } },
+  { id: '4', data: { label: 'app-server-02' }, iconText: 'fa-server', combo: 'region-beijing', style: { x: 200, y: 200 } },
+  { id: '5', data: { label: 'db-master' }, iconText: 'fa-database', combo: 'region-beijing', style: { x: 80, y: 350 } },
+  { id: '6', data: { label: 'server-east-01' }, iconText: 'fa-server', combo: 'region-shanghai', style: { x: 580, y: 200 } },
+  { id: '7', data: { label: 'server-east-02' }, iconText: 'fa-server', combo: 'region-shanghai', style: { x: 680, y: 200 } },
+  { id: '8', data: { label: 'db-replica' }, iconText: 'fa-database', combo: 'region-shanghai', style: { x: 600, y: 350 } },
+])
+const NET_COMBO_DEFS = ref([
+  { id: 'region-beijing', data: { label: '华北区域一' } },
+  { id: 'region-shanghai', data: { label: '华东区域一' } },
+])
+const NET_EDGES = ref([
+  { source: '1', target: '3', data: { label: '流量1Gbps' }, style: { stroke: '#52c41a' } },
+  { source: '1', target: '4', data: { label: '流量500Mbps' }, style: { stroke: '#fa8c16' } },
+  { source: '1', target: '2', data: { label: '跨区域1Gbps' }, style: { stroke: '#1890ff', lineDash: [5, 5] } },
+  { source: '2', target: '6', data: { label: '流量800Mbps' }, style: { stroke: '#52c41a' } },
+  { source: '2', target: '7', data: { label: '流量200Mbps' }, style: { stroke: '#f5222d' } },
+  { source: '3', target: '5', data: { label: '读写' }, style: { stroke: '#52c41a' } },
+  { source: '4', target: '5', data: { label: '读写' }, style: { stroke: '#52c41a' } },
+  { source: '5', target: '8', data: { label: '复制' }, style: { stroke: '#1890ff', lineDash: [5, 5] } },
+])
 const loading = ref(false)
 
 onMounted(async function() {

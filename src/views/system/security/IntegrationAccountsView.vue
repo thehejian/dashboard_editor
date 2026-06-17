@@ -34,7 +34,11 @@ import { ref, computed, onMounted } from 'vue'
 const search = ref('')
 const filterProvider = ref(null)
 const providers = ['企业微信', '阿里云 RAM', 'LDAP 目录服务']
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'AWS IAM', provider: 'Amazon Web Services', status: 'active', lastSync: '2026-06-17 08:00:00' },
+  { id: 2, name: '阿里云 RAM', provider: 'Alibaba Cloud', status: 'active', lastSync: '2026-06-17 08:00:00' },
+  { id: 3, name: 'Azure AD', provider: 'Microsoft Azure', status: 'inactive', lastSync: '2026-06-10 08:00:00' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

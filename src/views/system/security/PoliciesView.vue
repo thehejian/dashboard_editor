@@ -33,7 +33,12 @@ import { ref, onMounted } from 'vue'
 
 const search = ref('')
 const filterType = ref(null)
-const data = ref([])
+const data = ref([
+  { id: 1, name: '密码策略', type: '安全策略', desc: '密码复杂度不低于8位，包含大小写字母和特殊字符', created: '2024-01-01' },
+  { id: 2, name: '访问控制策略', type: '安全策略', desc: '基于角色的访问控制，最小权限原则', created: '2024-01-01' },
+  { id: 3, name: '审计策略', type: '审计策略', desc: '所有操作记录审计日志，保留180天', created: '2024-01-01' },
+  { id: 4, name: '数据保留策略', type: '合规策略', desc: '监控数据保留90天，日志数据保留180天', created: '2024-02-01' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

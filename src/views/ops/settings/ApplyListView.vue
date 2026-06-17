@@ -47,7 +47,13 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([])
+const data = ref([
+  { id: 1, title: '数据库账号申请', type: '新建', status: 'approved', statusLabel: '已通过', createdAt: '2026-06-17 09:00:00', finishedAt: '2026-06-17 10:00:00' },
+  { id: 2, title: '服务器权限变更', type: '变更', status: 'pending', statusLabel: '待审批', createdAt: '2026-06-17 10:00:00', finishedAt: '--' },
+  { id: 3, title: 'VPN账号申请', type: '新建', status: 'rejected', statusLabel: '已拒绝', createdAt: '2026-06-17 11:00:00', finishedAt: '2026-06-17 11:30:00' },
+  { id: 4, title: 'Redis集群扩容', type: '变更', status: 'approved', statusLabel: '已通过', createdAt: '2026-06-16 14:00:00', finishedAt: '2026-06-16 16:00:00' },
+  { id: 5, title: '防火墙策略开通', type: '新建', status: 'pending', statusLabel: '待审批', createdAt: '2026-06-16 09:00:00', finishedAt: '--' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

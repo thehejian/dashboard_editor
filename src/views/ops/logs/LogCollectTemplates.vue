@@ -39,7 +39,13 @@ import { ref, onMounted } from 'vue'
 const search = ref('')
 const scene = ref(null)
 const sourceType = ref(null)
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'Nginx访问日志', scene: '应用', engine: 'iLogtail', sample: '$remote_addr - $remote_user [$time_local] "$request"', sourceType: '文件' },
+  { id: 2, name: 'MySQL慢查询', scene: '数据库', engine: 'Filebeat', sample: '# Time: $time\n# User@Host: $user', sourceType: '文件' },
+  { id: 3, name: 'Java应用日志', scene: '应用', engine: 'Logstash', sample: '%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n', sourceType: '文件' },
+  { id: 4, name: '系统日志', scene: '系统', engine: 'Rsyslog', sample: '%timegenerated %hostname %syslogtag %msg', sourceType: 'Syslog' },
+  { id: 5, name: 'K8s容器日志', scene: '容器', engine: 'Fluentd', sample: '{json结构}', sourceType: '标准输出' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

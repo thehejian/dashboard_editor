@@ -80,7 +80,12 @@ const showSuccess = ref(true)
 const storageForm1 = ref({ duration: '180' })
 const storageForm2 = ref({ duration: '180' })
 
-const forwardData = ref([])
+const forwardData = ref([
+  { id: 1, logType: '系统日志', ip: '192.168.1.100', port: '514', serverType: 'Syslog', protocol: 'TCP', enabled: true },
+  { id: 2, logType: '应用日志', ip: '192.168.1.101', port: '9200', serverType: 'Elasticsearch', protocol: 'HTTP', enabled: true },
+  { id: 3, logType: '安全日志', ip: '192.168.1.102', port: '5044', serverType: 'Logstash', protocol: 'TLS', enabled: false },
+  { id: 4, logType: '审计日志', ip: '192.168.1.103', port: '24224', serverType: 'Fluentd', protocol: 'TCP', enabled: true },
+])
 const loading = ref(false)
 
 onMounted(async () => {

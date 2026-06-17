@@ -31,7 +31,10 @@
 import { ref, onMounted } from 'vue'
 
 const stats = ref({ total: 5, running: 1, done: 12, issues: 3 })
-const plans = ref([])
+const plans = ref([
+  { id: 1, name: '每日巡检', description: '数据库每日健康巡检', schedule: '每天 09:00', targetCount: 5, status: 'active' },
+  { id: 2, name: '安全合规巡检', description: '安全基线检查', schedule: '每周一 10:00', targetCount: 20, status: 'active' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

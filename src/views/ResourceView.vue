@@ -177,8 +177,21 @@ const zoom = ref(1)
 const changeType = ref(null)
 const changeRange = ref(null)
 
-const assets = ref([])
-const changes = ref([])
+const assets = ref([
+  { id: 1, name: 'web-server-001', ip: '10.0.2.10', type: 'server', status: 'running', region: '华北区域一', createdAt: '2024-01-15', config: { cpu: 8, memory: 32, disk: 500 } },
+  { id: 2, name: 'db-primary', ip: '10.0.3.20', type: 'database', status: 'running', region: '华东区域一', createdAt: '2024-01-15', config: { cpu: 16, memory: 64, disk: 2000 } },
+  { id: 3, name: 'redis-cluster', ip: '10.0.5.10', type: 'middleware', status: 'running', region: '华东区域一', createdAt: '2024-03-01', config: { cpu: 4, memory: 16, disk: 100 } },
+  { id: 4, name: 'switch-01', ip: '10.0.254.1', type: 'network', status: 'running', region: '华北区域一', createdAt: '2023-06-01', config: { cpu: 2, memory: 8, disk: 64 } },
+  { id: 5, name: 'k8s-node-02', ip: '10.0.4.12', type: 'server', status: 'running', region: '华北区域一', createdAt: '2024-02-01', config: { cpu: 32, memory: 128, disk: 2000 } },
+  { id: 6, name: 'api-gateway', ip: '10.0.0.20', type: 'server', status: 'running', region: '华北区域一', createdAt: '2024-01-20', config: { cpu: 4, memory: 8, disk: 100 } },
+])
+const changes = ref([
+  { id: 1, type: '配置变更', resource: 'server-001', detail: '内存扩容 32G→64G', operator: '张伟', time: '2026-06-15 22:00:00' },
+  { id: 2, type: '版本升级', resource: 'api-gateway', detail: 'Kong 3.3→3.4', operator: '李娜', time: '2026-06-14 14:30:00' },
+  { id: 3, type: '配置变更', resource: '订单服务中心', detail: 'JVM参数优化', operator: '张伟', time: '2026-06-13 11:00:00' },
+  { id: 4, type: '扩容', resource: 'db-primary', detail: '磁盘扩容 500G→1T', operator: '赵敏', time: '2026-06-12 02:00:00' },
+  { id: 5, type: '版本升级', resource: 'redis-cluster', detail: 'Redis 6.2→7.0', operator: '王强', time: '2026-06-11 23:00:00' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

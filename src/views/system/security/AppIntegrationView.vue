@@ -66,7 +66,18 @@ const columns = [
   { title: '操作', key: 'action', width: 200 },
 ]
 
-const data = ref([])
+const data = ref([
+  { id: 1, name: '飞书', type: '协同办公', protocol: 'OAuth2', tenant: 'internal', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '办公工具' },
+  { id: 2, name: '企业微信', type: '协同办公', protocol: 'OAuth2', tenant: 'internal', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '办公工具' },
+  { id: 3, name: 'Jenkins', type: 'CI/CD', protocol: 'API Token', tenant: 'ops', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '运维工具' },
+  { id: 4, name: 'GitLab', type: '代码仓库', protocol: 'OAuth2', tenant: 'dev', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '开发工具' },
+  { id: 5, name: 'PagerDuty', type: '告警', protocol: 'API Key', tenant: 'ops', status: 'active', statusLabel: '已启用', hasShortcut: false, shortcutGroup: null },
+  { id: 6, name: 'Grafana', type: '监控', protocol: 'API Key', tenant: 'ops', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '监控工具' },
+  { id: 7, name: 'Zabbix', type: '监控', protocol: 'API Key', tenant: 'ops', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '监控工具' },
+  { id: 8, name: 'Sophon', type: 'AI平台', protocol: 'OAuth2', tenant: 'ai', status: 'active', statusLabel: '已启用', hasShortcut: false, shortcutGroup: null },
+  { id: 9, name: '堡垒机', type: '安全', protocol: 'LDAP', tenant: 'ops', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '安全工具' },
+  { id: 10, name: 'Wiki', type: '知识库', protocol: 'OAuth2', tenant: 'internal', status: 'active', statusLabel: '已启用', hasShortcut: true, shortcutGroup: '办公工具' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

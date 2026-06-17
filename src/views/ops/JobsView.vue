@@ -32,8 +32,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 const activeKey = ref('running')
-const runningJobs = ref([])
-const jobHistory = ref([])
+const runningJobs = ref([
+  { id: 1, name: '数据库巡检', target: 'db-primary, db-replica-02', progress: 65 },
+])
+const jobHistory = ref([
+  { id: 1, name: '全量备份', startTime: '2026-06-17 02:00:00', endTime: '2026-06-17 02:45:00', status: 'success' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

@@ -46,7 +46,13 @@ const columns = [
   { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', sorter: true },
   { title: '操作', key: 'action', width: 120 },
 ]
-const data = ref([])
+const data = ref([
+  { id: 1, name: 'tomcat_admin', mwType: 'Tomcat 9', host: '192.168.20.10', port: 8080, status: 'green', statusLabel: '正常', app: '业务系统A', user: '张运维', createdAt: '2024/01/15 09:00:00' },
+  { id: 2, name: 'nginx_ops', mwType: 'Nginx 1.24', host: '192.168.20.20', port: 443, status: 'green', statusLabel: '正常', app: '统一网关', user: '李运维', createdAt: '2024/03/20 10:30:00' },
+  { id: 3, name: 'kafka_admin', mwType: 'Kafka 3.5', host: '192.168.20.30', port: 9092, status: 'red', statusLabel: '异常', app: '消息平台', user: '王运维', createdAt: '2024/06/10 14:00:00' },
+  { id: 4, name: 'zk_admin', mwType: 'ZooKeeper 3.8', host: '192.168.20.40', port: 2181, status: 'green', statusLabel: '正常', app: '配置中心', user: '赵运维', createdAt: '2024/08/05 11:20:00' },
+  { id: 5, name: 'rabbitmq_admin', mwType: 'RabbitMQ 3.12', host: '192.168.20.50', port: 5672, status: 'yellow', statusLabel: '警告', app: '消息队列', user: '张运维', createdAt: '2024/02/28 16:45:00' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

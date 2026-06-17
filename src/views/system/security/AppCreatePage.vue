@@ -186,7 +186,7 @@
       </template>
       <template v-if="step === 2">
         <a-button @click="step = 1">上一步</a-button>
-        <a-button type="primary" @click="confirmCreate">完成</a-button>
+        <a-button type="primary" :loading="submitting" @click="confirmCreate">完成</a-button>
       </template>
     </div>
 
@@ -203,6 +203,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 
 const router = useRouter()
 const step = ref(1)
@@ -264,8 +265,38 @@ function goBack() {
   router.push('/system/security/app-integration')
 }
 
-function confirmCreate() {
-  goBack()
+const submitting = ref(false)
+
+async function confirmCreate() {
+  submitting.value = true
+  try {
+    const body = {
+      name: form.name,
+      type: form.appType,
+      protocol: selectedProtocol.value,
+      tenant: form.tenant,
+      status: form.enabled ? 'active' : 'disabled',
+      has_shortcut: form.quickEntry === 'yes',
+      shortcut_group: form.shortcutGroup,
+      description: form.description,
+    }
+    const res = await fetch('/api/cmdb/applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await res.json()
+    if (json.success) {
+      message.success('应用创建成功')
+      goBack()
+    } else {
+      message.error(json.error || '创建失败')
+    }
+  } catch (e) {
+    message.error('网络错误')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

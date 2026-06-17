@@ -43,7 +43,12 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status' },
   { title: '操作', key: 'action', width: 120 },
 ]
-const data = ref([])
+const data = ref([
+  { id: 1, name: '中间件默认策略', minLen: '12', expireDays: 90, lockThreshold: 5, lockDuration: 30, timeout: 15, scope: '全部中间件', status: 'green', statusLabel: '启用' },
+  { id: 2, name: 'Nginx代理策略', minLen: '14', expireDays: 60, lockThreshold: 3, lockDuration: 60, timeout: 10, scope: 'Nginx实例', status: 'green', statusLabel: '启用' },
+  { id: 3, name: '消息队列策略', minLen: '16', expireDays: 30, lockThreshold: 3, lockDuration: 120, timeout: 5, scope: 'Kafka/RabbitMQ', status: 'yellow', statusLabel: '停用' },
+  { id: 4, name: '开发测试策略', minLen: '8', expireDays: 180, lockThreshold: 10, lockDuration: 15, timeout: 30, scope: '开发环境', status: 'green', statusLabel: '启用' },
+])
 const loading = ref(false)
 
 onMounted(async () => {

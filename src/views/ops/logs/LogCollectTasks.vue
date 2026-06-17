@@ -62,7 +62,13 @@ const status = ref(null)
 const resourceType1 = ref(null)
 const resourceType2 = ref(null)
 const deployStatus = ref(null)
-const data = ref([])
+const data = ref([
+  { id: 1, name: '应用日志采集', scene: '应用', enabled: true, resType1: '应用', resType2: '', target: '所有应用节点', region: '华北区域一', deployStatus: 'deployed', lastCollect: '2026-06-17 10:30:00' },
+  { id: 2, name: 'DB错误日志', scene: '数据库', enabled: true, resType1: '数据库', resType2: '', target: '数据库集群', region: '华北区域一,华东区域一', deployStatus: 'deployed', lastCollect: '2026-06-17 10:30:00' },
+  { id: 3, name: '安全审计日志', scene: '安全', enabled: true, resType1: '安全', resType2: '', target: '所有节点', region: '全部区域', deployStatus: 'deployed', lastCollect: '2026-06-17 10:30:00' },
+  { id: 4, name: '中间件日志', scene: '中间件', enabled: false, resType1: '中间件', resType2: '', target: 'Redis/Kafka节点', region: '华南区域', deployStatus: 'pending', lastCollect: null },
+  { id: 5, name: '网络设备日志', scene: '网络', enabled: true, resType1: '网络', resType2: '', target: '核心交换机', region: '华北区域一', deployStatus: 'deployed', lastCollect: '2026-06-17 10:25:00' },
+])
 const loading = ref(false)
 
 onMounted(async () => {
