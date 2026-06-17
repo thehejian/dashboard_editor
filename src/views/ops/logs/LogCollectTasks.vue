@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const search = ref('')
@@ -62,13 +62,36 @@ const status = ref(null)
 const resourceType1 = ref(null)
 const resourceType2 = ref(null)
 const deployStatus = ref(null)
-const data = ref([
-  { id: 1, name: 'ECS-异常采集', scene: '异常日志', enabled: true, resType1: '云服务', resType2: '微服务', target: 'ecs-service(4)', region: '华北2', deployStatus: '已下发', lastCollect: '2026-05-20 14:35:20' },
-  { id: 2, name: 'RDS-全量采集', scene: '全量日志', enabled: true, resType1: '云服务', resType2: '微服务', target: 'rds-service(2)', region: '华东1', deployStatus: '已下发', lastCollect: '2026-05-20 14:30:00' },
-  { id: 3, name: '物理机-系统日志', scene: '自定义', enabled: false, resType1: '物理资源', resType2: '虚拟机', target: '192.168.1.10(1)', region: '华北2', deployStatus: '待下发', lastCollect: '-' },
-  { id: 4, name: '交换机-流量采集', scene: '全量日志', enabled: true, resType1: '云资源', resType2: '交换机', target: 'sw-core-01(1)', region: '华东1', deployStatus: '下发中', lastCollect: '2026-05-20 14:20:00' },
-  { id: 5, name: 'API网关-错误日志', scene: '异常日志', enabled: true, resType1: '云服务', resType2: '微服务', target: 'api-gateway(3)', region: '华北2', deployStatus: '已下发', lastCollect: '2026-05-20 14:35:18' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/log_collect_tasks?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          scene: item.scene,
+          enabled: item.enabled,
+          resType1: item.scene,
+          resType2: '',
+          target: item.target,
+          region: item.region,
+          deployStatus: item.deploy_status,
+          lastCollect: item.last_collect,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '任务名', dataIndex: 'name' },
   { title: '场景类型', key: 'scene', width: 110 },

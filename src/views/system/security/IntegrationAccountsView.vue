@@ -29,16 +29,36 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const search = ref('')
 const filterProvider = ref(null)
 const providers = ['企业微信', '阿里云 RAM', 'LDAP 目录服务']
-const data = ref([
-  { id: 1, name: 'ops_bot', provider: '企业微信', status: 'active', lastSync: '2025-05-19 10:30:00' },
-  { id: 2, name: 'aliyun_ram_role', provider: '阿里云 RAM', status: 'active', lastSync: '2025-05-19 09:15:00' },
-  { id: 3, name: 'ldap_sync_user', provider: 'LDAP 目录服务', status: 'error', lastSync: '2025-05-19 08:00:00' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/integration_accounts?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          provider: item.provider,
+          status: item.status,
+          lastSync: item.last_sync,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const filteredData = computed(() => data.value.filter(d =>
   (!filterProvider.value || d.provider === filterProvider.value) &&
   (!search.value || d.name.includes(search.value))

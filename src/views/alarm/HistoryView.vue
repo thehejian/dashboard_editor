@@ -24,20 +24,33 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const search = ref('')
 const level = ref(null)
 const scrollY = ref(500)
-const historyData = ref([
-  { id: 101, level: 'critical', title: '网络延迟过高', resource: 'lb-001', time: '2026-05-17 08:30', duration: '15分钟', status: 'resolved' },
-  { id: 102, level: 'warning', title: '数据库连接池满', resource: 'db-002', time: '2026-05-16 14:20', duration: '30分钟', status: 'resolved' },
-  { id: 103, level: 'info', title: '磁盘IO等待过高', resource: 'vm-003', time: '2026-05-15 22:10', duration: '8分钟', status: 'resolved' },
-  { id: 104, level: 'critical', title: '服务不可用', resource: 'api-gateway', time: '2026-05-15 18:45', duration: '5分钟', status: 'resolved' },
-  { id: 105, level: 'warning', title: 'SSL证书即将过期', resource: '*.example.com', time: '2026-05-14 09:00', duration: '1小时', status: 'processing' },
-  { id: 106, level: 'critical', title: 'K8s节点NotReady', resource: 'k8s-node-02', time: '2026-05-13 15:30', duration: '12分钟', status: 'resolved' },
-  { id: 107, level: 'warning', title: 'MySQL慢查询增多', resource: 'db-master-01', time: '2026-05-12 11:20', duration: '40分钟', status: 'resolved' },
-  { id: 108, level: 'info', title: '备份任务失败', resource: 'backup-srv', time: '2026-05-12 03:00', duration: '4小时', status: 'processing' },
-  { id: 109, level: 'warning', title: 'Redis内存使用率过高', resource: 'redis-session', time: '2026-05-11 14:15', duration: '25分钟', status: 'resolved' },
-  { id: 110, level: 'critical', title: '负载均衡后端离线', resource: 'slb-prod', time: '2026-05-10 09:30', duration: '10分钟', status: 'resolved' },
-  { id: 111, level: 'info', title: '日志磁盘使用率超阈值', resource: 'log-collector', time: '2026-05-09 20:00', duration: '3小时', status: 'resolved' },
-  { id: 112, level: 'warning', title: '容器OOMKilled', resource: 'order-service', time: '2026-05-09 10:45', duration: '6分钟', status: 'resolved' },
-])
+const historyData = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/alerts?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      historyData.value = json.data.filter(function(i) { return i.status !== 'firing' }).map(function(item) {
+        return {
+          id: item.id,
+          level: item.level,
+          title: item.title,
+          resource: item.resource,
+          time: item.trigger_time,
+          duration: item.duration,
+          status: item.status,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载历史告警失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '告警标题', dataIndex: 'title', ellipsis: true },
   { title: '资源', dataIndex: 'resource', ellipsis: true },

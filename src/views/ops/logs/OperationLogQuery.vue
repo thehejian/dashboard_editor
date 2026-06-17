@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const activeTab = ref('admin')
 
@@ -117,12 +117,47 @@ const timeBtns = [
 const adminForm = reactive({ logType: null, timeBtn: '1hour', hostname: '', detail: '' })
 const tenantForm = reactive({ timeBtn: '1hour' })
 
-const adminData = ref([
-  { id: 1, hostname: 'TDNS-TNTP02', detail: '<133> Sep 24 09:01:44 TDNS-TNTP02 sshd[3748822]: sudo: monitor : PWD=/home ; USER=root ; COMMAND=...', time: '2025-09-24 09:01:52', protocol: 'syslog' },
-  { id: 2, hostname: 'HAPROXY01', detail: '<133>Sep 24 09:01:51 HAPROXY01 sshd[2421823]: sudo: monitor : PWD=/home ; USER=root ; COMMAND=...', time: '2025-09-24 09:01:52', protocol: 'syslog' },
-  { id: 3, hostname: 'CPT-SRV01', detail: '<133> Sep 24 09:01:36 CPT-SRV01 sshd[3242119]: sudo: monitor : PWD=/home ; USER=root ; COMMAND=...', time: '2025-09-24 09:01:42', protocol: 'syslog' },
-  { id: 4, hostname: 'OM-SRV01', detail: '<133>Sep 24 09:01:37 OM-SRV01 sshd[3785363]: sudo: monitor : PWD=/home ; USER=root ; COMMAND=...', time: '2025-09-24 09:01:42', protocol: 'syslog' },
-])
+const adminData = ref([])
+const tenantData = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/operation_logs?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      var admin = json.data.map(function(item) {
+        return {
+          id: item.id,
+          hostname: item.hostname,
+          detail: item.detail,
+          time: item.time,
+          protocol: item.protocol,
+        }
+      })
+      var tenant = json.data.map(function(item) {
+        return {
+          id: item.id,
+          event: item.event,
+          resource: item.resource,
+          level: item.level,
+          result: item.result,
+          user: item.user,
+          ip: item.ip,
+          time: item.time,
+          trace: item.trace,
+        }
+      })
+      adminData.value = admin
+      tenantData.value = tenant
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const adminColumns = [
   { title: '主机名', dataIndex: 'hostname', width: 140 },
@@ -132,16 +167,6 @@ const adminColumns = [
 ]
 
 const adminPagination = { pageSize: 10, total: 153 }
-
-const tenantData = ref([
-  { id: 1, event: '文件对象上传', resource: 'eec52ddd-3969-4b5f-8d2a-1c3e5f7a9b0c', level: '一般', result: '成功', user: 'vdc_admin', ip: '71.49.130.13', time: '2025-09-24 09:34:51', trace: '--' },
-  { id: 2, event: '用户登录', resource: 'bss_admin', level: '一般', result: '成功', user: 'bss_admin', ip: '52.153.240.13', time: '2025-09-24 09:34:43', trace: '--' },
-  { id: 3, event: '强制注销会话', resource: '会话管理', level: '危险', result: '成功', user: 'thirdparty', ip: '71.49.130.61', time: '2025-09-24 09:33:42', trace: '--' },
-  { id: 4, event: '删除协议模板', resource: '资源发现', level: '一般', result: '失败', user: 'bss_admin', ip: '52.153.242.101', time: '2025-09-24 09:33:33', trace: '--' },
-  { id: 5, event: '创建会话', resource: '会话管理', level: '一般', result: '成功', user: 'bss_admin', ip: '52.153.242.101', time: '2025-09-24 09:33:31', trace: '--' },
-  { id: 6, event: '用户登录', resource: 'bss_admin', level: '一般', result: '成功', user: 'bss_admin', ip: '52.153.242.101', time: '2025-09-24 09:33:31', trace: '--' },
-  { id: 7, event: '导出订单', resource: 'report-订单-ADEE-20250924-001', level: '一般', result: '成功', user: 'bss_admin', ip: '52.153.241.55', time: '2025-09-24 09:33:28', trace: '--' },
-])
 
 const tenantColumns = [
   { title: '事件名称', dataIndex: 'event', width: 120, sorter: true },

@@ -139,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const activeTab = ref('jobs')
 const jobsSubTab = ref('running')
@@ -150,32 +150,45 @@ const logSearch = ref('')
 const logModalVisible = ref(false)
 const logContent = ref('')
 
-const runningJobs = ref([
-  { id: 1, name: '批量更新安全组规则', target: '华东区域-所有服务器', progress: 65, startTime: '14:30' },
-  { id: 2, name: '数据库备份任务', target: '主库集群', progress: 30, startTime: '14:25' },
-])
-
-const jobHistory = ref([
-  { id: 101, name: '日志清理任务', target: '全部服务器', startTime: '2026-05-17 10:00', endTime: '10:05', duration: '5分钟', status: 'success' },
-  { id: 102, name: '证书续期', target: 'API网关', startTime: '2026-05-16 14:00', endTime: '14:02', duration: '2分钟', status: 'success' },
-])
-
-const scripts = ref([
-  { id: 1, name: '系统健康检查', description: '检查服务器CPU/内存/磁盘状态', type: 'Shell', updateTime: '2026-05-10' },
-  { id: 2, name: '日志清理', description: '清理7天前的日志文件', type: 'Python', updateTime: '2026-05-08' },
-])
-
-const logs = ref([
-  { id: 1, level: 'error', source: 'api', time: '14:35:20', message: 'Connection timeout to database db-primary' },
-  { id: 2, level: 'warn', source: 'worker', time: '14:34:15', message: 'Task queue is accumulating' },
-  { id: 3, level: 'info', source: 'api', time: '14:33:10', message: 'User admin logged in' },
-])
-
+const runningJobs = ref([])
+const jobHistory = ref([])
+const scripts = ref([])
+const logs = ref([])
 const inspectStats = ref({ total: 5, running: 1, done: 12, issues: 3 })
-const inspectPlans = ref([
-  { id: 1, name: '日常健康检查', description: '每日服务器基础指标检查', schedule: '每天 00:00', targetCount: 50, status: 'scheduled' },
-  { id: 2, name: '周安全巡检', description: '每周安全基线检查', schedule: '每周一 03:00', targetCount: 100, status: 'running' },
-])
+const inspectPlans = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const [jobsRes, histRes, logsRes, plansRes] = await Promise.all([
+      fetch('/api/cmdb/jobs?status=running&sort=id&order=ASC'),
+      fetch('/api/cmdb/job_history?sort=id&order=DESC&pageSize=2'),
+      fetch('/api/cmdb/operation_logs?sort=id&order=DESC&pageSize=3'),
+      fetch('/api/cmdb/inspection_plans?sort=id&order=ASC'),
+    ])
+    const jobsJson = await jobsRes.json()
+    const histJson = await histRes.json()
+    const logsJson = await logsRes.json()
+    const plansJson = await plansRes.json()
+    if (jobsJson.success) {
+      runningJobs.value = jobsJson.data.map(function(i) { return { id: i.id, name: i.name, target: i.target, progress: i.progress, startTime: i.start_time } })
+    }
+    if (histJson.success) {
+      jobHistory.value = histJson.data.map(function(i) { return { id: i.id, name: i.name, target: i.target, startTime: i.start_time, endTime: i.end_time, duration: i.duration, status: i.status } })
+    }
+    if (logsJson.success) {
+      logs.value = logsJson.data.map(function(i) { return { id: i.id, level: i.level, source: i.hostname, time: i.time, message: i.detail } })
+    }
+    if (plansJson.success) {
+      inspectPlans.value = plansJson.data.map(function(i) { return { id: i.id, name: i.name, description: i.description, schedule: i.schedule, targetCount: i.target_count, status: i.status } })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const jobColumns = [
   { title: '任务名称', dataIndex: 'name' }, { title: '目标', dataIndex: 'target' },

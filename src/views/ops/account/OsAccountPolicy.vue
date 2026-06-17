@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const search = ref('')
 const selectedRowKeys = ref([])
@@ -52,12 +52,37 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([
-  { id: 1, name: '服务器默认策略', minLen: '12', expireDays: 90, lockThreshold: 5, lockDuration: 30, timeout: 15, scope: '全部服务器', status: 'green', statusLabel: '启用' },
-  { id: 2, name: '数据库服务器策略', minLen: '16', expireDays: 60, lockThreshold: 3, lockDuration: 60, timeout: 10, scope: '数据库服务器', status: 'green', statusLabel: '启用' },
-  { id: 3, name: '开发环境策略', minLen: '8', expireDays: 180, lockThreshold: 10, lockDuration: 15, timeout: 30, scope: '开发服务器', status: 'green', statusLabel: '启用' },
-  { id: 4, name: '堡垒机托管策略', minLen: '14', expireDays: 30, lockThreshold: 3, lockDuration: 120, timeout: 5, scope: '堡垒机资产', status: 'yellow', statusLabel: '停用' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/account_policies?account_type=OS&sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          minLen: item.min_len,
+          expireDays: item.expire_days,
+          lockThreshold: item.lock_threshold,
+          lockDuration: item.lock_duration,
+          timeout: item.timeout,
+          mfa: item.mfa,
+          scope: item.scope,
+          status: item.status,
+          statusLabel: item.status_label,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

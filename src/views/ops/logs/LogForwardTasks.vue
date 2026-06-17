@@ -39,16 +39,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 const search = ref('')
 const targetType = ref(null)
 const enabled = ref(null)
-const data = ref([
-  { id: 1, name: '异常日志-Kafka', targetType: 'Kafka', targetAddr: '10.0.2.20:9092', forwardContent: ['操作日志', '运行日志'], enabled: true, lastForward: '2026-05-20 14:35:22' },
-  { id: 2, name: '安全审计-Syslog', targetType: 'Syslog', targetAddr: '192.168.1.100:514', forwardContent: ['操作日志'], enabled: true, lastForward: '2026-05-20 14:35:20' },
-  { id: 3, name: '全量日志-ES', targetType: 'ES', targetAddr: '10.0.3.10:9200', forwardContent: ['运行日志', '告警'], enabled: false, lastForward: '2026-05-19 10:00:00' },
-  { id: 4, name: '告警推送-HTTP', targetType: 'HTTP', targetAddr: 'https://webhook.company.com/alert', forwardContent: ['告警'], enabled: true, lastForward: '2026-05-20 14:30:00' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/log_forward_tasks?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          targetType: item.target_type,
+          targetAddr: item.target_addr,
+          forwardContent: item.forward_content || [],
+          enabled: item.enabled,
+          lastForward: item.last_forward,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '任务名', dataIndex: 'name' },
   { title: '目标类型', key: 'targetType', width: 100 },

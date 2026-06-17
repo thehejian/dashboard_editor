@@ -162,7 +162,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const activeTab = ref('list')
 const searchText = ref('')
@@ -177,22 +177,52 @@ const zoom = ref(1)
 const changeType = ref(null)
 const changeRange = ref(null)
 
-const assets = ref([
-  { id: 1, name: 'web-server-001', ip: '10.0.2.10', type: 'server', status: 'running', region: '华北区域一', createdAt: '2025-03-15', config: { CPU: '8核', 内存: '16GB', 磁盘: '500GB SSD' } },
-  { id: 2, name: 'web-server-002', ip: '10.0.2.11', type: 'server', status: 'running', region: '华北区域一', createdAt: '2025-03-15', config: { CPU: '8核', 内存: '16GB', 磁盘: '500GB SSD' } },
-  { id: 3, name: 'db-primary', ip: '10.0.3.20', type: 'database', status: 'running', region: '华东区域一', createdAt: '2025-01-20', config: { 引擎: 'MySQL 8.0', 规格: '4核16GB', 存储: '1TB' } },
-  { id: 4, name: 'db-replica', ip: '10.0.3.21', type: 'database', status: 'running', region: '华东区域一', createdAt: '2025-01-20', config: { 引擎: 'MySQL 8.0', 规格: '4核16GB', 存储: '1TB' } },
-  { id: 5, name: 'core-switch', ip: '10.0.1.1', type: 'network', status: 'running', region: '华北区域一', createdAt: '2024-12-01', config: { 型号: 'Cisco 9300', 端口: '48口', 带宽: '10Gbps' } },
-  { id: 6, name: 'storage-array', ip: '10.0.6.10', type: 'storage', status: 'maintenance', region: '华南区域一', createdAt: '2025-02-10', config: { 容量: '100TB', 类型: 'NAS', RAID: 'RAID10' } },
-])
+const assets = ref([])
+const changes = ref([])
+const loading = ref(false)
 
-const changes = ref([
-  { id: 1, type: 'update', resource: 'web-server-001', detail: '扩容CPU从4核到8核', operator: 'admin', time: '2026-05-17 14:30' },
-  { id: 2, type: 'maintenance', resource: 'storage-array', detail: '例行维护', operator: '运维', time: '2026-05-16 10:00' },
-  { id: 3, type: 'create', resource: 'k8s-node-005', detail: '新增K8s节点', operator: 'admin', time: '2026-05-15 16:20' },
-  { id: 4, type: 'update', resource: 'db-primary', detail: '调整安全组策略', operator: 'secops', time: '2026-05-14 09:15' },
-  { id: 5, type: 'delete', resource: 'temp-server-01', detail: '回收临时资源', operator: 'admin', time: '2026-05-13 18:00' },
-])
+onMounted(async () => {
+  loading.value = true
+  try {
+    const [assetsRes, changesRes] = await Promise.all([
+      fetch('/api/cmdb/ci?sort=id&order=ASC'),
+      fetch('/api/cmdb/resource_changes?sort=id&order=ASC'),
+    ])
+    const assetsJson = await assetsRes.json()
+    const changesJson = await changesRes.json()
+    if (assetsJson.success) {
+      assets.value = assetsJson.data.map(function(item) {
+        var typeMap = { 1: 'server', 2: 'database', 3: 'middleware', 4: 'network' }
+        return {
+          id: item.id,
+          name: item.name,
+          ip: item.ip,
+          type: typeMap[item.ci_type_id] || 'server',
+          status: item.status,
+          region: item.region,
+          createdAt: item.created_at,
+          config: { cpu: item.metadata ? item.metadata.cpu || 4 : 4, memory: item.metadata ? item.metadata.memory || 16 : 16, disk: item.metadata ? item.metadata.disk || 500 : 500 },
+        }
+      })
+    }
+    if (changesJson.success) {
+      changes.value = changesJson.data.map(function(item) {
+        return {
+          id: item.id,
+          type: item.type,
+          resource: item.resource,
+          detail: item.detail,
+          operator: item.operator,
+          time: item.time,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const columns = [
   { title: '名称', dataIndex: 'name', key: 'name' },

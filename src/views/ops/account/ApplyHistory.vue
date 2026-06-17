@@ -31,7 +31,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 const search = ref('')
 const selectedRowKeys = ref([])
 function onSelectChange(keys) { selectedRowKeys.value = keys }
@@ -45,13 +45,35 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status' },
   { title: '操作', key: 'action', width: 120 },
 ]
-const data = ref([
-  { id: 1, name: 'db_readonly', resType: 'MySQL', reason: '日常查询需要', applicant: '张三', approver: '李运维', createdAt: '2026/05/21 10:30:00', status: 'green', statusLabel: '已通过' },
-  { id: 2, name: 'op_developer', resType: 'OP账号', reason: '开发环境部署', applicant: '王五', approver: '李运维', createdAt: '2026/05/20 14:15:00', status: 'yellow', statusLabel: '审批中' },
-  { id: 3, name: 'ssh_bastion', resType: '操作系统', reason: '堡垒机接入', applicant: '赵六', approver: '--', createdAt: '2026/05/19 09:00:00', status: 'red', statusLabel: '已拒绝' },
-  { id: 4, name: 'kafka_producer', resType: '中间件', reason: '消息生产接入', applicant: '张三', approver: '李运维', createdAt: '2026/05/18 16:45:00', status: 'green', statusLabel: '已通过' },
-  { id: 5, name: 'switch_viewer', resType: '网络设备', reason: '巡检需要', applicant: '王五', approver: '--', createdAt: '2026/05/17 11:20:00', status: 'yellow', statusLabel: '审批中' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/app_orders?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          resType: item.res_type,
+          reason: item.reason,
+          applicant: item.applicant,
+          approver: item.approver,
+          createdAt: item.created_at,
+          status: item.status === 'approved' ? 'green' : item.status === 'rejected' ? 'red' : 'yellow',
+          statusLabel: item.status_label,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

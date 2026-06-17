@@ -164,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const emit = defineEmits(['close'])
 
@@ -189,17 +189,33 @@ const rightSearch = ref('')
 const leftSelected = ref([])
 const rightSelected = ref([])
 
-const leftApps = ref(
-  Array.from({ length: 10 }, (_, i) => ({
-    id: i + 1,
-    name: i === 0 ? 'Turnkey' : `App${String(i + 1).padStart(2, '0')}`,
-    type: 'OAuth2/OIDC',
-    status: 'enabled',
-    statusLabel: '已启用',
-    description: '--',
-  }))
-)
+const leftApps = ref([])
 const rightApps = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/app_list?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      leftApps.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          status: item.status,
+          statusLabel: item.status === 'active' ? '已启用' : '已停用',
+          description: item.description || '--',
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const appColumns = [
   { title: '应用名称', dataIndex: 'name', key: 'name' },

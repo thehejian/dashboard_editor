@@ -30,10 +30,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 const activeKey = ref('running')
-const runningJobs = ref([{ id: 1, name: '批量更新安全组规则', target: '华东区域', progress: 65 }])
-const jobHistory = ref([{ id: 101, name: '日志清理任务', startTime: '2026-05-17 10:00', endTime: '10:05', status: 'success' }])
+const runningJobs = ref([])
+const jobHistory = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const [jobsRes, historyRes] = await Promise.all([
+      fetch('/api/cmdb/jobs?status=running&sort=id&order=ASC'),
+      fetch('/api/cmdb/job_history?sort=id&order=ASC'),
+    ])
+    const jobsJson = await jobsRes.json()
+    const historyJson = await historyRes.json()
+    if (jobsJson.success) {
+      runningJobs.value = jobsJson.data.map(function(item) {
+        return { id: item.id, name: item.name, target: item.target, progress: item.progress }
+      })
+    }
+    if (historyJson.success) {
+      jobHistory.value = historyJson.data.map(function(item) {
+        return { id: item.id, name: item.name, startTime: item.start_time, endTime: item.end_time, status: item.status }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [{ title: '任务名称', dataIndex: 'name' }, { title: '开始', dataIndex: 'startTime' }, { title: '结束', dataIndex: 'endTime' }, { title: '状态', key: 'status' }]
 const stopJob = (id) => { runningJobs.value = runningJobs.value.filter(j => j.id !== id) }
 </script>

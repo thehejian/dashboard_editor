@@ -1187,6 +1187,45 @@ onMounted(() => {
   renderMainDonutChart()
 })
 
+onMounted(async function() {
+  try {
+    const [overviewRes, alertsRes] = await Promise.all([
+      fetch('/api/cmdb/dashboard/overview'),
+      fetch('/api/cmdb/alerts?sort=id&order=DESC&pageSize=5'),
+    ])
+    const overview = await overviewRes.json()
+    const alerts = await alertsRes.json()
+
+    if (overview.success) {
+      var ov = overview.data
+      kpiCards.splice(0, kpiCards.length,
+        { title: '监控对象', value: String(ov.ciTotal), trend: undefined, trendText: '+2', icon: 'fa-cubes', iconBg: 'rgba(24,144,255,0.1)', iconColor: '#1890FF', sub: '配置项总数' },
+        { title: '活跃告警', value: String(ov.firingAlerts), trend: undefined, trendText: '+1', icon: 'fa-exclamation-circle', iconBg: 'rgba(245,34,45,0.1)', iconColor: '#F5222D', sub: '需立即处理' },
+        { title: '活跃用户', value: String(ov.activeUsers), trend: undefined, trendText: '', icon: 'fa-user-check', iconBg: 'rgba(82,196,26,0.1)', iconColor: '#52C41A', sub: '今日登录' },
+        { title: '运行作业', value: String(ov.runningJobs), trend: undefined, trendText: '', icon: 'fa-play-circle', iconBg: 'rgba(250,140,22,0.1)', iconColor: '#FA8C16', sub: '进行中' },
+      )
+    }
+
+    if (alerts.success) {
+      alertEvents.splice(0, alertEvents.length,
+        ...alerts.data.map(function(item) {
+          return {
+            id: item.id,
+            time: item.trigger_time,
+            ciName: (item.resource || '').split('(')[0].trim(),
+            ciType: item.level,
+            event: item.title,
+            level: item.level,
+            status: item.status,
+          }
+        })
+      )
+    }
+  } catch (e) {
+    console.error('加载仪表盘数据失败:', e)
+  }
+})
+
 onBeforeUnmount(() => {
   if (alertTrendChart) { alertTrendChart.destroy(); alertTrendChart = null }
   if (healthTrendChart) { healthTrendChart.destroy(); healthTrendChart = null }

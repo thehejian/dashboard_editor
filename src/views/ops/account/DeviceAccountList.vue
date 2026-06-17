@@ -31,7 +31,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 const search = ref('')
 const selectedRowKeys = ref([])
 function onSelectChange(keys) { selectedRowKeys.value = keys }
@@ -45,13 +45,45 @@ const columns = [
   { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', sorter: true },
   { title: '操作', key: 'action', width: 120 },
 ]
-const data = ref([
-  { id: 1, name: 'switch_admin', devType: '华为交换机', ip: '10.0.1.1', status: 'green', statusLabel: '正常', location: '机房A-01柜', user: '张运维', createdAt: '2024/01/15 09:00:00' },
-  { id: 2, name: 'fw_admin', devType: '山石防火墙', ip: '10.0.0.254', status: 'green', statusLabel: '正常', location: '机房A-02柜', user: '李运维', createdAt: '2024/03/20 10:30:00' },
-  { id: 3, name: 'ups_admin', devType: 'UPS电源', ip: '10.0.100.10', status: 'red', statusLabel: '离线', location: '机房B电力间', user: '王运维', createdAt: '2024/06/10 14:00:00' },
-  { id: 4, name: 'ilo_admin', devType: 'iLO带外', ip: '10.0.200.50', status: 'green', statusLabel: '正常', location: '机房A管理网', user: '赵运维', createdAt: '2024/08/05 11:20:00' },
-  { id: 5, name: 'camera_admin', devType: '监控摄像头', ip: '10.0.50.5', status: 'yellow', statusLabel: '告警', location: '机房A-03柜', user: '张运维', createdAt: '2024/02/28 16:45:00' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/accounts?account_type=DEVICE&sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          devType: item.dev_type,
+          ip: item.ip,
+          host: item.host,
+          port: item.port,
+          instance: item.instance,
+          dbType: item.db_type,
+          mwType: item.mw_type,
+          osType: item.os_type,
+          system: item.system,
+          status: item.status,
+          statusLabel: item.status_label,
+          location: item.location,
+          user: item.user,
+          role: item.role,
+          lastLogin: item.last_login,
+          app: item.app,
+          createdAt: item.created_at,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

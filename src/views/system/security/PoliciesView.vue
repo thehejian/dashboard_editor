@@ -29,16 +29,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const search = ref('')
 const filterType = ref(null)
-const data = ref([
-  { id: 1, name: 'AdministratorAccess', type: 'system', desc: '完全管理所有资源的权限', created: '2024-01-01' },
-  { id: 2, name: 'ReadOnlyAccess', type: 'system', desc: '只读访问所有资源的权限', created: '2024-01-01' },
-  { id: 3, name: 'MonitorFullAccess', type: 'custom', desc: '监控系统完全管理权限', created: '2024-03-15' },
-  { id: 4, name: 'DBReadOnly', type: 'custom', desc: '数据库只读访问权限', created: '2024-05-20' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/policies?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          desc: item.description,
+          created: item.created_at,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '策略名称', dataIndex: 'name' },
   { title: '类型', key: 'type', width: 100 },

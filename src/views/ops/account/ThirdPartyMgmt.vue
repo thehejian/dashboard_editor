@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const search = ref('')
 const selectedRowKeys = ref([])
@@ -54,13 +54,35 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([
-  { id: 1, name: '企业微信', appId: 'wxCorp123456', protocol: 'OAuth2/OIDC', syncMethod: '自动同步', lastSync: '2026/05/22 08:00:00', bindCount: 156, status: 'green', statusLabel: '已接入' },
-  { id: 2, name: '钉钉', appId: 'ding789012', protocol: 'OAuth2/OIDC', syncMethod: '自动同步', lastSync: '2026/05/22 08:00:00', bindCount: 89, status: 'green', statusLabel: '已接入' },
-  { id: 3, name: '飞书', appId: 'feishu345678', protocol: 'OAuth2/OIDC', syncMethod: '手动同步', lastSync: '2026/05/20 14:30:00', bindCount: 42, status: 'green', statusLabel: '已接入' },
-  { id: 4, name: 'LDAP', appId: 'ldap901234', protocol: 'LDAP', syncMethod: '自动同步', lastSync: '2026/05/22 06:00:00', bindCount: 320, status: 'green', statusLabel: '已接入' },
-  { id: 5, name: 'JumpServer堡垒机', appId: 'jms567890', protocol: 'SSH/RDP', syncMethod: '自动同步', lastSync: '2026/05/21 23:59:00', bindCount: 78, status: 'red', statusLabel: '连接异常' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/integration_accounts?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          appId: item.provider,
+          protocol: 'OAuth2/OIDC',
+          syncMethod: '自动同步',
+          lastSync: item.last_sync,
+          bindCount: 0,
+          status: item.status,
+          statusLabel: item.status,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

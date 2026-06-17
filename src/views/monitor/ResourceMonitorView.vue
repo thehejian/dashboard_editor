@@ -1,110 +1,581 @@
 <template>
-  <div class="page-view">
-    <div class="page-header"><h2>资源监控</h2></div>
-
-    <div class="resource-categories">
-      <button class="cat-btn" :class="{ active: cat === 'all' }" @click="cat = 'all'">全部</button>
-      <button class="cat-btn" :class="{ active: cat === 'app' }" @click="cat = 'app'">业务应用</button>
-      <button class="cat-btn" :class="{ active: cat === 'cloud' }" @click="cat = 'cloud'">云服务</button>
-      <button class="cat-btn" :class="{ active: cat === 'resource' }" @click="cat = 'resource'">云资源</button>
-      <button class="cat-btn" :class="{ active: cat === 'physical' }" @click="cat = 'physical'">物理资源</button>
+  <div class="resource-monitor">
+    <div class="page-header">
+      <h2>资源监控</h2>
     </div>
 
-    <div class="resource-filter">
-      <a-input-search v-model:value="search" placeholder="搜索资源名称" style="width: 240px" />
-      <a-select v-model:value="statusFilter" placeholder="状态" style="width: 120px" allowClear>
-        <a-select-option value="正常">正常</a-select-option>
-        <a-select-option value="警告">警告</a-select-option>
-        <a-select-option value="异常">异常</a-select-option>
-      </a-select>
+    <div class="alert-cards">
+      <div class="alert-card" v-for="item in alertCards" :key="item.label">
+        <div class="card-body">
+          <div class="card-info">
+            <div class="card-number">
+              <span class="num-alert" :class="{ zero: item.alertCount === 0 }">{{ item.alertCount }}</span>
+              <span class="num-total">/{{ item.total }}</span>
+            </div>
+            <div class="card-label">{{ item.label }}</div>
+          </div>
+          <div class="card-icon-wrap" :style="{ background: item.iconBg }">
+            <i :class="item.icon"></i>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <a-table :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10 }" row-key="id">
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
+    <div class="filter-section">
+      <div class="filter-row">
+        <span class="filter-label">资源类别</span>
+        <div class="tab-group">
+          <button
+            v-for="tab in mainTabs"
+            :key="tab.key"
+            class="tab-btn"
+            :class="{ active: mainTab === tab.key }"
+            @click="mainTab = tab.key"
+          >{{ tab.label }}</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">当前可选分类</span>
+        <div class="sub-tab-group">
+          <span class="pill-btn active">应用</span>
+          <span class="pill-btn">应用服务</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="table-toolbar">
+        <a-input
+          v-model:value="searchText"
+          placeholder="输入关键字搜索、过滤"
+          allow-clear
+        />
+      </div>
+
+      <a-table
+        :columns="columns"
+        :data-source="tableData"
+        :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: total => '共 ' + total + ' 条' }"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'">
+            <a class="app-link" href="javascript:;" @click="openDetail(record)">{{ record.name }}</a>
+          </template>
+          <template v-if="column.key === 'alertStatus'">
+            <span v-if="record.alertStatus === '紧急'" class="status-tag emergency">
+              <i class="fa-solid fa-circle-exclamation"></i> 紧急
+            </span>
+            <span v-else class="status-tag normal">
+              <i class="fa-solid fa-circle-check"></i> 正常
+            </span>
+          </template>
+          <template v-if="column.key === 'runStatus'">
+            <span class="run-status"><span class="dot-green"></span> 运行中</span>
+          </template>
         </template>
-        <template v-if="column.key === 'cpu'">
-          <a-progress :percent="parseInt(record.cpu)" :showInfo="false" :strokeColor="getProgressColor(parseInt(record.cpu))" size="small" style="width: 80px" />
-          <span style="margin-left: 8px">{{ record.cpu }}</span>
-        </template>
-        <template v-if="column.key === 'memory'">
-          <a-progress :percent="parseInt(record.memory)" :showInfo="false" :strokeColor="getProgressColor(parseInt(record.memory))" size="small" style="width: 80px" />
-          <span style="margin-left: 8px">{{ record.memory }}</span>
-        </template>
-        <template v-if="column.key === 'disk'">
-          <a-progress :percent="parseInt(record.disk)" :showInfo="false" :strokeColor="getProgressColor(parseInt(record.disk))" size="small" style="width: 80px" />
-          <span style="margin-left: 8px">{{ record.disk }}</span>
-        </template>
-        <template v-if="column.key === 'action'">
-          <a-button type="link" size="small" @click="viewDetail(record)">详情</a-button>
-          <a-button type="link" size="small" @click="viewChart(record)">监控图</a-button>
-        </template>
-      </template>
-    </a-table>
+      </a-table>
+    </div>
+
+    <div class="detail-panel" :class="{ open: detailOpen }">
+      <div class="detail-mask" @click="closeDetail"></div>
+      <div class="detail-panel-content" v-if="currentApp">
+        <div class="detail-header">
+          <h3>{{ currentApp.name }} - 详情</h3>
+          <button class="detail-close" @click="closeDetail"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="detail-body">
+          <div class="detail-section">
+            <h4>基本信息</h4>
+            <div class="info-grid">
+              <div class="info-item"><span class="label">名称</span><span class="value">{{ currentApp.name }}</span></div>
+              <div class="info-item"><span class="label">标识</span><span class="value">{{ currentApp.identifier }}</span></div>
+              <div class="info-item"><span class="label">告警状态</span><span class="value"><span :class="currentApp.alertStatus === '紧急' ? 'text-danger' : 'text-success'">{{ currentApp.alertStatus }}</span></span></div>
+              <div class="info-item"><span class="label">运行状态</span><span class="value text-success">运行中</span></div>
+              <div class="info-item"><span class="label">应用级别</span><span class="value">{{ currentApp.appLevel }}</span></div>
+              <div class="info-item"><span class="label">所属VDC</span><span class="value">{{ currentApp.vdc }}</span></div>
+              <div class="info-item"><span class="label">负责人</span><span class="value">{{ currentApp.owner }}</span></div>
+              <div class="info-item"><span class="label">来源</span><span class="value">{{ currentApp.source }}</span></div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <h4>监控指标</h4>
+            <div class="metric-grid">
+              <div class="metric-card">
+                <div class="metric-label">CPU 使用率</div>
+                <div class="metric-value">{{ currentApp.metrics.cpu }}%</div>
+                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.cpu + '%', background: getMetricColor(currentApp.metrics.cpu) }"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">内存使用率</div>
+                <div class="metric-value">{{ currentApp.metrics.memory }}%</div>
+                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.memory + '%', background: getMetricColor(currentApp.metrics.memory) }"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">请求速率</div>
+                <div class="metric-value">{{ currentApp.metrics.requests }} req/s</div>
+                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.requests / 10 + '%', background: getMetricColor(currentApp.metrics.requests / 10) }"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">错误率</div>
+                <div class="metric-value">{{ currentApp.metrics.errorRate }}%</div>
+                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.errorRate * 10 + '%', background: getMetricColor(currentApp.metrics.errorRate * 10) }"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">响应时间</div>
+                <div class="metric-value">{{ currentApp.metrics.responseTime }} ms</div>
+                <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.responseTime / 5, 100) + '%', background: getMetricColor(currentApp.metrics.responseTime / 5) }"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">连接数</div>
+                <div class="metric-value">{{ currentApp.metrics.connections }}</div>
+                <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.connections / 2, 100) + '%', background: getMetricColor(currentApp.metrics.connections / 2) }"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 
-const cat = ref('all')
-const search = ref('')
-const statusFilter = ref(null)
+const searchText = ref('')
+const mainTab = ref('app')
+const detailOpen = ref(false)
+const currentApp = ref(null)
 
-const data = ref([
-  { id: 1, name: 'web-cluster', category: 'app', type: '业务应用', status: '正常', cpu: '45', memory: '62', disk: '38', region: '华北区域一' },
-  { id: 2, name: 'db-cluster', category: 'app', type: '业务应用', status: '警告', cpu: '72', memory: '85', disk: '55', region: '华东区域一' },
-  { id: 3, name: 'redis-cache', category: 'cloud', type: '云服务', status: '正常', cpu: '25', memory: '45', disk: '20', region: '华北区域一' },
-  { id: 4, name: 'vm-001', category: 'resource', type: '云资源', status: '正常', cpu: '15', memory: '30', disk: '40', region: '华南区域一' },
-  { id: 5, name: 'physical-server-01', category: 'physical', type: '物理资源', status: '异常', cpu: '98', memory: '92', disk: '75', region: '华北区域一' },
-  { id: 6, name: 'k8s-master-01', category: 'cloud', type: '云服务', status: '正常', cpu: '35', memory: '55', disk: '42', region: '华东区域一' },
-  { id: 7, name: 'api-gateway', category: 'app', type: '业务应用', status: '正常', cpu: '28', memory: '40', disk: '15', region: '华北区域一' },
-  { id: 8, name: 'oss-bucket', category: 'cloud', type: '云服务', status: '正常', cpu: '5', memory: '10', disk: '60', region: '华南区域一' },
-])
-
-const columns = [
-  { title: '资源名称', dataIndex: 'name', width: 150 },
-  { title: '类型', dataIndex: 'type', width: 100 },
-  { title: '状态', key: 'status', width: 80 },
-  { title: 'CPU', key: 'cpu', width: 180 },
-  { title: '内存', key: 'memory', width: 180 },
-  { title: '磁盘', key: 'disk', width: 180 },
-  { title: '区域', dataIndex: 'region', width: 120 },
-  { title: '操作', key: 'action', width: 140 },
+const mainTabs = [
+  { key: 'all', label: '全部' },
+  { key: 'app', label: '业务应用' },
+  { key: 'cloud', label: '云服务' },
+  { key: 'cloud-resource', label: '云资源' },
+  { key: 'virtual', label: '虚拟资源池' },
+  { key: 'physical', label: '物理资源' },
 ]
 
-const catMap = { all: '', app: 'app', cloud: 'cloud', resource: 'resource', physical: 'physical' }
+const alertCards = [
+  { label: '应用', alertCount: 3, total: 100, icon: 'fa-solid fa-circle-nodes', iconBg: 'linear-gradient(135deg, #1890ff, #096dd9)' },
+  { label: '云服务', alertCount: 1, total: 100, icon: 'fa-solid fa-cloud', iconBg: 'linear-gradient(135deg, #1890ff, #096dd9)' },
+  { label: '云资源', alertCount: 3, total: 100, icon: 'fa-solid fa-server', iconBg: 'linear-gradient(135deg, #1890ff, #096dd9)' },
+  { label: '虚拟资源池', alertCount: 0, total: 100, icon: 'fa-solid fa-layer-group', iconBg: 'linear-gradient(135deg, #1890ff, #096dd9)' },
+  { label: '物理资源', alertCount: 3, total: 100, icon: 'fa-solid fa-microchip', iconBg: 'linear-gradient(135deg, #1890ff, #096dd9)' },
+]
 
-const filteredData = computed(() => {
-  return data.value.filter(item => {
-    if (cat.value !== 'all' && item.category !== catMap[cat.value]) return false
-    if (search.value && !item.name.includes(search.value)) return false
-    if (statusFilter.value && item.status !== statusFilter.value) return false
-    return true
-  })
-})
+const columns = [
+  { title: '名称', dataIndex: 'name', key: 'name', width: 120, sorter: (a, b) => a.name.localeCompare(b.name) },
+  { title: '告警状态', dataIndex: 'alertStatus', key: 'alertStatus', width: 120, sorter: true, filters: [{ text: '紧急', value: '紧急' }, { text: '正常', value: '正常' }], onFilter: (value, record) => record.alertStatus === value },
+  { title: '标识', dataIndex: 'identifier', key: 'identifier', width: 150, sorter: true },
+  { title: '运行状态', dataIndex: 'runStatus', key: 'runStatus', width: 120, sorter: true, filters: [{ text: '运行中', value: '运行中' }, { text: '已停止', value: '已停止' }], onFilter: (value, record) => record.runStatus === value },
+  { title: '应用级别', dataIndex: 'appLevel', key: 'appLevel', width: 120, sorter: true },
+  { title: '所属VDC', dataIndex: 'vdc', key: 'vdc', width: 120, sorter: true },
+  { title: '负责人', dataIndex: 'owner', key: 'owner', width: 100, sorter: true },
+  { title: '来源', dataIndex: 'source', key: 'source', width: 100, sorter: true },
+]
 
-const getStatusColor = (status) => ({ 正常: 'green', 警告: 'orange', 异常: 'red' }[status])
-const getProgressColor = (value) => {
-  if (value >= 90) return '#f5222d'
-  if (value >= 80) return '#fa8c16'
+const openDetail = (app) => {
+  currentApp.value = app
+  detailOpen.value = true
+}
+const closeDetail = () => {
+  detailOpen.value = false
+}
+const getMetricColor = (value) => {
+  if (value >= 80) return '#f5222d'
+  if (value >= 50) return '#fa8c16'
   return '#52c41a'
 }
-const viewDetail = (record) => { console.log('查看详情', record) }
-const viewChart = (record) => { console.log('查看监控图', record) }
+
+const tableData = ref([])
+const loading = ref(false)
+
+onMounted(async function() {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/ci?ci_type_id=5&sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      tableData.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          alertStatus: '正常',
+          identifier: item.identifier,
+          runStatus: '运行中',
+          appLevel: item.app_level,
+          vdc: item.vdc,
+          owner: item.owner,
+          source: item.source,
+          metrics: {
+            cpu: item.metadata && item.metadata.cpu || 45,
+            memory: item.metadata && item.metadata.memory || 60,
+            requests: 500,
+            errorRate: 0.5,
+            responseTime: 50,
+            connections: 60,
+          },
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载资源监控数据失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
-.page-view { padding: 0 24px; height: 100%; display: flex; flex-direction: column; }
-:deep(.ant-table-wrapper) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-:deep(.ant-table) { flex: 1; min-height: 0; }
-:deep(.ant-table-container) { flex: 1; min-height: 0; }
-.page-header { margin-bottom: 20px; }
-.page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
-.resource-categories { display: flex; gap: 8px; margin-bottom: 16px; }
-.cat-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--bg); border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.15s; }
-.cat-btn:hover { border-color: var(--brand); }
-.cat-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-.resource-filter { display: flex; gap: 12px; margin-bottom: 16px; }
+.resource-monitor {
+  padding: 0 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+}
+
+.page-header {
+  padding: 24px 0 20px;
+}
+.page-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.alert-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.alert-card {
+  flex: 1;
+  background: linear-gradient(135deg, #f0f9ff, #e0f0fe);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s;
+}
+.alert-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-number {
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.num-alert {
+  font-size: 32px;
+  font-weight: 700;
+  color: #f5222d;
+}
+.num-alert.zero {
+  color: #1a1a1a;
+}
+.num-total {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin-left: 2px;
+}
+.card-label {
+  font-size: 14px;
+  color: #595959;
+  font-weight: 500;
+}
+
+.card-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.card-icon-wrap i {
+  font-size: 22px;
+  color: #fff;
+}
+
+.filter-section {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #595959;
+  font-weight: 500;
+  white-space: nowrap;
+  width: 96px;
+  flex-shrink: 0;
+}
+
+.tab-group {
+  display: flex;
+  gap: 4px;
+}
+.tab-btn {
+  padding: 7px 18px;
+  border: 1px solid #e8e8e8;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #595959;
+  transition: all 0.15s;
+}
+.tab-btn:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+.tab-btn.active {
+  background: #1890ff;
+  color: #fff;
+  border-color: #1890ff;
+}
+
+.sub-tab-group {
+  display: flex;
+  gap: 8px;
+}
+.pill-btn {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  color: #595959;
+  transition: all 0.15s;
+}
+.pill-btn.active {
+  border-color: #1890ff;
+  background: #fff;
+  color: #1890ff;
+}
+.pill-btn:not(.active):hover {
+  border-color: #1890ff;
+}
+
+.table-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.table-toolbar {
+  margin-bottom: 16px;
+}
+
+:deep(.ant-table-wrapper) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+:deep(.ant-table) {
+  flex: 1;
+  min-height: 0;
+}
+:deep(.ant-table-container) {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-link {
+  color: #1890ff;
+  text-decoration: none;
+}
+.app-link:hover {
+  text-decoration: underline;
+}
+
+.status-tag i {
+  margin-right: 4px;
+}
+.status-tag.emergency {
+  color: #f5222d;
+  font-weight: 500;
+}
+.status-tag.normal {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.run-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #52c41a;
+}
+.dot-green {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #52c41a;
+}
+
+.detail-panel {
+  position: fixed;
+  top: 48px; right: 0; bottom: 0; left: 0;
+  z-index: 1050;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.detail-panel.open {
+  pointer-events: auto;
+  opacity: 1;
+}
+.detail-mask {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+.detail-panel-content {
+  position: absolute;
+  top: 0;
+  right: -500px;
+  width: 500px;
+  height: 100%;
+  background: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s;
+}
+.detail-panel.open .detail-panel-content {
+  right: 0;
+}
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+.detail-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+.detail-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #8c8c8c;
+  transition: all 0.15s;
+}
+.detail-close:hover {
+  background: #f0f0f0;
+  color: #1a1a1a;
+}
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.detail-section {
+  margin-bottom: 24px;
+}
+.detail-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.info-item {
+  display: flex;
+  align-items: center;
+}
+.info-item .label {
+  width: 80px;
+  font-size: 13px;
+  color: #8c8c8c;
+  flex-shrink: 0;
+}
+.info-item .value {
+  font-size: 13px;
+  color: #1a1a1a;
+}
+.text-danger {
+  color: #f5222d !important;
+}
+.text-success {
+  color: #52c41a !important;
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.metric-card {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+}
+.metric-label {
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-bottom: 6px;
+}
+.metric-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+.metric-bar {
+  height: 4px;
+  background: #e8e8e8;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.metric-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
 </style>

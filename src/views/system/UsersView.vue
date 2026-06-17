@@ -30,17 +30,50 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const activeKey = ref('users')
-const users = ref([
-  { id: 1, username: 'admin', name: '管理员', email: 'admin@company.com', role: '超级管理员', enabled: true },
-  { id: 2, username: 'ops1', name: '运维人员', email: 'ops1@company.com', role: '运维', enabled: true },
-])
-const roles = ref([
-  { id: 1, name: '超级管理员', description: '拥有所有系统权限', userCount: 1 },
-  { id: 2, name: '运维', description: '运维管理权限', userCount: 3 },
-])
+const users = ref([])
+const roles = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const [usersRes, rolesRes] = await Promise.all([
+      fetch('/api/cmdb/users?sort=id&order=ASC'),
+      fetch('/api/cmdb/roles?sort=id&order=ASC'),
+    ])
+    const usersJson = await usersRes.json()
+    const rolesJson = await rolesRes.json()
+    if (usersJson.success) {
+      users.value = usersJson.data.map(function(item) {
+        return {
+          id: item.id,
+          username: item.username,
+          name: item.name,
+          email: item.email,
+          role: item.role,
+          enabled: item.enabled,
+        }
+      })
+    }
+    if (rolesJson.success) {
+      roles.value = rolesJson.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          userCount: item.user_count,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '用户名', dataIndex: 'username' }, { title: '姓名', dataIndex: 'name' },
   { title: '邮箱', dataIndex: 'email' }, { title: '角色', dataIndex: 'role' },

@@ -35,17 +35,36 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 const search = ref('')
 const scene = ref(null)
 const sourceType = ref(null)
-const data = ref([
-  { id: 1, name: 'Nginx-错误日志', scene: '异常日志', engine: 'grok', sample: '2026/05/20 14:35:20 [error] ...', sourceType: '内置' },
-  { id: 2, name: 'Java-应用日志', scene: '全量日志', engine: 'grok', sample: '2026-05-20 14:35:20.123 INFO ...', sourceType: '内置' },
-  { id: 3, name: '交换机-syslog', scene: '自定义', engine: 'regex', sample: '<190>May 20 14:35:20 10.0.1.1 ...', sourceType: '自定义' },
-  { id: 4, name: 'MySQL-慢查询', scene: '异常日志', engine: 'regex', sample: '# Time: 2026-05-20T14:35:20...', sourceType: '内置' },
-  { id: 5, name: 'K8s-容器日志', scene: '全量日志', engine: 'json', sample: '{"log":"...","stream":"stdout","time":"..."}', sourceType: '内置' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/log_templates?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          scene: item.scene,
+          engine: item.engine,
+          sample: item.sample,
+          sourceType: item.source_type,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '模板名', dataIndex: 'name' },
   { title: '场景类型', key: 'scene', width: 110 },

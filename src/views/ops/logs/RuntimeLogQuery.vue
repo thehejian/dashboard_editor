@@ -84,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const activeTab = ref('cloud')
 
@@ -113,19 +113,32 @@ const logColumns = [
   { title: '日志内容', key: 'content', ellipsis: true },
 ]
 
-const cloudData = ref([
-  { id: 1, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hww13nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://auth:8080/auth/checkLogin  flags:1  host:mall-auth-c7559575b-rtszq  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable  attribute:{}  content:http://auth:8080/auth/checkLogin  flags:1  host:mall-auth-c7559575b-rtszq ...展开' },
-  { id: 2, time: '2024/12/28 17:56:19.507', content: 'hostId: 002  hostIdIP: 192.168.0.162  resource_id: iZbp1hww13nzf8ej1322c2Z  pathFile: cn-hangzhou.192.168.0.162  attribute:{}  content:http://order:8080/order/list  flags:1  host:mall-order-c7559575b-abcd  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable ...展开' },
-  { id: 3, time: '2024/12/28 17:56:19.507', content: 'hostId: 003  hostIdIP: 192.168.0.163  resource_id: iZbp1hww13nzf8ej1322c3Z  pathFile: cn-hangzhou.192.168.0.163  attribute:{}  content:http://user:8080/user/info  flags:1  host:mall-user-c7559575b-efgh  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable ...展开' },
-  { id: 4, time: '2024/12/28 17:56:19.507', content: 'hostId: 004  hostIdIP: 192.168.0.164  resource_id: iZbp1hww13nzf8ej1322c4Z  pathFile: cn-hangzhou.192.168.0.164  attribute:{}  content:http://pay:8080/pay/callback  flags:1  host:mall-pay-c7559575b-ijkl  otel.name:com.aliyun.sls.filter.AccessLogAspect  otel.version:Type=resumable ...展开' },
-])
+const cloudData = ref([])
+const tenantLogData = ref([])
+const loading = ref(false)
 
-const tenantLogData = ref([
-  { id: 1, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://auth:8080/auth/checkLogin  flags:1  host:mall-auth-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
-  { id: 2, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://auth:8080/auth/logout  flags:1  host:mall-auth-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
-  { id: 3, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://order:8080/order/create  flags:1  host:mall-order-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
-  { id: 4, time: '2024/12/28 17:56:19.507', content: 'hostId: 001  hostIdIP: 192.168.0.161  resource_id: iZbp1hwwt3nzf8ej1322c1Z  pathFile: cn-hangzhou.192.168.0.161  attribute:{}  content:http://user:8080/user/register  flags:1  host:mall-user-c7559575b-rtszq  otlp.name:com.aliyun.sls.filter.AccessLogAspect  otlp.version:Type=resumable ...展开' },
-])
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/runtime_logs?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      var all = json.data.map(function(item) {
+        return {
+          id: item.id,
+          time: item.time,
+          content: item.content,
+        }
+      })
+      cloudData.value = all
+      tenantLogData.value = all
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const cloudPagination = { pageSize: 10, total: 153, showTotal: total => `总条数：${total}`, showSizeChanger: true, current: 14 }
 const tenantPagination = { pageSize: 10, total: 153, showTotal: total => `总条数：${total}`, showSizeChanger: true, current: 14 }

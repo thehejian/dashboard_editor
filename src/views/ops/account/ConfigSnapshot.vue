@@ -33,7 +33,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 const search = ref('')
 const selectedRowKeys = ref([])
 function onSelectChange(keys) { selectedRowKeys.value = keys }
@@ -47,13 +47,35 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status' },
   { title: '操作', key: 'action', width: 180 },
 ]
-const data = ref([
-  { id: 1, name: '升级前基线-20260522', asset: 'prod-mysql-01', snapType: '手动', createdAt: '2026/05/22 02:00:00', size: '2.3GB', creator: '张运维', status: 'green', statusLabel: '可用' },
-  { id: 2, name: '更新前备份', asset: 'Server-001-BMC', snapType: '自动', createdAt: '2026/05/21 14:30:00', size: '128MB', creator: '系统', status: 'green', statusLabel: '可用' },
-  { id: 3, name: '配置变更快照', asset: 'core-switch-a', snapType: '手动', createdAt: '2026/05/20 09:15:00', size: '512KB', creator: '李运维', status: 'green', statusLabel: '可用' },
-  { id: 4, name: '大版本升级快照', asset: 'op-platform', snapType: '手动', createdAt: '2026/05/15 23:00:00', size: '1.8GB', creator: '王运维', status: 'red', statusLabel: '异常' },
-  { id: 5, name: '日常快照', asset: 'prod-mysql-01', snapType: '自动', createdAt: '2026/05/14 02:00:00', size: '2.3GB', creator: '系统', status: 'green', statusLabel: '可用' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/snapshots?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          asset: item.name,
+          snapType: item.snap_type,
+          createdAt: item.created_at,
+          size: item.size,
+          creator: item.creator,
+          status: item.status,
+          statusLabel: item.status_label,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

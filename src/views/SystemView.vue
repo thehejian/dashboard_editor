@@ -143,7 +143,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const activeTab = ref('users')
 const usersSubTab = ref('users')
@@ -154,19 +154,48 @@ const saving = ref(false)
 const notifyConfig = reactive({ email: true, sms: false, wechat: true, dingtalk: false })
 const systemConfig = reactive({ sessionTimeout: 30, passwordMinLength: 8, logRetention: 30, apiRateLimit: 1000 })
 
-const users = ref([
-  { id: 1, username: 'admin', name: '管理员', email: 'admin@company.com', phone: '13800138000', role: '超级管理员', enabled: true },
-  { id: 2, username: 'ops1', name: '运维人员', email: 'ops1@company.com', phone: '13800138001', role: '运维', enabled: true },
-  { id: 3, username: 'dev1', name: '开发人员', email: 'dev1@company.com', phone: '13800138002', role: '开发', enabled: true },
-  { id: 4, username: 'viewer', name: '查看人员', email: 'viewer@company.com', phone: '13800138003', role: '只读', enabled: false },
-])
+const users = ref([])
+const roles = ref([])
+const loading = ref(false)
 
-const roles = ref([
-  { id: 1, name: '超级管理员', description: '拥有所有系统权限', userCount: 1 },
-  { id: 2, name: '运维', description: '运维管理权限', userCount: 3 },
-  { id: 3, name: '开发', description: '开发查看权限', userCount: 5 },
-  { id: 4, name: '只读', description: '仅查看权限', userCount: 10 },
-])
+onMounted(async () => {
+  loading.value = true
+  try {
+    const [usersRes, rolesRes] = await Promise.all([
+      fetch('/api/cmdb/users?sort=id&order=ASC'),
+      fetch('/api/cmdb/roles?sort=id&order=ASC'),
+    ])
+    const usersJson = await usersRes.json()
+    const rolesJson = await rolesRes.json()
+    if (usersJson.success) {
+      users.value = usersJson.data.map(function(item) {
+        return {
+          id: item.id,
+          username: item.username,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          role: item.role,
+          enabled: item.enabled,
+        }
+      })
+    }
+    if (rolesJson.success) {
+      roles.value = rolesJson.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          userCount: item.user_count,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const userForm = reactive({ username: '', name: '', email: '', phone: '', roleId: null })
 const userColumns = [

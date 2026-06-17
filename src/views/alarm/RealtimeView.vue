@@ -254,42 +254,69 @@ const historySearch = ref('')
 const historyLevel = ref(null)
 const historyTimeRange = ref(null)
 
-const realtimeAlerts = ref([
-  { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001 (华北区域)', metric: 'CPU使用率', currentValue: '95%', threshold: '> 90%', duration: '5分钟', displayDuration: '5分钟', durationMinutes: 5, triggerTime: '2026-06-17 10:32:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查是否有异常进程占用CPU\n2. 查看应用日志定位慢查询\n3. 必要时重启相关服务' },
-  { id: 2, level: 'critical', title: '磁盘空间不足', resource: 'db-primary (华东区域)', metric: '磁盘使用率', currentValue: '92%', threshold: '> 90%', duration: '12分钟', displayDuration: '12分钟', durationMinutes: 12, triggerTime: '2026-06-17 10:28:00', recoveryTime: '-', status: 'firing', suggestion: '1. 清理过期日志文件\n2. 检查大表并归档历史数据\n3. 扩容磁盘或迁移数据' },
-  { id: 3, level: 'critical', title: '数据库主从延迟', resource: 'db-replica-02 (华东区域)', metric: '复制延迟', currentValue: '35s', threshold: '> 10s', duration: '37分钟', displayDuration: '37分钟', durationMinutes: 37, triggerTime: '2026-06-17 09:55:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查主库写入压力\n2. 检查从库IO/SQL线程状态\n3. 确认网络带宽是否充足' },
-  { id: 4, level: 'warning', title: '内存使用率偏高', resource: 'app-server-03 (华南区域)', metric: '内存使用率', currentValue: '82%', threshold: '> 80%', duration: '20分钟', displayDuration: '20分钟', durationMinutes: 20, triggerTime: '2026-06-17 10:15:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查JVM堆内存使用情况\n2. 分析是否有内存泄漏\n3. 调整容器内存限制' },
-  { id: 5, level: 'warning', title: '响应时间超时', resource: 'api-gateway (华北区域)', metric: '响应时间', currentValue: '2500ms', threshold: '> 2000ms', duration: '1小时', displayDuration: '1小时', durationMinutes: 60, triggerTime: '2026-06-17 09:45:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查下游服务响应时间\n2. 分析慢请求链路\n3. 考虑增加限流或降级策略' },
-  { id: 6, level: 'warning', title: 'HTTP 5xx错误率上升', resource: 'nginx-ingress (华北区域)', metric: '5xx错误率', currentValue: '3.2%', threshold: '> 1%', duration: '1.5小时', displayDuration: '1.5小时', durationMinutes: 90, triggerTime: '2026-06-17 09:30:00', recoveryTime: '-', status: 'suppressed', suggestion: '1. 检查后端服务健康状态\n2. 查看nginx错误日志\n3. 回滚最近变更' },
-  { id: 7, level: 'info', title: '连接数接近上限', resource: 'redis-cluster (华东区域)', metric: '连接数', currentValue: '85%', threshold: '> 80%', duration: '2小时', displayDuration: '2小时', durationMinutes: 120, triggerTime: '2026-06-17 09:20:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查连接池配置\n2. 排查是否有连接泄漏\n3. 考虑扩容Redis节点' },
-  { id: 8, level: 'info', title: '证书即将过期', resource: 'cdn-domain.example.com', metric: '证书剩余天数', currentValue: '15天', threshold: '< 30天', duration: '2.5小时', displayDuration: '2.5小时', durationMinutes: 150, triggerTime: '2026-06-17 08:00:00', recoveryTime: '-', status: 'firing', suggestion: '1. 申请新证书\n2. 更新证书配置\n3. 验证HTTPS访问正常' },
-  { id: 9, level: 'critical', title: 'K8s Pod频繁重启', resource: 'payment-service (prod)', metric: 'Pod重启率', currentValue: '5次/小时', threshold: '> 3次/小时', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-17 08:45:00', recoveryTime: '2026-06-17 10:00:00', status: 'resolved', suggestion: '1. 查看Pod事件和日志\n2. 检查OOMKilled情况\n3. 调整resources限制' },
-  { id: 10, level: 'warning', title: '消息队列积压', resource: 'kafka-consumer-group order', metric: '积压量', currentValue: '50000条', threshold: '> 10000条', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-17 07:30:00', recoveryTime: '2026-06-17 10:30:00', status: 'resolved', suggestion: '1. 检查消费者处理逻辑\n2. 增加消费者实例数\n3. 检查生产者发送速率' },
-  { id: 11, level: 'warning', title: '网络丢包率过高', resource: 'switch-01 (华北区域)', metric: '丢包率', currentValue: '2.1%', threshold: '> 1%', duration: '45分钟', displayDuration: '45分钟', durationMinutes: 45, triggerTime: '2026-06-17 06:30:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查网络链路质量\n2. 排查交换机端口错误\n3. 联系网络运维处理' },
-  { id: 12, level: 'info', title: 'NTP同步偏移过大', resource: 'ntp-server', metric: '时间偏移', currentValue: '850ms', threshold: '> 500ms', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-16 23:00:00', recoveryTime: '2026-06-17 01:00:00', status: 'resolved', suggestion: '1. 检查NTP服务状态\n2. 确认时间源可达\n3. 手动同步时间' },
-])
+const realtimeAlerts = ref([])
+const historyData = ref([])
+const alertHistoryRecords = ref([])
+const loading = ref(false)
 
-const historyData = ref([
-  { id: 101, level: 'critical', title: '网络延迟过高', resource: 'lb-001', time: '2026-06-16 08:30', duration: '15分钟', status: 'resolved' },
-  { id: 102, level: 'warning', title: '数据库连接池满', resource: 'db-002', time: '2026-06-16 14:20', duration: '30分钟', status: 'resolved' },
-  { id: 103, level: 'info', title: '磁盘IO等待过高', resource: 'vm-003', time: '2026-06-15 22:10', duration: '8分钟', status: 'resolved' },
-  { id: 104, level: 'critical', title: '服务不可用', resource: 'api-gateway', time: '2026-06-15 18:45', duration: '5分钟', status: 'resolved' },
-  { id: 105, level: 'warning', title: 'SSL证书即将过期', resource: '*.example.com', time: '2026-06-15 09:00', duration: '1小时', status: 'processing' },
-  { id: 106, level: 'critical', title: 'K8s节点NotReady', resource: 'k8s-node-02', time: '2026-06-14 15:30', duration: '12分钟', status: 'resolved' },
-  { id: 107, level: 'warning', title: 'MySQL慢查询增多', resource: 'db-master-01', time: '2026-06-14 11:20', duration: '40分钟', status: 'resolved' },
-  { id: 108, level: 'info', title: '备份任务失败', resource: 'backup-srv', time: '2026-06-13 03:00', duration: '4小时', status: 'processing' },
-  { id: 109, level: 'warning', title: 'Redis内存使用率过高', resource: 'redis-session', time: '2026-06-13 14:15', duration: '25分钟', status: 'resolved' },
-  { id: 110, level: 'critical', title: '负载均衡后端离线', resource: 'slb-prod', time: '2026-06-12 09:30', duration: '10分钟', status: 'resolved' },
-  { id: 111, level: 'info', title: '日志磁盘使用率超阈值', resource: 'log-collector', time: '2026-06-11 20:00', duration: '3小时', status: 'resolved' },
-  { id: 112, level: 'warning', title: '容器OOMKilled', resource: 'order-service', time: '2026-06-11 10:45', duration: '6分钟', status: 'resolved' },
-])
-
-const alertHistoryRecords = ref([
-  { id: 201, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001', time: '2026-06-15 09:15', duration: '20分钟', status: 'resolved', operator: '张工' },
-  { id: 202, level: 'warning', title: '内存使用率偏高', resource: 'app-server-03', time: '2026-06-15 14:30', duration: '45分钟', status: 'resolved', operator: '李工' },
-  { id: 203, level: 'critical', title: '磁盘空间不足', resource: 'db-primary', time: '2026-06-14 11:20', duration: '1小时', status: 'resolved', operator: '王工' },
-  { id: 204, level: 'info', title: '连接数接近上限', resource: 'redis-cluster', time: '2026-06-14 16:00', duration: '30分钟', status: 'resolved', operator: '张工' },
-])
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/alerts?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      realtimeAlerts.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          level: item.level,
+          title: item.title,
+          resource: item.resource,
+          metric: item.metric,
+          currentValue: item.current_value,
+          threshold: item.threshold,
+          duration: item.duration,
+          displayDuration: item.display_duration,
+          durationMinutes: item.duration_minutes,
+          triggerTime: item.trigger_time,
+          recoveryTime: item.recovery_time || '-',
+          status: item.status,
+          suggestion: item.suggestion,
+        }
+      })
+      historyData.value = json.data.filter(function(i) { return i.status === 'resolved' }).map(function(item) {
+        return {
+          id: item.id,
+          level: item.level,
+          title: item.title,
+          resource: item.resource,
+          time: item.trigger_time,
+          duration: item.duration,
+          status: item.status,
+        }
+      })
+      alertHistoryRecords.value = json.data.filter(function(i) { return i.status === 'resolved' }).slice(0, 4).map(function(item) {
+        return {
+          id: item.id,
+          level: item.level,
+          title: item.title,
+          resource: item.resource,
+          time: item.trigger_time,
+          duration: item.duration,
+          status: item.status,
+          operator: item.operator || '系统',
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载告警数据失败:', e)
+  } finally {
+    loading.value = false
+  }
+  renderDonutChart()
+  renderBarChart()
+  renderDurationChart()
+  renderTopNChart()
+})
 
 const columns = [
   { title: '告警级别', dataIndex: 'level', key: 'level', width: 100, sorter: function(a, b) { var order = { critical: 0, warning: 1, info: 2 }; return order[a.level] - order[b.level]; } },
@@ -517,7 +544,6 @@ function updateScrollY() {
 onMounted(function() {
   updateScrollY()
   window.addEventListener('resize', updateScrollY)
-  renderCharts()
 })
 
 onBeforeUnmount(function() {

@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const activeTab = ref('forward')
 const showSuccess = ref(true)
@@ -80,12 +80,33 @@ const showSuccess = ref(true)
 const storageForm1 = ref({ duration: '180' })
 const storageForm2 = ref({ duration: '180' })
 
-const forwardData = ref([
-  { id: 1, logType: '租户操作日志', ip: '未配置', port: '未配置', serverType: '主', protocol: 'LTS', enabled: '' },
-  { id: 2, logType: '管理操作日志', ip: '未配置', port: '未配置', serverType: '备', protocol: '', enabled: '停用' },
-  { id: 3, logType: '租户操作日志', ip: '未配置', port: '未配置', serverType: '主', protocol: 'LTS', enabled: '' },
-  { id: 4, logType: '租户操作日志', ip: '未配置', port: '未配置', serverType: '备', protocol: '', enabled: '停用' },
-])
+const forwardData = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/log_forward_tasks?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      forwardData.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          logType: item.forward_content ? JSON.parse(item.forward_content).join(',') : '--',
+          ip: (item.target_addr || '').split(':')[0],
+          port: (item.target_addr || '').split(':')[1],
+          serverType: item.target_type,
+          protocol: item.target_type,
+          enabled: item.enabled,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const forwardColumns = [
   { title: '日志类型', dataIndex: 'logType', width: 140 },

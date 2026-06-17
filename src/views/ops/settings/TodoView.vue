@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const search = ref('')
 const selectedRowKeys = ref([])
@@ -51,13 +51,35 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([
-  { id: 1, title: '审批工单 CS202201181514', source: '账号申请', priority: 'high', priorityLabel: '高', deadline: '2026-05-27 18:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-05-26 10:00' },
-  { id: 2, title: '处理告警 #4521', source: '监控告警', priority: 'medium', priorityLabel: '中', deadline: '2026-05-27 12:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-05-26 09:30' },
-  { id: 3, title: '审批资源变更申请', source: '资源变更', priority: 'low', priorityLabel: '低', deadline: '2026-05-28 18:00', status: 'processing', statusLabel: '处理中', createdAt: '2026-05-25 14:00' },
-  { id: 4, title: '更新系统配置', source: '运维任务', priority: 'medium', priorityLabel: '中', deadline: '2026-05-29 18:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-05-24 11:00' },
-  { id: 5, title: '安全扫描任务审批', source: '安全扫描', priority: 'high', priorityLabel: '高', deadline: '2026-05-26 20:00', status: 'pending', statusLabel: '待处理', createdAt: '2026-05-26 08:00' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/todos?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          title: item.title,
+          source: item.source,
+          priority: item.priority,
+          priorityLabel: item.priority_label,
+          deadline: item.deadline,
+          status: item.status,
+          statusLabel: item.status_label,
+          createdAt: item.created_at,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

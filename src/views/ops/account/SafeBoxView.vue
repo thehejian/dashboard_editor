@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import SafeBoxCreateModal from './SafeBoxCreateModal.vue'
 
 const search = ref('')
@@ -61,32 +61,36 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([
-  {
-    id: 1,
-    name: 'Turnkey',
-    status: 'enabled',
-    statusLabel: '已启用',
-    scope: '全部账号',
-    permissions: '查看，修正，修改',
-    createdAt: '2023/03/14 12:34:51',
-    updatedAt: '2023/03/14 12:34:51',
-    app: 'Turnkey',
-    description: '部署、升级、扩容期间使用',
-  },
-  {
-    id: 2,
-    name: '兴业银行',
-    status: 'enabled',
-    statusLabel: '已启用',
-    scope: '全部操作系统账号',
-    permissions: '只读',
-    createdAt: '2020/10/13 18:15:48',
-    updatedAt: '2020/10/13 18:15:48',
-    app: '兴业银行',
-    description: '--',
-  },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/safeboxes?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          status: item.status,
+          statusLabel: item.status_label,
+          scope: item.scope,
+          permissions: item.permissions,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+          app: item.name,
+          description: item.description,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

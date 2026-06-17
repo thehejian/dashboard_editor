@@ -59,25 +59,43 @@
   </div>
 </template>
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const search = ref('')
 const activeTab = ref('apply')
 const selectedRowKeys = ref([])
 function onSelectChange(keys) { selectedRowKeys.value = keys }
 
-const allData = ref([
-  { id: 1, orderId: 'CS202201181564', status: 'completed', statusDot: 'green', statusLabel: '已完成', type: '一键登录', handler: '王嘉怡 w00657412', createdAt: '2023-02-06 12:00:00', finishedAt: '2023-02-06 12:30:00', tab: 'apply' },
-  { id: 2, orderId: 'CS202201181514', status: 'pending', statusDot: 'blue', statusLabel: '审批中', type: '账号密码', handler: '李四 l00451234', createdAt: '2023-02-06 11:00:00', finishedAt: '--', tab: 'apply' },
-  { id: 3, orderId: 'CS202201181500', status: 'completed', statusDot: 'green', statusLabel: '已完成', type: '账号回收', handler: '王嘉怡 w00657412', createdAt: '2023-02-05 14:00:00', finishedAt: '2023-02-05 14:20:00', tab: 'apply' },
-  { id: 4, orderId: 'CS202201181490', status: 'pending', statusDot: 'blue', statusLabel: '审批中', type: 'OP账号登录', handler: '赵七 z00765432', createdAt: '2023-02-05 09:30:00', finishedAt: '--', tab: 'apply' },
-  { id: 5, orderId: 'CS202201181480', status: 'rejected', statusDot: 'red', statusLabel: '已拒绝', type: '一键登录', handler: '--', createdAt: '2023-02-04 16:00:00', finishedAt: '2023-02-04 16:10:00', tab: 'apply' },
-  { id: 6, orderId: 'CS202201181470', status: 'urged', statusDot: 'yellow', statusLabel: '已催办', type: '账号密码', handler: '王五 w00554321', createdAt: '2023-02-03 10:00:00', finishedAt: '--', tab: 'urge' },
-  { id: 7, orderId: 'CS202201181460', status: 'urged', statusDot: 'yellow', statusLabel: '已催办', type: '一键登录', handler: '孙八 s00876543', createdAt: '2023-02-02 15:00:00', finishedAt: '--', tab: 'urge' },
-  { id: 8, orderId: 'CS202201181450', status: 'extended', statusDot: 'blue', statusLabel: '已延期', type: '账号密码', handler: '周九 z00987654', createdAt: '2023-01-30 08:00:00', finishedAt: '--', tab: 'extend' },
-  { id: 9, orderId: 'CS202201181440', status: 'extended', statusDot: 'blue', statusLabel: '已延期', type: 'OP账号登录', handler: '吴十 w01098765', createdAt: '2023-01-28 13:00:00', finishedAt: '--', tab: 'extend' },
-  { id: 10, orderId: 'CS202201181430', status: 'deleted', statusDot: 'red', statusLabel: '已删除', type: '账号回收', handler: '系统', createdAt: '2023-01-25 11:00:00', finishedAt: '2023-01-25 11:05:00', tab: 'delete' },
-])
+const allData = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/app_orders?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      allData.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          orderId: item.order_id,
+          status: item.status,
+          statusDot: item.status === 'approved' ? 'green' : item.status === 'rejected' || item.status === 'deleted' ? 'red' : 'blue',
+          statusLabel: item.status_label,
+          type: item.type,
+          handler: item.handler,
+          createdAt: item.created_at,
+          finishedAt: item.finished_at || '--',
+          tab: item.type === '账号回收' ? 'delete' : item.status === 'approved' ? 'apply' : item.status,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const statusFilters = [
   { text: '已完成', value: 'completed' },

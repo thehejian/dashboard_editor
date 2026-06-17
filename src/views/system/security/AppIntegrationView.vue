@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -66,18 +66,35 @@ const columns = [
   { title: '操作', key: 'action', width: 200 },
 ]
 
-const data = ref([
-  { id: 1, name: 'ServiceOM', type: '应用组', protocol: 'CAS2.0', tenant: '租户01', status: 'green', statusLabel: '已启用', hasShortcut: '是', shortcutGroup: '运维中心' },
-  { id: 2, name: '鸿鹄', type: '应用', protocol: 'SAML2.0', tenant: '租户01', status: 'green', statusLabel: '已启用', hasShortcut: '是', shortcutGroup: '运维中心' },
-  { id: 3, name: '深交所环境管理', type: '应用', protocol: 'OAuth2/OIDC', tenant: '租户02', status: 'gray', statusLabel: '已停用', hasShortcut: '否', shortcutGroup: '--' },
-  { id: 4, name: '下级云管', type: '应用组', protocol: 'CAS2.0', tenant: '租户03', status: 'green', statusLabel: '已启用', hasShortcut: '是', shortcutGroup: '服务中心' },
-  { id: 5, name: 'Turnkey', type: '应用', protocol: 'OAuth2/OIDC', tenant: '租户01', status: 'green', statusLabel: '已启用', hasShortcut: '是', shortcutGroup: '运维中心' },
-  { id: 6, name: '兴业银行', type: '应用', protocol: 'SAML2.0', tenant: '租户04', status: 'green', statusLabel: '已启用', hasShortcut: '否', shortcutGroup: '--' },
-  { id: 7, name: 'CPS', type: '应用组', protocol: 'CAS2.0', tenant: '租户02', status: 'green', statusLabel: '已启用', hasShortcut: '是', shortcutGroup: '服务中心' },
-  { id: 8, name: '云服务控制台', type: '应用', protocol: 'OAuth2/OIDC', tenant: '租户03', status: 'green', statusLabel: '已启用', hasShortcut: '是', shortcutGroup: '运维中心' },
-  { id: 9, name: 'CloudNetDebug', type: '应用', protocol: 'SAML2.0', tenant: '租户05', status: 'green', statusLabel: '已启用', hasShortcut: '否', shortcutGroup: '--' },
-  { id: 10, name: 'CloudNetDebug', type: '应用', protocol: 'OAuth2/OIDC', tenant: '租户04', status: 'green', statusLabel: '已启用', hasShortcut: '是', shortcutGroup: '服务中心' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/applications?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          protocol: item.protocol,
+          tenant: item.tenant,
+          status: item.status,
+          statusLabel: item.status === 'active' ? '已启用' : '已停用',
+          hasShortcut: item.has_shortcut,
+          shortcutGroup: item.shortcut_group,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

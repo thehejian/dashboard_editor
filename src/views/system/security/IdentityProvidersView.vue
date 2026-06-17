@@ -35,19 +35,40 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const search = ref('')
 const filterType = ref(null)
+const data = ref([])
+const loading = ref(false)
 
-const data = ref([
-  { id: 1, name: '企业微信', protocol: 'OAuth', status: 'active', created: '2024-01-15', updated: '2025-05-19 10:30', desc: '企业微信 OAuth 身份认证' },
-  { id: 2, name: '阿里云 RAM', protocol: 'SAML', status: 'active', created: '2024-03-20', updated: '2025-05-18 14:20', desc: '阿里云 RAM SAML 2.0 联邦认证' },
-  { id: 3, name: 'LDAP 目录服务', protocol: 'LDAP', status: 'disabled', created: '2024-06-01', updated: '2025-04-15 09:00', desc: '企业内部 LDAP 目录同步' },
-  { id: 4, name: '统一认证平台', protocol: 'CAS', status: 'active', created: '2024-08-10', updated: '2025-05-17 16:45', desc: 'CAS 2.0 单点登录认证' },
-])
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/identity_providers?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          protocol: item.protocol,
+          status: item.status,
+          statusLabel: item.status === 'active' ? '已启用' : '已停用',
+          created: item.created_at,
+          updated: item.updated_at,
+          desc: item.description,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 const columns = [
   { title: '名称', dataIndex: 'name' },

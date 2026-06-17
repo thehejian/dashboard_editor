@@ -28,13 +28,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const stats = ref({ total: 5, running: 1, done: 12, issues: 3 })
-const plans = ref([
-  { id: 1, name: '日常健康检查', description: '每日服务器基础指标检查', schedule: '每天 00:00', targetCount: 50, status: 'scheduled' },
-  { id: 2, name: '周安全巡检', description: '每周安全基线检查', schedule: '每周一 03:00', targetCount: 100, status: 'running' },
-])
+const plans = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/inspection_plans?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      plans.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          schedule: item.schedule,
+          targetCount: item.target_count,
+          status: item.status,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

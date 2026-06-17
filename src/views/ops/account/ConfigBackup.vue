@@ -32,7 +32,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 const search = ref('')
 const selectedRowKeys = ref([])
 function onSelectChange(keys) { selectedRowKeys.value = keys }
@@ -46,13 +46,35 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status' },
   { title: '操作', key: 'action', width: 160 },
 ]
-const data = ref([
-  { id: 1, name: '操作系统账号备份', backupType: '全量备份', target: 'NFS存储', schedule: '每日02:00', retention: '30天', lastBackup: '2026/05/22 02:00:00', status: 'green', statusLabel: '成功' },
-  { id: 2, name: '数据库账号备份', backupType: '全量备份', target: 'NFS存储', schedule: '每日03:00', retention: '30天', lastBackup: '2026/05/22 03:00:00', status: 'green', statusLabel: '成功' },
-  { id: 3, name: '保管箱备份', backupType: '增量备份', target: '对象存储', schedule: '每小时', retention: '7天', lastBackup: '2026/05/22 08:00:00', status: 'green', statusLabel: '成功' },
-  { id: 4, name: 'OP平台配置备份', backupType: '全量备份', target: 'Git仓库', schedule: '每周日04:00', retention: '12周', lastBackup: '2026/05/17 04:00:00', status: 'red', statusLabel: '失败' },
-  { id: 5, name: '网络设备配置备份', backupType: '全量备份', target: 'FTP服务器', schedule: '每日05:00', retention: '90天', lastBackup: '2026/05/22 05:00:00', status: 'yellow', statusLabel: '进行中' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/backup_tasks?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          backupType: item.backup_type,
+          target: item.target,
+          schedule: item.schedule,
+          retention: item.retention,
+          lastBackup: item.last_backup,
+          status: item.status,
+          statusLabel: item.status_label,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

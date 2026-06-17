@@ -47,14 +47,32 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
-const metrics = ref([
-  { id: 1, name: 'CPU使用率', type: 'Gauge', enabled: true },
-  { id: 2, name: '内存使用率', type: 'Gauge', enabled: true },
-  { id: 3, name: '磁盘IO', type: 'Counter', enabled: true },
-  { id: 4, name: '网络流量', type: 'Counter', enabled: false },
-])
+const metrics = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/monitor_metrics?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      metrics.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          enabled: item.enabled,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '指标名称', dataIndex: 'name' }, { title: '类型', dataIndex: 'type' },
   { title: '启用', key: 'enabled', width: 80 },

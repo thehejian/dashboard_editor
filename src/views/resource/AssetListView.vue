@@ -23,15 +23,38 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const filterType = ref(null)
 const filterStatus = ref(null)
 const search = ref('')
-const assets = ref([
-  { id: 1, name: 'web-server-001', ip: '10.0.2.10', type: 'server', status: 'running', region: '华北区域一' },
-  { id: 2, name: 'db-primary', ip: '10.0.3.20', type: 'database', status: 'running', region: '华东区域一' },
-])
+const assets = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/ci?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      assets.value = json.data.map(function(item) {
+        var typeMap = { 1: 'server', 2: 'database', 3: 'middleware', 4: 'network_device', 5: 'application', 6: 'cloud_service', 7: 'container' }
+        return {
+          id: item.id,
+          name: item.name,
+          ip: item.ip,
+          type: typeMap[item.ci_type_id] || 'server',
+          status: item.status,
+          region: item.region,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '名称', dataIndex: 'name' }, { title: 'IP', dataIndex: 'ip' },
   { title: '类型', key: 'type' }, { title: '状态', key: 'status' },

@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const search = ref('')
 const activeTab = ref('scope')
@@ -96,13 +96,41 @@ const columns = [
   { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
 ]
 
-const data = ref([
-  { id: 1, accountName: 'root', accountStatus: 'checking', accountStatusLabel: '● 检测中', mgmtStatus: '已纳管', resourceIp: '152.212.146.235', resourceName: 'HelpCenter-System01', deviceType: '虚拟机', osType: 'Euler2.13', region: '华北一区', app: 'HCC Turnkey', changeStatus: '', changeStatusLabel: '--', lastLogin: '2023/03/14 12:34:51', description: '考虑到对系统安全的影响...' },
-  { id: 2, accountName: 'sopuser', accountStatus: 'normal', accountStatusLabel: '● 正常', mgmtStatus: '已保存', resourceIp: '226.17.91.9', resourceName: 'HelpCenter-System02', deviceType: '--', osType: '--', region: '华北一区', app: 'ConsoleFramework', changeStatus: 'success', changeStatusLabel: '● 修改成功', lastLogin: '2023/03/14 12:34:51', description: '在安装HCC Turnkey过程中创...' },
-  { id: 3, accountName: 'root', accountStatus: 'normal', accountStatusLabel: '● 正常', mgmtStatus: '第三方纳管', resourceIp: '252.80.153.155', resourceName: 'HelpCenter_DC1-System01', deviceType: '虚拟机', osType: 'Ubuntu 22.04', region: '华南二区', app: 'FusionCare', changeStatus: 'success', changeStatusLabel: '● 延期成功', lastLogin: '2023/04/16 17:01:37', description: '--' },
-  { id: 4, accountName: 'opsadmin', accountStatus: 'normal', accountStatusLabel: '● 正常', mgmtStatus: '未纳管', resourceIp: '133.180.193.241', resourceName: 'HelpCenter_DC1-System02', deviceType: '虚拟机', osType: 'Ubuntu 22.04', region: '华南二区', app: 'APIGateway', changeStatus: 'fail', changeStatusLabel: '○ 失败', lastLogin: '2020/10/13 18:15:48', description: '--' },
-  { id: 5, accountName: 'root', accountStatus: 'normal', accountStatusLabel: '● 正常', mgmtStatus: '已纳管', resourceIp: '98.47.116.124', resourceName: 'HelpCenter_DC2-System01', deviceType: '宿主机', osType: 'Ubuntu 22.04', region: '华北一区', app: 'OceanStor DJ', changeStatus: 'fail', changeStatusLabel: '● 失败', lastLogin: '2023/11/12 13:40:21', description: '--' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/safebox_accounts?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          accountName: item.account_name,
+          accountStatus: item.account_status,
+          accountStatusLabel: item.account_status === 'normal' ? '● 正常' : item.account_status === 'checking' ? '● 检测中' : item.account_status,
+          mgmtStatus: item.mgmt_status,
+          resourceIp: item.resource_ip,
+          resourceName: item.resource_name,
+          deviceType: item.device_type,
+          osType: item.os_type,
+          region: item.region,
+          app: item.app,
+          changeStatus: '',
+          changeStatusLabel: '--',
+          lastLogin: item.last_login,
+          description: item.description,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

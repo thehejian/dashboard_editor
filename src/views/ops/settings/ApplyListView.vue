@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const search = ref('')
 const selectedRowKeys = ref([])
@@ -47,13 +47,33 @@ const columns = [
   { title: '操作', key: 'action', width: 120 },
 ]
 
-const data = ref([
-  { id: 1, title: '申请账号 op_svc_test', type: '账号申请', status: 'green', statusLabel: '已完成', createdAt: '2026-05-20 10:00:00', finishedAt: '2026-05-20 14:30:00' },
-  { id: 2, title: '申请资源权限变更', type: '权限申请', status: 'blue', statusLabel: '审批中', createdAt: '2026-05-21 09:00:00', finishedAt: '--' },
-  { id: 3, title: '申请备份任务', type: '任务申请', status: 'yellow', statusLabel: '已退回', createdAt: '2026-05-19 15:00:00', finishedAt: '2026-05-19 16:00:00' },
-  { id: 4, title: '申请系统访问权限', type: '权限申请', status: 'green', statusLabel: '已完成', createdAt: '2026-05-18 11:00:00', finishedAt: '2026-05-18 13:00:00' },
-  { id: 5, title: '申请数据库连接', type: '资源申请', status: 'blue', statusLabel: '审批中', createdAt: '2026-05-22 08:00:00', finishedAt: '--' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/app_orders?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          status: item.status,
+          statusLabel: item.status_label,
+          createdAt: item.created_at,
+          finishedAt: item.finished_at,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

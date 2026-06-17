@@ -193,18 +193,37 @@ const userOptions = ['zhangsan', 'lisi', 'wangwu', 'zhaoliu', 'sunqi']
 
 const showTransfer = ref(false)
 const targetKeys = ref([])
-const transferData = ref([
-  { key: '1', title: 'op_svc_sdr', region: 'Region-A', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_sdr', app: 'FusionSphere', subApp: 'APICOM', statusLabel: '正常' },
-  { key: '2', title: 'op_svc_ecs', region: 'Region-A', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_ecs', app: 'FusionSphere', subApp: 'APICOM', statusLabel: '正常' },
-  { key: '3', title: 'op_svc_obs', region: 'Region-B', desc: '对象存储服务', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_obs', app: 'FusionSphere', subApp: 'OBS', statusLabel: '正常' },
-  { key: '4', title: 'op_svc_vpc', region: 'Region-A', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_vpc', app: 'FusionSphere', subApp: 'VPC', statusLabel: '正常' },
-  { key: '5', title: 'op_svc_iam', region: 'Region-B', desc: '身份认证服务', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_iam', app: 'FusionSphere', subApp: 'IAM', statusLabel: '检测中' },
-  { key: '6', title: 'op_svc_dns', region: 'Region-C', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_dns', app: 'FusionSphere', subApp: 'DNS', statusLabel: '无法访问' },
-  { key: '7', title: 'op_svc_lb', region: 'Region-A', desc: '负载均衡服务', mgmtStatus: '已纳管', acctType: '人机', tenant: 'op_svc_lb', app: 'FusionSphere', subApp: 'ELB', statusLabel: '正常' },
-  { key: '8', title: 'op_svc_cdn', region: 'Region-C', desc: '--', mgmtStatus: '仅保存', acctType: '混用', tenant: 'op_svc_cdn', app: 'FusionSphere', subApp: 'CDN', statusLabel: '正常' },
-])
-
+const transferData = ref([])
 const selectedAccounts = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/accounts?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      transferData.value = json.data.map(function(item) {
+        return {
+          key: String(item.id),
+          title: item.name,
+          region: item.location || '--',
+          desc: item.description || '--',
+          mgmtStatus: item.mgmt_status || '仅保存',
+          acctType: item.account_type || '混用',
+          tenant: item.name,
+          app: item.system || '--',
+          subApp: item.instance || '--',
+          statusLabel: item.status_label || item.status,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载账号列表失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 
 function filterTransfer(inputValue, item) {
   return item.title.indexOf(inputValue) !== -1 || item.desc.indexOf(inputValue) !== -1 || item.region.indexOf(inputValue) !== -1

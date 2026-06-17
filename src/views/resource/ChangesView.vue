@@ -22,15 +22,36 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const changeType = ref(null)
 const range = ref(null)
-const changes = ref([
-  { id: 1, type: 'update', resource: 'web-server-001', detail: '扩容CPU从4核到8核', operator: 'admin', time: '2026-05-17 14:30' },
-  { id: 2, type: 'create', resource: 'k8s-node-005', detail: '新增K8s节点', operator: 'admin', time: '2026-05-15 16:20' },
-  { id: 3, type: 'delete', resource: 'temp-server-01', detail: '回收临时资源', operator: 'admin', time: '2026-05-13 18:00' },
-])
+const changes = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/resource_changes?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      changes.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          type: item.type,
+          resource: item.resource,
+          detail: item.detail,
+          operator: item.operator,
+          time: item.time,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const getChangeColor = (t) => ({ create: 'green', update: 'blue', delete: 'red' }[t])
 const getChangeText = (t) => ({ create: '新增', update: '更新', delete: '删除' }[t])
 </script>

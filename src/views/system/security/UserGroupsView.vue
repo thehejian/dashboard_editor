@@ -22,15 +22,34 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const search = ref('')
-const data = ref([
-  { id: 1, name: '运维组', desc: '系统运维团队', users: 5, created: '2024-01-01' },
-  { id: 2, name: '开发组', desc: '应用开发团队', users: 12, created: '2024-01-15' },
-  { id: 3, name: '安全组', desc: '安全审计团队', users: 3, created: '2024-03-01' },
-  { id: 4, name: 'DBA组', desc: '数据库管理团队', users: 2, created: '2024-04-10' },
-])
+const data = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/user_groups?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      data.value = json.data.map(function(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          desc: item.description,
+          users: item.users,
+          created: item.created_at,
+        }
+      })
+    }
+  } catch (e) {
+    console.error('加载失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 const columns = [
   { title: '组名称', dataIndex: 'name' },
   { title: '描述', dataIndex: 'desc' },
