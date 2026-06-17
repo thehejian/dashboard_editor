@@ -71,105 +71,102 @@
           </button>
         </div>
         <div class="detail-body" v-if="currentAlert">
-          <div class="detail-tabs">
-            <button v-for="tab in detailTabs" :key="tab.key"
-              class="detail-tab" :class="{ active: activeDetailTab === tab.key }"
-              @click="activeDetailTab = tab.key">
-              {{ tab.label }}
-            </button>
-          </div>
-
-          <div v-if="activeDetailTab === 'info'" class="tab-panel">
-            <div class="detail-kpi">
-              <div class="kpi-item">
-                <div class="kpi-label">告警级别</div>
-                <div class="kpi-value"><a-tag :color="getLevelColor(currentAlert.level)">{{ getLevelText(currentAlert.level) }}</a-tag></div>
-              </div>
-              <div class="kpi-item">
-                <div class="kpi-label">告警状态</div>
-                <div class="kpi-value">
-                  <a-tag :color="currentAlert.status === 'firing' ? 'red' : 'green'">
-                    {{ currentAlert.status === 'firing' ? '告警中' : '已恢复' }}
-                  </a-tag>
+          <a-tabs v-model:activeKey="activeDetailTab" class="detail-tabs-comp">
+            <a-tab-pane key="info" tab="告警详情和处理建议">
+              <div class="tab-panel">
+                <div class="detail-kpi">
+                  <div class="kpi-item">
+                    <div class="kpi-label">告警级别</div>
+                    <div class="kpi-value"><a-tag :color="getLevelColor(currentAlert.level)">{{ getLevelText(currentAlert.level) }}</a-tag></div>
+                  </div>
+                  <div class="kpi-item">
+                    <div class="kpi-label">告警状态</div>
+                    <div class="kpi-value">
+                      <a-tag :color="currentAlert.status === 'firing' ? 'red' : 'green'">
+                        {{ currentAlert.status === 'firing' ? '告警中' : '已恢复' }}
+                      </a-tag>
+                    </div>
+                  </div>
+                  <div class="kpi-item">
+                    <div class="kpi-label">当前值</div>
+                    <div class="kpi-value">{{ currentAlert.currentValue }}</div>
+                  </div>
+                  <div class="kpi-item">
+                    <div class="kpi-label">阈值</div>
+                    <div class="kpi-value">{{ currentAlert.threshold }}</div>
+                  </div>
+                  <div class="kpi-item">
+                    <div class="kpi-label">持续时间</div>
+                    <div class="kpi-value">{{ currentAlert.duration }}</div>
+                  </div>
+                  <div class="kpi-item">
+                    <div class="kpi-label">触发时间</div>
+                    <div class="kpi-value">{{ currentAlert.triggerTime }}</div>
+                  </div>
+                </div>
+                <div class="section-block">
+                  <div class="section-title">告警源</div>
+                  <div class="section-body">{{ currentAlert.resource }}</div>
+                </div>
+                <div class="section-block">
+                  <div class="section-title">处理建议</div>
+                  <div class="section-body suggestion">{{ currentAlert.suggestion }}</div>
                 </div>
               </div>
-              <div class="kpi-item">
-                <div class="kpi-label">当前值</div>
-                <div class="kpi-value">{{ currentAlert.currentValue }}</div>
+            </a-tab-pane>
+            <a-tab-pane key="experience" tab="维护经验">
+              <div class="tab-panel">
+                <div class="empty-state">
+                  <i class="fa-solid fa-book"></i>
+                  <p>暂无维护经验记录</p>
+                </div>
               </div>
-              <div class="kpi-item">
-                <div class="kpi-label">阈值</div>
-                <div class="kpi-value">{{ currentAlert.threshold }}</div>
+            </a-tab-pane>
+            <a-tab-pane key="history" tab="最近2个月处理记录">
+              <div class="tab-panel">
+                <a-table
+                  :columns="historyRecordColumns"
+                  :data-source="alertHistoryRecords"
+                  :pagination="{ pageSize: 5, size: 'small' }"
+                  row-key="id"
+                  size="small"
+                >
+                  <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'level'">
+                      <a-tag :color="getLevelColor(record.level)" size="small">{{ getLevelText(record.level) }}</a-tag>
+                    </template>
+                    <template v-if="column.key === 'status'">
+                      <a-tag :color="record.status === 'resolved' ? 'green' : 'default'" size="small">
+                        {{ record.status === 'resolved' ? '已恢复' : '处理中' }}
+                      </a-tag>
+                    </template>
+                  </template>
+                </a-table>
               </div>
-              <div class="kpi-item">
-                <div class="kpi-label">持续时间</div>
-                <div class="kpi-value">{{ currentAlert.duration }}</div>
+            </a-tab-pane>
+            <a-tab-pane key="help" tab="告警处理与告警帮助">
+              <div class="tab-panel">
+                <div class="help-section">
+                  <h4><i class="fa-solid fa-headset"></i> 告警处理流程</h4>
+                  <ol class="help-steps">
+                    <li>确认告警级别与影响范围</li>
+                    <li>检查相关资源状态与日志</li>
+                    <li>执行对应处理建议</li>
+                    <li>验证告警是否恢复</li>
+                    <li>记录处理过程与结果</li>
+                  </ol>
+                </div>
+                <div class="help-section">
+                  <h4><i class="fa-solid fa-phone"></i> 联系方式</h4>
+                  <div class="help-info">
+                    <p>运维值班：138-0000-0001</p>
+                    <p>DBA值班：138-0000-0002</p>
+                    <p>网络值班：138-0000-0003</p>
+                  </div>
+                </div>
               </div>
-              <div class="kpi-item">
-                <div class="kpi-label">触发时间</div>
-                <div class="kpi-value">{{ currentAlert.triggerTime }}</div>
-              </div>
-            </div>
-
-            <div class="section-block">
-              <div class="section-title">告警源</div>
-              <div class="section-body">{{ currentAlert.resource }}</div>
-            </div>
-
-            <div class="section-block">
-              <div class="section-title">处理建议</div>
-              <div class="section-body suggestion">{{ currentAlert.suggestion }}</div>
-            </div>
-          </div>
-
-          <div v-if="activeDetailTab === 'experience'" class="tab-panel">
-            <div class="empty-state">
-              <i class="fa-solid fa-book"></i>
-              <p>暂无维护经验记录</p>
-            </div>
-          </div>
-
-          <div v-if="activeDetailTab === 'history'" class="tab-panel">
-            <a-table
-              :columns="historyRecordColumns"
-              :data-source="alertHistoryRecords"
-              :pagination="{ pageSize: 5, size: 'small' }"
-              row-key="id"
-              size="small"
-            >
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'level'">
-                  <a-tag :color="getLevelColor(record.level)" size="small">{{ getLevelText(record.level) }}</a-tag>
-                </template>
-                <template v-if="column.key === 'status'">
-                  <a-tag :color="record.status === 'resolved' ? 'green' : 'default'" size="small">
-                    {{ record.status === 'resolved' ? '已恢复' : '处理中' }}
-                  </a-tag>
-                </template>
-              </template>
-            </a-table>
-          </div>
-
-          <div v-if="activeDetailTab === 'help'" class="tab-panel">
-            <div class="help-section">
-              <h4><i class="fa-solid fa-headset"></i> 告警处理流程</h4>
-              <ol class="help-steps">
-                <li>确认告警级别与影响范围</li>
-                <li>检查相关资源状态与日志</li>
-                <li>执行对应处理建议</li>
-                <li>验证告警是否恢复</li>
-                <li>记录处理过程与结果</li>
-              </ol>
-            </div>
-            <div class="help-section">
-              <h4><i class="fa-solid fa-phone"></i> 联系方式</h4>
-              <div class="help-info">
-                <p>运维值班：138-0000-0001</p>
-                <p>DBA值班：138-0000-0002</p>
-                <p>网络值班：138-0000-0003</p>
-              </div>
-            </div>
-          </div>
+            </a-tab-pane>
+          </a-tabs>
         </div>
       </div>
     </div>
@@ -186,13 +183,6 @@ const detailVisible = ref(false)
 const currentAlert = ref(null)
 const activeDetailTab = ref('info')
 const scrollY = ref(500)
-
-const detailTabs = [
-  { key: 'info', label: '告警详情和处理建议' },
-  { key: 'experience', label: '维护经验' },
-  { key: 'history', label: '最近2个月处理记录' },
-  { key: 'help', label: '告警处理与告警帮助' },
-]
 
 const realtimeAlerts = ref([
   { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001 (华北区域)', triggerTime: '2026-06-16 10:32:00', currentValue: '95%', threshold: '> 90%', duration: '5分钟', status: 'firing', suggestion: '1. 检查是否有异常进程占用CPU\n2. 查看应用日志定位慢查询\n3. 必要时重启相关服务' },
@@ -376,13 +366,9 @@ onUnmounted(function() {
 .detail-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 0 20px 20px;
 }
-
-.detail-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; flex-wrap: wrap; }
-.detail-tab { padding: 6px 12px; border: none; background: transparent; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-radius: 4px; transition: all 0.15s; white-space: nowrap; }
-.detail-tab:hover { background: var(--bg-sec); color: var(--text); }
-.detail-tab.active { background: var(--brand); color: #fff; font-weight: 500; }
+.detail-body :deep(.ant-tabs > .ant-tabs-nav) { margin-bottom: 16px; }
 
 .tab-panel { min-height: 200px; }
 
@@ -413,11 +399,9 @@ onUnmounted(function() {
   .detail-panel-content { width: 100%; right: -100%; }
   .detail-panel.open .detail-panel-content { right: 0; }
   .detail-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .detail-tabs { flex-wrap: wrap; }
 }
 
 @media (max-width: 576px) {
   .detail-kpi { grid-template-columns: 1fr; }
-  .detail-tabs .detail-tab { flex: 1 1 45%; text-align: center; }
 }
 </style>
