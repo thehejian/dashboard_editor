@@ -8,18 +8,9 @@
             <i class="fa-solid fa-house"></i><span>首页</span>
           </router-link>
 
-          <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'alarm'" @openChange="openNav('alarm')">
-            <span class="nav-item" :class="{ active: $route.path.startsWith('/alarm') }">
-              <i class="fa-solid fa-bell"></i><span>告警</span> <i class="fa-solid fa-chevron-down"></i>
-            </span>
-            <template #overlay>
-              <a-menu @click="handleNavClick">
-                <a-menu-item key="/alarm/realtime">实时告警</a-menu-item>
-                <a-menu-item key="/alarm/history">历史告警</a-menu-item>
-                <a-menu-item key="/alarm/config">告警配置</a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
+          <router-link to="/alarm/current" class="nav-item" :class="{ active: $route.path.startsWith('/alarm') }">
+            <i class="fa-solid fa-bell"></i><span>告警</span>
+          </router-link>
 
           <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'monitor'" @openChange="openNav('monitor')">
             <span class="nav-item" :class="{ active: $route.path.startsWith('/monitor') }">

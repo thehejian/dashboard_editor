@@ -3,9 +3,28 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
 
-  { path: '/alarm/realtime', name: 'alarm-realtime', component: () => import('../views/alarm/RealtimeView.vue') },
-  { path: '/alarm/history', name: 'alarm-history', component: () => import('../views/alarm/HistoryView.vue') },
-  { path: '/alarm/config', name: 'alarm-config', component: () => import('../views/alarm/ConfigView.vue') },
+  { path: '/alarm/realtime', redirect: '/alarm/current' },
+  { path: '/alarm/history', redirect: '/alarm/current' },
+  { path: '/alarm/config', redirect: '/alarm/settings/rules' },
+  {
+    path: '/alarm',
+    component: () => import('../views/alarm/AlarmManageView.vue'),
+    children: [
+      { path: '', redirect: '/alarm/current' },
+      { path: 'current', component: () => import('../views/alarm/RealtimeView.vue') },
+      { path: 'events', component: () => import('../views/alarm/EventsView.vue') },
+      {
+        path: 'settings',
+        children: [
+          { path: '', redirect: '/alarm/settings/rules' },
+          { path: 'rules', component: () => import('../views/alarm/ConfigView.vue') },
+          { path: 'notification', component: () => import('../views/alarm/settings/NotificationView.vue') },
+          { path: 'extension', component: () => import('../views/alarm/settings/ExtensionView.vue') },
+        ],
+      },
+      { path: 'customize', component: () => import('../views/alarm/CustomizeView.vue') },
+    ],
+  },
 
   { path: '/monitor/dashboard', name: 'monitor-dashboard', component: () => import('../views/MonitorView.vue') },
   { path: '/monitor/resource', name: 'monitor-resource', component: () => import('../views/monitor/ResourceMonitorView.vue') },
