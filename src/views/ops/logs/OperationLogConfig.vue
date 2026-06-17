@@ -102,7 +102,7 @@ const forwardColumns = [
 .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
 .success-banner { display: inline-flex; align-items: center; gap: 8px; background: #e8f5e9; border-radius: 6px; padding: 6px 16px; font-size: 13px; color: #333; margin-left: auto; white-space: nowrap; }
 .config-section { max-width: 720px; }
-.helper-text { font-size: 12px; color: #999; margin: -8px 0 0 0; padding-left: 180px; font-style: italic; line-height: 1.6; }
+.helper-text { font-size: 12px; color: #999; margin: 4px 0 0 0; font-style: italic; line-height: 1.6; }
 @media (max-width: 768px) {
   .page-header { flex-direction: column; align-items: flex-start; }
   .success-banner { margin-left: 0; white-space: normal; width: 100%; }
