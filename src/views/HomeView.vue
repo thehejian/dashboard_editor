@@ -1199,10 +1199,10 @@ onMounted(async function() {
     if (overview.success) {
       var ov = overview.data
       kpiCards.splice(0, kpiCards.length,
-        { title: '监控对象', value: String(ov.ciTotal), trend: undefined, trendText: '+2', icon: 'fa-cubes', iconBg: 'rgba(24,144,255,0.1)', iconColor: '#1890FF', sub: '配置项总数' },
-        { title: '活跃告警', value: String(ov.firingAlerts), trend: undefined, trendText: '+1', icon: 'fa-exclamation-circle', iconBg: 'rgba(245,34,45,0.1)', iconColor: '#F5222D', sub: '需立即处理' },
-        { title: '活跃用户', value: String(ov.activeUsers), trend: undefined, trendText: '', icon: 'fa-user-check', iconBg: 'rgba(82,196,26,0.1)', iconColor: '#52C41A', sub: '今日登录' },
-        { title: '运行作业', value: String(ov.runningJobs), trend: undefined, trendText: '', icon: 'fa-play-circle', iconBg: 'rgba(250,140,22,0.1)', iconColor: '#FA8C16', sub: '进行中' },
+        { title: '监控对象', value: String(ov.ciTotal), trend: 12, trendText: '较上月 +12%', icon: 'fa-solid fa-layer-group', iconBg: '#e6f7ff', iconColor: '#007BFF', sub: '配置项总数' },
+        { title: '健康资源', value: '100%', trend: undefined, trendText: '', icon: 'fa-solid fa-circle-check', iconBg: '#f6ffed', iconColor: '#52C41A', sub: '健康率 100%' },
+        { title: '当日告警', value: String(ov.firingAlerts), trend: -8, trendText: '较上周 -8%', icon: 'fa-solid fa-triangle-exclamation', iconBg: '#fff7e6', iconColor: '#FA8C16', sub: ' ' },
+        { title: '活跃用户', value: String(ov.activeUsers), trend: 5, trendText: '较昨日 +5%', icon: 'fa-solid fa-bell', iconBg: '#fff0f6', iconColor: '#EB2F96', sub: ' ' },
       )
     }
 
