@@ -96,4 +96,24 @@ cd server && npm run dev  # Express 后端 (node --watch)
 - Ant Design Vue v4.2.6 全量引入（`main.js` 全局注册）
 - 数据 mock 直接写死在 views 文件中，无独立 mock 层
 - Server 端 Express + PostgreSQL + OpenAI（`server/server.js`）
+- **CMDB**：`server/db/001_cmdb_schema.sql`（36 张表，覆盖 CI/IAM/告警/账号/日志/运维）
+- **API 路由**：`server/routes/cmdb.js`，自动 CRUD + 特化端点（`ci/tree`, `alerts/stats`, `dashboard/overview`）
+- seed 数据：`npm run seed`（`server/db/002_seed_data.sql`）
 - `.opencode/` 在 `.gitignore` 中，不提交
+
+## CMDB API
+
+Base URL: `/api/cmdb`
+
+| 端点 | 说明 |
+|---|---|
+| `GET /tables` | 列出所有 CMDB 表及列信息 |
+| `GET /ci/tree` | CI 按类型分组树 |
+| `GET /alerts/stats` | 告警统计摘要 |
+| `GET /dashboard/overview` | 首页概览 KPI |
+| `GET/POST/PUT/DELETE /:table` | 通用 CRUD |
+| `GET /:table?key=val` | 按字段精确过滤 |
+| `GET /:table?sort=col&order=DESC` | 排序 |
+| `GET /:table?page=1&pageSize=50` | 分页 |
+
+支持的表：ci_types, ci, users, alerts, accounts, jobs, operation_logs 等 36 张表。

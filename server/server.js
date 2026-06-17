@@ -2,6 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import { Pool } from 'pg'
 import dotenv from 'dotenv'
+import { readFileSync } from 'fs'
+import cmdbRouter from './routes/cmdb.js'
 
 dotenv.config()
 
@@ -25,6 +27,33 @@ const pool = new Pool({
 pool.query('SELECT NOW()')
   .then(() => console.log('✅ 数据库连接成功'))
   .catch(err => console.error('❌ 数据库连接失败:', err))
+
+// Share pool with route modules
+app.locals.pool = pool
+
+// ==================== CMDB API Routes ====================
+
+app.use('/api/cmdb', cmdbRouter)
+
+// Run CMDB migration on startup
+async function runMigrations() {
+  try {
+    const migrationResult = await pool.query(`
+      SELECT to_regclass('public.ci_types') IS NOT NULL as exists
+    `)
+    if (!migrationResult.rows[0].exists) {
+      console.log('📦 运行 CMDB 迁移...')
+      const migrationSql = readFileSync(new URL('./db/001_cmdb_schema.sql', import.meta.url), 'utf-8')
+      await pool.query(migrationSql)
+      console.log('✅ CMDB 表结构创建成功')
+    } else {
+      console.log('✅ CMDB 表结构已存在')
+    }
+  } catch (err) {
+    console.error('❌ CMDB 迁移失败:', err)
+  }
+}
+runMigrations()
 
 // ==================== API Routes ====================
 
@@ -73,40 +102,20 @@ app.post('/api/code-search', async (req, res) => {
 // 添加测试数据
 app.post('/api/seed-data', async (req, res) => {
   try {
-    // 插入代码片段 (使用 random_vector() 生成向量)
-    await pool.query(`
-      INSERT INTO code_snippets (title, description, code_content, language, embedding) VALUES
-      ('登录表单组件', 'Vue3 登录表单组件', '<template><a-form><a-input/></a-form>', 'vue', random_vector(1536)),
-      ('表格组件', 'Ant Design Table', '<a-table :columns="cols" :data-source="data" />', 'vue', random_vector(1536)),
-      ('图表组件', 'G2 折线图', '<Line :data="data" />', 'vue', random_vector(1536)),
-      ('弹窗组件', 'Modal 对话框', '<a-modal title="标题">内容</a-modal>', 'vue', random_vector(1536)),
-      ('下拉组件', 'Select 选择', '<a-select><a-select-option/></a-select>', 'vue', random_vector(1536))
-    `)
+    // Check if CMDB data already exists
+    const ciCheck = await pool.query('SELECT COUNT(*) as count FROM ci_types')
+    if (parseInt(ciCheck.rows[0].count) > 0) {
+      return res.json({ success: true, message: 'CMDB 数据已存在，跳过 seed' })
+    }
 
-    // 插入模板
-    await pool.query(`
-      INSERT INTO code_templates (name, trigger_keyword, template_content, category, usage_count, embedding) VALUES
-      ('输入框', 'a-input', '<a-input v-model:value="v" />', '表单', 100, random_vector(1536)),
-      ('按钮', 'a-button', '<a-button>确定</a-button>', '按钮', 90, random_vector(1536)),
-      ('表格', 'a-table', '<a-table :data-source="d" />', '数据', 80, random_vector(1536)),
-      ('弹窗', 'a-modal', '<a-modal>内容</a-modal>', '反馈', 70, random_vector(1536))
-    `)
+    // Seed CMDB data
+    const seedSql = readFileSync(new URL('./db/002_seed_data.sql', import.meta.url), 'utf-8')
+    await pool.query(seedSql)
+    console.log('✅ CMDB seed 完成')
 
-    // 插入文档
-    await pool.query(`
-      INSERT INTO docs (title, content, chunk_text, doc_type, embedding) VALUES
-      ('运维手册-创建图表', '如何创建新图表', '打开仪表盘，点击"添加图表"按钮，选择类型并配置数据源。', '运维手册', random_vector(1536)),
-      ('运维手册-数据源', '如何配置数据源', '在监控配置页面添加 Prometheus/InfluxDB 数据源。', '运维手册', random_vector(1536)),
-      ('API-指标', '获取监控指标', '调用 /api/v1/metrics 获取监控数据，需传时间和指标参数。', 'API文档', random_vector(1536)),
-      ('API-告警', '查询告警', '调用 /api/v1/alarms 查询告警，支持按级别、状态筛选。', 'API文档', random_vector(1536))
-    `)
-
-    res.json({
-      success: true,
-      message: '测试数据已添加 (使用 pgvector random_vector)'
-    })
+    res.json({ success: true, message: 'CMDB 数据初始化完成' })
   } catch (err) {
-    console.error('添加测试数据错误:', err)
+    console.error('Seed 错误:', err)
     res.status(500).json({ error: err.message })
   }
 })
