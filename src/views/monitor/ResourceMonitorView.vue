@@ -96,7 +96,10 @@ const viewChart = (record) => { console.log('查看监控图', record) }
 </script>
 
 <style scoped>
-.page-view { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.page-view { padding: 0 24px; height: 100%; display: flex; flex-direction: column; }
+:deep(.ant-table-wrapper) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+:deep(.ant-table) { flex: 1; min-height: 0; }
+:deep(.ant-table-container) { flex: 1; min-height: 0; }
 .page-header { margin-bottom: 20px; }
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
 .resource-categories { display: flex; gap: 8px; margin-bottom: 16px; }

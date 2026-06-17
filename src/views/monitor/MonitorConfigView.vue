@@ -62,7 +62,7 @@ const columns = [
 </script>
 
 <style scoped>
-.page-view { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.page-view { padding: 0 24px; height: 100%; display: flex; flex-direction: column; overflow-y: auto; }
 .page-header { margin-bottom: 20px; }
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
 .config-card { background: var(--bg-card); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
