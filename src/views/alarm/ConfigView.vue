@@ -22,18 +22,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
-const rules = ref([
-  { id: 1, name: 'CPU告警', description: 'CPU使用率超过阈值时触发', level: 'critical', target: 'CPU使用率', condition: '> 90%', enabled: true },
-  { id: 2, name: '内存告警', description: '内存使用率超过阈值时触发', level: 'warning', target: '内存使用率', condition: '> 80%', enabled: true },
-  { id: 3, name: '磁盘告警', description: '磁盘使用率超过阈值时触发', level: 'warning', target: '磁盘使用率', condition: '> 85%', enabled: false },
-  { id: 4, name: '网络告警', description: '网络延迟超过阈值时触发', level: 'info', target: '网络延迟', condition: '> 100ms', enabled: true },
-  { id: 5, name: '连接数告警', description: '数据库连接数超过阈值时触发', level: 'critical', target: '连接数', condition: '> 500', enabled: true },
-  { id: 6, name: 'Pod重启告警', description: 'Pod重启次数超过阈值时触发', level: 'critical', target: 'Pod重启率', condition: '> 3次/小时', enabled: true },
-  { id: 7, name: '证书过期告警', description: 'SSL证书剩余天数低于阈值时触发', level: 'warning', target: '证书剩余天数', condition: '< 30天', enabled: true },
-  { id: 8, name: '日志错误告警', description: '日志ERROR级别出现频率超过阈值时触发', level: 'info', target: '错误率', condition: '> 5次/分钟', enabled: false },
-])
+const rules = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await fetch('/api/cmdb/alert_rules?sort=id&order=ASC')
+    const json = await res.json()
+    if (json.success) {
+      rules.value = json.data
+    }
+  } catch (e) {
+    console.error('加载告警规则失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
+
 const getLevelColor = (l) => ({ critical: 'red', warning: 'orange', info: 'blue' }[l])
 const getLevelText = (l) => ({ critical: '紧急', warning: '重要', info: '次要' }[l])
 </script>
