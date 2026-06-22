@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="page-header">
-      <h3>日志查询<small style="font-size: 13px; color: #999; font-weight: normal; margin-left: 8px;">(870版本暂不开发)</small></h3>
+      <h3>日志查询</h3>
     </div>
     <a-tabs v-model:activeKey="activeTab" class="log-tabs">
       <a-tab-pane key="cloud" tab="云平台日志">
@@ -155,7 +155,7 @@ const tenantPagination = { pageSize: 10, total: 153, showTotal: total => `总条
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 16px; }
+.page-header { margin-bottom: 4px; }
 .page-header h3 { color: #007DFF; }
 .filter-item { margin-bottom: 12px; }
 .filter-item label { display: block; margin-bottom: 4px; font-size: 14px; color: #333; }

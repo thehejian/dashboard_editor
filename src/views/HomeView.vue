@@ -1189,22 +1189,8 @@ onMounted(() => {
 
 onMounted(async function() {
   try {
-    const [overviewRes, alertsRes] = await Promise.all([
-      fetch('/api/cmdb/dashboard/overview'),
-      fetch('/api/cmdb/alerts?sort=id&order=DESC&pageSize=5'),
-    ])
-    const overview = await overviewRes.json()
+    const alertsRes = await fetch('/api/cmdb/alerts?sort=id&order=DESC&pageSize=5')
     const alerts = await alertsRes.json()
-
-    if (overview.success) {
-      var ov = overview.data
-      kpiCards.splice(0, kpiCards.length,
-        { title: '监控对象', value: String(ov.ciTotal), trend: 12, trendText: '较上月 +12%', icon: 'fa-solid fa-layer-group', iconBg: '#e6f7ff', iconColor: '#007BFF', sub: '配置项总数' },
-        { title: '健康资源', value: '100%', trend: undefined, trendText: '', icon: 'fa-solid fa-circle-check', iconBg: '#f6ffed', iconColor: '#52C41A', sub: '健康率 100%' },
-        { title: '当日告警', value: String(ov.firingAlerts), trend: -8, trendText: '较上周 -8%', icon: 'fa-solid fa-triangle-exclamation', iconBg: '#fff7e6', iconColor: '#FA8C16', sub: ' ' },
-        { title: '活跃用户', value: String(ov.activeUsers), trend: 5, trendText: '较昨日 +5%', icon: 'fa-solid fa-bell', iconBg: '#fff0f6', iconColor: '#EB2F96', sub: ' ' },
-      )
-    }
 
     if (alerts.success) {
       alertEvents.splice(0, alertEvents.length,

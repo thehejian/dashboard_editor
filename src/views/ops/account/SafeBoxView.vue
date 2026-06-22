@@ -3,11 +3,11 @@
     <div class="page-header">
       <h3>账号保管箱</h3>
     </div>
-    <div class="button-row">
+    <div class="filter-actions-bar">
       <a-button @click="showCreate = true">创建</a-button>
       <a-button>删除</a-button>
     </div>
-    <div class="search-row">
+    <div class="filter-bar">
       <a-input-search v-model:value="search" placeholder="请输入关键字搜索" />
     </div>
     <a-table
@@ -108,13 +108,19 @@ onMounted(async () => {
   font-weight: 600;
   margin: 0;
 }
-.button-row {
+.filter-actions-bar {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  justify-content: flex-end;
 }
-.search-row {
+.filter-bar {
+  display: flex;
+  gap: 8px;
   margin-bottom: 16px;
+}
+.filter-bar :deep(.ant-input-search) {
+  flex: 1;
 }
 .link-blue {
   color: var(--brand);
@@ -159,9 +165,9 @@ onMounted(async () => {
   .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
   .page-header h3 { font-size: 16px; }
   .page-header .ant-btn { width: 100%; }
-  .button-row { flex-wrap: wrap; }
-  .button-row .ant-btn { flex: 1; min-width: 0; }
-  .search-row .ant-input-search { width: 100% !important; }
+  .filter-actions-bar { flex-wrap: wrap; }
+  .filter-actions-bar .ant-btn { flex: 1; min-width: 0; }
+  .filter-bar :deep(.ant-input-search) { width: 100% !important; }
   .ant-table { overflow-x: auto; }
 }
 </style>

@@ -30,7 +30,7 @@
           <a-select-option value="stopped">已停止</a-select-option>
           <a-select-option value="maintenance">维护中</a-select-option>
         </a-select>
-        <a-input-search v-model:value="searchText" placeholder="搜索名称/IP" style="width: 240px" />
+        <a-input-search v-model:value="searchText" placeholder="搜索名称/IP" class="search-input" />
       </div>
 
       <a-table :columns="columns" :data-source="filteredAssets" :pagination="{ pageSize: 10 }" row-key="id">
@@ -278,7 +278,9 @@ const resetView = () => { zoom.value = 1 }
 .tab-btn:hover { background: var(--bg-sec); color: var(--text); }
 .tab-btn.active { background: var(--brand-subtle); color: var(--brand); font-weight: 500; }
 
-.filter-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
+.filter-bar :deep(.ant-input-search) { flex: 1; }
+.search-input { flex: 1; min-width: 200px; }
 
 .topology-toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .topology-canvas { height: 400px; background: var(--bg-card); border-radius: 8px; overflow: auto; position: relative; }

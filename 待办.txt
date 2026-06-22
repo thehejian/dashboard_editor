@@ -1,0 +1,16 @@
+
+
+
+
+
+
+数据集下的按分组和按资源类型下面的两个下拉框，要合并成一个级联带搜索的下拉框
+
+
+
+
+title为dashboard
+
+vista和前面的log整体改为这个图片https://res-static.hc-cdn.cn/cloudbu-site/china/zh-cn/wangxue/header/logo.svg
+
+页签上logo为<link rel="icon" href="https://www.huaweicloud.com/favicon.ico">

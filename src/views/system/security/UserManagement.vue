@@ -3,11 +3,11 @@
     <div class="page-header">
       <h3>用户</h3>
     </div>
-    <div class="button-row">
+    <div class="filter-actions-bar">
       <a-button>创建用户</a-button>
       <a-button>删除</a-button>
     </div>
-    <div class="filter-row">
+    <div class="filter-bar">
       <a-input-search v-model:value="search" placeholder="搜索用户名/姓名/邮箱" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }" row-key="id">
@@ -75,8 +75,9 @@ const columns = [
 <style scoped>
 .page-header { margin-bottom: 16px; }
 .page-header h3 { font-size: 18px; font-weight: 600; margin: 0; }
-.button-row { display: flex; gap: 8px; margin-bottom: 12px; }
-.filter-row { margin-bottom: 16px; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; }
+.filter-bar :deep(.ant-input-search) { flex: 1; }
 :deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
 :deep(.ant-table-tbody > tr > td) { font-size: 13px; }
 :deep(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafafa; }

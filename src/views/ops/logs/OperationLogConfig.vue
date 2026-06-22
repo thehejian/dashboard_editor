@@ -125,7 +125,7 @@ const forwardColumns = [
 </script>
 
 <style scoped>
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.page-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 4px; flex-wrap: wrap; }
 .success-banner { display: inline-flex; align-items: center; gap: 8px; background: #e8f5e9; border-radius: 6px; padding: 6px 16px; font-size: 13px; color: #333; margin-left: auto; white-space: nowrap; }
 .config-section { max-width: 720px; }
 .helper-text { font-size: 12px; color: #999; margin: 4px 0 0 0; font-style: italic; line-height: 1.6; }

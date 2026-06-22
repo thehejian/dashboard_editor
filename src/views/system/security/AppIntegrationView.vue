@@ -3,12 +3,12 @@
     <div class="page-header">
       <h3>应用集成</h3>
     </div>
-    <div class="button-row">
+    <div class="filter-actions-bar">
       <a-button type="primary" @click="router.push('/system/security/app-integration/create')">创建应用集成</a-button>
       <a-button>导出元数据</a-button>
       <a-button>导出配置</a-button>
     </div>
-    <div class="filter-row">
+    <div class="filter-bar">
       <a-select v-model:value="filterTenant" placeholder="全部租户" style="width: 160px">
         <a-select-option value="tenant01">租户01</a-select-option>
         <a-select-option value="tenant02">租户02</a-select-option>
@@ -111,9 +111,9 @@ onMounted(async () => {
 <style scoped>
 .page-header { margin-bottom: 16px; }
 .page-header h3 { font-size: 18px; font-weight: 600; margin: 0; }
-.button-row { display: flex; gap: 8px; margin-bottom: 12px; }
-.filter-row { display: flex; gap: 12px; margin-bottom: 16px; }
-.filter-row .ant-input-search { flex: 1; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; }
+.filter-bar :deep(.ant-input-search) { flex: 1; }
 .link-blue { color: var(--brand); cursor: pointer; font-size: 13px; }
 .link-blue:hover { opacity: 0.8; }
 .status-cell { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }

@@ -135,7 +135,7 @@ function onMobileSelectTree(keys) {
 .log-sidebar { width: 200px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--bg); overflow-y: auto; padding: 16px 0; }
 .sidebar-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); padding: 0 16px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .sidebar-title i { font-size: 14px; color: var(--brand); }
-.log-content { flex: 1; overflow-y: auto; padding: 24px; }
+.log-content { flex: 1; overflow-y: auto; padding: 16px 24px 24px; }
 .log-content.create-mode { padding: 0; }
 .log-mobile-nav { display: none; }
 .log-mobile-sidebar { display: none; }

@@ -100,7 +100,7 @@ const pagination = { pageSize: 10, total: 153, showTotal: (total, range) => `总
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 16px; }
+.page-header { margin-bottom: 4px; }
 
 .search-bar-wrapper { border: 1px solid #d9d9d9; border-radius: 6px; background: #fff; }
 .search-bar-inner { display: flex; align-items: center; padding: 4px 8px; }

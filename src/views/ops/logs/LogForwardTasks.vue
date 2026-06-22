@@ -3,6 +3,9 @@
     <div class="page-header">
       <h3>日志转发任务</h3>
     </div>
+    <div class="filter-actions-bar">
+      <a-button type="primary" style="margin-left: auto">新建任务</a-button>
+    </div>
     <div class="filter-bar">
       <a-select v-model:value="targetType" placeholder="目标类型" style="width: 130px" allowClear>
         <a-select-option value="Kafka">Kafka</a-select-option>
@@ -14,8 +17,7 @@
         <a-select-option value="启用">启用</a-select-option>
         <a-select-option value="停用">停用</a-select-option>
       </a-select>
-      <a-input-search v-model:value="search" placeholder="综合搜索任务名/目标地址" style="width: 280px" />
-      <a-button type="primary" style="margin-left: auto">新建任务</a-button>
+      <a-input-search v-model:value="search" placeholder="综合搜索任务名/目标地址" style="flex: 1; min-width: 200px" />
     </div>
     <a-table :columns="columns" :data-source="data" :pagination="{ pageSize: 10 }" row-key="id" :scroll="{ x: 800 }">
       <template #bodyCell="{ column, record }">
@@ -88,13 +90,13 @@ const columns = [
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
+.filter-actions-bar { display: flex; align-items: center; margin-bottom: 8px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
 @media (max-width: 768px) {
+  .filter-actions-bar { flex-wrap: wrap; }
   .filter-bar { flex-wrap: wrap; }
-  .filter-bar :deep(.ant-select),
-  .filter-bar :deep(.ant-input-search),
-  .filter-bar :deep(.ant-btn) { flex: 1 1 calc(50% - 4px); min-width: 0; }
-  .filter-bar :deep(.ant-btn[style*="margin-left"]) { margin-left: 0 !important; }
+  .filter-bar :deep(.ant-select) { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .filter-bar :deep(.ant-input-search) { flex: 1; min-width: 200px; }
   .page-header h3 { font-size: 15px; }
 }
 </style>

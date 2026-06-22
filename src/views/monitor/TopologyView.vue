@@ -584,84 +584,61 @@ const NET_LAYOUT = {
 }
 
 const NET_NODE_DEFS = ref([
-  { id: '1', data: { label: 'SLB-prod' }, iconText: 'fa-sliders-h', combo: 'region-beijing', style: { x: 100, y: 50 } },
-  { id: '2', data: { label: 'SLB-east' }, iconText: 'fa-sliders-h', combo: 'region-shanghai', style: { x: 600, y: 50 } },
-  { id: '3', data: { label: 'server-001' }, iconText: 'fa-server', combo: 'region-beijing', style: { x: 80, y: 200 } },
-  { id: '4', data: { label: 'app-server-02' }, iconText: 'fa-server', combo: 'region-beijing', style: { x: 200, y: 200 } },
-  { id: '5', data: { label: 'db-master' }, iconText: 'fa-database', combo: 'region-beijing', style: { x: 80, y: 350 } },
-  { id: '6', data: { label: 'server-east-01' }, iconText: 'fa-server', combo: 'region-shanghai', style: { x: 580, y: 200 } },
-  { id: '7', data: { label: 'server-east-02' }, iconText: 'fa-server', combo: 'region-shanghai', style: { x: 680, y: 200 } },
-  { id: '8', data: { label: 'db-replica' }, iconText: 'fa-database', combo: 'region-shanghai', style: { x: 600, y: 350 } },
+  { id: 'internet', data: { label: 'Internet / 企业专线\n网络' }, iconText: '\uf0ac', style: { fill: '#1890ff', size: 48 } },
+  { id: 'border-leaf', data: { label: 'Border Leaf\n192.168.0.1' }, iconText: '\uf6ff', style: { fill: '#1890ff', size: 48 } },
+  { id: 'mgmt-spine-east', data: { label: '管理核心Spine\n192.1.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'biz-spine-east', data: { label: '业务核心Spine\n192.1.0.2' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'mgmt-tor-east', data: { label: '管理TOR\n192.1.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'biz-tor-east', data: { label: '业务TOR\n192.1.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'storage-tor-east', data: { label: '存储TOR\n192.1.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'mgmt-nodes-east', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'network-nodes-east', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'compute-nodes-east', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'storage-nodes-east', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: 48 }, combo: 'region-east' },
+  { id: 'mgmt-spine-north', data: { label: '管理核心Spine\n192.2.0.1' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'biz-spine-north', data: { label: '业务核心Spine\n192.2.0.2' }, iconText: '\uf126', style: { fill: '#f5222d', size: 48 }, combo: 'region-north' },
+  { id: 'mgmt-tor-north', data: { label: '管理TOR\n192.2.0.11' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'biz-tor-north', data: { label: '业务TOR\n192.2.0.12' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'storage-tor-north', data: { label: '存储TOR\n192.2.0.13' }, iconText: '\uf126', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'mgmt-nodes-north', data: { label: '管理节点\nx3' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'network-nodes-north', data: { label: '网络节点\nx2' }, iconText: '\uf233', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'compute-nodes-north', data: { label: '计算节点\nx2' }, iconText: '\uf2db', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
+  { id: 'storage-nodes-north', data: { label: '存储节点\nx2' }, iconText: '\uf1c0', style: { fill: '#1890ff', size: 48 }, combo: 'region-north' },
 ])
 const NET_COMBO_DEFS = ref([
-  { id: 'region-beijing', data: { label: '华北区域一' } },
-  { id: 'region-shanghai', data: { label: '华东区域一' } },
+  { id: 'region-east', data: { label: 'Region: 华东1' } },
+  { id: 'region-north', data: { label: 'Region: 华北2' } },
 ])
 const NET_EDGES = ref([
-  { source: '1', target: '3', data: { label: '流量1Gbps' }, style: { stroke: '#52c41a' } },
-  { source: '1', target: '4', data: { label: '流量500Mbps' }, style: { stroke: '#fa8c16' } },
-  { source: '1', target: '2', data: { label: '跨区域1Gbps' }, style: { stroke: '#1890ff', lineDash: [5, 5] } },
-  { source: '2', target: '6', data: { label: '流量800Mbps' }, style: { stroke: '#52c41a' } },
-  { source: '2', target: '7', data: { label: '流量200Mbps' }, style: { stroke: '#f5222d' } },
-  { source: '3', target: '5', data: { label: '读写' }, style: { stroke: '#52c41a' } },
-  { source: '4', target: '5', data: { label: '读写' }, style: { stroke: '#52c41a' } },
-  { source: '5', target: '8', data: { label: '复制' }, style: { stroke: '#1890ff', lineDash: [5, 5] } },
+  { source: 'internet', target: 'border-leaf', style: { stroke: '#d9d9d9', lineWidth: 2, sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'border-leaf', target: 'mgmt-spine-east', data: { label: '管理通道' }, style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'border-leaf', target: 'biz-spine-east', data: { label: '业务平面' }, style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'mgmt-spine-east', target: 'mgmt-tor-east', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-spine-east', target: 'biz-tor-east', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-spine-east', target: 'storage-tor-east', data: { label: '存储平面' }, style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'mgmt-tor-east', target: 'mgmt-nodes-east', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-tor-east', target: 'network-nodes-east', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-tor-east', target: 'compute-nodes-east', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'storage-tor-east', target: 'storage-nodes-east', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'border-leaf', target: 'mgmt-spine-north', data: { label: '管理通道' }, style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'border-leaf', target: 'biz-spine-north', data: { label: '业务平面' }, style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'mgmt-spine-north', target: 'mgmt-tor-north', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-spine-north', target: 'biz-tor-north', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-spine-north', target: 'storage-tor-north', data: { label: '存储平面' }, style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'mgmt-tor-north', target: 'mgmt-nodes-north', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-tor-north', target: 'network-nodes-north', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-tor-north', target: 'compute-nodes-north', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'storage-tor-north', target: 'storage-nodes-north', style: { sourcePort: 'bottom', targetPort: 'top' } },
+  { source: 'biz-spine-east', target: 'biz-spine-north', type: 'cubic-horizontal', data: { label: 'Region互联' }, style: { lineDash: [5, 5], stroke: '#fa8c16', sourcePort: 'right', targetPort: 'left' } },
 ])
-const loading = ref(false)
-
-onMounted(async function() {
-  loading.value = true
-  try {
-    const [nodesRes, edgesRes, zonesRes] = await Promise.all([
-      fetch('/api/cmdb/topology_nodes?sort=sort_order&order=ASC'),
-      fetch('/api/cmdb/topology_edges?sort=id&order=ASC'),
-      fetch('/api/cmdb/topology_zones?sort=sort_order&order=ASC'),
-    ])
-    const nodesJson = await nodesRes.json()
-    const edgesJson = await edgesRes.json()
-    if (nodesJson.success) {
-      NET_NODE_DEFS.value = nodesJson.data.map(function(item) {
-        var style = item.style || {}
-        if (typeof style === 'string') { try { style = JSON.parse(style) } catch(e) {} }
-        return {
-          id: String(item.id),
-          data: { label: item.label },
-          iconText: item.icon_text || null,
-          style: style,
-          combo: item.combo || undefined,
-        }
-      })
-      NET_COMBO_DEFS.value = [...new Set(nodesJson.data.map(function(i) { return i.combo }).filter(Boolean))].map(function(c) {
-        return { id: c, data: { label: c.replace('region-', '区域 ') } }
-      })
-    }
-    if (edgesJson.success) {
-      NET_EDGES.value = edgesJson.data.map(function(item) {
-        var data = item.data || {}
-        var style = item.style || {}
-        if (typeof data === 'string') { try { data = JSON.parse(data) } catch(e) {} }
-        if (typeof style === 'string') { try { style = JSON.parse(style) } catch(e) {} }
-        return {
-          source: String(item.source_id),
-          target: String(item.target_id),
-          data: data,
-          style: style,
-        }
-      })
-    }
-  } catch (e) {
-    console.error('加载拓扑数据失败:', e)
-  } finally {
-    loading.value = false
-  }
-})
+onMounted(function() {})
 
 function createNetworkTopoData() {
   const nodes = NET_NODE_DEFS.value.map(n => {
     const pos = NET_LAYOUT[n.id]
     return {
       ...n,
-      style: { ...n.style, x: pos[0], y: pos[1] },
+      style: { ...n.style, x: pos ? pos[0] : (n.style?.x ?? 0), y: pos ? pos[1] : (n.style?.y ?? 0) },
     }
   })
   const combos = NET_COMBO_DEFS.value.map(c => {

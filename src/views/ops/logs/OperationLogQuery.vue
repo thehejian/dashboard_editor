@@ -27,7 +27,7 @@
             <label>操作详情</label>
             <a-input v-model:value="adminForm.detail" placeholder="最大长度为25个字符" style="width: 200px" allowClear />
           </div>
-          <div class="filter-actions">
+          <div class="filter-actions" style="margin-bottom: 16px;">
             <a-button type="primary">查询</a-button>
             <a-button>导出<i class="fa-solid fa-caret-down" style="margin-left: 8px;"></i></a-button>
           </div>
@@ -197,7 +197,7 @@ const tenantPagination = { pageSize: 10, total: 153, showTotal: total => `总条
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 16px; }
+.page-header { margin-bottom: 4px; }
 .filter-admin { margin-bottom: 12px; }
 .filter-item { margin-bottom: 12px; }
 .filter-item label { display: block; margin-bottom: 4px; font-size: 14px; color: #333; }

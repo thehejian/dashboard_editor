@@ -4,18 +4,20 @@
       <a-tab-pane key="current" tab="当前告警">
         <div class="current-alerts">
           <div class="toolbar-row">
+            <a-button type="primary"><i class="fa-solid fa-volume-off"></i></a-button>
+          </div>
+          <div class="filter-bar">
             <a-select v-model:value="templateValue" placeholder="选择模板" style="width:320px" allowClear>
               <a-select-option value="default">默认模板</a-select-option>
               <a-select-option value="critical">仅紧急告警</a-select-option>
               <a-select-option value="warning">重要告警</a-select-option>
             </a-select>
-            <a-input-search v-model:value="searchText" placeholder="搜索告警名称、资源" class="search-input" />
-            <a-button class="mute-btn"><i class="fa-solid fa-volume-off"></i></a-button>
-            <a-select v-model:value="refreshInterval" style="width:130px">
+            <a-select v-model:value="refreshInterval" placeholder="刷新频率" style="width:130px">
               <a-select-option :value="30">30秒刷新</a-select-option>
               <a-select-option :value="60">60秒刷新</a-select-option>
               <a-select-option :value="0">不刷新</a-select-option>
             </a-select>
+            <a-input-search v-model:value="searchText" placeholder="搜索告警名称、资源" class="search-input" />
           </div>
 
           <div class="stats-row">
@@ -103,23 +105,104 @@
       </a-tab-pane>
 
       <a-tab-pane key="suppressed" tab="被屏蔽的告警">
-        <div class="tab-empty">
-          <i class="fa-solid fa-ban"></i>
-          <p>暂无被屏蔽的告警</p>
+        <div class="history-alerts">
+          <div class="filter-bar">
+            <a-button type="primary"><i class="fa-solid fa-rotate"></i> 取消屏蔽</a-button>
+          </div>
+          <div class="filter-bar">
+            <a-range-picker v-model:value="suppressedTimeRange" style="width:260px" />
+            <a-select v-model:value="suppressedLevel" placeholder="告警级别" style="width:120px" allowClear>
+              <a-select-option value="critical">紧急</a-select-option>
+              <a-select-option value="warning">重要</a-select-option>
+              <a-select-option value="info">次要</a-select-option>
+            </a-select>
+            <a-input-search v-model:value="suppressedSearch" placeholder="搜索告警名称、资源" class="search-input" />
+          </div>
+          <a-table
+            :columns="suppressedColumns"
+            :data-source="suppressedFilteredData"
+            :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: function(t) { return '共 ' + t + ' 条' } }"
+            row-key="id"
+            :scroll="{ y: scrollY, x: 1100 }"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'level'"><a-tag :color="getLevelColor(record.level)">{{ getLevelText(record.level) }}</a-tag></template>
+              <template v-if="column.key === 'status'"><a-tag color="default">已屏蔽</a-tag></template>
+              <template v-if="column.key === 'action'">
+                <div class="action-btns">
+                  <a-tooltip title="查看详情"><button class="icon-btn" @click="openDetail(record)"><i class="fa-solid fa-eye"></i></button></a-tooltip>
+                  <a-tooltip title="取消屏蔽"><button class="icon-btn" @click="unmuteAlert(record.id)"><i class="fa-solid fa-volume-off"></i></button></a-tooltip>
+                </div>
+              </template>
+            </template>
+          </a-table>
         </div>
       </a-tab-pane>
 
       <a-tab-pane key="logs" tab="告警日志">
-        <div class="tab-empty">
-          <i class="fa-solid fa-clock-rotate-left"></i>
-          <p>告警日志功能开发中</p>
+        <div class="history-alerts">
+          <div class="filter-bar">
+            <a-range-picker v-model:value="logsTimeRange" style="width:260px" />
+            <a-select v-model:value="logsType" placeholder="日志类型" style="width:120px" allowClear>
+              <a-select-option value="trigger">触发</a-select-option>
+              <a-select-option value="resolve">恢复</a-select-option>
+              <a-select-option value="mute">屏蔽</a-select-option>
+              <a-select-option value="unmute">取消屏蔽</a-select-option>
+              <a-select-option value="handle">处理</a-select-option>
+            </a-select>
+            <a-input-search v-model:value="logsSearch" placeholder="搜索操作人、告警" class="search-input" />
+          </div>
+          <a-table
+            :columns="logsColumns"
+            :data-source="logsFilteredData"
+            :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: function(t) { return '共 ' + t + ' 条' } }"
+            row-key="id"
+            :scroll="{ y: scrollY, x: 1000 }"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'type'">
+                <a-tag :color="getTypeColor(record.type)">{{ getTypeText(record.type) }}</a-tag>
+              </template>
+              <template v-if="column.key === 'level'"><a-tag :color="getLevelColor(record.level)">{{ getLevelText(record.level) }}</a-tag></template>
+            </template>
+          </a-table>
         </div>
       </a-tab-pane>
 
       <a-tab-pane key="experience" tab="维护经验">
-        <div class="tab-empty">
-          <i class="fa-solid fa-book"></i>
-          <p>暂无维护经验记录</p>
+        <div class="history-alerts">
+          <div class="filter-bar">
+            <a-button type="primary"><i class="fa-solid fa-plus"></i> 新增经验</a-button>
+          </div>
+          <div class="filter-bar">
+            <a-select v-model:value="expCategory" placeholder="分类" style="width:120px" allowClear>
+              <a-select-option value="cpu">CPU</a-select-option>
+              <a-select-option value="memory">内存</a-select-option>
+              <a-select-option value="disk">磁盘</a-select-option>
+              <a-select-option value="network">网络</a-select-option>
+              <a-select-option value="database">数据库</a-select-option>
+              <a-select-option value="other">其他</a-select-option>
+            </a-select>
+            <a-input-search v-model:value="expSearch" placeholder="搜索经验标题、关键词" class="search-input" />
+          </div>
+          <a-table
+            :columns="expColumns"
+            :data-source="expFilteredData"
+            :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: function(t) { return '共 ' + t + ' 条' } }"
+            row-key="id"
+            :scroll="{ y: scrollY, x: 900 }"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'category'">
+                <a-tag>{{ record.category }}</a-tag>
+              </template>
+              <template v-if="column.key === 'helpful'">
+                <a-tooltip :title="'被采纳 ' + record.helpful + ' 次'">
+                  <a-icon type="thumb-up" /><span style="margin-left:4px">{{ record.helpful }}</span>
+                </a-tooltip>
+              </template>
+            </template>
+          </a-table>
         </div>
       </a-tab-pane>
     </a-tabs>
@@ -254,6 +337,17 @@ const historySearch = ref('')
 const historyLevel = ref(null)
 const historyTimeRange = ref(null)
 
+const suppressedSearch = ref('')
+const suppressedLevel = ref(null)
+const suppressedTimeRange = ref(null)
+
+const logsSearch = ref('')
+const logsType = ref(null)
+const logsTimeRange = ref(null)
+
+const expSearch = ref('')
+const expCategory = ref(null)
+
 const realtimeAlerts = ref([
   { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001 (华北区域)', metric: 'CPU使用率', currentValue: '95%', threshold: '> 90%', duration: '5分钟', displayDuration: '5分钟', durationMinutes: 5, triggerTime: '2026-06-17 10:32:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查是否有异常进程占用CPU\n2. 查看应用日志定位慢查询\n3. 必要时重启相关服务' },
   { id: 2, level: 'critical', title: '磁盘空间不足', resource: 'db-primary (华东区域)', metric: '磁盘使用率', currentValue: '92%', threshold: '> 90%', duration: '12分钟', displayDuration: '12分钟', durationMinutes: 12, triggerTime: '2026-06-17 10:28:00', recoveryTime: '-', status: 'firing', suggestion: '1. 清理过期日志文件\n2. 检查大表并归档历史数据\n3. 扩容磁盘或迁移数据' },
@@ -288,6 +382,38 @@ const alertHistoryRecords = ref([
   { id: 203, level: 'critical', title: '磁盘空间不足', resource: 'db-primary', time: '2026-06-14 11:20', duration: '1小时', status: 'resolved', operator: '王工' },
   { id: 204, level: 'info', title: '连接数接近上限', resource: 'redis-cluster', time: '2026-06-14 16:00', duration: '30分钟', status: 'resolved', operator: '张工' },
 ])
+const suppressedData = ref([
+  { id: 301, level: 'warning', title: 'HTTP 5xx错误率上升', resource: 'nginx-ingress (华北区域)', metric: '5xx错误率', currentValue: '3.2%', threshold: '> 1%', duration: '已屏蔽', displayDuration: '已屏蔽', durationMinutes: 90, triggerTime: '2026-06-17 09:30:00', recoveryTime: '-', status: 'suppressed', muteReason: '维护窗口期', mutedBy: '张工', mutedAt: '2026-06-17 09:35:00', suggestion: '1. 检查后端服务健康状态\n2. 查看nginx错误日志\n3. 回滚最近变更' },
+  { id: 302, level: 'info', title: '连接数接近上限', resource: 'redis-cluster (华东区域)', metric: '连接数', currentValue: '85%', threshold: '> 80%', duration: '已屏蔽', displayDuration: '已屏蔽', durationMinutes: 120, triggerTime: '2026-06-17 09:20:00', recoveryTime: '-', status: 'suppressed', muteReason: '计划升级', mutedBy: '李工', mutedAt: '2026-06-17 09:25:00', suggestion: '1. 检查连接池配置\n2. 排查是否有连接泄漏\n3. 考虑扩容Redis节点' },
+  { id: 303, level: 'warning', title: '响应时间超时', resource: 'api-gateway (华北区域)', metric: '响应时间', currentValue: '2500ms', threshold: '> 2000ms', duration: '已屏蔽', displayDuration: '已屏蔽', durationMinutes: 60, triggerTime: '2026-06-17 10:15:00', recoveryTime: '-', status: 'suppressed', muteReason: '已知问题', mutedBy: '王工', mutedAt: '2026-06-17 10:20:00', suggestion: '1. 检查下游服务响应时间\n2. 分析慢请求链路\n3. 考虑增加限流或降级策略' },
+  { id: 304, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-005 (华南区域)', metric: 'CPU使用率', currentValue: '93%', threshold: '> 90%', duration: '已屏蔽', displayDuration: '已屏蔽', durationMinutes: 25, triggerTime: '2026-06-17 10:05:00', recoveryTime: '-', status: 'suppressed', muteReason: '故障排查中', mutedBy: '张工', mutedAt: '2026-06-17 10:10:00', suggestion: '1. 检查是否有异常进程占用CPU\n2. 查看应用日志定位慢查询\n3. 必要时重启相关服务' },
+  { id: 305, level: 'info', title: '证书即将过期', resource: 'pay.example.com', metric: '证书剩余天数', currentValue: '10天', threshold: '< 30天', duration: '已屏蔽', displayDuration: '已屏蔽', durationMinutes: 180, triggerTime: '2026-06-17 08:00:00', recoveryTime: '-', status: 'suppressed', muteReason: '证书续期流程中', mutedBy: '赵工', mutedAt: '2026-06-17 08:15:00', suggestion: '1. 申请新证书\n2. 更新证书配置\n3. 验证HTTPS访问正常' },
+  { id: 306, level: 'warning', title: '网络丢包率过高', resource: 'switch-03 (华南区域)', metric: '丢包率', currentValue: '1.8%', threshold: '> 1%', duration: '已屏蔽', displayDuration: '已屏蔽', durationMinutes: 35, triggerTime: '2026-06-17 10:25:00', recoveryTime: '-', status: 'suppressed', muteReason: '网络割接中', mutedBy: '李工', mutedAt: '2026-06-17 10:28:00', suggestion: '1. 检查网络链路质量\n2. 排查交换机端口错误\n3. 联系网络运维处理' },
+])
+const logsData = ref([
+  { id: 401, type: 'trigger', level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001 (华北区域)', operator: '系统', time: '2026-06-17 10:32:00', detail: '告警触发，CPU使用率达到95%，超过阈值90%' },
+  { id: 402, type: 'mute', level: 'warning', title: 'HTTP 5xx错误率上升', resource: 'nginx-ingress (华北区域)', operator: '张工', time: '2026-06-17 09:35:00', detail: '屏蔽告警，原因：维护窗口期' },
+  { id: 403, type: 'resolve', level: 'critical', title: 'K8s Pod频繁重启', resource: 'payment-service (prod)', operator: '系统', time: '2026-06-17 10:00:00', detail: '告警自动恢复，Pod重启率降至正常水平' },
+  { id: 404, type: 'handle', level: 'critical', title: '数据库主从延迟', resource: 'db-replica-02 (华东区域)', operator: '王工', time: '2026-06-17 10:15:00', detail: '处理告警：重启SQL线程，延迟降至2秒' },
+  { id: 405, type: 'unmute', level: 'info', title: '连接数接近上限', resource: 'redis-cluster (华东区域)', operator: '李工', time: '2026-06-17 11:20:00', detail: '取消屏蔽，维护升级已完成' },
+  { id: 406, type: 'trigger', level: 'warning', title: '内存使用率偏高', resource: 'app-server-03 (华南区域)', operator: '系统', time: '2026-06-17 10:15:00', detail: '告警触发，内存使用率达82%，超过阈值80%' },
+  { id: 407, type: 'resolve', level: 'warning', title: '消息队列积压', resource: 'kafka-consumer-group order', operator: '系统', time: '2026-06-17 10:30:00', detail: '告警自动恢复，积压量降至1000条以下' },
+  { id: 408, type: 'trigger', level: 'info', title: '证书即将过期', resource: 'cdn-domain.example.com', operator: '系统', time: '2026-06-17 08:00:00', detail: '告警触发，证书剩余有效天数15天' },
+  { id: 409, type: 'mute', level: 'info', title: 'NTP同步偏移过大', resource: 'ntp-server', operator: '赵工', time: '2026-06-16 23:05:00', detail: '屏蔽告警，原因：计划校准时间' },
+  { id: 410, type: 'resolve', level: 'info', title: 'NTP同步偏移过大', resource: 'ntp-server', operator: '系统', time: '2026-06-17 01:00:00', detail: '告警自动恢复，时间偏移降至100ms以内' },
+  { id: 411, type: 'trigger', level: 'warning', title: '响应时间超时', resource: 'api-gateway (华北区域)', operator: '系统', time: '2026-06-17 09:45:00', detail: '告警触发，平均响应时间2500ms，超过阈值2000ms' },
+  { id: 412, type: 'handle', level: 'warning', title: '响应时间超时', resource: 'api-gateway (华北区域)', operator: '王工', time: '2026-06-17 10:00:00', detail: '处理告警：回滚至上一稳定版本，响应恢复正常' },
+])
+const expData = ref([
+  { id: 501, title: 'CPU使用率持续过高的排查思路', category: 'CPU', author: '张工', time: '2026-06-15 14:30', helpful: 12, content: '1. 使用top/htop定位占用最高的进程\n2. 检查是否有死循环或异常线程\n3. 查看crontab是否有定时任务集中执行\n4. 分析系统调用栈perf top' },
+  { id: 502, title: '数据库主从延迟快速恢复方法', category: '数据库', author: '王工', time: '2026-06-14 09:20', helpful: 18, content: '1. 检查SHOW SLAVE STATUS中的Seconds_Behind_Master\n2. 确认大事务是否正在执行\n3. 尝试STOP SLAVE后RESET SLAVE再START\n4. 调整slave_parallel_workers提升并发' },
+  { id: 503, title: 'Redis内存泄漏排查与解决', category: '内存', author: '李工', time: '2026-06-13 16:45', helpful: 9, content: '1. 使用redis-cli --bigkeys扫描大key\n2. 检查是否有未设置过期时间的key\n3. 使用MEMORY USAGE命令分析具体key\n4. 清理无效数据并设置合理的maxmemory策略' },
+  { id: 504, title: 'K8s Pod频繁重启的常见原因', category: '其他', author: '赵工', time: '2026-06-12 11:00', helpful: 15, content: '1. 查看kubectl describe pod检查RestartCount\n2. 检查OOMKilled：kubectl logs --previous\n3. 确认liveness probe配置是否合理\n4. 调整resources limits和request' },
+  { id: 505, title: '网络丢包问题的分层排查法', category: '网络', author: '李工', time: '2026-06-11 08:30', helpful: 7, content: '1. 使用ping/traceroute定位断点\n2. 检查交换机端口错误计数器\n3. 使用tcpdump抓包分析重传\n4. 检查网卡驱动和固件版本' },
+  { id: 506, title: '磁盘空间不足的应急处理', category: '磁盘', author: '张工', time: '2026-06-10 22:15', helpful: 21, content: '1. df -h查看各分区使用情况\n2. du -sh *定位大目录\n3. 清理journalctl --vacuum-time=7d\n4. 清理docker prune -a释放空间\n5. 永久方案：扩容或迁移数据' },
+  { id: 507, title: 'HTTP 5xx错误率飙升的应急回滚', category: '其他', author: '王工', time: '2026-06-09 15:40', helpful: 14, content: '1. 查看错误码分布(502/503/504)\n2. 检查后端服务health endpoint\n3. 立即回滚最近一次部署\n4. 启用降级开关关闭非核心功能\n5. 验证后逐步灰度发布' },
+  { id: 508, title: 'MySQL慢查询优化实战', category: '数据库', author: '王工', time: '2026-06-08 10:20', helpful: 16, content: '1. 开启slow_query_log定位慢SQL\n2. 使用EXPLAIN分析执行计划\n3. 检查是否命中索引，添加合适索引\n4. 避免SELECT *，减少回表\n5. 大表分页使用游标代替LIMIT offset' },
+])
 const loading = ref(false)
 
 onMounted(async () => {
@@ -302,16 +428,16 @@ onMounted(async () => {
           level: item.level,
           title: item.title,
           resource: item.resource,
-          metric: item.metric,
-          currentValue: item.current_value,
-          threshold: item.threshold,
-          duration: item.duration,
-          displayDuration: item.display_duration,
-          durationMinutes: item.duration_minutes,
-          triggerTime: item.trigger_time,
-          recoveryTime: item.recovery_time || '-',
-          status: item.status,
-          suggestion: item.suggestion,
+          metric: item.metric || item.Metric || '未知指标',
+          currentValue: item.current_value || item.currentValue || '',
+          threshold: item.threshold || '',
+          duration: item.duration || '',
+          displayDuration: item.display_duration || item.displayDuration || '',
+          durationMinutes: item.duration_minutes != null ? item.duration_minutes : 0,
+          triggerTime: item.trigger_time || item.triggerTime || '',
+          recoveryTime: item.recovery_time || item.recoveryTime || '-',
+          status: item.status || 'firing',
+          suggestion: item.suggestion || '',
         }
       })
       historyData.value = json.data.filter(function(i) { return i.status === 'resolved' }).map(function(item) {
@@ -380,6 +506,34 @@ const historyRecordColumns = [
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
 ]
 
+const suppressedColumns = [
+  { title: '告警标题', dataIndex: 'title', key: 'title', ellipsis: true },
+  { title: '资源', dataIndex: 'resource', key: 'resource', ellipsis: true, width: 200 },
+  { title: '级别', key: 'level', width: 80 },
+  { title: '屏蔽原因', dataIndex: 'muteReason', key: 'muteReason', width: 130 },
+  { title: '屏蔽人', dataIndex: 'mutedBy', key: 'mutedBy', width: 70 },
+  { title: '触发时间', dataIndex: 'triggerTime', key: 'triggerTime', width: 180 },
+  { title: '操作', key: 'action', width: 90, fixed: 'right' },
+]
+
+const logsColumns = [
+  { title: '类型', key: 'type', width: 80 },
+  { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
+  { title: '资源', dataIndex: 'resource', key: 'resource', ellipsis: true, width: 200 },
+  { title: '级别', key: 'level', width: 80 },
+  { title: '操作人', dataIndex: 'operator', key: 'operator', width: 70 },
+  { title: '时间', dataIndex: 'time', key: 'time', width: 180 },
+  { title: '详情', dataIndex: 'detail', key: 'detail', ellipsis: true, width: 250 },
+]
+
+const expColumns = [
+  { title: '经验标题', dataIndex: 'title', key: 'title', ellipsis: true },
+  { title: '分类', key: 'category', width: 80 },
+  { title: '作者', dataIndex: 'author', key: 'author', width: 70 },
+  { title: '更新时间', dataIndex: 'time', key: 'time', width: 170 },
+  { title: '帮助', key: 'helpful', width: 60 },
+]
+
 const firingAlerts = computed(function() {
   return realtimeAlerts.value.filter(function(a) { return a.status === 'firing' })
 })
@@ -415,6 +569,52 @@ const getLevelText = function(level) {
   return map[level] || level
 }
 
+const getTypeColor = function(type) {
+  var map = { trigger: 'red', resolve: 'green', mute: 'default', unmute: 'blue', handle: 'orange' }
+  return map[type] || 'default'
+}
+
+const getTypeText = function(type) {
+  var map = { trigger: '触发', resolve: '恢复', mute: '屏蔽', unmute: '取消屏蔽', handle: '处理' }
+  return map[type] || type
+}
+
+const suppressedFilteredData = computed(function() {
+  var list = suppressedData.value
+  if (suppressedSearch.value) {
+    var sk = suppressedSearch.value.toLowerCase()
+    list = list.filter(function(a) { return a.title.toLowerCase().includes(sk) || a.resource.toLowerCase().includes(sk) })
+  }
+  if (suppressedLevel.value) {
+    list = list.filter(function(a) { return a.level === suppressedLevel.value })
+  }
+  return list
+})
+
+const logsFilteredData = computed(function() {
+  var list = logsData.value
+  if (logsSearch.value) {
+    var kw = logsSearch.value.toLowerCase()
+    list = list.filter(function(a) { return a.title.toLowerCase().includes(kw) || a.operator.toLowerCase().includes(kw) })
+  }
+  if (logsType.value) {
+    list = list.filter(function(a) { return a.type === logsType.value })
+  }
+  return list
+})
+
+const expFilteredData = computed(function() {
+  var list = expData.value
+  if (expSearch.value) {
+    var kw = expSearch.value.toLowerCase()
+    list = list.filter(function(a) { return a.title.toLowerCase().includes(kw) })
+  }
+  if (expCategory.value) {
+    list = list.filter(function(a) { return a.category === expCategory.value })
+  }
+  return list
+})
+
 const handleAlert = function(id) {
   realtimeAlerts.value = realtimeAlerts.value.filter(function(a) { return a.id !== id })
 }
@@ -423,6 +623,10 @@ const openDetail = function(alert) {
   currentAlert.value = alert
   activeDetailTab.value = 'info'
   detailVisible.value = true
+}
+
+const unmuteAlert = function(id) {
+  suppressedData.value = suppressedData.value.filter(function(a) { return a.id !== id })
 }
 
 // ---- G2 Charts ----
@@ -549,7 +753,6 @@ function renderTopnChart() {
     .encode('x', 'name')
     .encode('y', 'count')
     .encode('color', 'name')
-    .scale('color', { range: ['#007DFF', '#40A9FF', '#69C0FF', '#91D5FF', '#BAE7FF'] })
     .style('radius', 4)
     .tooltip({ title: 'name', items: [{ channel: 'y', name: '次数' }] })
 
@@ -596,9 +799,10 @@ onBeforeUnmount(function() {
 
 .current-alerts { display: flex; flex-direction: column; height: 100%; }
 
-.toolbar-row { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
+.toolbar-row { display: flex; justify-content: flex-end; margin-bottom: 16px; flex-shrink: 0; }
+
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
 .search-input { flex: 1; min-width: 200px; }
-.mute-btn { width: 32px; display: flex; align-items: center; justify-content: center; }
 
 .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; flex-shrink: 0; }
 .stat-card { background: #fff; border-radius: 8px; padding: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -624,7 +828,8 @@ onBeforeUnmount(function() {
 .icon-btn:hover { background: var(--bg-sec); color: var(--brand); }
 
 .history-alerts { display: flex; flex-direction: column; height: 100%; }
-.history-alerts .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; }
+.history-alerts .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
+.history-alerts .search-input { flex: 1; min-width: 200px; }
 .history-alerts :deep(.ant-table-wrapper) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .history-alerts :deep(.ant-table) { flex: 1; min-height: 0; }
 .history-alerts :deep(.ant-table-container) { flex: 1; min-height: 0; }

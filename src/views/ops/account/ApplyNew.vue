@@ -17,7 +17,7 @@
         :type="activeTab === 'delete' ? 'primary' : 'default'"
         @click="activeTab = 'delete'">删除</a-button>
     </div>
-    <div class="search-row">
+    <div class="filter-bar">
       <a-input-search v-model:value="search" placeholder="请输入关键字搜索">
         <template #suffix>
           <i class="fa-solid fa-gear" style="color:#8c8c8c;cursor:pointer;font-size:14px"></i>
@@ -132,8 +132,8 @@ const filteredData = computed(() => {
 .page-header h3 { font-size: 18px; font-weight: 600; margin: 0; color: var(--text); }
 .tab-bar { display: flex; gap: 8px; margin-bottom: 12px; }
 .tab-bar .ant-btn { height: 32px; padding: 0 16px; }
-.search-row { margin-bottom: 16px; }
-.search-row :deep(.ant-input-search) { width: 100%; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.filter-bar :deep(.ant-input-search) { flex: 1; }
 .link-blue { color: var(--brand); cursor: pointer; font-size: 13px; }
 .link-blue:hover { opacity: 0.8; }
 .status-cell { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
@@ -151,7 +151,7 @@ const filteredData = computed(() => {
   .page-header h3 { font-size: 16px; }
   .tab-bar { flex-wrap: wrap; }
   .tab-bar .ant-btn { flex: 1; min-width: 0; text-align: center; }
-  .search-row .ant-input-search { width: 100% !important; }
+  .filter-bar :deep(.ant-input-search) { width: 100% !important; }
   .ant-table { overflow-x: auto; }
 }
 </style>

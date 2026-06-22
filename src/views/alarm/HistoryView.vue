@@ -2,12 +2,12 @@
   <div class="page-view">
     <div class="page-header"><h2>历史告警</h2></div>
     <div class="filter-bar">
-      <a-input-search v-model:value="search" placeholder="搜索告警" style="width: 280px" />
       <a-select v-model:value="level" placeholder="告警级别" style="width: 120px" allowClear>
         <a-select-option value="critical">紧急</a-select-option>
         <a-select-option value="warning">重要</a-select-option>
         <a-select-option value="info">次要</a-select-option>
       </a-select>
+      <a-input-search v-model:value="search" placeholder="搜索告警" class="search-input" />
     </div>
     <a-table :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10 }" row-key="id" :scroll="{ y: scrollY, x: 900 }">
       <template #bodyCell="{ column, record }">
@@ -101,10 +101,12 @@ onUnmounted(function() {
 </script>
 
 <style scoped>
-.page-view { display: flex; flex-direction: column; padding: 16px 24px 0; height: 100%; }
+.page-view { display: flex; flex-direction: column; padding: 16px 0 0; height: 100%; }
 .page-header { margin-bottom: 16px; flex-shrink: 0; }
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
-.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; }
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
+.filter-bar :deep(.ant-input-search) { flex: 1; }
+.search-input { flex: 1; min-width: 200px; }
 :deep(.ant-table-wrapper) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 :deep(.ant-table) { flex: 1; min-height: 0; }
 :deep(.ant-table-container) { flex: 1; min-height: 0; }

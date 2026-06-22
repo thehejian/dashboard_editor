@@ -309,9 +309,9 @@ function onMobileSelectTree(keys) {
   .account-content .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
   .account-content .page-header h3 { font-size: 16px; }
   .account-content .page-header .ant-btn { width: 100%; }
-  .account-content .button-row { flex-wrap: wrap; }
-  .account-content .button-row .ant-btn { flex: 1; min-width: 0; }
-  .account-content .search-row .ant-input-search { width: 100% !important; }
+  .account-content .filter-actions-bar { flex-wrap: wrap; }
+  .account-content .filter-actions-bar .ant-btn { flex: 1; min-width: 0; }
+  .account-content .filter-bar .ant-input-search { width: 100% !important; }
   .account-content .ant-table { overflow-x: auto; }
   .account-content .ant-table-body { overflow-x: auto !important; }
 }
