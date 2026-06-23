@@ -91,6 +91,24 @@ a-table
 - G6 v5 无 `sourceAnchor`，用 port 系统；`getChildrenData(comboId)` 返回空 → 改用 `getNodeData().filter(d => d.combo === id)`
 - fixed 元素在 `overflow: auto/hidden` 父容器内被裁剪 → 挂 body 层级
 
+## 告警管理布局规范
+
+告警管理（`AlarmManageView.vue`）使用左侧树形导航 + 右侧内容区布局：
+
+- `.alarm-content` 控制左右 padding（`padding: 0 24px 24px`）
+- 子页面 `.page-view` 左右 padding 为 `0`，避免叠加
+- 统一三行布局：
+  - 第1行：按钮独占一行，`justify-content: flex-end`
+  - 第2行：筛选+搜索控件，搜索框 `flex: 1` 拉宽至列表右边缘
+  - 第3行：表格
+
+## 经验教训
+
+- **G2 图表函数名大小写敏感**：`renderTopnChart`≠`renderTopNChart`，调用不存在的函数名会静默抛 TypeError，导致同名后续代码不执行，但已执行的前序图表（donut/bar/duration）不受影响
+- **嵌套路由 padding 叠加**：父容器 `.alarm-content` 已有 24px padding，子页面 `.page-view` 不应再设左右 padding
+- **按钮与筛选分离**：按钮行（操作）和筛选行（条件）需独立成两行，避免混杂
+- **告警管理页面清单**：包含 7 个子页面（RealtimeView/HistoryView/EventsView/ConfigView/CustomizeView + settings/NotificationView + settings/ExtensionView），所有页面需保持一致的 header/筛选/表格 三行布局
+
 ## 数据特点
 
 - 所有 mock / seed 数据直接写在 views 文件中，无独立 mock 层

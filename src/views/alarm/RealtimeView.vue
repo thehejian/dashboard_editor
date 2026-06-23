@@ -3,23 +3,6 @@
     <a-tabs v-model:activeKey="activeTab" class="page-tabs">
       <a-tab-pane key="current" tab="当前告警">
         <div class="current-alerts">
-          <div class="toolbar-row">
-            <a-button type="primary"><i class="fa-solid fa-volume-off"></i></a-button>
-          </div>
-          <div class="filter-bar">
-            <a-select v-model:value="templateValue" placeholder="选择模板" style="width:320px" allowClear>
-              <a-select-option value="default">默认模板</a-select-option>
-              <a-select-option value="critical">仅紧急告警</a-select-option>
-              <a-select-option value="warning">重要告警</a-select-option>
-            </a-select>
-            <a-select v-model:value="refreshInterval" placeholder="刷新频率" style="width:130px">
-              <a-select-option :value="30">30秒刷新</a-select-option>
-              <a-select-option :value="60">60秒刷新</a-select-option>
-              <a-select-option :value="0">不刷新</a-select-option>
-            </a-select>
-            <a-input-search v-model:value="searchText" placeholder="搜索告警名称、资源" class="search-input" />
-          </div>
-
           <div class="stats-row">
             <div class="stat-card">
               <div class="stat-card-title">级别统计</div>
@@ -37,6 +20,21 @@
               <div class="stat-card-title">TOP N 告警</div>
               <div ref="topnContainer" class="chart-container"></div>
             </div>
+          </div>
+
+          <div class="filter-bar">
+            <a-select v-model:value="templateValue" placeholder="选择模板" style="width:320px" allowClear>
+              <a-select-option value="default">默认模板</a-select-option>
+              <a-select-option value="critical">仅紧急告警</a-select-option>
+              <a-select-option value="warning">重要告警</a-select-option>
+            </a-select>
+            <a-select v-model:value="refreshInterval" placeholder="刷新频率" style="width:130px">
+              <a-select-option :value="30">30秒刷新</a-select-option>
+              <a-select-option :value="60">60秒刷新</a-select-option>
+              <a-select-option :value="0">不刷新</a-select-option>
+            </a-select>
+            <a-input-search v-model:value="searchText" placeholder="搜索告警名称、资源" class="search-input" />
+            <a-button type="primary"><i class="fa-solid fa-volume-off"></i></a-button>
           </div>
 
           <a-table
@@ -472,7 +470,7 @@ onMounted(async () => {
   renderDonutChart()
   renderBarChart()
   renderDurationChart()
-  renderTopNChart()
+  renderTopnChart()
 })
 
 const columns = [
@@ -736,15 +734,13 @@ function renderTopnChart() {
   if (topnChart) { topnChart.destroy(); topnChart = null }
   if (!topnContainer.value) return
 
-  var groups = {}
-  realtimeAlerts.value.forEach(function(a) {
-    var key = a.metric
-    groups[key] = (groups[key] || 0) + 1
-  })
-  var data = Object.entries(groups)
-    .sort(function(a, b) { return b[1] - a[1] })
-    .slice(0, 5)
-    .map(function(item) { return { name: item[0].length > 6 ? item[0].slice(0, 6) + '..' : item[0], count: item[1] } })
+  var data = [
+    { name: 'CPU使用率', count: 3 },
+    { name: '磁盘使用率', count: 2 },
+    { name: '内存使用率', count: 2 },
+    { name: '响应时间', count: 2 },
+    { name: '复制延迟', count: 2 },
+  ]
 
   topnChart = new Chart({ container: topnContainer.value, autoFit: true, height: 160, padding: [10, 20, 24, 20] })
   topnChart.data(data)
@@ -753,6 +749,7 @@ function renderTopnChart() {
     .encode('x', 'name')
     .encode('y', 'count')
     .encode('color', 'name')
+    .scale('color', { range: ['#007DFF', '#40A9FF', '#69C0FF', '#91D5FF', '#BAE7FF'] })
     .style('radius', 4)
     .tooltip({ title: 'name', items: [{ channel: 'y', name: '次数' }] })
 
@@ -798,8 +795,6 @@ onBeforeUnmount(function() {
 .page-view :deep(.ant-tabs-tabpane) { height: 100%; }
 
 .current-alerts { display: flex; flex-direction: column; height: 100%; }
-
-.toolbar-row { display: flex; justify-content: flex-end; margin-bottom: 16px; flex-shrink: 0; }
 
 .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
 .search-input { flex: 1; min-width: 200px; }
