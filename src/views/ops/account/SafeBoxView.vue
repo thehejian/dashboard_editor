@@ -8,10 +8,6 @@
       <a-button>删除</a-button>
     </div>
     <div class="filter-bar">
-      <a-select v-model:value="filterStatus" placeholder="状态" style="width:120px" allowClear>
-        <a-select-option value="enabled">已启用</a-select-option>
-        <a-select-option value="disabled">已停用</a-select-option>
-      </a-select>
       <a-input-search v-model:value="search" placeholder="请输入关键字搜索" />
     </div>
     <a-table
@@ -46,7 +42,6 @@ import { ref, computed, onMounted } from 'vue'
 import SafeBoxCreateModal from './SafeBoxCreateModal.vue'
 
 const search = ref('')
-const filterStatus = ref(null)
 const selectedRowKeys = ref([])
 const showCreate = ref(false)
 
@@ -62,15 +57,12 @@ const filteredData = computed(function() {
       return item.name.toLowerCase().includes(kw) || item.description.toLowerCase().includes(kw)
     })
   }
-  if (filterStatus.value) {
-    list = list.filter(function(item) { return item.status === filterStatus.value })
-  }
   return list
 })
 
 const columns = [
   { title: '名称', dataIndex: 'name', key: 'name', sorter: true },
-  { title: '状态', dataIndex: 'status', key: 'status' },
+  { title: '状态', dataIndex: 'status', key: 'status', filters: [{ text: '已启用', value: 'enabled' }, { text: '已停用', value: 'disabled' }], onFilter: function(value, record) { return record.status === value } },
   { title: '账号范围', dataIndex: 'scope', key: 'scope' },
   { title: '权限', dataIndex: 'permissions', key: 'permissions' },
   { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', sorter: true },

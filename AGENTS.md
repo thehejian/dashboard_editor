@@ -108,6 +108,8 @@ a-table
 - **嵌套路由 padding 叠加**：父容器 `.alarm-content` 已有 24px padding，子页面 `.page-view` 不应再设左右 padding
 - **按钮与筛选分离**：按钮行（操作）和筛选行（条件）需独立成两行，避免混杂
 - **告警管理页面清单**：包含 7 个子页面（RealtimeView/HistoryView/EventsView/ConfigView/CustomizeView + settings/NotificationView + settings/ExtensionView），所有页面需保持一致的 header/筛选/表格 三行布局
+- **Ant Design column header filter 替代 filter-bar select**：列表页状态筛选优先使用 `a-table` column 的 `filters` + `onFilter`（点击列头图标弹出），而非在 filter-bar 额外放置 Select。前者是 Ant Design 原生模式，无需维护独立 `filterStatus` ref，UI 更紧凑。`onFilter` 签名 = `(value, record) => record.status === value`，`filters` 格式 = `[{ text: '已启用', value: 'enabled' }]`。参考 `SafeBoxView.vue`
+- **SafeBox modal 标题与内容对齐**：Ant Design Vue modal 的 `title` prop 渲染在 `.ant-modal-header` 内，默认有 padding，但 `<a-form>` body 的 padding 更大，导致左右不对齐。解法：用 `#title` slot 替代 `title` prop，然后在 `:deep(.ant-modal-header)` 设置 `padding: 16px 24px`（与 body padding 一致）
 
 ## 数据特点
 
