@@ -5,11 +5,15 @@ Vue 3.5 + Vite 6.3 + Ant Design Vue 4.2.6 运维监控系统。6 个顶部导航
 ## 命令
 
 ```bash
-npm run dev              # Vite dev (host 0.0.0.0, port 5173, basic auth admin/745544752)
-npm run build            # 构建 dist/
-cd server && npm run dev # Express 后端 (node --watch, port 3001)
-cd server && npm run seed # 通过 curl POST 初始化 seed 数据
+bash start.sh                        # nohup 同时启动前后台（推荐）
+nohup npm run dev > /tmp/vite.log 2>&1 &   # 单独启动前台（port 5173）
+nohup node server/server.js > /tmp/server.log 2>&1 & # 单独启动后台（port 3001）
+npm run build                        # 构建 dist/
+cd server && npm run dev             # 后端开发（交互式终端用）
+cd server && npm run seed            # 通过 curl POST 初始化 seed 数据
 ```
+
+无 lint/typecheck/测试命令。SPA 需服务端 `createWebHistory()` fallback。
 
 无 lint/typecheck/测试命令。SPA 需服务端 `createWebHistory()` fallback。
 
@@ -110,6 +114,7 @@ a-table
 - **告警管理页面清单**：包含 7 个子页面（RealtimeView/HistoryView/EventsView/ConfigView/CustomizeView + settings/NotificationView + settings/ExtensionView），所有页面需保持一致的 header/筛选/表格 三行布局
 - **Ant Design column header filter 替代 filter-bar select**：列表页状态筛选优先使用 `a-table` column 的 `filters` + `onFilter`（点击列头图标弹出），而非在 filter-bar 额外放置 Select。前者是 Ant Design 原生模式，无需维护独立 `filterStatus` ref，UI 更紧凑。`onFilter` 签名 = `(value, record) => record.status === value`，`filters` 格式 = `[{ text: '已启用', value: 'enabled' }]`。参考 `SafeBoxView.vue`
 - **SafeBox modal 标题与内容对齐**：Ant Design Vue modal 的 `title` prop 渲染在 `.ant-modal-header` 内，默认有 padding，但 `<a-form>` body 的 padding 更大，导致左右不对齐。解法：用 `#title` slot 替代 `title` prop，然后在 `:deep(.ant-modal-header)` 设置 `padding: 16px 24px`（与 body padding 一致）
+- **Bash tool 超时杀死前台进程**：在 Bash 工具里直接跑 `npm run dev` / `node server.js`，shell 超时后会回收整个进程组，导致服务被连带杀死。必须用 `nohup` 启动脱离进程组控制，或使用 `start.sh` 一键启动。lsof 确认：`lsof -i :5173 -i :3001`
 
 ## 数据特点
 
