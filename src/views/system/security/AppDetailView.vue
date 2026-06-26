@@ -296,4 +296,13 @@ const keyData = ref([
   font-size: 12px;
   color: #8c8c8c;
 }
+
+@media (max-width: 768px) {
+  .app-detail { padding: 16px; }
+  .info-card { padding: 16px; }
+  .info-row { flex-direction: column; gap: 4px; }
+  .info-label { min-width: auto; }
+  .warning-banner { flex-direction: column; }
+  .reset-bar { flex-wrap: wrap; }
+}
 </style>

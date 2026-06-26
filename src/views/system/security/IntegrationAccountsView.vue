@@ -86,4 +86,10 @@ const columns = [
 :deep(.ant-table-tbody > tr > td) { font-size: 13px; }
 :deep(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafafa; }
 :deep(.ant-table-tbody > tr:hover > td) { background: var(--brand-subtle) !important; }
-</style>
+
+@media (max-width: 768px) {
+  .filter-actions-bar { flex-wrap: wrap; }
+  .filter-bar { flex-wrap: wrap; }
+  .filter-bar :deep(.ant-input-search) { width: 100%; }
+  .filter-bar .ant-select { width: 100% !important; }
+}</style>

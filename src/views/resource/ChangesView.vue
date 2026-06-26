@@ -73,4 +73,11 @@ const getChangeText = (t) => ({ create: '新增', update: '更新', delete: '删
 .change-action.delete { background: #fff1f0; color: #f5222d; }
 .change-detail { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
 .change-meta { font-size: 12px; color: var(--text-ter); display: flex; gap: 16px; }
+
+@media (max-width: 768px) {
+  .page-view { padding: 16px; }
+  .filter-bar { flex-wrap: wrap; }
+  .filter-bar .ant-select { width: 100% !important; }
+  .filter-bar .ant-picker { width: 100% !important; }
+}
 </style>

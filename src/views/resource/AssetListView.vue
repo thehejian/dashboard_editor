@@ -75,4 +75,11 @@ const getStatusText = (s) => ({ running: '运行中', stopped: '已停止' }[s])
 .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
 .filter-bar :deep(.ant-input-search) { flex: 1; }
 .search-input { flex: 1; min-width: 200px; }
+
+@media (max-width: 768px) {
+  .page-view { padding: 16px; }
+  .filter-bar { flex-wrap: wrap; }
+  .filter-bar :deep(.ant-input-search) { width: 100%; }
+  .filter-bar .ant-select { width: 100% !important; }
+}
 </style>

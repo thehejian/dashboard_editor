@@ -3,11 +3,11 @@
     :open="true"
     :footer="null"
     :closable="false"
-    :width="720"
+    :width="960"
     :body-style="{ padding: 0 }"
-    title="创建账号保管箱"
     class="create-modal"
   >
+    <template #title><span>创建账号保管箱</span></template>
     <div style="padding: 0 24px 24px">
       <a-steps :current="step" size="small" style="margin-bottom: 24px">
         <a-step v-for="(s, i) in steps" :key="i" :title="s" />
@@ -55,7 +55,7 @@
             <a-table
               :columns="appColumns"
               :data-source="leftApps"
-              :pagination="{ pageSize: 5, total: 70, showSizeChanger: false, showQuickJumper: true }"
+              :pagination="{ pageSize: 10, total: leftApps.length, showSizeChanger: false, showQuickJumper: true }"
               row-key="id"
               size="small"
               class="panel-table"
@@ -86,7 +86,7 @@
               v-else
               :columns="appColumns"
               :data-source="rightApps"
-              :pagination="{ pageSize: 5, showSizeChanger: false, showQuickJumper: true }"
+              :pagination="{ pageSize: 10, showSizeChanger: false, showQuickJumper: true }"
               row-key="id"
               size="small"
               class="panel-table"
@@ -284,6 +284,9 @@ async function handleDone() {
 </script>
 
 <style scoped>
+.create-modal :deep(.ant-modal-header) {
+  padding: 16px 24px;
+}
 .modal-body {
   padding: 0 24px 24px;
   max-height: 520px;
@@ -331,7 +334,7 @@ async function handleDone() {
 .dual-panel {
   display: flex;
   gap: 16px;
-  min-height: 380px;
+  min-height: 480px;
 }
 .panel {
   flex: 1;

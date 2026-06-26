@@ -674,27 +674,27 @@ function renderBarChart() {
   if (!barContainer.value) return
 
   var list = realtimeAlerts.value
-  var data = [
-    { status: '告警中', value: list.filter(function(a) { return a.status === 'firing' }).length },
-    { status: '已恢复', value: list.filter(function(a) { return a.status === 'resolved' }).length },
-    { status: '已屏蔽', value: list.filter(function(a) { return a.status === 'suppressed' }).length },
-  ]
+  var statuses = ['firing', 'resolved', 'suppressed']
+  var labels = { firing: '告警中', resolved: '已恢复', suppressed: '已屏蔽' }
+  var colors = { firing: '#F5222D', resolved: '#52C41A', suppressed: '#BFBFBF' }
+  var data = statuses.map(function(s) {
+    return { name: labels[s], value: Math.max(list.filter(function(a) { return a.status === s }).length, 1) }
+  })
 
-  barChart = new Chart({ container: barContainer.value, autoFit: true, height: 160, padding: [10, 20, 24, 20] })
+  barChart = new Chart({ container: barContainer.value, autoFit: true, height: 160, padding: [10, 5, 10, 5] })
+  barChart.coordinate({ type: 'theta', innerRadius: 0.6, outerRadius: 0.9 })
   barChart.data(data)
 
   barChart.interval()
-    .encode('x', 'status')
     .encode('y', 'value')
-    .encode('color', 'status')
-    .scale('color', { range: ['#F5222D', '#52C41A', '#BFBFBF'] })
-    .style('radius', 4)
-    .tooltip({ title: 'status', items: [{ channel: 'y', name: '数量' }] })
+    .encode('color', 'name')
+    .scale('color', { range: [colors.firing, colors.resolved, colors.suppressed] })
+    .style('stroke', '#fff')
+    .style('lineWidth', 2)
+    .tooltip({ title: 'name', items: [{ channel: 'y', name: '数量' }] })
 
-  barChart.label({ text: 'value', position: 'top', fontSize: 11, fontWeight: 'bold' })
-  barChart.axis('x', { title: null, labelFontSize: 11 })
-  barChart.axis('y', { title: null, labelFontSize: 10 })
-  barChart.legend(false)
+  barChart.label({ text: function(d) { return d.name + '\n' + d.value }, position: 'outside', connector: true, fontSize: 11, connectorStroke: '#ccc' })
+  barChart.legend('color', { position: 'right', layout: { justifyContent: 'center' }, itemSpacing: 8, itemLabelFontSize: 11 })
   barChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   barChart.render()
 }

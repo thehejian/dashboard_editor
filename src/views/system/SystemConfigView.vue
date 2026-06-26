@@ -39,4 +39,9 @@ const system = reactive({ sessionTimeout: 30, passwordMinLength: 8 })
 .config-section { background: var(--bg-card); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
 .config-section h3 { font-size: 16px; font-weight: 600; margin: 0 0 16px; }
 .help { margin-left: 8px; font-size: 12px; color: var(--text-secondary); }
+
+@media (max-width: 768px) {
+  .page-view { padding: 16px; }
+  .config-section { padding: 16px; }
+}
 </style>

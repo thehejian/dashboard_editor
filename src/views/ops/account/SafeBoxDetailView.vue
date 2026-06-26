@@ -195,4 +195,11 @@ onMounted(async () => {
 .tab-bar {
   margin-bottom: 12px;
 }
+
+@media (max-width: 768px) {
+  .detail-page { padding: 16px; }
+  .info-row { flex-direction: column; gap: 16px; }
+  .tab-bar :deep(.ant-radio-group) { display: flex; width: 100%; }
+  .tab-bar :deep(.ant-radio-button-wrapper) { flex: 1; text-align: center; }
+}
 </style>

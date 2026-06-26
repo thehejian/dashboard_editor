@@ -79,4 +79,13 @@ const stopJob = (id) => { runningJobs.value = runningJobs.value.filter(j => j.id
 .job-content { flex: 1; }
 .job-name { font-weight: 500; margin-bottom: 8px; }
 .job-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+@media (max-width: 768px) {
+  .page-view { padding: 16px; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-header .ant-btn { width: 100%; }
+  .job-item { flex-wrap: wrap; gap: 12px; }
+  .job-content { width: 100%; }
+  .job-content .ant-progress { width: 100% !important; }
+}
 </style>

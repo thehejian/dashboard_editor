@@ -90,4 +90,9 @@ const columns = [
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
 .config-card { background: var(--bg-card); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
 .config-card h3 { font-size: 16px; font-weight: 600; margin: 0 0 16px; }
+
+@media (max-width: 768px) {
+  .page-view { padding: 0 16px; }
+  .config-card { padding: 16px; }
+}
 </style>

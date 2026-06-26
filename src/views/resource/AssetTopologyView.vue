@@ -29,4 +29,13 @@ const topoType = ref('physical')
 .topology-node { position: absolute; padding: 12px 20px; background: var(--bg); border: 2px solid var(--border); border-radius: 8px; text-align: center; }
 .topology-node i { display: block; font-size: 24px; margin-bottom: 8px; color: var(--brand); }
 .topology-node span { font-size: 12px; }
+
+@media (max-width: 768px) {
+  .page-view { padding: 16px; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-header .ant-select { width: 100% !important; }
+  .topology-canvas { height: 250px; }
+  .topology-node { padding: 8px 12px; }
+  .topology-node i { font-size: 18px; }
+}
 </style>

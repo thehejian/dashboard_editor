@@ -586,4 +586,17 @@ onMounted(async function() {
   border-radius: 2px;
   transition: width 0.3s;
 }
+
+@media (max-width: 768px) {
+  .resource-monitor { padding: 0 16px; }
+  .page-header { padding: 16px 0; }
+  .alert-cards { flex-wrap: wrap; }
+  .alert-card { min-width: calc(50% - 8px); flex: none; }
+  .filter-row { flex-wrap: wrap; }
+  .filter-label { width: auto; }
+  .tab-group { flex-wrap: wrap; }
+  .table-section { padding: 12px; }
+  .detail-panel-content { width: 100%; right: -100%; }
+  .metric-grid { grid-template-columns: 1fr; }
+}
 </style>

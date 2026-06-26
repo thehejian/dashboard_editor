@@ -17,7 +17,7 @@ app.use(express.json())
 // Database connection
 const pool = new Pool({
   host: process.env.DB_HOST || '192.168.0.155',
-  port: process.env.DB_PORT || 2345,
+  port: process.env.DB_PORT || 54321,
   user: process.env.DB_USER || 'admin',
   password: process.env.DB_PASSWORD || '745544752',
   database: process.env.DB_NAME || 'mydb'

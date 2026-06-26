@@ -4,16 +4,20 @@
       <h3>账号保管箱</h3>
     </div>
     <div class="filter-actions-bar">
-      <a-button @click="showCreate = true">创建</a-button>
+      <a-button type="primary" @click="showCreate = true">创建</a-button>
       <a-button>删除</a-button>
     </div>
     <div class="filter-bar">
+      <a-select v-model:value="filterStatus" placeholder="状态" style="width:120px" allowClear>
+        <a-select-option value="enabled">已启用</a-select-option>
+        <a-select-option value="disabled">已停用</a-select-option>
+      </a-select>
       <a-input-search v-model:value="search" placeholder="请输入关键字搜索" />
     </div>
     <a-table
       :columns="columns"
-      :data-source="data"
-      :pagination="{ pageSize: 10, total: data.length, showSizeChanger: true, showQuickJumper: true }"
+      :data-source="filteredData"
+      :pagination="{ pageSize: 10, total: filteredData.length, showSizeChanger: true, showQuickJumper: true }"
       row-key="id"
       :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
     >
@@ -38,16 +42,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import SafeBoxCreateModal from './SafeBoxCreateModal.vue'
 
 const search = ref('')
+const filterStatus = ref(null)
 const selectedRowKeys = ref([])
 const showCreate = ref(false)
 
 function onSelectChange(keys) {
   selectedRowKeys.value = keys
 }
+
+const filteredData = computed(function() {
+  var list = data.value
+  if (search.value) {
+    var kw = search.value.toLowerCase()
+    list = list.filter(function(item) {
+      return item.name.toLowerCase().includes(kw) || item.description.toLowerCase().includes(kw)
+    })
+  }
+  if (filterStatus.value) {
+    list = list.filter(function(item) { return item.status === filterStatus.value })
+  }
+  return list
+})
 
 const columns = [
   { title: '名称', dataIndex: 'name', key: 'name', sorter: true },
@@ -112,7 +131,6 @@ onMounted(async () => {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
-  justify-content: flex-end;
 }
 .filter-bar {
   display: flex;

@@ -77,4 +77,13 @@ onMounted(async () => {
 .plan-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
 .plan-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text-ter); margin-bottom: 12px; }
 .plan-actions { display: flex; gap: 8px; }
+
+@media (max-width: 768px) {
+  .page-view { padding: 16px; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-header .ant-btn { width: 100%; }
+  .inspect-stats { flex-wrap: wrap; }
+  .stat-item { min-width: calc(50% - 8px); flex: none; }
+  .plan-list { grid-template-columns: 1fr; }
+}
 </style>
