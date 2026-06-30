@@ -3,6 +3,7 @@ import cors from 'cors'
 import { Pool } from 'pg'
 import dotenv from 'dotenv'
 import { readFileSync } from 'fs'
+import { exec } from 'child_process'
 import cmdbRouter from './routes/cmdb.js'
 
 dotenv.config()
@@ -189,6 +190,56 @@ app.post('/api/doc-qa', async (req, res) => {
     console.error('文档问答错误:', err)
     res.status(500).json({ error: '问答失败' })
   }
+})
+
+// ==================== Helper Functions ====================
+
+const VM_CONFIG = {
+  host: '8.147.132.193',
+  port: 1222,
+  user: 'root',
+  password: 'Hjian!745544752',
+  scriptPath: '/root/sysinfo.sh',
+}
+
+let vmCache = { data: null, time: 0 }
+const VM_CACHE_TTL = 60_000 // 1 minute cache
+
+app.get('/api/vm/sysinfo', async (req, res) => {
+  const now = Date.now()
+  if (vmCache.data && now - vmCache.time < VM_CACHE_TTL) {
+    return res.json({ success: true, data: vmCache.data, cached: true })
+  }
+
+  // Upload script if not exists, then run
+  const cmd = `sshpass -p '${VM_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${VM_CONFIG.port} ${VM_CONFIG.user}@${VM_CONFIG.host} 'bash -s' < "${VM_CONFIG.scriptPath}" -- --json 2>/dev/null || sshpass -p '${VM_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${VM_CONFIG.port} ${VM_CONFIG.user}@${VM_CONFIG.host} 'cat > /root/sysinfo.sh && chmod +x /root/sysinfo.sh' < /Users/mac/.qclaw/workspace/006-vm/sysinfo.sh`
+
+  exec(cmd, { timeout: 15000 }, (err, stdout) => {
+    if (err) {
+      // Fallback: upload script first, then run
+      const uploadCmd = `sshpass -p '${VM_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${VM_CONFIG.port} ${VM_CONFIG.user}@${VM_CONFIG.host} 'cat > /root/sysinfo.sh && chmod +x /root/sysinfo.sh' < /Users/mac/.qclaw/workspace/006-vm/sysinfo.sh && sshpass -p '${VM_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${VM_CONFIG.port} ${VM_CONFIG.user}@${VM_CONFIG.host} 'bash /root/sysinfo.sh --json'`
+      exec(uploadCmd, { timeout: 20000 }, (err2, stdout2) => {
+        if (err2 || !stdout2.trim()) {
+          return res.json({ success: false, error: 'SSH 连接失败', detail: err2?.message || '无输出' })
+        }
+        try {
+          const parsed = JSON.parse(stdout2)
+          vmCache = { data: parsed, time: Date.now() }
+          res.json({ success: true, data: parsed, cached: false })
+        } catch {
+          res.json({ success: false, error: '数据解析失败', raw: stdout2 })
+        }
+      })
+      return
+    }
+    try {
+      const parsed = JSON.parse(stdout)
+      vmCache = { data: parsed, time: Date.now() }
+      res.json({ success: true, data: parsed, cached: false })
+    } catch {
+      res.json({ success: false, error: '数据解析失败', raw: stdout })
+    }
+  })
 })
 
 // ==================== Helper Functions ====================

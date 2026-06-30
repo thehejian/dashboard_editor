@@ -107,7 +107,7 @@
               </a-select>
               <button class="dashboard-add-btn" @click="createNewDashboard()">+</button>
             </div>
-            <div v-if="!isOBSDashboard" class="dashboard-actions">
+            <div v-if="!isCustomDashboard" class="dashboard-actions">
               <a-dropdown :trigger="['click']" class="header-dropdown">
                 <button class="header-btn">{{ currentRegion?.name || '选择区域' }} <i class="fa-solid fa-chevron-down"></i></button>
                 <template #overlay>
@@ -145,7 +145,7 @@
               </div>
             </div>
           </div>
-          <div v-if="!isOBSDashboard" class="canvas-toolbar">
+          <div v-if="!isCustomDashboard" class="canvas-toolbar">
             <div class="canvas-title">
               <div class="time-pills">
                 <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
@@ -172,13 +172,14 @@
           </div>
           <div class="canvas-scroll">
             <OBSDashboard v-if="isOBSDashboard" />
+            <VMDashboard v-else-if="isVMDashboard" />
             <ChartGrid v-else />
           </div>
-          <button v-if="!isOBSDashboard" class="fab-add" @click="addChart()" title="添加图表">
+          <button v-if="!isCustomDashboard" class="fab-add" @click="addChart()" title="添加图表">
             <i class="fa-solid fa-plus"></i>
           </button>
         </main>
-        <template v-if="!isOBSDashboard">
+        <template v-if="!isCustomDashboard">
           <div class="config-overlay" :class="{ visible: state.configOpen }" @click="closeConfig"></div>
           <ConfigPanel />
         </template>
@@ -201,6 +202,7 @@ import { useExport } from './composables/useExport'
 import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
 import OBSDashboard from './components/OBSDashboard.vue'
+import VMDashboard from './components/VMDashboard.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 const router = useRouter()
@@ -224,6 +226,8 @@ const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport
 const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))
 
 const isOBSDashboard = computed(() => currentDashboard.value?.title === 'OBS监控')
+const isVMDashboard = computed(() => currentDashboard.value?.title === '虚拟机监控')
+const isCustomDashboard = computed(() => isOBSDashboard.value || isVMDashboard.value)
 
 function scrollToChart(chartId) {
   const el = document.querySelector(`[data-chart-id="${chartId}"]`)
