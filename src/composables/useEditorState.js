@@ -197,6 +197,7 @@ const DASHBOARDS = [
   createDashboard(2, '容器监控', 'cn-north-1', '24h', cloneContainerCharts()),
   createDashboard(3, '开发环境监控', 'cn-north-2', '6h'),
   createDashboard(4, '测试环境仪表盘', 'cn-east-1', '24h'),
+  createDashboard(5, 'OBS监控', 'cn-north-1', '24h'),
 ]
 
 function cloneDashboards() {

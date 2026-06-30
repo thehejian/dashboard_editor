@@ -107,7 +107,7 @@
               </a-select>
               <button class="dashboard-add-btn" @click="createNewDashboard()">+</button>
             </div>
-            <div class="dashboard-actions">
+            <div v-if="!isOBSDashboard" class="dashboard-actions">
               <a-dropdown :trigger="['click']" class="header-dropdown">
                 <button class="header-btn">{{ currentRegion?.name || '选择区域' }} <i class="fa-solid fa-chevron-down"></i></button>
                 <template #overlay>
@@ -145,7 +145,7 @@
               </div>
             </div>
           </div>
-          <div class="canvas-toolbar">
+          <div v-if="!isOBSDashboard" class="canvas-toolbar">
             <div class="canvas-title">
               <div class="time-pills">
                 <button class="time-pill" :class="{ active: state.period === '1h' }" @click="setPeriod('1h')">1h</button>
@@ -171,14 +171,17 @@
             </div>
           </div>
           <div class="canvas-scroll">
-            <ChartGrid />
+            <OBSDashboard v-if="isOBSDashboard" />
+            <ChartGrid v-else />
           </div>
-          <button class="fab-add" @click="addChart()" title="添加图表">
+          <button v-if="!isOBSDashboard" class="fab-add" @click="addChart()" title="添加图表">
             <i class="fa-solid fa-plus"></i>
           </button>
         </main>
-        <div class="config-overlay" :class="{ visible: state.configOpen }" @click="closeConfig"></div>
-        <ConfigPanel />
+        <template v-if="!isOBSDashboard">
+          <div class="config-overlay" :class="{ visible: state.configOpen }" @click="closeConfig"></div>
+          <ConfigPanel />
+        </template>
       </template>
       <div v-else class="page-view-container">
         <router-view />
@@ -197,6 +200,7 @@ import { useEditorState } from './composables/useEditorState'
 import { useExport } from './composables/useExport'
 import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
+import OBSDashboard from './components/OBSDashboard.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 const router = useRouter()
@@ -218,6 +222,8 @@ const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: cu
 const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport()
 
 const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))
+
+const isOBSDashboard = computed(() => currentDashboard.value?.title === 'OBS监控')
 
 function scrollToChart(chartId) {
   const el = document.querySelector(`[data-chart-id="${chartId}"]`)

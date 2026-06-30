@@ -30,15 +30,23 @@
             :key="tab.key"
             class="tab-btn"
             :class="{ active: mainTab === tab.key }"
-            @click="mainTab = tab.key"
+            @click="mainTab = tab.key; subActive = 0"
           >{{ tab.label }}</button>
         </div>
       </div>
       <div class="filter-row">
         <span class="filter-label">当前可选分类</span>
         <div class="sub-tab-group">
-          <span class="pill-btn active">应用</span>
-          <span class="pill-btn">应用服务</span>
+          <span
+            v-for="(st, i) in subTabs"
+            :key="i"
+            class="pill-btn"
+            :class="{ active: subActive === i, 'pill-more': st.more }"
+            @click="subActive = i"
+          >
+            {{ st.label }}
+            <i v-if="st.more" class="fa-solid fa-filter"></i>
+          </span>
         </div>
       </div>
     </div>
@@ -54,7 +62,7 @@
 
       <a-table
         :columns="columns"
-        :data-source="tableData"
+        :data-source="filteredData"
         :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: total => '共 ' + total + ' 条' }"
         row-key="id"
       >
@@ -73,6 +81,9 @@
           <template v-if="column.key === 'runStatus'">
             <span class="run-status"><span class="dot-green"></span> 运行中</span>
           </template>
+          <template v-if="column.key === 'storageSize'">
+            <span>{{ record.storageSize || '--' }}</span>
+          </template>
         </template>
       </a-table>
     </div>
@@ -81,7 +92,7 @@
       <div class="detail-mask" @click="closeDetail"></div>
       <div class="detail-panel-content" v-if="currentApp">
         <div class="detail-header">
-          <h3>{{ currentApp.name }} - 详情</h3>
+          <h3>{{ currentApp.name }} - {{ currentApp.type === 'obs' ? 'OBS 详情' : '详情' }}</h3>
           <button class="detail-close" @click="closeDetail"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="detail-body">
@@ -98,41 +109,110 @@
               <div class="info-item"><span class="label">来源</span><span class="value">{{ currentApp.source }}</span></div>
             </div>
           </div>
-          <div class="detail-section">
-            <h4>监控指标</h4>
-            <div class="metric-grid">
-              <div class="metric-card">
-                <div class="metric-label">CPU 使用率</div>
-                <div class="metric-value">{{ currentApp.metrics.cpu }}%</div>
-                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.cpu + '%', background: getMetricColor(currentApp.metrics.cpu) }"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">内存使用率</div>
-                <div class="metric-value">{{ currentApp.metrics.memory }}%</div>
-                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.memory + '%', background: getMetricColor(currentApp.metrics.memory) }"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">请求速率</div>
-                <div class="metric-value">{{ currentApp.metrics.requests }} req/s</div>
-                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.requests / 10 + '%', background: getMetricColor(currentApp.metrics.requests / 10) }"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">错误率</div>
-                <div class="metric-value">{{ currentApp.metrics.errorRate }}%</div>
-                <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.errorRate * 10 + '%', background: getMetricColor(currentApp.metrics.errorRate * 10) }"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">响应时间</div>
-                <div class="metric-value">{{ currentApp.metrics.responseTime }} ms</div>
-                <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.responseTime / 5, 100) + '%', background: getMetricColor(currentApp.metrics.responseTime / 5) }"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">连接数</div>
-                <div class="metric-value">{{ currentApp.metrics.connections }}</div>
-                <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.connections / 2, 100) + '%', background: getMetricColor(currentApp.metrics.connections / 2) }"></div></div>
+
+          <template v-if="currentApp.type === 'obs'">
+            <div class="detail-section">
+              <h4>存储概览</h4>
+              <div class="obs-summary-cards">
+                <div class="obs-summary-item">
+                  <div class="oss-label">存储桶</div>
+                  <div class="oss-value">{{ currentApp.obs?.buckets || 0 }}</div>
+                </div>
+                <div class="obs-summary-item">
+                  <div class="oss-label">对象总数</div>
+                  <div class="oss-value">{{ currentApp.obs?.objects || 0 }}</div>
+                </div>
+                <div class="obs-summary-item">
+                  <div class="oss-label">已用容量</div>
+                  <div class="oss-value">{{ currentApp.obs?.usedStorage || '--' }}</div>
+                </div>
+                <div class="obs-summary-item">
+                  <div class="oss-label">可用容量</div>
+                  <div class="oss-value">{{ currentApp.obs?.availStorage || '--' }}</div>
+                </div>
               </div>
             </div>
-          </div>
+            <div class="detail-section">
+              <h4>请求指标</h4>
+              <div class="metric-grid">
+                <div class="metric-card">
+                  <div class="metric-label">总请求次数</div>
+                  <div class="metric-value">{{ currentApp.obs?.totalRequests || 0 }}</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">读请求</div>
+                  <div class="metric-value">{{ currentApp.obs?.readRequests || 0 }}</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">写请求</div>
+                  <div class="metric-value">{{ currentApp.obs?.writeRequests || 0 }}</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">下行流量</div>
+                  <div class="metric-value">{{ currentApp.obs?.downTraffic || '--' }}</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">上行流量</div>
+                  <div class="metric-value">{{ currentApp.obs?.upTraffic || '--' }}</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">存储利用率</div>
+                  <div class="metric-value">{{ currentApp.obs?.storageUtil || '0' }}%</div>
+                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.obs?.storageUtil + '%', background: getMetricColor(currentApp.obs?.storageUtil) }"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-section">
+              <h4>存储桶 Top 5</h4>
+              <div class="bucket-list">
+                <div v-for="(b, i) in currentApp.obs?.topBuckets || []" :key="i" class="bucket-item">
+                  <span class="bucket-name">{{ b.name }}</span>
+                  <div class="bucket-usage-bar-wrap">
+                    <div class="bucket-usage-fill" :style="{ width: b.pct + '%', background: getMetricColor(b.pct) }"></div>
+                  </div>
+                  <span class="bucket-size">{{ b.size }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="detail-section">
+              <h4>监控指标</h4>
+              <div class="metric-grid">
+                <div class="metric-card">
+                  <div class="metric-label">CPU 使用率</div>
+                  <div class="metric-value">{{ currentApp.metrics.cpu }}%</div>
+                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.cpu + '%', background: getMetricColor(currentApp.metrics.cpu) }"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">内存使用率</div>
+                  <div class="metric-value">{{ currentApp.metrics.memory }}%</div>
+                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.memory + '%', background: getMetricColor(currentApp.metrics.memory) }"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">请求速率</div>
+                  <div class="metric-value">{{ currentApp.metrics.requests }} req/s</div>
+                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.requests / 10 + '%', background: getMetricColor(currentApp.metrics.requests / 10) }"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">错误率</div>
+                  <div class="metric-value">{{ currentApp.metrics.errorRate }}%</div>
+                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.errorRate * 10 + '%', background: getMetricColor(currentApp.metrics.errorRate * 10) }"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">响应时间</div>
+                  <div class="metric-value">{{ currentApp.metrics.responseTime }} ms</div>
+                  <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.responseTime / 5, 100) + '%', background: getMetricColor(currentApp.metrics.responseTime / 5) }"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">连接数</div>
+                  <div class="metric-value">{{ currentApp.metrics.connections }}</div>
+                  <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.connections / 2, 100) + '%', background: getMetricColor(currentApp.metrics.connections / 2) }"></div></div>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -140,12 +220,50 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const searchText = ref('')
 const mainTab = ref('app')
+const subActive = ref(0)
 const detailOpen = ref(false)
 const currentApp = ref(null)
+
+const subTabMap = {
+  all: [
+    { label: '全部' },
+  ],
+  app: [
+    { label: '应用' },
+    { label: '应用服务' },
+  ],
+  cloud: [
+    { label: '全部' },
+    { label: '弹性计算服务' },
+    { label: '镜像管理服务' },
+    { label: '云硬盘' },
+    { label: '更多', more: true },
+  ],
+  'cloud-resource': [
+    { label: '全部' },
+    { label: '弹性云服务器' },
+    { label: '裸金属服务器' },
+    { label: 'GPU云服务器' },
+  ],
+  virtual: [
+    { label: '全部' },
+    { label: 'Kubernetes集群' },
+    { label: '容器实例' },
+    { label: 'Serverless函数' },
+  ],
+  physical: [
+    { label: '全部' },
+    { label: '物理服务器' },
+    { label: '网络设备' },
+    { label: '存储设备' },
+  ],
+}
+
+const subTabs = computed(() => subTabMap[mainTab.value] || subTabMap.all)
 
 const mainTabs = [
   { key: 'all', label: '全部' },
@@ -170,6 +288,7 @@ const columns = [
   { title: '标识', dataIndex: 'identifier', key: 'identifier', width: 150, sorter: true },
   { title: '运行状态', dataIndex: 'runStatus', key: 'runStatus', width: 120, sorter: true, filters: [{ text: '运行中', value: '运行中' }, { text: '已停止', value: '已停止' }], onFilter: (value, record) => record.runStatus === value },
   { title: '应用级别', dataIndex: 'appLevel', key: 'appLevel', width: 120, sorter: true },
+  { title: '存储量', dataIndex: 'storageSize', key: 'storageSize', width: 100, sorter: true },
   { title: '所属VDC', dataIndex: 'vdc', key: 'vdc', width: 120, sorter: true },
   { title: '负责人', dataIndex: 'owner', key: 'owner', width: 100, sorter: true },
   { title: '来源', dataIndex: 'source', key: 'source', width: 100, sorter: true },
@@ -188,15 +307,30 @@ const getMetricColor = (value) => {
   return '#52c41a'
 }
 
-const tableData = ref([
-  { id: 1, name: '订单服务中心', alertStatus: '紧急', identifier: 'order-svc-prod-01', runStatus: '运行中', appLevel: '重要应用', vdc: 'VDC-BJ-01', owner: '张伟', source: '运营', metrics: { cpu: 87, memory: 92, requests: 1560, errorRate: 3.2, responseTime: 245, connections: 128 } },
-  { id: 2, name: '用户认证中心', alertStatus: '正常', identifier: 'auth-center-prod-02', runStatus: '运行中', appLevel: '重要应用', vdc: 'VDC-BJ-01', owner: '李娜', source: '运营', metrics: { cpu: 23, memory: 45, requests: 420, errorRate: 0.1, responseTime: 32, connections: 56 } },
-  { id: 3, name: '支付网关服务', alertStatus: '正常', identifier: 'payment-gw-prod-03', runStatus: '运行中', appLevel: '重要应用', vdc: 'VDC-SH-02', owner: '--', source: '运营', metrics: { cpu: 45, memory: 62, requests: 780, errorRate: 0.5, responseTime: 68, connections: 89 } },
-  { id: 4, name: '消息推送平台', alertStatus: '正常', identifier: 'push-platform-prod-04', runStatus: '运行中', appLevel: '普通应用', vdc: 'VDC-BJ-01', owner: '王强', source: '运营', metrics: { cpu: 12, memory: 34, requests: 230, errorRate: 0.0, responseTime: 18, connections: 34 } },
-  { id: 5, name: '日志采集服务', alertStatus: '正常', identifier: 'log-collector-prod-05', runStatus: '运行中', appLevel: '普通应用', vdc: 'VDC-GZ-03', owner: '--', source: '运营', metrics: { cpu: 67, memory: 78, requests: 1100, errorRate: 1.8, responseTime: 120, connections: 92 } },
-  { id: 6, name: '数据同步引擎', alertStatus: '正常', identifier: 'data-sync-prod-06', runStatus: '运行中', appLevel: '重要应用', vdc: 'VDC-SH-02', owner: '赵敏', source: '运营', metrics: { cpu: 34, memory: 51, requests: 560, errorRate: 0.3, responseTime: 45, connections: 67 } },
-  { id: 7, name: '配置管理中心', alertStatus: '正常', identifier: 'config-center-prod-07', runStatus: '运行中', appLevel: '普通应用', vdc: 'VDC-BJ-01', owner: '--', source: '运营', metrics: { cpu: 8, memory: 22, requests: 180, errorRate: 0.0, responseTime: 15, connections: 28 } },
-])
+const appData = [
+  { id: 1, name: '订单服务中心', alertStatus: '紧急', identifier: 'order-svc-prod-01', runStatus: '运行中', appLevel: '重要应用', storageSize: '--', vdc: 'VDC-BJ-01', owner: '张伟', source: '运营', type: 'app', metrics: { cpu: 87, memory: 92, requests: 1560, errorRate: 3.2, responseTime: 245, connections: 128 } },
+  { id: 2, name: '用户认证中心', alertStatus: '正常', identifier: 'auth-center-prod-02', runStatus: '运行中', appLevel: '重要应用', storageSize: '--', vdc: 'VDC-BJ-01', owner: '李娜', source: '运营', type: 'app', metrics: { cpu: 23, memory: 45, requests: 420, errorRate: 0.1, responseTime: 32, connections: 56 } },
+  { id: 3, name: '支付网关服务', alertStatus: '正常', identifier: 'payment-gw-prod-03', runStatus: '运行中', appLevel: '重要应用', storageSize: '--', vdc: 'VDC-SH-02', owner: '--', source: '运营', type: 'app', metrics: { cpu: 45, memory: 62, requests: 780, errorRate: 0.5, responseTime: 68, connections: 89 } },
+  { id: 4, name: '消息推送平台', alertStatus: '正常', identifier: 'push-platform-prod-04', runStatus: '运行中', appLevel: '普通应用', storageSize: '--', vdc: 'VDC-BJ-01', owner: '王强', source: '运营', type: 'app', metrics: { cpu: 12, memory: 34, requests: 230, errorRate: 0.0, responseTime: 18, connections: 34 } },
+  { id: 5, name: '日志采集服务', alertStatus: '正常', identifier: 'log-collector-prod-05', runStatus: '运行中', appLevel: '普通应用', storageSize: '--', vdc: 'VDC-GZ-03', owner: '--', source: '运营', type: 'app', metrics: { cpu: 67, memory: 78, requests: 1100, errorRate: 1.8, responseTime: 120, connections: 92 } },
+  { id: 6, name: '数据同步引擎', alertStatus: '正常', identifier: 'data-sync-prod-06', runStatus: '运行中', appLevel: '重要应用', storageSize: '--', vdc: 'VDC-SH-02', owner: '赵敏', source: '运营', type: 'app', metrics: { cpu: 34, memory: 51, requests: 560, errorRate: 0.3, responseTime: 45, connections: 67 } },
+  { id: 7, name: '配置管理中心', alertStatus: '正常', identifier: 'config-center-prod-07', runStatus: '运行中', appLevel: '普通应用', storageSize: '--', vdc: 'VDC-BJ-01', owner: '--', source: '运营', type: 'app', metrics: { cpu: 8, memory: 22, requests: 180, errorRate: 0.0, responseTime: 15, connections: 28 } },
+]
+
+const obsData = [
+  { id: 101, name: 'OBS-生产存储', alertStatus: '正常', identifier: 'obs-prod-01', runStatus: '运行中', appLevel: '核心服务', storageSize: '11.68 TB', vdc: 'VDC-BJ-01', owner: '存储团队', source: '云服务', type: 'obs', obs: { buckets: 8, objects: '1,285,432', usedStorage: '4.28 TB', availStorage: '92.78 TB', totalRequests: '3,450,892', readRequests: '2,180,456', writeRequests: '1,270,436', downTraffic: '2.57 GB/s', upTraffic: '530 KB/s', storageUtil: 78, topBuckets: [{ name: 'bucket-data-01', size: '4.28 TB', pct: 78 }, { name: 'bucket-log-01', size: '2.15 TB', pct: 45 }, { name: 'bucket-backup-01', size: '1.87 TB', pct: 38 }, { name: 'bucket-media-01', size: '1.24 TB', pct: 26 }, { name: 'bucket-archive-01', size: '0.89 TB', pct: 18 }] } },
+  { id: 102, name: 'OBS-灾备存储', alertStatus: '正常', identifier: 'obs-dr-02', runStatus: '运行中', appLevel: '核心服务', storageSize: '8.45 TB', vdc: 'VDC-SH-02', owner: '存储团队', source: '云服务', type: 'obs', obs: { buckets: 5, objects: '654,321', usedStorage: '2.87 TB', availStorage: '45.22 TB', totalRequests: '892,156', readRequests: '534,289', writeRequests: '357,867', downTraffic: '890 MB/s', upTraffic: '210 KB/s', storageUtil: 32, topBuckets: [{ name: 'bucket-dr-data-01', size: '1.45 TB', pct: 52 }, { name: 'bucket-dr-log-01', size: '0.78 TB', pct: 28 }, { name: 'bucket-dr-backup-01', size: '0.64 TB', pct: 22 }] } },
+  { id: 103, name: 'OBS-日志归档', alertStatus: '紧急', identifier: 'obs-log-03', runStatus: '运行中', appLevel: '基础服务', storageSize: '6.12 TB', vdc: 'VDC-GZ-03', owner: '--', source: '云服务', type: 'obs', obs: { buckets: 3, objects: '456,789', usedStorage: '3.56 TB', availStorage: '35.78 TB', totalRequests: '1,234,567', readRequests: '723,456', writeRequests: '511,111', downTraffic: '1.2 GB/s', upTraffic: '340 KB/s', storageUtil: 85, topBuckets: [{ name: 'bucket-log-access', size: '2.15 TB', pct: 85 }, { name: 'bucket-log-audit', size: '0.98 TB', pct: 42 }, { name: 'bucket-log-ops', size: '0.43 TB', pct: 18 }] } },
+  { id: 104, name: 'OBS-媒体存储', alertStatus: '正常', identifier: 'obs-media-04', runStatus: '运行中', appLevel: '基础服务', storageSize: '3.78 TB', vdc: 'VDC-BJ-01', owner: '媒体团队', source: '云服务', type: 'obs', obs: { buckets: 4, objects: '345,678', usedStorage: '1.89 TB', availStorage: '28.56 TB', totalRequests: '2,345,678', readRequests: '1,567,890', writeRequests: '777,788', downTraffic: '3.2 GB/s', upTraffic: '890 KB/s', storageUtil: 45, topBuckets: [{ name: 'bucket-media-images', size: '0.89 TB', pct: 45 }, { name: 'bucket-media-videos', size: '0.67 TB', pct: 34 }, { name: 'bucket-media-audio', size: '0.33 TB', pct: 16 }] } },
+]
+
+const filteredData = computed(() => {
+  if (mainTab.value === 'all') return [...appData, ...obsData]
+  if (mainTab.value === 'app') return appData
+  if (mainTab.value === 'cloud') return obsData
+  return appData
+})
+
 const loading = ref(false)
 
 onMounted(async function() {
@@ -205,7 +339,7 @@ onMounted(async function() {
     const res = await fetch('/api/cmdb/ci?ci_type_id=5&sort=id&order=ASC')
     const json = await res.json()
     if (json.success) {
-      tableData.value = json.data.map(function(item) {
+      const apiData = json.data.map(function(item) {
         return {
           id: item.id,
           name: item.name,
@@ -213,9 +347,11 @@ onMounted(async function() {
           identifier: item.identifier,
           runStatus: '运行中',
           appLevel: item.app_level,
+          storageSize: '--',
           vdc: item.vdc,
           owner: item.owner,
           source: item.source,
+          type: 'app',
           metrics: {
             cpu: item.metadata && item.metadata.cpu || 45,
             memory: item.metadata && item.metadata.memory || 60,
@@ -226,6 +362,8 @@ onMounted(async function() {
           },
         }
       })
+      // merge API data into appData
+      appData.splice(0, appData.length, ...apiData)
     }
   } catch (e) {
     console.error('加载资源监控数据失败:', e)
@@ -383,6 +521,10 @@ onMounted(async function() {
 }
 .pill-btn:not(.active):hover {
   border-color: #1890ff;
+}
+.pill-more i {
+  margin-left: 4px;
+  font-size: 11px;
 }
 
 .table-section {
@@ -585,6 +727,69 @@ onMounted(async function() {
   height: 100%;
   border-radius: 2px;
   transition: width 0.3s;
+}
+
+.obs-summary-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.obs-summary-item {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.oss-label {
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-bottom: 6px;
+}
+.oss-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.bucket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bucket-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+.bucket-name {
+  font-size: 12px;
+  color: #1a1a1a;
+  width: 140px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bucket-usage-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: #e8e8e8;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bucket-usage-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.bucket-size {
+  font-size: 12px;
+  color: #8c8c8c;
+  white-space: nowrap;
+  width: 60px;
+  text-align: right;
 }
 
 @media (max-width: 768px) {
