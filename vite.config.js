@@ -34,6 +34,10 @@ export default defineConfig({
       '/api/cmdb': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/api/vm': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },

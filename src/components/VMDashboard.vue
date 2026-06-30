@@ -1,13 +1,21 @@
 <template>
   <div class="vm-dashboard">
     <div class="vm-toolbar">
-      <div class="vm-toolbar-left"><h2>虚拟机监控</h2></div>
       <div class="vm-toolbar-right">
-        <button class="header-btn refresh-btn" @click="refresh" :disabled="loading">
-          <i class="fa-solid fa-rotate" :class="{ spinning: loading }"></i>
-          <span>{{ loading ? '刷新中...' : '手动刷新' }}</span>
-        </button>
-        <span class="last-refresh">最后更新: {{ lastRefresh || '--' }}</span>
+        <a-dropdown :trigger="['click']" class="refresh-dropdown">
+          <button class="header-btn refresh-btn">
+            <i class="fa-solid fa-rotate" :class="{ spinning: loading }"></i>
+            <span>{{ refreshRate === '0' ? '自动刷新' : refreshOptions.find(r => r.value === refreshRate)?.label }}</span>
+          </button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item v-for="opt in refreshOptions" :key="opt.value" @click="setRefreshRate(opt.value)">
+                {{ opt.label }}
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <span v-if="lastRefresh" class="last-refresh">最后更新: {{ lastRefresh }}</span>
       </div>
     </div>
 
@@ -33,6 +41,7 @@
           <div class="vm-card-body">
             <div class="vm-card-value" :style="{ color: s.color }">{{ s.value }}</div>
             <div class="vm-card-label">{{ s.label }}</div>
+            <div v-if="s.sub" class="vm-card-sub">{{ s.sub }}</div>
           </div>
         </div>
       </div>
@@ -48,10 +57,27 @@
         </div>
         <div class="vm-card">
           <div class="card-hdr"><span>内存使用</span></div>
-          <div ref="memRef" class="chart-box"></div>
+          <div class="mem-progress">
+            <div class="mem-stats">
+              <span class="mem-stat"><span class="mem-stat-dot used"></span>已用 {{ fmtBytes(data.mem_used) }}</span>
+              <span class="mem-stat"><span class="mem-stat-dot free"></span>空闲 {{ fmtBytes(data.mem_free) }}</span>
+              <span class="mem-stat">总计 {{ fmtBytes(data.mem_total) }}</span>
+            </div>
+            <a-progress :percent="data.mem_usage_pct" :stroke-color="data.mem_usage_pct > 80 ? '#f5222d' : data.mem_usage_pct > 60 ? '#fa8c16' : '#52c41a'" :show-info="false" />
+            <div class="mem-pct">{{ data.mem_usage_pct }}%</div>
+          </div>
         </div>
         <div class="vm-card">
           <div class="card-hdr"><span>磁盘使用</span></div>
+          <div class="disk-info">
+            <div v-for="(disk, i) in data.disks || []" :key="i" class="disk-item">
+              <div class="disk-row">
+                <span class="disk-label">{{ disk.mounted }}</span>
+                <span class="disk-pct">{{ disk.use_percent }}</span>
+              </div>
+              <a-progress :percent="parseFloat(disk.use_percent)" stroke-color="#1890ff" :show-info="false" />
+            </div>
+          </div>
           <div ref="diskRef" class="chart-box"></div>
         </div>
       </div>
@@ -97,7 +123,7 @@
                   <td class="td-ellipsis" :title="c.name">{{ c.name }}</td>
                   <td><span class="status-dot" :class="c.status.includes('Up') ? 'green' : 'red'"></span>{{ c.status }}</td>
                 </tr>
-                <tr v-if="!dockerContainers.length"><td colspan="2" class="td-empty">{{ data.docker_installed === 'false' ? 'Docker 未安装' : '无运行容器' }}</td></tr>
+                <tr v-if="!dockerContainers.length"><td colspan="2" class="td-empty">{{ !data.docker_installed ? 'Docker 未安装' : '无运行容器' }}</td></tr>
               </tbody>
             </table>
           </div>
@@ -160,12 +186,28 @@ const data = ref(null)
 const loading = ref(false)
 const error = ref(null)
 const lastRefresh = ref('')
+const refreshRate = ref('0')
 
-const memRef = ref(null)
+const refreshOptions = [
+  { value: '0', label: '关闭' },
+  { value: '30', label: '30秒' },
+  { value: '60', label: '1分钟' },
+  { value: '300', label: '5分钟' },
+  { value: '900', label: '15分钟' },
+  { value: '1800', label: '30分钟' },
+]
+
 const diskRef = ref(null)
-let memChart = null
 let diskChart = null
 let refreshTimer = null
+
+function setRefreshRate(rate) {
+  refreshRate.value = rate
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null }
+  if (rate !== '0') {
+    refreshTimer = setInterval(refresh, parseInt(rate) * 1000)
+  }
+}
 
 function fmtBytes(b) {
   if (!b || b === '0') return '0 B'
@@ -180,31 +222,31 @@ const summaryCards = computed(() => {
   const d = data.value
   if (!d) return []
   return [
-    { label: '主机名', value: d.hostname || '--', icon: 'fa-solid fa-server', bg: 'linear-gradient(135deg, #1890ff, #096dd9)', color: '#1890ff' },
+    { label: '主机名', value: d.hostname || '--', icon: 'fa-solid fa-server', bg: 'linear-gradient(135deg, #1890ff, #096dd9)', color: '#1890ff', sub: d.public_ip || '' },
     { label: '运行时间', value: d.uptime || '--', icon: 'fa-solid fa-clock', bg: 'linear-gradient(135deg, #52c41a, #389e0d)', color: '#52c41a' },
     { label: 'CPU 核心', value: d.cpu_cores || '--', icon: 'fa-solid fa-microchip', bg: 'linear-gradient(135deg, #13c2c2, #08979c)', color: '#13c2c2' },
-    { label: 'Docker 运行', value: d.docker_installed === 'true' ? (d.docker_running || '0') : '未安装', icon: 'fa-brands fa-docker', bg: 'linear-gradient(135deg, #722ed1, #531dab)', color: '#722ed1' },
+    { label: 'Docker 运行', value: d.docker_installed ? (d.docker_running ?? 0) : '未安装', icon: 'fa-brands fa-docker', bg: 'linear-gradient(135deg, #722ed1, #531dab)', color: '#722ed1' },
   ]
 })
 
 const topCpu = computed(() => {
-  if (!data.value?.top_cpu_processes) return []
-  try { return JSON.parse(data.value.top_cpu_processes).slice(0, 5) } catch { return [] }
+  if (!data.value?.top_cpu_processes?.length) return []
+  return data.value.top_cpu_processes.slice(0, 5)
 })
 
 const topMem = computed(() => {
-  if (!data.value?.top_mem_processes) return []
-  try { return JSON.parse(data.value.top_mem_processes).slice(0, 5) } catch { return [] }
+  if (!data.value?.top_mem_processes?.length) return []
+  return data.value.top_mem_processes.slice(0, 5)
 })
 
 const dockerContainers = computed(() => {
-  if (!data.value?.docker_containers) return []
-  try { return JSON.parse(data.value.docker_containers) } catch { return [] }
+  if (!data.value?.docker_containers?.length) return []
+  return data.value.docker_containers
 })
 
 const bruteForceTop = computed(() => {
-  if (!data.value?.ssh_brute_force_top) return []
-  try { return JSON.parse(data.value.ssh_brute_force_top) } catch { return [] }
+  if (!data.value?.ssh_brute_force_top?.length) return []
+  return data.value.ssh_brute_force_top
 })
 
 async function refresh() {
@@ -228,35 +270,14 @@ async function refresh() {
 }
 
 function renderCharts() {
-  renderMemChart()
   renderDiskChart()
-}
-
-function renderMemChart() {
-  if (memChart) { memChart.destroy(); memChart = null }
-  if (!memRef.value || !data.value) return
-  const used = parseFloat(data.value.mem_usage_pct || 0)
-  memChart = new Chart({ container: memRef.value, autoFit: true, height: 160, padding: [4, 4, 4, 4] })
-  memChart.coordinate({ type: 'theta', innerRadius: 0.6, outerRadius: 0.9 })
-  memChart.interval()
-    .data([
-      { name: '已使用', value: used },
-      { name: '空闲', value: Math.round((100 - used) * 10) / 10 },
-    ])
-    .encode('y', 'value').encode('color', 'name')
-    .scale('color', { range: ['#fa8c16', '#52c41a'] })
-    .style('stroke', '#fff').style('lineWidth', 2)
-    .tooltip({ title: 'name', items: [{ channel: 'y', name: '占比', valueFormatter: (v) => v + '%' }] })
-  memChart.legend(false)
-  memChart.render()
 }
 
 function renderDiskChart() {
   if (diskChart) { diskChart.destroy(); diskChart = null }
-  if (!diskRef.value || !data.value?.disks) return
-  let disks
-  try { disks = JSON.parse(data.value.disks) } catch { return }
-  if (!disks || !disks.length) return
+  if (!diskRef.value || !data.value?.disks?.length) return
+  const disks = data.value.disks
+  if (!disks.length) return
   diskChart = new Chart({ container: diskRef.value, autoFit: true, height: 160, padding: [8, 16, 16, 16] })
   diskChart.interval()
     .data(disks.map(d => ({ name: d.mounted, value: parseFloat(d.use_percent.replace('%', '')) })))
@@ -270,12 +291,10 @@ function renderDiskChart() {
 
 onMounted(() => {
   refresh()
-  refreshTimer = setInterval(refresh, 3600_000) // 1 hour
 })
 
 onBeforeUnmount(() => {
   if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null }
-  if (memChart) { memChart.destroy(); memChart = null }
   if (diskChart) { diskChart.destroy(); diskChart = null }
 })
 </script>
@@ -290,11 +309,9 @@ onBeforeUnmount(() => {
 .vm-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 16px 0 4px;
 }
-.vm-toolbar-left { display: flex; align-items: center; gap: 10px; }
-.vm-toolbar-left h2 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin: 0; }
 .vm-toolbar-right { display: flex; align-items: center; gap: 8px; }
 
 .error-banner {
@@ -348,6 +365,15 @@ onBeforeUnmount(() => {
 .vm-card-icon i { font-size: 20px; color: #fff; }
 .vm-card-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
 .vm-card-label { font-size: 12px; color: #8c8c8c; margin-top: 2px; }
+.vm-card-sub { font-size: 11px; color: #8c8c8c; margin-top: 2px; }
+
+.mem-progress { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+.mem-stats { display: flex; gap: 12px; font-size: 11px; color: #8c8c8c; flex-wrap: wrap; }
+.mem-stat { display: flex; align-items: center; gap: 4px; }
+.mem-stat-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.mem-stat-dot.used { background: #fa8c16; }
+.mem-stat-dot.free { background: #52c41a; }
+.mem-pct { font-size: 24px; font-weight: 700; color: #1a1a1a; text-align: center; }
 
 .card-hdr {
   font-size: 13px;
@@ -425,4 +451,12 @@ onBeforeUnmount(() => {
 .net-item { display: flex; flex-direction: column; gap: 2px; }
 .net-label { font-size: 11px; color: #8c8c8c; }
 .net-val { font-size: 13px; font-weight: 600; color: #1a1a1a; word-break: break-all; }
+
+.last-refresh { font-size: 11px; color: #8c8c8c; white-space: nowrap; flex-shrink: 0; }
+
+.disk-info { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.disk-item { display: flex; flex-direction: column; gap: 2px; }
+.disk-row { display: flex; justify-content: space-between; font-size: 11px; }
+.disk-label { color: #1a1a1a; font-weight: 500; }
+.disk-pct { color: #8c8c8c; }
 </style>

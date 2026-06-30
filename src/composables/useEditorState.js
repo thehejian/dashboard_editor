@@ -131,10 +131,11 @@ const REGIONS = [
   { id: 'ap-southeast-2', name: '曼谷区域', code: 'ap-southeast-2' },
 ]
 
-function createDashboard(id, title, region = 'cn-north-1', period = '24h', charts = null) {
+function createDashboard(id, title, region = 'cn-north-1', period = '24h', charts = null, slug = '') {
   return {
     id,
     title,
+    slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dashboard-' + id,
     region,
     period,
     charts: charts || cloneCharts(),
@@ -193,12 +194,12 @@ function cloneContainerCharts() {
 }
 
 const DASHBOARDS = [
-  createDashboard(1, '宿主机监控', 'cn-north-1', '24h'),
-  createDashboard(6, '虚拟机监控', 'cn-north-1', '24h'),
-  createDashboard(2, '容器监控', 'cn-north-1', '24h', cloneContainerCharts()),
-  createDashboard(3, '开发环境监控', 'cn-north-2', '6h'),
-  createDashboard(4, '测试环境仪表盘', 'cn-east-1', '24h'),
-  createDashboard(5, 'OBS监控', 'cn-north-1', '24h'),
+  createDashboard(1, '宿主机监控', 'cn-north-1', '24h', null, 'host'),
+  createDashboard(6, '虚拟机监控', 'cn-north-1', '24h', null, 'vm'),
+  createDashboard(2, '容器监控', 'cn-north-1', '24h', cloneContainerCharts(), 'container'),
+  createDashboard(3, '开发环境监控', 'cn-north-2', '6h', null, 'dev'),
+  createDashboard(4, '测试环境仪表盘', 'cn-east-1', '24h', null, 'test'),
+  createDashboard(5, 'OBS监控', 'cn-north-1', '24h', null, 'obs'),
 ]
 
 function cloneDashboards() {
@@ -488,7 +489,17 @@ async function refreshAllCharts() {
 function switchDashboard(id) {
   const db = state.dashboards.find(d => d.id === id)
   if (!db) return
-  state.currentDashboardId = id
+  applyDashboard(db)
+}
+
+function switchDashboardBySlug(slug) {
+  const db = state.dashboards.find(d => d.slug === slug)
+  if (!db) return
+  applyDashboard(db)
+}
+
+function applyDashboard(db) {
+  state.currentDashboardId = db.id
   state.charts = db.charts
   state.currentRegion = db.region
   state.period = db.period
@@ -599,7 +610,7 @@ export function useEditorState() {
     setObjType, spinTop, pickRec, addThreshold, removeThreshold,
     updateThValue, updateThLevel, toggleLink, getCurrentThresholds,
     refreshChart, refreshAllCharts,
-    switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts, createNewDashboard,
+    switchDashboard, switchDashboardBySlug, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts, createNewDashboard,
     setRefreshRate, clearRefresh,
   }
 }

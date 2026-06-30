@@ -112,6 +112,9 @@ const routes = [
   },
   { path: '/system/users', redirect: '/system/security' },
   { path: '/system/config', name: 'system-config', component: () => import('../views/system/SystemConfigView.vue') },
+
+  // Dashboard independent routes — each tab gets its own URL via App.vue rendering
+  { path: '/dashboard/:slug', component: () => import('../components/EmptyRoute.vue') },
 ]
 
 const router = createRouter({

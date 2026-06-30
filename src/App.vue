@@ -90,19 +90,19 @@
       </div>
     </header>
 
-    <div class="main" :class="{ 'dashboard-mode': $route.path === '/monitor' || $route.path === '/monitor/dashboard' }">
-      <template v-if="$route.path === '/monitor' || $route.path === '/monitor/dashboard'">
+    <div class="main" :class="{ 'dashboard-mode': $route.path === '/monitor' || $route.path === '/monitor/dashboard' || $route.path.startsWith('/dashboard/') }">
+      <template v-if="$route.path === '/monitor' || $route.path === '/monitor/dashboard' || $route.path.startsWith('/dashboard/')">
         <main class="canvas">
           <div class="dashboard-toolbar">
             <div class="dashboard-tabs">
-              <div class="dashboard-tab" v-for="db in state.dashboards" :key="db.id" :class="{ active: db.id === state.currentDashboardId }" @click="switchDashboard(db.id)">
+              <div class="dashboard-tab" v-for="db in state.dashboards" :key="db.id" :class="{ active: db.id === state.currentDashboardId }" @click="goToDashboard(db)">
                 {{ db.title }}
                 <span class="tab-close" @click.stop="closeDashboard(db.id)">×</span>
               </div>
               <button class="dashboard-tab add-tab" @click="createNewDashboard()">+</button>
             </div>
             <div class="dashboard-tabs-mobile">
-              <a-select v-model="state.currentDashboardId" style="width: 100%" @change="switchDashboard">
+              <a-select v-model="state.currentDashboardId" style="width: 100%" @change="id => goToDashboard(state.dashboards.find(d => d.id === id))">
                 <a-select-option v-for="db in state.dashboards" :key="db.id" :value="db.id">{{ db.title }}</a-select-option>
               </a-select>
               <button class="dashboard-add-btn" @click="createNewDashboard()">+</button>
@@ -196,7 +196,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useEditorState } from './composables/useEditorState'
 import { useExport } from './composables/useExport'
 import ChartGrid from './components/ChartGrid.vue'
@@ -206,6 +206,7 @@ import VMDashboard from './components/VMDashboard.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 const router = useRouter()
+const route = useRoute()
 
 const activeNav = ref('')
 
@@ -220,7 +221,7 @@ const handleUserMenuClick = ({ key }) => {
   router.push(key)
 }
 
-const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate, createNewDashboard } = useEditorState()
+const { state, toast, addChart, closeConfig, currentDashboard, currentRegion: currentRegionObj, REGIONS, REFRESH_OPTIONS, FILTERS, switchDashboard, switchDashboardBySlug, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, setRefreshRate, createNewDashboard } = useEditorState()
 const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport()
 
 const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))
@@ -277,6 +278,15 @@ onUnmounted(() => {
 
 watch(() => state.configOpen, (open) => {
 })
+
+// Sync dashboard from route param
+watch(() => route.params.slug, (slug) => {
+  if (slug) switchDashboardBySlug(slug)
+}, { immediate: true })
+
+function goToDashboard(db) {
+  router.replace('/dashboard/' + db.slug)
+}
 </script>
 
 <style>

@@ -121,6 +121,12 @@ a-table
 - **OBSDashboard 作为 App.vue dashboard-mode 的特殊页签**：通过判断 `currentDashboard.value?.title === 'OBS监控'` 条件渲染，需隐藏区域选择/导出/编辑/时间选择器/FAB/配置面板等通用工具条
 - **`deepseek-ocr` 对 G2 Canvas 图表截图识别效果差**：OCR 模型会幻觉填充不存在的文字。UI 验证应优先用 playwright `eval` + snapshot 文本，而非截图后 OCR
 - **sysinfo.sh JSON 输出用 `add_json` 函数而非 while-read 管道**：`echo -e "$OUT" | while IFS=':' read key val` 会在值含冒号/Docker 端口映射时截断。正确做法：用 shell 函数变量拼接，最后 `${json_parts%,}` 去尾逗号。参考 `006-vm/sysinfo.sh` 的 `add_json()` 模式
+- **后端 JSON 数组字段无需前端 `JSON.parse()`**：`sysinfo.sh --json` 输出经后端 `res.json()` + 前端 `fetch().json()` 两次解析后，数组字段（`top_cpu_processes` / `disks` / `docker_containers` 等）已经是 JS 数组对象，再调用 `JSON.parse()` 会抛异常导致数据为空。应直接访问数组/对象属性。参考 `VMDashboard.vue` 的 `topCpu`/`topMem` computed 修复
+- **Express 路由顺序：catch-all 中间件必须放最后**：`cmdbRouter` 挂载在 `/api/cmdb` 会捕获 `/:tableName` 参数，若将自定义 VM 端点放在 `/api/cmdb/vm/sysinfo` 会被路由到 cmdb 的 `:tableName` 导致"无效表名"。解法：将自定义端点移至独立路径（如 `/api/vm/sysinfo`）并在 `app.use('/api/cmdb', cmdbRouter)` 之前注册，同时添加 Vite proxy 配置
+- **Vite proxy 新增后端路径需同步配置**：Express 新增端点（如 `/api/vm/*`）必须同时在 `vite.config.js` 的 `proxy` 中添加对应路径代理，否则 dev 模式前端请求 404
+- **Dashboard slug 路由优于数字 ID**：独立链接使用 `/dashboard/vm` 而非 `/dashboard/6`，语义化且可读性更好。在 `useEditorState.js` 的 DASHBOARDS 中为每个 dashboard 加 `slug` 字段，路由 `/dashboard/:slug` 匹配，tab 点击用 `router.replace` 导航
+- **自定义 Dashboard 组件的 toolbar 需自包含**：OBSDashboard/VMDashboard 等自定义组件不依赖 App.vue 的通用 toolbar，需自行实现刷新下拉、最后更新时间、时间范围选择等交互。App.vue 通过 `isCustomDashboard` computed 隐藏通用 toolbar/FAB/配置面板
+- **G2 图表在小卡片中可用 `a-progress` 替代**：G2 环形图/柱状图在小卡片中空间利用率低且依赖 Canvas 渲染生命周期（destroy 防泄漏），改用 Ant Design Vue 的 `a-progress` 进度条更紧凑稳定，无需 chart 实例管理。参考 `VMDashboard.vue` 内存/磁盘使用卡片
 
 ## 数据特点
 
