@@ -115,6 +115,12 @@ a-table
 - **Ant Design column header filter 替代 filter-bar select**：列表页状态筛选优先使用 `a-table` column 的 `filters` + `onFilter`（点击列头图标弹出），而非在 filter-bar 额外放置 Select。前者是 Ant Design 原生模式，无需维护独立 `filterStatus` ref，UI 更紧凑。`onFilter` 签名 = `(value, record) => record.status === value`，`filters` 格式 = `[{ text: '已启用', value: 'enabled' }]`。参考 `SafeBoxView.vue`
 - **SafeBox modal 标题与内容对齐**：Ant Design Vue modal 的 `title` prop 渲染在 `.ant-modal-header` 内，默认有 padding，但 `<a-form>` body 的 padding 更大，导致左右不对齐。解法：用 `#title` slot 替代 `title` prop，然后在 `:deep(.ant-modal-header)` 设置 `padding: 16px 24px`（与 body padding 一致）
 - **Bash tool 超时杀死前台进程**：在 Bash 工具里直接跑 `npm run dev` / `node server.js`，shell 超时后会回收整个进程组，导致服务被连带杀死。必须用 `nohup` 启动脱离进程组控制，或使用 `start.sh` 一键启动。lsof 确认：`lsof -i :5173 -i :3001`
+- **playwright-cli 访问带 basic auth 的 dev server**：Vite 配置了 basic auth（admin/745544752），URL 需用 `http://user:pass@host/` 格式，但会触发 Vue Router `SecurityError: replaceState`（不影响渲染）。排查时先用 curl 验证 auth 是否生效
+- **G2 v5 默认渲染到 Canvas 而非 SVG**：`querySelectorAll('svg')` 不适用于检查 G2 图表渲染，应通过 `canvas.getContext('2d').getImageData()` 或 `canvas.width` 验证
+- **G2 柱状图数据要放在 interval mark 层级**：`chart.interval().data([...])` 而非 `chart.data([...])` + `chart.interval()`，后者会导致柱状图不渲染。折线图/面积图用 mark-level data 无此问题。参考 `ChartRenderer.vue` 模式
+- **OBSDashboard 作为 App.vue dashboard-mode 的特殊页签**：通过判断 `currentDashboard.value?.title === 'OBS监控'` 条件渲染，需隐藏区域选择/导出/编辑/时间选择器/FAB/配置面板等通用工具条
+- **`deepseek-ocr` 对 G2 Canvas 图表截图识别效果差**：OCR 模型会幻觉填充不存在的文字。UI 验证应优先用 playwright `eval` + snapshot 文本，而非截图后 OCR
+- **sysinfo.sh JSON 输出用 `add_json` 函数而非 while-read 管道**：`echo -e "$OUT" | while IFS=':' read key val` 会在值含冒号/Docker 端口映射时截断。正确做法：用 shell 函数变量拼接，最后 `${json_parts%,}` 去尾逗号。参考 `006-vm/sysinfo.sh` 的 `add_json()` 模式
 
 ## 数据特点
 
