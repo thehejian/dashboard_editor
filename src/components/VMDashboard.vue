@@ -47,7 +47,7 @@
       </div>
 
       <div class="vm-row">
-        <div class="vm-card">
+        <div class="vm-card compact-card">
           <div class="card-hdr"><span>CPU 负载</span></div>
           <div class="cpu-grid">
             <div class="cpu-item"><div class="cpu-label">1 分钟</div><div class="cpu-value">{{ data.load_1min || '--' }}</div></div>
@@ -55,7 +55,7 @@
             <div class="cpu-item"><div class="cpu-label">15 分钟</div><div class="cpu-value">{{ data.load_15min || '--' }}</div></div>
           </div>
         </div>
-        <div class="vm-card">
+        <div class="vm-card compact-card">
           <div class="card-hdr"><span>内存使用</span></div>
           <div class="mem-progress">
             <div class="mem-stats">
@@ -67,18 +67,15 @@
             <div class="mem-pct">{{ data.mem_usage_pct }}%</div>
           </div>
         </div>
-        <div class="vm-card">
+        <div class="vm-card compact-card">
           <div class="card-hdr"><span>磁盘使用</span></div>
-          <div class="disk-info">
-            <div v-for="(disk, i) in data.disks || []" :key="i" class="disk-item">
-              <div class="disk-row">
-                <span class="disk-label">{{ disk.mounted }}</span>
-                <span class="disk-pct">{{ disk.use_percent }}</span>
-              </div>
-              <a-progress :percent="parseFloat(disk.use_percent)" stroke-color="#1890ff" :show-info="false" />
+          <div class="disk-info" v-if="data.disks?.length">
+            <div class="disk-row">
+              <span class="disk-label">{{ data.disks[0].mounted }}</span>
+              <span class="disk-pct">{{ data.disks[0].use_percent }}</span>
             </div>
+            <a-progress :percent="parseFloat(data.disks[0].use_percent)" stroke-color="#1890ff" :show-info="false" />
           </div>
-          <div ref="diskRef" class="chart-box"></div>
         </div>
       </div>
 
@@ -150,7 +147,7 @@
             </table>
           </div>
         </div>
-        <div class="vm-card">
+        <div class="vm-card assess-card">
           <div class="card-hdr"><span>系统评估</span></div>
           <div class="assess-grid">
             <div class="assess-item">
@@ -179,10 +176,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { Chart } from '@antv/g2'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
-const data = ref(null)
+let vmDataCache = null
+
+const data = ref(vmDataCache)
 const loading = ref(false)
 const error = ref(null)
 const lastRefresh = ref('')
@@ -197,8 +195,6 @@ const refreshOptions = [
   { value: '1800', label: '30分钟' },
 ]
 
-const diskRef = ref(null)
-let diskChart = null
 let refreshTimer = null
 
 function setRefreshRate(rate) {
@@ -256,9 +252,9 @@ async function refresh() {
     const res = await fetch('/api/vm/sysinfo')
     const json = await res.json()
     if (json.success) {
-      data.value = json.data
+      vmDataCache = json.data
+      data.value = vmDataCache
       lastRefresh.value = new Date().toLocaleString()
-      nextTick(() => renderCharts())
     } else {
       error.value = json.error || '未知错误'
     }
@@ -269,33 +265,12 @@ async function refresh() {
   }
 }
 
-function renderCharts() {
-  renderDiskChart()
-}
-
-function renderDiskChart() {
-  if (diskChart) { diskChart.destroy(); diskChart = null }
-  if (!diskRef.value || !data.value?.disks?.length) return
-  const disks = data.value.disks
-  if (!disks.length) return
-  diskChart = new Chart({ container: diskRef.value, autoFit: true, height: 160, padding: [8, 16, 16, 16] })
-  diskChart.interval()
-    .data(disks.map(d => ({ name: d.mounted, value: parseFloat(d.use_percent.replace('%', '')) })))
-    .encode('x', 'name').encode('y', 'value').encode('color', 'name')
-    .scale('color', { range: ['#1890ff', '#07C160', '#722ed1', '#13c2c2'] })
-    .style('radius', [2, 2, 0, 0])
-    .axis('y', { labelFormatter: (v) => v + '%' })
-  diskChart.legend(false)
-  diskChart.render()
-}
-
 onMounted(() => {
-  refresh()
+  if (!vmDataCache) refresh()
 })
 
 onBeforeUnmount(() => {
   if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null }
-  if (diskChart) { diskChart.destroy(); diskChart = null }
 })
 </script>
 
@@ -313,6 +288,7 @@ onBeforeUnmount(() => {
   padding: 16px 0 4px;
 }
 .vm-toolbar-right { display: flex; align-items: center; gap: 8px; }
+.vm-toolbar-right .refresh-dropdown { margin-left: 0; }
 
 .error-banner {
   display: flex;
@@ -347,6 +323,7 @@ onBeforeUnmount(() => {
   padding: 14px 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
+.compact-card { padding: 10px 14px; }
 .summary-card {
   display: flex;
   align-items: center;
@@ -367,31 +344,35 @@ onBeforeUnmount(() => {
 .vm-card-label { font-size: 12px; color: #8c8c8c; margin-top: 2px; }
 .vm-card-sub { font-size: 11px; color: #8c8c8c; margin-top: 2px; }
 
-.mem-progress { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
-.mem-stats { display: flex; gap: 12px; font-size: 11px; color: #8c8c8c; flex-wrap: wrap; }
-.mem-stat { display: flex; align-items: center; gap: 4px; }
-.mem-stat-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-.mem-stat-dot.used { background: #fa8c16; }
-.mem-stat-dot.free { background: #52c41a; }
-.mem-pct { font-size: 24px; font-weight: 700; color: #1a1a1a; text-align: center; }
-
-.card-hdr {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-}
-.chart-box { width: 100%; height: 160px; }
-
 .cpu-grid {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
-  padding: 12px 0;
+  padding: 4px 0;
 }
 .cpu-item { text-align: center; }
-.cpu-label { font-size: 11px; color: #8c8c8c; margin-bottom: 4px; }
-.cpu-value { font-size: 28px; font-weight: 700; color: #1890ff; }
+.cpu-label { font-size: 11px; color: #8c8c8c; margin-bottom: 2px; }
+.cpu-value { font-size: 22px; font-weight: 700; color: #1890ff; }
+
+.mem-progress { display: flex; flex-direction: column; gap: 4px; padding: 2px 0; }
+.mem-stats { display: flex; gap: 10px; font-size: 11px; color: #8c8c8c; flex-wrap: wrap; }
+.mem-stat { display: flex; align-items: center; gap: 3px; }
+.mem-stat-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+.mem-stat-dot.used { background: #fa8c16; }
+.mem-stat-dot.free { background: #52c41a; }
+.mem-pct { font-size: 18px; font-weight: 700; color: #1a1a1a; text-align: center; }
+
+.disk-info { display: flex; flex-direction: column; gap: 4px; }
+.disk-row { display: flex; justify-content: space-between; font-size: 10px; }
+.disk-label { color: #1a1a1a; font-weight: 500; }
+.disk-pct { color: #8c8c8c; }
+
+.card-hdr {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
 
 .table-wrap { overflow-y: auto; max-height: 180px; }
 .simple-table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -425,16 +406,18 @@ onBeforeUnmount(() => {
 
 .assess-grid {
   display: flex;
+  align-items: center;
   gap: 16px;
-  padding: 8px 0;
+  flex: 1;
 }
+.assess-card { display: flex; flex-direction: column; }
 .assess-item { text-align: center; flex: 1; }
-.assess-label { font-size: 11px; color: #8c8c8c; margin-bottom: 6px; }
+.assess-label { font-size: 13px; color: #8c8c8c; margin-bottom: 8px; }
 .assess-badge {
   display: inline-block;
-  padding: 3px 14px;
-  border-radius: 12px;
-  font-size: 13px;
+  padding: 6px 20px;
+  border-radius: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 .assess-badge.green { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
