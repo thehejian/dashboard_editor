@@ -196,6 +196,7 @@ function cloneContainerCharts() {
 const DASHBOARDS = [
   createDashboard(1, '宿主机监控', 'cn-north-1', '24h', null, 'host'),
   createDashboard(6, '虚拟机监控', 'cn-north-1', '24h', null, 'vm'),
+  createDashboard(7, 'NAS监控', 'cn-north-1', '24h', null, 'nas'),
   createDashboard(2, '容器监控', 'cn-north-1', '24h', cloneContainerCharts(), 'container'),
   createDashboard(3, '开发环境监控', 'cn-north-2', '6h', null, 'dev'),
   createDashboard(4, '测试环境仪表盘', 'cn-east-1', '24h', null, 'test'),

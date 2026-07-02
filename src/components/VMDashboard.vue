@@ -217,12 +217,25 @@ function fmtBytes(b) {
   return v.toFixed(1) + ' ' + units[i]
 }
 
+function fmtUptimeStr(str) {
+  if (!str || str === '--') return '--'
+  let totalMin = 0
+  const r = (p) => { const m = str.match(new RegExp(`(\\d+)\\s+${p}`)); return m ? parseInt(m[1]) : 0 }
+  totalMin += r('weeks?') * 7 * 24 * 60
+  totalMin += r('days?') * 24 * 60
+  totalMin += r('hours?') * 60
+  totalMin += r('minutes?')
+  if (totalMin === 0) return str
+  const d = Math.floor(totalMin / 1440), h = Math.floor((totalMin % 1440) / 60), m = totalMin % 60
+  return `${d}天, ${h}小时, ${m}分钟`
+}
+
 const summaryCards = computed(() => {
   const d = data.value
   if (!d) return []
   return [
-    { label: '主机名', value: d.hostname || '--', icon: 'fa-solid fa-server', bg: 'linear-gradient(135deg, #1890ff, #096dd9)', color: '#1890ff', sub: d.public_ip || '' },
-    { label: '运行时间', value: d.uptime || '--', icon: 'fa-solid fa-clock', bg: 'linear-gradient(135deg, #52c41a, #389e0d)', color: '#52c41a' },
+    { label: '公网 IP', value: d.public_ip || '--', icon: 'fa-solid fa-server', bg: 'linear-gradient(135deg, #1890ff, #096dd9)', color: '#1890ff', sub: d.hostname || '' },
+    { label: '运行时间', value: fmtUptimeStr(d.uptime), icon: 'fa-solid fa-clock', bg: 'linear-gradient(135deg, #52c41a, #389e0d)', color: '#52c41a' },
     { label: 'CPU 核心', value: d.cpu_cores || '--', icon: 'fa-solid fa-microchip', bg: 'linear-gradient(135deg, #13c2c2, #08979c)', color: '#13c2c2' },
     { label: 'Docker 运行', value: d.docker_installed ? (d.docker_running ?? 0) : '未安装', icon: 'fa-brands fa-docker', bg: 'linear-gradient(135deg, #722ed1, #531dab)', color: '#722ed1' },
   ]

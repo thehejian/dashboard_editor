@@ -85,16 +85,17 @@
         <div v-if="dev.status === 'online'" class="ctr-card ctr-table-card">
           <div class="card-hdr"><span>容器列表</span></div>
           <div class="table-wrap">
-            <table class="simple-table">
-              <thead><tr><th>名称</th><th>镜像</th><th>状态</th><th>端口</th></tr></thead>
-              <tbody>
-                <tr v-for="(c, i) in dev.containers" :key="i">
-                  <td class="td-ellipsis" :title="c.name">{{ c.name }}</td>
-                  <td class="td-ellipsis" :title="c.image">{{ c.image || '--' }}</td>
-                  <td><span class="status-dot" :class="c.state === 'running' ? 'green' : c.state === 'exited' ? 'red' : 'yellow'"></span>{{ c.status || c.state }}</td>
-                  <td class="td-ellipsis" :title="c.ports">{{ c.ports || '--' }}</td>
-                </tr>
-                <tr v-if="!dev.containers.length"><td colspan="4" class="td-empty">无容器</td></tr>
+<table class="simple-table">
+                <thead><tr><th>名称</th><th>镜像</th><th>状态</th><th>端口</th><th>内存</th></tr></thead>
+                <tbody>
+                  <tr v-for="(c, i) in dev.containers.slice().sort((a, b) => a.state === 'running' ? -1 : b.state === 'running' ? 1 : 0)" :key="i">
+                    <td class="td-ellipsis" :title="c.name">{{ c.name }}</td>
+                    <td class="td-ellipsis" :title="c.image">{{ c.image || '--' }}</td>
+                    <td><span class="status-dot" :class="c.state === 'running' ? 'green' : c.state === 'exited' ? 'red' : 'yellow'"></span>{{ c.status || c.state }}</td>
+                    <td class="td-ellipsis" :title="c.ports">{{ c.ports || '--' }}</td>
+                    <td style="white-space:nowrap">{{ c.mem_perc !== '--' ? fmtBytes(c.mem_usage) + ' (' + c.mem_perc + ')' : '--' }}</td>
+                  </tr>
+                  <tr v-if="!dev.containers.length"><td colspan="5" class="td-empty">无容器</td></tr>
               </tbody>
             </table>
           </div>

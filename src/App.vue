@@ -173,6 +173,8 @@
           <div class="canvas-scroll">
             <OBSDashboard v-if="isOBSDashboard" />
             <VMDashboard v-else-if="isVMDashboard" />
+            <NASDashboard v-else-if="isNASDashboard" />
+            <ContainerDashboard v-else-if="isContainerDashboard" />
             <ChartGrid v-else />
           </div>
           <button v-if="!isCustomDashboard" class="fab-add" @click="addChart()" title="添加图表">
@@ -203,6 +205,8 @@ import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
 import OBSDashboard from './components/OBSDashboard.vue'
 import VMDashboard from './components/VMDashboard.vue'
+import NASDashboard from './components/NASDashboard.vue'
+import ContainerDashboard from './components/ContainerDashboard.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 const router = useRouter()
@@ -228,7 +232,9 @@ const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentReg
 
 const isOBSDashboard = computed(() => currentDashboard.value?.title === 'OBS监控')
 const isVMDashboard = computed(() => currentDashboard.value?.title === '虚拟机监控')
-const isCustomDashboard = computed(() => isOBSDashboard.value || isVMDashboard.value)
+const isNASDashboard = computed(() => currentDashboard.value?.title === 'NAS监控')
+const isContainerDashboard = computed(() => currentDashboard.value?.title === '容器监控')
+const isCustomDashboard = computed(() => isOBSDashboard.value || isVMDashboard.value || isNASDashboard.value || isContainerDashboard.value)
 
 function scrollToChart(chartId) {
   const el = document.querySelector(`[data-chart-id="${chartId}"]`)

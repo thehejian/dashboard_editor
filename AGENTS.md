@@ -128,6 +128,35 @@ a-table
 - **自定义 Dashboard 组件的 toolbar 需自包含**：OBSDashboard/VMDashboard 等自定义组件不依赖 App.vue 的通用 toolbar，需自行实现刷新下拉、最后更新时间、时间范围选择等交互。App.vue 通过 `isCustomDashboard` computed 隐藏通用 toolbar/FAB/配置面板
 - **G2 图表在小卡片中可用 `a-progress` 替代**：G2 环形图/柱状图在小卡片中空间利用率低且依赖 Canvas 渲染生命周期（destroy 防泄漏），改用 Ant Design Vue 的 `a-progress` 进度条更紧凑稳定，无需 chart 实例管理。参考 `VMDashboard.vue` 内存/磁盘使用卡片
 
+## NAS 监控项目
+
+位于远程 Windows 桌面 `C:\Users\hejian\Desktop\nas\`（跳板机入口 `8.147.132.193:52222`）。
+
+### 连接信息
+
+| 目标 | 协议 | 地址 | 用户 | 密码 |
+|---|---|---|---|---|
+| Windows 跳板 | SSH | `8.147.132.193:52222` | hejian | Hjian!745544752 |
+| QNAP NAS SSH | SSH | `8.147.132.193:62222` (外) / `192.168.0.160:22` (内) | admin | Hjian!745544752 |
+| QNAP NAS Web | HTTP | `http://8.147.132.193:65000` (外) / `http://192.168.0.160:5000` (内) | admin | Hjian!745544752 |
+| NAS 非管理员 | Web | 同上 | opencode | Hjian!745544752 (isAdmin=0 受限) |
+
+密码 Base64: `SGppYW4hNzQ1NTQ0NzUy`
+
+### NAS 规格
+- 型号: QNAP TS-464C (Intel N5095, 4核)
+- 内存: 8GB LPDDR4 (焊死不可升)
+- 存储: 2×10TB RAID0 + 1TB NVMe 缓存
+- 固件: QTS 5.2.9
+
+### 经验教训
+
+1. **直连优于跳板**：NAS SSH 端口 `62222` / Web 端口 `65000` 均对公网开放，无需经过 Windows 跳板。之前项目脚本全是内网 `192.168.0.160` 地址，需要 Windows 代理，效率低（15-30s vs 2s）
+2. **QNAP Web API**：SID 必须作为 URL 查询参数 `?sid=xxx`，仅设 Cookie 不够；QTS 5.2.6+ 只 `sysRequest.cgi` 可用，storage/security/logRequest.cgi 全部 404
+3. **Docker 非标准路径**：`/share/CACHEDEV2_DATA/.qpkg/container-station/usr/bin/.libs/docker`
+4. **BusyBox**：`top -b -n 1 -m` 按内存排序，无 systemd 用 `/etc/init.d/`
+5. **内存 97%**：QEMU 虚拟机占 2.6GB + Apache 代理 ~3GB，Swap 异常
+
 ## 数据特点
 
 - 所有 mock / seed 数据直接写在 views 文件中，无独立 mock 层

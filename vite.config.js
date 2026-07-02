@@ -38,6 +38,14 @@ export default defineConfig({
       '/api/vm': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/api/nas': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/api/portainer': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },
