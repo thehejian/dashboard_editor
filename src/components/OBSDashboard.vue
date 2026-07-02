@@ -468,4 +468,20 @@ onBeforeUnmount(() => {
 }
 .al-tag.error { background: #f5222d; color: #fff; }
 .al-tag.warn { background: #fa8c16; color: #fff; }
+
+@media (max-width: 768px) {
+  .obs-row { flex-direction: column; }
+  .summary-row { flex-direction: row; flex-wrap: wrap; }
+  .summary-row .obs-card { width: calc(50% - 8px); flex: none; min-width: 0; padding: 14px 16px; }
+  .obs-card { padding: 14px 16px; }
+  .obs-card-icon { width: 44px; height: 44px; }
+  .obs-card-icon i { font-size: 18px; }
+  .obs-card-value { font-size: 22px; }
+  .obs-toolbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .alert-table-wrap { overflow-x: auto; }
+  .chart-box { height: 160px; }
+}
+@media (max-width: 420px) {
+  .summary-row .obs-card { width: 100%; }
+}
 </style>
