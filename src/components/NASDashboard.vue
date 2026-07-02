@@ -442,9 +442,8 @@ onBeforeUnmount(() => {
 
 .assess-grid {
   display: flex;
-  align-items: center;
   gap: 16px;
-  flex: 1;
+  padding-top: 24px;
 }
 .assess-card { display: flex; flex-direction: column; }
 .assess-item { text-align: center; flex: 1; }
