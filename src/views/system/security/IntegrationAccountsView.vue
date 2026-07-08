@@ -4,7 +4,7 @@
       <h3>集成账号</h3>
     </div>
     <div class="filter-actions-bar">
-      <a-button>创建集成账号</a-button>
+      <a-button type="primary">创建集成账号</a-button>
       <a-button>删除</a-button>
     </div>
     <div class="filter-bar">
@@ -79,7 +79,7 @@ const columns = [
 <style scoped>
 .page-header { margin-bottom: 16px; }
 .page-header h3 { font-size: 18px; font-weight: 600; margin: 0; }
-.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-start; }
 .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; }
 .filter-bar :deep(.ant-input-search) { flex: 1; }
 :deep(.ant-table-thead > tr > th) { background: var(--bg); font-size: 13px; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); }
