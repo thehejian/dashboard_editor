@@ -87,15 +87,37 @@
 
       <a-collapse-panel key="directory" header="用户目录树配置">
         <a-form layout="vertical">
+          <a-form-item label="用户认证方式" required>
+            <a-radio-group v-model:value="form.authMethod">
+              <a-radio value="simple">
+                <span class="radio-label">简单认证</span>
+                <span class="radio-hint">使用根DN前缀和根DN后缀认证</span>
+              </a-radio>
+              <a-radio value="two-step">
+                <span class="radio-label">两步认证</span>
+                <span class="radio-hint">需要先使用服务账号认证，成功后再使用登录用户认证</span>
+              </a-radio>
+            </a-radio-group>
+          </a-form-item>
           <a-form-item label="根DN" required>
             <a-input v-model:value="form.userRootDn" placeholder="请输入" />
           </a-form-item>
-          <a-form-item label="根DN前缀" required>
-            <a-input v-model:value="form.userRootDnPrefix" placeholder="请输入" />
-          </a-form-item>
-          <a-form-item label="根DN后缀" required>
-            <a-input v-model:value="form.userRootDnSuffix" placeholder="请输入" />
-          </a-form-item>
+          <template v-if="form.authMethod === 'simple'">
+            <a-form-item label="根DN前缀" required>
+              <a-input v-model:value="form.userRootDnPrefix" placeholder="请输入" />
+            </a-form-item>
+            <a-form-item label="根DN后缀" required>
+              <a-input v-model:value="form.userRootDnSuffix" placeholder="请输入" />
+            </a-form-item>
+          </template>
+          <template v-if="form.authMethod === 'two-step'">
+            <a-form-item label="服务账号" required>
+              <a-input v-model:value="form.directoryBindDn" placeholder="请输入" />
+            </a-form-item>
+            <a-form-item label="服务密码" required>
+              <a-input-password v-model:value="form.directoryBindPassword" placeholder="******" />
+            </a-form-item>
+          </template>
           <a-form-item label="用户对象类名" required>
             <a-input v-model:value="form.userObjectClass" placeholder="请输入" />
           </a-form-item>
@@ -294,6 +316,9 @@ const form = reactive({
   tlsEnabled: true,
   tlsVersion: null,
   mode: 'OpenLDAP',
+  authMethod: 'simple',
+  directoryBindDn: '',
+  directoryBindPassword: '',
   userRootDn: '',
   userRootDnPrefix: '',
   userRootDnSuffix: '',
@@ -345,6 +370,9 @@ defineExpose({ form, validate })
 .icon-tips { font-size: 11px; color: var(--text-ter); line-height: 1.6; }
 .icon-tips p { margin: 0; }
 .form-hint { font-size: 11px; color: var(--text-ter); margin-top: 4px; line-height: 1.5; }
+:deep(.ant-radio-wrapper) { display: flex; align-items: flex-start; margin-bottom: 8px; }
+.radio-label { display: block; font-weight: 600; font-size: 13px; }
+.radio-hint { display: block; font-size: 11px; color: var(--text-ter); margin-top: 2px; line-height: 1.4; }
 .card-section { border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; background: var(--bg); }
 .card-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
 :deep(.card-body .ant-form-item) { margin-bottom: 12px; }
