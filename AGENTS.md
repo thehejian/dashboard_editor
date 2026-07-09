@@ -127,6 +127,11 @@ a-table
 - **Dashboard slug 路由优于数字 ID**：独立链接使用 `/dashboard/vm` 而非 `/dashboard/6`，语义化且可读性更好。在 `useEditorState.js` 的 DASHBOARDS 中为每个 dashboard 加 `slug` 字段，路由 `/dashboard/:slug` 匹配，tab 点击用 `router.replace` 导航
 - **自定义 Dashboard 组件的 toolbar 需自包含**：OBSDashboard/VMDashboard 等自定义组件不依赖 App.vue 的通用 toolbar，需自行实现刷新下拉、最后更新时间、时间范围选择等交互。App.vue 通过 `isCustomDashboard` computed 隐藏通用 toolbar/FAB/配置面板
 - **G2 图表在小卡片中可用 `a-progress` 替代**：G2 环形图/柱状图在小卡片中空间利用率低且依赖 Canvas 渲染生命周期（destroy 防泄漏），改用 Ant Design Vue 的 `a-progress` 进度条更紧凑稳定，无需 chart 实例管理。参考 `VMDashboard.vue` 内存/磁盘使用卡片
+- **AI Chat 后端重试应对空回复**：`/api/ai/chat` 请求 Agnes API 偶发返回 `choices[0].message.content = ""`（HTTP 200 但空内容）。后端需 for-loop 重试（最多 2 次，间隔 1s），不能假设非空即是正常。参考 `server.js` 的 `for (let i = 0; i <= 2; i++)` 模式
+- **AI 回复推荐按钮格式 `[[action:...]]`**：用 `[[action:按钮文字:补充prompt]]` 标记可执行操作。后端正则 `/\[\[action:([^\]]+)\]\]/g` 解析剥离，`actions` 数组单独返回。前端渲染 `.action-btn`，`runAction()` 自动填入补充 prompt 发送。参考 `server.js` 和 `AIAssistant.vue`
+- **前端 `data.reply` 空判需考虑 actions**：AI 回复可能 `reply=""` 但 `actions` 存在（AI 只输出 action 标记、无正文）。不能简单 `if (data.reply)` 判断不可用，需 `if (data.reply || data.actions?.length)`。后端也需兜底：reply 为空但有 actions 时生成 `推荐操作：xxx` fallback 文字
+- **nohup 启动进程 PATH 不全**：`nohup` 启动的 Node 服务继承环境有限，`exec()` 子进程找不到 `sshpass`、`node` 等命令。解法：要么写死全路径（`/opt/homebrew/bin/sshpass`），要么在启动命令前 `export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"`。参考 `start.sh` 和 `server.js` 中 `sshpass` 使用
+- **Node.js fetch 兼容性 workaround**：Node.js 22 的 undici 与某些外部 LLM API（如 Agnes）之间存在 TLS/网络兼容性问题，`fetch()` 会静默失败。用 `exec(curl)` 作为回退方案，JSON 体通过 `body.replace(/'/g, "'\\''")` 逃逸单引号后嵌入 shell 命令。参考 `server.js` 的 `/api/ai/chat` 路由
 
 ## NAS 监控项目
 

@@ -23,7 +23,12 @@
           </div>
           <div v-for="(msg, i) in messages" :key="i" class="ai-msg" :class="msg.role">
             <div class="msg-avatar">{{ msg.role === 'user' ? 'U' : 'AI' }}</div>
-            <div class="msg-content"><div class="msg-bubble"><div class="md-content" v-html="renderMarkdown(msg.content)"></div></div></div>
+            <div class="msg-content">
+              <div class="msg-bubble"><div class="md-content" v-html="renderMarkdown(msg.content)"></div></div>
+              <div v-if="msg.actions?.length" class="msg-actions">
+                <button v-for="(act, j) in msg.actions" :key="j" class="action-btn" @click="runAction(act)"><i class="fa-solid fa-bolt"></i> {{ act.label }}</button>
+              </div>
+            </div>
           </div>
           <div v-if="loading" class="ai-msg assistant">
             <div class="msg-avatar">AI</div>
@@ -95,8 +100,8 @@ async function sendMessage() {
       body: JSON.stringify({ messages: messages.value.map(m => ({ role: m.role, content: m.content })), context })
     })
     const data = await res.json()
-    if (data.reply) {
-      messages.value.push({ role: 'assistant', content: data.reply })
+    if (data.reply || data.actions?.length) {
+      messages.value.push({ role: 'assistant', content: data.reply || '请选择以下操作：', actions: data.actions })
     } else {
       messages.value.push({ role: 'assistant', content: '抱歉，AI 服务暂时不可用。' })
     }
@@ -134,6 +139,11 @@ async function summarizeAlerts() {
     messages.value.push({ role: 'assistant', content: '获取告警数据失败。' })
     loading.value = false
   }
+}
+
+function runAction(act) {
+  inputText.value = act.prompt || act.label
+  sendMessage()
 }
 
 function openPanel() {
@@ -277,6 +287,17 @@ function openPanel() {
 }
 .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .send-btn:not(:disabled):hover { background: var(--brand-hover, #0066D6); }
+
+.msg-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.action-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border: 1px solid var(--brand, #007DFF);
+  border-radius: 6px; background: var(--brand-subtle, #EBF4FF);
+  color: var(--brand, #007DFF); cursor: pointer; font-size: 12px;
+  transition: all 0.15s; white-space: nowrap;
+}
+.action-btn:hover { background: var(--brand, #007DFF); color: #FFF; }
+.action-btn i { font-size: 11px; }
 
 @media (max-width: 768px) {
   .ai-fab { bottom: 70px; right: 16px; width: 44px; height: 44px; font-size: 18px; }

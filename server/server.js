@@ -574,26 +574,67 @@ app.post('/api/doc-qa', async (req, res) => {
 const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
 const AGNES_BASE_URL = 'https://apihub.agnes-ai.com/v1'
 
+const ZHIPU_API_KEY = '8329553cf0bd83a57bd45502d80688b7.MoH21npPA0tXNPfw'
+const ZHIPU_BASE_URL = 'https://open.bigmodel.cn/api/paas/v4'
+const ZHIPU_MODEL = 'glm-4.7-flash'
+
+async function callProvider(apiKey, baseUrl, model, messages, extraParams) {
+  const bodyObj = { model, messages, stream: false, ...extraParams }
+  const bodyStr = JSON.stringify(bodyObj)
+  const curl = `curl -s --max-time 120 '${baseUrl}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${apiKey}' -d '${bodyStr.replace(/'/g, "'\\''")}'`
+
+  for (let i = 0; i <= 2; i++) {
+    if (i > 0) {
+      console.log(`[AI Chat] ${model} 重试 #${i}`)
+      await new Promise(r => setTimeout(r, 1000))
+    }
+    try {
+      const stdout = await new Promise((resolve, reject) => {
+        exec(curl, { timeout: 130000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
+          if (err || !stdout.trim()) return reject(err || new Error('无响应'))
+          resolve(stdout)
+        })
+      })
+      const data = JSON.parse(stdout)
+      const raw = data.choices?.[0]?.message?.content
+      if (raw) {
+        return { raw, usage: data.usage }
+      }
+      console.error(`[AI Chat] ${model} 空回复 attempt=${i} usage=${JSON.stringify(data.usage)}`)
+    } catch (e) {
+      console.error(`[AI Chat] ${model} 异常 attempt=${i}:`, e.message)
+    }
+  }
+  return null
+}
+
 app.post('/api/ai/chat', async (req, res) => {
   const { messages, context } = req.body
   const systemMsg = {
     role: 'system',
-    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。`
+    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。如果建议用户执行某个操作，在末尾用格式 [[action:按钮文字:发送给AI的补充内容]] 标记，例如建议查告警详情用 [[action:查看8条告警详情:列出当前8条触发告警的详细信息]]。最多标记3个action。不要写多余格式。`
       + (context ? '\n当前页面上下文：' + JSON.stringify(context) : '')
   }
-  const body = JSON.stringify({ model: 'agnes-2.0-flash', messages: [systemMsg, ...(messages || [])], stream: false })
-  const curl = `curl -s --max-time 30 '${AGNES_BASE_URL}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${AGNES_API_KEY}' -d '${body.replace(/'/g, "'\\''")}'`
-  exec(curl, { timeout: 35000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
-    if (err || !stdout.trim()) {
-      return res.status(500).json({ error: 'AI 服务异常: ' + (err?.message || '无响应') })
-    }
-    try {
-      const data = JSON.parse(stdout)
-      res.json({ reply: data.choices?.[0]?.message?.content || '', usage: data.usage })
-    } catch {
-      res.status(500).json({ error: 'AI 响应解析失败', raw: stdout.slice(0, 500) })
-    }
-  })
+  const fullMessages = [systemMsg, ...(messages || [])]
+
+  let result = await callProvider(ZHIPU_API_KEY, ZHIPU_BASE_URL, ZHIPU_MODEL, fullMessages, { thinking: { type: 'enabled' } })
+  if (!result) {
+    console.log('[AI Chat] GLM 全部失败, 切换至 Agnes')
+    result = await callProvider(AGNES_API_KEY, AGNES_BASE_URL, 'agnes-2.0-flash', fullMessages)
+  }
+
+  if (result) {
+    const actions = []
+    const clean = result.raw.replace(/\[\[action:([^\]]+)\]\]/g, (_, m) => {
+      const parts = m.split(':')
+      actions.push({ label: parts[0], prompt: parts.slice(1).join(':') || '' })
+      return ''
+    })
+    const replyText = clean.trim() || (actions.length ? `推荐操作：${actions.map(a => a.label).join('、')}` : '')
+    return res.json({ reply: replyText, actions: actions.length ? actions : undefined, usage: result.usage })
+  }
+
+  res.json({ reply: '', usage: null })
 })
 
 // ==================== Helper Functions ====================
