@@ -46,6 +46,10 @@ export default defineConfig({
       '/api/portainer': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/api/ai': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },

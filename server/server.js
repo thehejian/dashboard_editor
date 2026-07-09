@@ -52,7 +52,7 @@ app.get('/api/vm/sysinfo', async (req, res) => {
   }
 
   const scriptPath = '/Users/mac/.qclaw/workspace/006-vm/sysinfo.sh'
-  const sshBase = `sshpass -p '${VM_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${VM_CONFIG.port} ${VM_CONFIG.user}@${VM_CONFIG.host}`
+  const sshBase = `/opt/homebrew/bin/sshpass -p '${VM_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${VM_CONFIG.port} ${VM_CONFIG.user}@${VM_CONFIG.host}`
 
   const cmd = `${sshBase} 'cat > /root/sysinfo.sh && chmod +x /root/sysinfo.sh' < "${scriptPath}" && ${sshBase} 'bash /root/sysinfo.sh --json'`
 
@@ -99,7 +99,7 @@ app.get('/api/nas/sysinfo', async (req, res) => {
     return res.json({ success: true, data: nasCache.data, cached: true })
   }
 
-  const sshBase = `sshpass -p '${NAS_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${NAS_CONFIG.port} ${NAS_CONFIG.user}@${NAS_CONFIG.host}`
+  const sshBase = `/opt/homebrew/bin/sshpass -p '${NAS_CONFIG.password}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${NAS_CONFIG.port} ${NAS_CONFIG.user}@${NAS_CONFIG.host}`
 
   const cmd = `${sshBase} '
 echo "===MEM==="
@@ -567,6 +567,33 @@ app.post('/api/doc-qa', async (req, res) => {
     console.error('文档问答错误:', err)
     res.status(500).json({ error: '问答失败' })
   }
+})
+
+// ==================== AI Chat ====================
+
+const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
+const AGNES_BASE_URL = 'https://apihub.agnes-ai.com/v1'
+
+app.post('/api/ai/chat', async (req, res) => {
+  const { messages, context } = req.body
+  const systemMsg = {
+    role: 'system',
+    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。`
+      + (context ? '\n当前页面上下文：' + JSON.stringify(context) : '')
+  }
+  const body = JSON.stringify({ model: 'agnes-2.0-flash', messages: [systemMsg, ...(messages || [])], stream: false })
+  const curl = `curl -s --max-time 30 '${AGNES_BASE_URL}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${AGNES_API_KEY}' -d '${body.replace(/'/g, "'\\''")}'`
+  exec(curl, { timeout: 35000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
+    if (err || !stdout.trim()) {
+      return res.status(500).json({ error: 'AI 服务异常: ' + (err?.message || '无响应') })
+    }
+    try {
+      const data = JSON.parse(stdout)
+      res.json({ reply: data.choices?.[0]?.message?.content || '', usage: data.usage })
+    } catch {
+      res.status(500).json({ error: 'AI 响应解析失败', raw: stdout.slice(0, 500) })
+    }
+  })
 })
 
 // ==================== Helper Functions ====================

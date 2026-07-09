@@ -3,7 +3,7 @@
     <div class="page-header">
       <h2>事件</h2>
     </div>
-    <div class="filter-actions-bar"><a-button type="primary" style="margin-left: auto"><i class="fa-solid fa-download"></i> 导出</a-button></div>
+    <div class="filter-actions-bar"><a-button type="primary"><i class="fa-solid fa-download"></i> 导出</a-button></div>
     <div class="filter-bar">
       <a-range-picker v-model:value="timeRange" style="width:260px" />
       <a-select v-model:value="eventType" placeholder="事件类型" style="width:140px" allowClear>
@@ -179,7 +179,7 @@ onBeforeUnmount(function() {
 .page-view { display: flex; flex-direction: column; padding: 16px 0 0; height: 100%; }
 .page-header { margin-bottom: 16px; flex-shrink: 0; }
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
-.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; }
 .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
 .filter-bar :deep(.ant-input-search) { flex: 1; }
 .search-input { flex: 1; min-width: 200px; }

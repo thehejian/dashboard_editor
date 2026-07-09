@@ -162,7 +162,7 @@ onUnmounted(function() {
 
 <style scoped>
 .page-view { display: flex; flex-direction: column; padding: 16px 0 0; height: 100%; }
-.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-shrink: 0; justify-content: flex-end; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-shrink: 0; }
 .content-tabs { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .content-tabs :deep(.ant-tabs-nav) { margin: 0 0 16px 0 !important; }
 .content-tabs :deep(.ant-tabs-content-holder) { flex: 1; min-height: 0; overflow: auto; }

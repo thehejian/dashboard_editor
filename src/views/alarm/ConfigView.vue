@@ -3,7 +3,7 @@
     <div class="page-header">
       <h2>告警规则</h2>
     </div>
-    <div class="filter-actions-bar"><a-button type="primary" style="margin-left: auto"><i class="fa-solid fa-plus"></i> 新建规则</a-button></div>
+    <div class="filter-actions-bar"><a-button type="primary"><i class="fa-solid fa-plus"></i> 新建规则</a-button></div>
     <div class="filter-bar">
       <a-select v-model:value="filterLevel" placeholder="告警级别" style="width:120px" allowClear>
         <a-select-option value="critical">紧急</a-select-option>
@@ -114,7 +114,7 @@ onUnmounted(function() {
 .page-view { display: flex; flex-direction: column; padding: 16px 0 0; height: 100%; }
 .page-header { margin-bottom: 16px; flex-shrink: 0; }
 .page-header h2 { font-size: 20px; font-weight: 600; margin: 0; }
-.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; }
 .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
 .filter-bar :deep(.ant-input-search) { flex: 1; }
 .search-input { flex: 1; min-width: 200px; }

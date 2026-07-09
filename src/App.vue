@@ -193,6 +193,7 @@
 
 
     <div class="toast" :class="{ visible: state.toast }">{{ state.toast }}</div>
+    <AIAssistant />
   </div>
 </template>
 
@@ -207,6 +208,7 @@ import OBSDashboard from './components/OBSDashboard.vue'
 import VMDashboard from './components/VMDashboard.vue'
 import NASDashboard from './components/NASDashboard.vue'
 import ContainerDashboard from './components/ContainerDashboard.vue'
+import AIAssistant from './components/AIAssistant.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 const router = useRouter()
