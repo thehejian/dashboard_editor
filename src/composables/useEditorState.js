@@ -598,11 +598,30 @@ function clearRefresh() {
   state.refreshRate = '0'
 }
 
+export const topoHighlight = reactive({
+  nodes: [],
+  edges: [],
+  active: false,
+})
+
+export function setTopoHighlight(data) {
+  topoHighlight.nodes = data.nodes || []
+  topoHighlight.edges = data.edges || []
+  topoHighlight.active = !!data.nodes?.length
+}
+
+export function clearTopoHighlight() {
+  topoHighlight.nodes = []
+  topoHighlight.edges = []
+  topoHighlight.active = false
+}
+
 export function useEditorState() {
   return {
     CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS, REFRESH_OPTIONS,
     state,
     chartData,
+    topoHighlight, setTopoHighlight, clearTopoHighlight,
     currentChart, currentCategory, currentSubDataset, availableMetrics, recommendedCharts, currentDashboard,
     toast, addChart, applyNewChart, delChart, dupChart,
     selectChart, closeConfig, switchTab,

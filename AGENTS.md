@@ -13,7 +13,11 @@ cd server && npm run dev             # 后端开发（交互式终端用）
 cd server && npm run seed            # 通过 curl POST 初始化 seed 数据
 ```
 
-无 lint/typecheck/测试命令。SPA 需服务端 `createWebHistory()` fallback。
+Vite 配置了 basic auth，dev 访问带凭据的 URL：
+```
+http://admin:745544752@localhost:5173
+```
+playwright/curl 访问测试也用此格式（注意 `SecurityError: replaceState` 不影响渲染）。
 
 无 lint/typecheck/测试命令。SPA 需服务端 `createWebHistory()` fallback。
 

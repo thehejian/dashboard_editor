@@ -19,6 +19,7 @@
               <button class="quick-btn" @click="analyzePage"><i class="fa-solid fa-chart-line"></i> 分析当前页面</button>
               <button class="quick-btn" @click="askPromQL"><i class="fa-solid fa-database"></i> 写 PromQL 查询</button>
               <button class="quick-btn" @click="summarizeAlerts"><i class="fa-solid fa-bell"></i> 总结今日告警</button>
+              <button class="quick-btn" @click="detectFaults"><i class="fa-solid fa-stethoscope"></i> 检测系统故障</button>
             </div>
           </div>
           <div v-for="(msg, i) in messages" :key="i" class="ai-msg" :class="msg.role">
@@ -50,8 +51,9 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
+import { setTopoHighlight, clearTopoHighlight } from '../composables/useEditorState.js'
 
 function renderMarkdown(text) {
   if (!text) return ''
@@ -59,6 +61,7 @@ function renderMarkdown(text) {
 }
 
 const route = useRoute()
+const router = useRouter()
 const open = ref(false)
 const loading = ref(false)
 const inputText = ref('')
@@ -69,6 +72,17 @@ function scrollToBottom() {
   nextTick(() => {
     if (bodyRef.value) bodyRef.value.scrollTop = bodyRef.value.scrollHeight
   })
+}
+
+const topoNodes = ['prod-order-01', 'prod-order-02', 'prod-pay-01', 'prod-user-01', 'mysql-master', 'mysql-slave', 'redis-cache', 'mq-order', 'lb-api', 'internet']
+
+if (typeof window !== 'undefined') {
+  window.__openAIAssistant = async (text) => {
+    open.value = true
+    await nextTick()
+    inputText.value = text
+    await sendMessage()
+  }
 }
 
 async function sendMessage() {
@@ -88,11 +102,20 @@ async function sendMessage() {
       overview = o.data || o
       alertStats = a.data || a
     } catch {}
+    let topo = { nodes: [], edges: [] }
+    try {
+      const t = await fetch('/api/mock/topology').then(r => r.json())
+      topo = t.data || t
+    } catch {}
     const context = {
       route: route.path,
       title: document.title || '',
       overview,
       alertStats,
+      topology: {
+        nodes: topo.nodes?.map(n => n.id) || [],
+        edges: topo.edges?.map(e => `${e.source}→${e.target} (${e.label||''})`) || [],
+      },
     }
     const res = await fetch('/api/ai/chat', {
       method: 'POST',
@@ -101,7 +124,18 @@ async function sendMessage() {
     })
     const data = await res.json()
     if (data.reply || data.actions?.length) {
-      messages.value.push({ role: 'assistant', content: data.reply || '请选择以下操作：', actions: data.actions })
+      const reply = (data.reply || '') + ' ' + JSON.stringify(data.actions || [])
+      const matched = topoNodes.filter(n => reply.includes(n))
+      const actions = [...(data.actions || [])]
+      matched.slice(0, 1).forEach(n => {
+        if (!actions.some(a => a.label.includes(n))) {
+          actions.push({ label: `查看${n}拓扑`, prompt: `跳转到${n}的拓扑高亮页面` })
+        }
+      })
+      messages.value.push({ role: 'assistant', content: data.reply || '请选择以下操作：', actions })
+      if (matched.length) {
+        setTopoHighlight({ nodes: matched })
+      }
     } else {
       messages.value.push({ role: 'assistant', content: '抱歉，AI 服务暂时不可用。' })
     }
@@ -141,7 +175,35 @@ async function summarizeAlerts() {
   }
 }
 
+async function detectFaults() {
+  open.value = true
+  inputText.value = ''
+  loading.value = true
+  try {
+    const [alertRes, topoRes] = await Promise.all([
+      fetch('/api/mock/alerts').then(r => r.json()),
+      fetch('/api/mock/topology').then(r => r.json())
+    ])
+    const alerts = alertRes.data || alertRes
+    const topo = topoRes.data || topoRes
+    const alertText = alerts.map(a => `  ${a.node} | ${a.metric} | ${a.value} | ${a.level}`).join('\n')
+    const nodeText = (topo.nodes||[]).map(n => n.id).join(', ')
+    inputText.value = '检测系统故障。\n\n当前告警：\n' + alertText + '\n\n拓扑节点：' + nodeText + '\n\n请分析是否存在关联故障，定位根因节点，给出修复建议。'
+    loading.value = false
+    await sendMessage()
+  } catch {
+    messages.value.push({ role: 'assistant', content: '获取故障检测数据失败。' })
+    loading.value = false
+  }
+}
+
 function runAction(act) {
+  const topoMatch = (act.label || '').match(/查看(.+?)拓扑/)
+  if (topoMatch) {
+    setTopoHighlight({ nodes: [topoMatch[1]] })
+    router.push('/monitor/topology?tab=application')
+    return
+  }
   inputText.value = act.prompt || act.label
   sendMessage()
 }

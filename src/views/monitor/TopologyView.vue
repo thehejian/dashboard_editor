@@ -21,13 +21,26 @@
 
     <main class="topology-main">
       <div class="topology-title">
-        <h2>{{ selectedNodeName }}</h2>
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+          <h2>{{ selectedNodeName }}</h2>
+          <div v-if="topoInfo" class="topo-highlight-bar">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color:#722ED1"></i>
+            <span>AI 分析高亮：</span>
+            <a-tag v-for="n in topoInfo.nodes" :key="n" color="purple" style="margin-right:4px">{{ n }}</a-tag>
+            <a-button type="text" size="small" style="margin-left:8px;color:#8c8c8c" @click="clearTopoHighlight(); topoInfo = null">
+              <i class="fa-solid fa-xmark"></i>
+            </a-button>
+          </div>
+        </div>
       </div>
 
       <div class="topology-header">
-        <div class="topology-tabs">
+        <div v-if="activeNav === 'cloud-system'" class="topology-tabs">
           <button class="tab-btn" :class="{ active: topoTab === 'resource' }" @click="switchTopoTab('resource')">资源拓扑</button>
           <button class="tab-btn" :class="{ active: topoTab === 'network' }" @click="switchTopoTab('network')">网络拓扑</button>
+        </div>
+        <div v-else-if="activeNav === 'app'" class="topology-tabs">
+          <button v-for="t in APP_TABS" :key="t.key" class="tab-btn" :class="{ active: appTab === t.key }" @click="switchAppTab(t.key)">{{ t.label }}</button>
         </div>
         <div class="topology-toolbar">
           <div class="toolbar-left">
@@ -214,13 +227,9 @@
             </div>
           </div>
 
-          <div v-else-if="activeNav !== 'cloud-system'" class="placeholder-content">
-            <p>{{ placeholderText }}</p>
-          </div>
-
-          <div v-else class="network-topology">
-            <div ref="networkContainer" class="network-canvas"></div>
-
+          <div v-if="['cloud-system', 'app', 'service'].includes(activeNav)" class="network-topology">
+            <div v-if="topoTab === 'network'" ref="networkContainer" class="network-canvas"></div>
+            <div v-if="topoTab === 'application'" ref="appContainer" class="network-canvas"></div>
           </div>
         </div>
       </div>
@@ -322,6 +331,7 @@ import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } 
 import { useRoute, useRouter } from 'vue-router'
 import { Graph } from '@antv/g6'
 import TreeNode from './TreeNode.vue'
+import { topoHighlight, clearTopoHighlight } from '../../composables/useEditorState.js'
 
 const navItems = [
   { key: 'cloud-system', label: '云系统拓扑', icon: 'fa-cloud' },
@@ -445,9 +455,26 @@ function statusLabel(s) {
 
 const route = useRoute()
 const router = useRouter()
-const topoTab = computed(() => route.query.tab || 'resource')
+const topoTab = computed(() => activeNav.value === 'app' ? 'application' : (route.query.tab || 'resource'))
 function switchTopoTab(tab) {
   router.push({ query: { ...route.query, tab } })
+}
+
+const APP_TABS = [
+  { key: 'order', label: '订单系统' },
+  { key: 'payment', label: '支付系统' },
+  { key: 'user', label: '用户系统' },
+  { key: 'all', label: '全链路' },
+]
+const APP_ICON_MAP = { internet: '\uf0ac', lb: '\uf0ec', service: '\uf233', database: '\uf1c0', cache: '\uf0a0', mq: '\uf0e7' }
+const APP_FILTER_MAP = {
+  order: new Set(['lb-api', 'prod-order-01', 'prod-order-02', 'redis-cache', 'mysql-master', 'mq-order']),
+  payment: new Set(['lb-api', 'prod-pay-01', 'mq-order']),
+  user: new Set(['lb-api', 'prod-user-01', 'mysql-master', 'mysql-slave']),
+}
+const appTab = computed(() => route.query.appTab || 'order')
+function switchAppTab(tab) {
+  router.push({ query: { ...route.query, tab: 'application', appTab: tab } })
 }
 
 function onNodeSelect(name) {
@@ -466,14 +493,70 @@ function closeNodeDetailPanel() {
 }
 
 const placeholderText = computed(() => {
-  const map = { app: '应用拓扑开发中...', service: '云服务拓扑开发中...' }
-  return map[activeNav.value] || ''
-})
+  })
+
+const topoInfo = ref(null)
 
 const searchText = ref('')
 const groupMode = ref('single')
 const networkContainer = ref(null)
 let networkGraph = null
+const appContainer = ref(null)
+let appGraph = null
+
+watch(() => topoHighlight.active, (val) => {
+  if (val && topoHighlight.nodes?.length) {
+    topoInfo.value = { nodes: [...topoHighlight.nodes] }
+    if (networkGraph) {
+      const gNodes = networkGraph.getNodeData()
+      const anyMatch = gNodes.some(n => topoHighlight.nodes.includes(n.id))
+      if (anyMatch) {
+        gNodes.forEach(n => {
+          if (topoHighlight.nodes.includes(n.id)) {
+            networkGraph.setItemState(n.id, 'ai-highlight', true)
+            networkGraph.setItemState(n.id, 'dimmed', false)
+            networkGraph.focusElement(n.id, { animation: { duration: 800 } })
+          } else {
+            networkGraph.setItemState(n.id, 'dimmed', true)
+            networkGraph.setItemState(n.id, 'ai-highlight', false)
+          }
+        })
+      }
+    }
+    if (appGraph) {
+      const aNodes = appGraph.getNodeData()
+      const anyMatch = aNodes.some(n => topoHighlight.nodes.includes(n.id))
+      if (anyMatch) {
+        aNodes.forEach(n => {
+          if (topoHighlight.nodes.includes(n.id)) {
+            appGraph.setItemState(n.id, 'ai-highlight', true)
+            appGraph.setItemState(n.id, 'dimmed', false)
+            appGraph.focusElement(n.id, { animation: { duration: 800 } })
+          } else {
+            appGraph.setItemState(n.id, 'dimmed', true)
+            appGraph.setItemState(n.id, 'ai-highlight', false)
+          }
+        })
+      }
+    }
+  } else {
+    topoInfo.value = null
+    if (networkGraph) {
+      networkGraph.getNodeData().forEach(n => {
+        networkGraph.setItemState(n.id, 'ai-highlight', false)
+        networkGraph.setItemState(n.id, 'dimmed', false)
+      })
+    }
+    if (appGraph) {
+      appGraph.getNodeData().forEach(n => {
+        appGraph.setItemState(n.id, 'ai-highlight', false)
+        appGraph.setItemState(n.id, 'dimmed', false)
+      })
+    }
+  }
+}, { immediate: true })
+
+watch(topoTab, () => { topoInfo.value = null; clearTopoHighlight() })
 
 const treeData = [
   {
@@ -674,6 +757,21 @@ function initNetworkGraph() {
     data: createNetworkTopoData(),
     node: {
       type: 'rect',
+      state: {
+        'ai-highlight': {
+          fill: '#722ED1',
+          stroke: '#722ED1',
+          lineWidth: 3,
+          shadowColor: 'rgba(114,46,209,0.4)',
+          shadowBlur: 12,
+          iconFill: '#fff',
+        },
+        dimmed: {
+          opacity: 0.25,
+          labelOpacity: 0.25,
+          labelBackgroundOpacity: 0.1,
+        },
+      },
       style: {
         size: (d) => d.style?.size || 40,
         fill: (d) => d.style?.fill === '#f5222d' ? '#f5222d' : '#1890ff',
@@ -760,6 +858,103 @@ function destroyNetworkGraph() {
   if (networkGraph) { networkGraph.destroy(); networkGraph = null }
 }
 
+async function initAppGraph(tab) {
+  if (!appContainer.value) return
+  if (appGraph) appGraph.destroy()
+  let topoData = { nodes: [], edges: [] }
+  try {
+    const res = await fetch('/api/mock/topology')
+    const d = await res.json()
+    topoData = d.data || d
+  } catch {}
+  const filterSet = tab && tab !== 'all' ? APP_FILTER_MAP[tab] : null
+  const filteredNodes = filterSet ? topoData.nodes.filter(n => filterSet.has(n.id)) : topoData.nodes
+  const filteredIds = new Set(filteredNodes.map(n => n.id))
+  const filteredEdges = (filterSet ? topoData.edges.filter(e => filteredIds.has(e.source) && filteredIds.has(e.target)) : topoData.edges)
+  const rect = appContainer.value.getBoundingClientRect()
+  appGraph = new Graph({
+    container: appContainer.value,
+    width: rect.width,
+    height: rect.height,
+    data: {
+      nodes: filteredNodes.map(n => ({
+        id: n.id,
+        data: { label: n.label, status: n.status, type: n.type },
+        iconText: APP_ICON_MAP[n.type] || '\uf233',
+      })),
+      edges: filteredEdges.map(e => ({ source: e.source, target: e.target, data: { label: e.label || '' } })),
+    },
+    node: {
+      type: 'rect',
+      state: {
+        'ai-highlight': { stroke: '#722ed1', lineWidth: 3, shadowBlur: 10, shadowColor: '#d3adf7', labelFontWeight: 'bold' },
+        dimmed: { opacity: 0.25, labelOpacity: 0.25 },
+      },
+      style: {
+        size: 48,
+        fill: (d) => ({ normal: '#1890ff', warning: '#fa8c16', critical: '#f5222d' })[d.data?.status] || '#1890ff',
+        stroke: 'transparent',
+        radius: 8,
+        labelText: (d) => d.data?.label || d.id,
+        labelPlacement: 'bottom',
+        labelOffsetY: 14,
+        labelFontSize: 10,
+        labelFill: '#333',
+        labelFontWeight: '500',
+        labelBackground: true,
+        labelBackgroundFill: '#f9f9fa',
+        labelBackgroundOpacity: 0.9,
+        labelBackgroundRadius: 4,
+        labelPadding: [2, 6],
+        iconFontFamily: 'Font Awesome 6 Free',
+        iconFontWeight: 900,
+        iconText: (d) => d.iconText || '',
+        iconFill: '#fff',
+        iconFontSize: 24,
+        zIndex: 10,
+        ports: [
+          { key: 'top', placement: [0.5, 0], r: 0 },
+          { key: 'right', placement: [1, 0.5], r: 0 },
+          { key: 'bottom', placement: [0.5, 1], r: 0 },
+          { key: 'left', placement: [0, 0.5], r: 0 },
+        ],
+      },
+    },
+    edge: {
+      type: 'cubic-vertical',
+      style: {
+        stroke: '#d9d9d9',
+        lineWidth: 1.5,
+        endArrow: true,
+        labelText: (d) => d.data?.label || '',
+        labelFontSize: 10,
+        labelFill: '#666',
+        labelBackground: true,
+        labelBackgroundFill: '#f9f9fa',
+        labelBackgroundOpacity: 0.9,
+        labelBackgroundRadius: 4,
+        labelPadding: [2, 6],
+      },
+    },
+    layout: { type: 'dagre', rankdir: 'TB', nodesep: 30, ranksep: 80 },
+    behaviors: ['drag-canvas', 'zoom-canvas'],
+    plugins: [
+      {
+        type: 'minimap',
+        size: [180, 140],
+        padding: 10,
+        maskStyle: { fill: 'rgba(24,144,255,0.08)', stroke: '#1890ff', lineWidth: 1.5 },
+      },
+    ],
+  })
+  await appGraph.render()
+  appGraph.fitView({ padding: 40 })
+}
+
+function destroyAppGraph() {
+  if (appGraph) { appGraph.destroy(); appGraph = null }
+}
+
 function initResourceGraph() {
   if (!g6Container.value) return
   if (graph) graph.destroy()
@@ -796,17 +991,24 @@ function initResourceGraph() {
 
 watch(topoTab, (val) => {
   if (val === 'network') nextTick(() => initNetworkGraph())
-  else destroyNetworkGraph()
+  else if (val === 'application') nextTick(() => initAppGraph(appTab.value))
+  else { destroyNetworkGraph(); destroyAppGraph() }
+})
+
+watch(appTab, (val) => {
+  if (topoTab.value === 'application') nextTick(() => initAppGraph(val))
 })
 
 onMounted(() => {
   initResourceGraph()
   if (topoTab.value === 'network') nextTick(() => initNetworkGraph())
+  else if (topoTab.value === 'application') nextTick(() => initAppGraph(appTab.value))
 })
 
 onBeforeUnmount(() => {
   if (graph) { graph.destroy(); graph = null }
   destroyNetworkGraph()
+  destroyAppGraph()
 })
 </script>
 
@@ -929,6 +1131,12 @@ onBeforeUnmount(() => {
   font-weight: 600;
   color: var(--text);
   margin: 0;
+}
+.topo-highlight-bar {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 13px; color: #722ED1;
+  background: #F9F0FF; padding: 4px 12px;
+  border-radius: 6px; border: 1px solid #D3ADF7;
 }
 
 /* ── body (cloud sidebar + content) ── */

@@ -2,7 +2,7 @@
   <div class="home-view">
     <a-row :gutter="[16, 16]">
       <a-col :xs="12" :sm="12" :md="6" v-for="card in kpiCards" :key="card.title">
-        <div class="kpi-card" :class="card.bgClass">
+        <div class="kpi-card" :class="card.bgClass" :style="card.link ? 'cursor:pointer' : ''" @click="navigateCard(card)">
           <div class="card-header">
             <div class="card-icon" :style="{ background: card.iconBg }">
               <i :class="card.icon" :style="{ color: card.iconColor }"></i>
@@ -117,6 +117,7 @@
               </template>
               <template v-else-if="column.key === 'action'">
                 <a-button type="link" size="small" @click="openAlertEventDetail(record)">查看详情</a-button>
+                <a-button type="link" size="small" style="color:#722ED1" @click="analyzeAlert(record)"><i class="fa-solid fa-wand-magic-sparkles"></i> AI分析</a-button>
               </template>
               </template>
             </a-table>
@@ -486,8 +487,10 @@
 
 <script setup>
 import { reactive, ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { Chart } from '@antv/g2'
+import { setTopoHighlight } from '../composables/useEditorState.js'
 
 const detailPanelOpen = ref(false)
 const currentCardTitle = ref('')
@@ -1091,6 +1094,7 @@ const kpiCards = reactive([
     iconBg: '#fff7e6',
     iconColor: '#FA8C16',
     sub: ' ',
+    link: '/alarm/current',
   },
   {
     title: '今日事件',
@@ -1122,12 +1126,26 @@ const alertColumns = [
 ]
 
 const alertEvents = reactive([
-  { id: 1, time: '10:23', ciName: 'ecs-prod-001', ciType: 'ECS', event: 'CPU使用率过高', level: '严重', status: '处理中' },
-  { id: 2, time: '10:15', ciName: 'mysql-01', ciType: 'MySQL', event: '连接数超限', level: '警告', status: '已恢复' },
-  { id: 3, time: '09:58', ciName: 'redis-01', ciType: 'Redis', event: '内存使用率过高', level: '警告', status: '处理中' },
-  { id: 4, time: '09:45', ciName: 'k8s-node-03', ciType: 'K8s', event: '节点离线', level: '严重', status: '已处理' },
-  { id: 5, time: '09:30', ciName: 'slb-prod-01', ciType: 'SLB', event: '后端健康检查失败', level: '警告', status: '已恢复' },
+  { id: 1, time: '10:23', ciName: 'prod-order-01', ciType: 'Service', event: 'CPU使用率过高', level: '严重', status: '处理中' },
+  { id: 2, time: '10:15', ciName: 'mysql-master', ciType: 'MySQL', event: '连接数超限', level: '警告', status: '已恢复' },
+  { id: 3, time: '09:58', ciName: 'redis-cache', ciType: 'Redis', event: '内存使用率过高', level: '警告', status: '处理中' },
+  { id: 4, time: '09:45', ciName: 'prod-order-02', ciType: 'Service', event: '服务响应超时', level: '严重', status: '已处理' },
+  { id: 5, time: '09:30', ciName: 'lb-api', ciType: 'Gateway', event: '后端健康检查失败', level: '警告', status: '已恢复' },
 ])
+
+const router = useRouter()
+
+function navigateCard(card) {
+  if (card.link) router.push(card.link)
+}
+
+function analyzeAlert(record) {
+  setTopoHighlight({ nodes: [record.ciName] })
+  const win = window
+  if (win.__openAIAssistant) {
+    win.__openAIAssistant(`分析告警：${record.event}（${record.level}，${record.ciName}），定位根因并给出排查建议`)
+  }
+}
 
 const alertTrendContainer = ref(null)
 let alertTrendChart = null

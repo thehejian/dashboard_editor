@@ -50,6 +50,10 @@ export default defineConfig({
       '/api/ai': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/api/mock': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },

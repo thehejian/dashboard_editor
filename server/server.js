@@ -569,6 +569,53 @@ app.post('/api/doc-qa', async (req, res) => {
   }
 })
 
+// ==================== Mock 故障模拟 ====================
+
+const MOCK_ALERTS = [
+  { id: 1, time: '14:22:30', node: 'prod-order-01', type: 'service', metric: 'CPU使用率', value: '97%', level: 'critical', summary: '订单服务-01 CPU 使用率 97%，持续 5 分钟', detail: 'prod-order-01 节点 CPU 使用率持续超过 95% 阈值，当前值 97%。该节点承载核心订单服务，建议立即排查。' },
+  { id: 2, time: '14:23:15', node: 'prod-order-01', type: 'service', metric: '内存使用率', value: '94%', level: 'critical', summary: '订单服务-01 内存使用率 94%，接近 OOM', detail: 'prod-order-01 节点内存使用率 94%，JVM 堆内存接近上限，存在 OOM 风险。' },
+  { id: 3, time: '14:24:00', node: 'prod-order-01', type: 'service', metric: '响应时间', value: '3200ms', level: 'critical', summary: '订单服务-01 响应时间 3200ms，远超 500ms 阈值', detail: 'prod-order-01 订单接口 P99 响应时间 3200ms，正常基线为 200ms。已影响上游 API Gateway 超时重试。' },
+  { id: 4, time: '14:25:30', node: 'mysql-master', type: 'database', metric: 'IO等待', value: '65%', level: 'warning', summary: 'MySQL 主库 IO 等待 65%，性能下降', detail: 'mysql-master 节点磁盘 IO 等待 65%，大量慢查询堆积，导致复制延迟增大。' },
+  { id: 5, time: '14:26:00', node: 'redis-cache', type: 'cache', metric: '命中率', value: '72%', level: 'warning', summary: 'Redis 缓存命中率降至 72%', detail: 'redis-cache 节点缓存命中率从基线 95% 降至 72%，大量请求穿透到数据库。' },
+]
+
+const MOCK_TOPO_NODES = [
+  { id: 'internet', label: 'Internet', type: 'internet', status: 'normal' },
+  { id: 'lb-api', label: 'API Gateway', type: 'lb', status: 'normal' },
+  { id: 'prod-order-01', label: '订单服务-01', type: 'service', status: 'critical' },
+  { id: 'prod-order-02', label: '订单服务-02', type: 'service', status: 'normal' },
+  { id: 'prod-user-01', label: '用户服务-01', type: 'service', status: 'normal' },
+  { id: 'prod-pay-01', label: '支付服务-01', type: 'service', status: 'normal' },
+  { id: 'redis-cache', label: 'Redis 缓存', type: 'cache', status: 'warning' },
+  { id: 'mysql-master', label: 'MySQL 主库', type: 'database', status: 'warning' },
+  { id: 'mysql-slave', label: 'MySQL 从库', type: 'database', status: 'normal' },
+  { id: 'mq-order', label: '订单消息队列', type: 'mq', status: 'normal' },
+]
+
+const MOCK_TOPO_EDGES = [
+  { id: 'e-internet-lb', source: 'internet', target: 'lb-api' },
+  { id: 'e-lb-order1', source: 'lb-api', target: 'prod-order-01' },
+  { id: 'e-lb-order2', source: 'lb-api', target: 'prod-order-02' },
+  { id: 'e-lb-user', source: 'lb-api', target: 'prod-user-01' },
+  { id: 'e-lb-pay', source: 'lb-api', target: 'prod-pay-01' },
+  { id: 'e-order1-cache', source: 'prod-order-01', target: 'redis-cache' },
+  { id: 'e-order2-cache', source: 'prod-order-02', target: 'redis-cache' },
+  { id: 'e-order1-db', source: 'prod-order-01', target: 'mysql-master' },
+  { id: 'e-order2-db', source: 'prod-order-02', target: 'mysql-master' },
+  { id: 'e-user-db', source: 'prod-user-01', target: 'mysql-master' },
+  { id: 'e-pay-mq', source: 'prod-pay-01', target: 'mq-order' },
+]
+
+// 获取当前活跃告警列表
+app.get('/api/mock/alerts', (req, res) => {
+  res.json({ success: true, data: MOCK_ALERTS })
+})
+
+// 获取拓扑节点+边（含实时状态）
+app.get('/api/mock/topology', (req, res) => {
+  res.json({ success: true, data: { nodes: MOCK_TOPO_NODES, edges: MOCK_TOPO_EDGES } })
+})
+
 // ==================== AI Chat ====================
 
 const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
@@ -612,7 +659,7 @@ app.post('/api/ai/chat', async (req, res) => {
   const { messages, context } = req.body
   const systemMsg = {
     role: 'system',
-    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。如果建议用户执行某个操作，在末尾用格式 [[action:按钮文字:发送给AI的补充内容]] 标记，例如建议查告警详情用 [[action:查看8条告警详情:列出当前8条触发告警的详细信息]]。最多标记3个action。不要写多余格式。`
+    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。如果建议用户执行某个操作，在末尾用格式 [[action:按钮文字:发送给AI的补充内容]] 标记，例如建议查告警详情用 [[action:查看8条告警详情:列出当前8条触发告警的详细信息]]。当分析结果涉及特定拓扑节点（如 prod-order-01、mysql-master、redis-cache）时，添加一个 [[action:查看XX拓扑:跳转到该节点的拓扑高亮页面]] 按钮，XX替换为节点名。最多标记3个action。不要写多余格式。`
       + (context ? '\n当前页面上下文：' + JSON.stringify(context) : '')
   }
   const fullMessages = [systemMsg, ...(messages || [])]
