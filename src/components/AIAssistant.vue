@@ -46,6 +46,108 @@
         </div>
       </div>
     </div>
+
+    <!-- 节点详情面板 -->
+    <div class="node-detail-overlay" :class="{ open: nodeDetailOpen }" @click.self="nodeDetailOpen = false">
+      <div class="node-detail-panel">
+        <div class="nd-header">
+          <div>
+            <h3>{{ nodeDetailData?.label || '' }}</h3>
+            <span class="nd-id">{{ nodeDetailData?.id || '' }}</span>
+          </div>
+          <button class="close-btn" @click="nodeDetailOpen = false"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="nd-body" v-if="nodeDetailData">
+          <div class="nd-status-bar">
+            <span class="status-tag" :class="'status-' + nodeDetailData.status">{{ statusLabel(nodeDetailData.status) }}</span>
+            <span class="nd-type">{{ nodeDetailData.layer }} / {{ nodeDetailData.type }}</span>
+          </div>
+
+          <div class="nd-section">
+            <div class="nd-section-title"><i class="fa-solid fa-chart-simple"></i> 实时指标</div>
+            <div class="nd-metrics-grid">
+              <div v-for="(val, key) in nodeDetailData.metrics" :key="key" class="nd-metric-card">
+                <div class="metric-val">{{ val }}</div>
+                <div class="metric-label">{{ metricLabel(key) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="nd-section" v-if="nodeDetailData.alerts?.length">
+            <div class="nd-section-title"><i class="fa-solid fa-bell"></i> 关联告警 ({{ nodeDetailData.alerts.length }})</div>
+            <div v-for="a in nodeDetailData.alerts" :key="a.id" class="nd-alert-item">
+              <span class="alert-time">{{ a.time }}</span>
+              <span class="alert-metric">{{ a.metric }}</span>
+              <span class="alert-value">{{ a.value }}</span>
+              <span class="status-tag-sm" :class="'status-' + a.level">{{ a.level }}</span>
+            </div>
+          </div>
+
+          <div class="nd-section">
+            <div class="nd-section-title"><i class="fa-solid fa-link"></i> 依赖关系</div>
+            <div class="nd-deps">
+              <div v-if="nodeDetailData.dependencies?.upstream?.length">
+                <span class="dep-label">上游</span>
+                <span v-for="d in nodeDetailData.dependencies.upstream" :key="d" class="dep-node">{{ d }} →</span>
+              </div>
+              <div class="dep-center">{{ nodeDetailData.id }}</div>
+              <div v-if="nodeDetailData.dependencies?.downstream?.length">
+                <span class="dep-label">下游</span>
+                <span v-for="d in nodeDetailData.dependencies.downstream" :key="d" class="dep-node">→ {{ d }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nd-section">
+            <div class="nd-section-title"><i class="fa-solid fa-wrench"></i> 修复操作</div>
+            <div class="nd-fix-actions">
+              <button v-for="fa in getFixActions(nodeDetailData)" :key="fa.action" class="fix-action-btn" @click="openFixConfirm(fa.action, nodeDetailData.id)">
+                <i :class="fa.icon"></i> {{ fa.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 修复确认弹窗 -->
+    <div class="fix-confirm-overlay" v-if="fixConfirmOpen" @click.self="fixConfirmOpen = false">
+      <div class="fix-confirm-dialog">
+        <div class="fix-confirm-header">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>确认执行修复</span>
+        </div>
+        <div class="fix-confirm-body" v-if="!fixLoading && !verifyResult">
+          <p>确认对 <strong>{{ fixNodeId }}</strong> 执行 <strong>{{ fixActionLabel }}</strong> 操作？</p>
+          <p class="fix-warning">此操作将模拟重启/调整服务，生产环境请谨慎操作。</p>
+        </div>
+        <div class="fix-confirm-body fix-progress" v-else-if="fixLoading && !verifyResult">
+          <div class="fix-spinner"></div>
+          <p>{{ fixProgressText }}</p>
+        </div>
+        <div class="fix-confirm-body fix-verify" v-else-if="verifyResult">
+          <div class="verify-icon" :class="verifyResult.status === 'normal' ? 'success' : 'warning'">
+            <i :class="verifyResult.status === 'normal' ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation'"></i>
+          </div>
+          <p class="verify-title">{{ verifyResult.status === 'normal' ? '修复验证通过' : '验证完成，状态未完全恢复' }}</p>
+          <div class="verify-table" v-if="verifyResult.before">
+            <div class="verify-row verify-header">
+              <span>指标</span><span>修复前</span><span>修复后</span>
+            </div>
+            <div v-for="(val, key) in verifyResult.metrics" :key="key" class="verify-row">
+              <span>{{ metricLabel(key) }}</span>
+              <span class="val-before">{{ verifyResult.before[key] || '-' }}</span>
+              <span class="val-after">{{ val }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="fix-confirm-footer">
+          <button class="btn-cancel" @click="fixConfirmOpen = false">{{ verifyResult ? '关闭' : '取消' }}</button>
+          <button v-if="!fixLoading && !verifyResult" class="btn-confirm" @click="executeFix">确认执行</button>
+          <button v-if="verifyResult" class="btn-confirm" @click="nodeDetailOpen = false; fixConfirmOpen = false">完成</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -53,7 +155,7 @@
 import { ref, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
-import { setTopoHighlight, clearTopoHighlight } from '../composables/useEditorState.js'
+import { setTopoHighlight, clearTopoHighlight, refreshTopology } from '../composables/useEditorState.js'
 
 function renderMarkdown(text) {
   if (!text) return ''
@@ -67,6 +169,37 @@ const loading = ref(false)
 const inputText = ref('')
 const messages = ref([])
 const bodyRef = ref(null)
+
+const nodeDetailOpen = ref(false)
+const nodeDetailData = ref(null)
+const fixConfirmOpen = ref(false)
+const fixAction = ref('')
+const fixNodeId = ref('')
+const fixLoading = ref(false)
+const fixProgressText = ref('')
+const verifyResult = ref(null)
+
+function statusLabel(s) {
+  return { critical: '严重', warning: '警告', normal: '正常' }[s] || s
+}
+function metricLabel(k) {
+  return { cpu: 'CPU', memory: '内存', latency: '响应时间', hitRate: '命中率', bandwidth: '带宽', blocked: '拦截量', rules: '规则数', qps: 'QPS', connections: '连接数', errorRate: '错误率' }[k] || k
+}
+function getFixActions(node) {
+  if (node.type === 'service') return [
+    { action: 'restart', label: '重启服务', icon: 'fa-solid fa-rotate-right' },
+    { action: 'scale', label: '扩容实例', icon: 'fa-solid fa-expand' },
+  ]
+  if (node.type === 'cache') return [
+    { action: 'flush-cache', label: '清除缓存', icon: 'fa-solid fa-broom' },
+  ]
+  if (node.type === 'gateway') return [
+    { action: 'ratelimit', label: '限流降级', icon: 'fa-solid fa-gauge-high' },
+    { action: 'restart', label: '重启网关', icon: 'fa-solid fa-rotate-right' },
+  ]
+  return [{ action: 'restart', label: '重启服务', icon: 'fa-solid fa-rotate-right' }]
+}
+const fixActionLabel = ref('')
 
 function scrollToBottom() {
   nextTick(() => {
@@ -140,6 +273,11 @@ async function sendMessage() {
         if (!actions.some(a => a.label.includes(n))) {
           actions.push({ label: `查看${n}拓扑`, prompt: `跳转到${n}的拓扑高亮页面` })
         }
+      })
+      actions.sort((a, b) => {
+        const aScore = /查看.+?详情/.test(a.label) ? 0 : 1
+        const bScore = /查看.+?详情/.test(b.label) ? 0 : 1
+        return aScore - bScore
       })
       messages.value.push({ role: 'assistant', content: data.reply || '请选择以下操作：', actions })
       if (matched.length) {
@@ -222,8 +360,74 @@ function runAction(act) {
     }
     return
   }
+
+  const detailMatch = (act.label || '').match(/查看(.+?)详情/)
+  if (detailMatch) {
+    openNodeDetail(detailMatch[1])
+    return
+  }
+
   inputText.value = act.prompt || act.label
   sendMessage()
+}
+
+async function openNodeDetail(nodeId) {
+  try {
+    const res = await fetch(`/api/mock/node/${nodeId}/metrics`)
+    const data = await res.json()
+    if (data.success) {
+      nodeDetailData.value = data.data
+      nodeDetailOpen.value = true
+    }
+  } catch {}
+}
+
+function openFixConfirm(action, nodeId) {
+  fixAction.value = action
+  fixNodeId.value = nodeId
+  fixLoading.value = false
+  verifyResult.value = null
+  fixProgressText.value = ''
+  const labels = { restart: '重启服务', scale: '扩容实例', ratelimit: '限流降级', 'flush-cache': '清除缓存' }
+  fixActionLabel.value = labels[action] || action
+  fixConfirmOpen.value = true
+}
+
+async function executeFix() {
+  fixLoading.value = true
+  fixProgressText.value = '正在执行修复操作...'
+  try {
+    const res = await fetch(`/api/mock/fix/${fixAction.value}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodeId: fixNodeId.value })
+    })
+    const data = await res.json()
+    if (data.success) {
+      fixProgressText.value = '修复完成，正在验证恢复...'
+      await new Promise(r => setTimeout(r, 800))
+      const vRes = await fetch(`/api/mock/verify/${fixNodeId.value}`)
+      const vData = await vRes.json()
+      if (vData.success) {
+        verifyResult.value = vData.data
+        nodeDetailData.value = { ...nodeDetailData.value, status: vData.data.status, metrics: vData.data.metrics }
+        const before = vData.data.before || {}
+        const after = vData.data.metrics || {}
+        const metricsText = Object.keys(after).map(k => `${metricLabel(k)} ${before[k] || '-'}→${after[k]}`).join(', ')
+        messages.value.push({
+          role: 'assistant',
+          content: `✅ **修复完成**\n\n节点 ${fixNodeId.value} 已执行「${fixActionLabel.value}」，状态 ${vData.data.status}。\n\n指标恢复：${metricsText}`,
+          actions: [{
+            label: '一键整理故障处理经验',
+            prompt: `整理故障处理经验文档。故障节点：${fixNodeId.value}，告警指标：${metricsText}，执行操作：${fixActionLabel.value}，结果：成功恢复。请生成结构化的故障处理报告，包含：故障概述、影响范围、根因分析、处理步骤、恢复结果、经验总结、预防建议。`
+          }]
+        })
+        scrollToBottom()
+        refreshTopology()
+      }
+    }
+  } catch {}
+  fixLoading.value = false
 }
 
 function openPanel() {
@@ -383,4 +587,124 @@ function openPanel() {
   .ai-fab { bottom: 70px; right: 16px; width: 44px; height: 44px; font-size: 18px; }
   .ai-panel-content { width: 100%; right: -100%; }
 }
+
+/* 节点详情面板 */
+.node-detail-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.3); opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.node-detail-overlay.open { opacity: 1; pointer-events: auto; }
+.node-detail-panel {
+  position: absolute; top: 0; right: -480px; width: 460px; height: 100%;
+  background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  transition: right 0.3s var(--ease, cubic-bezier(0.16,1,0.3,1));
+  display: flex; flex-direction: column;
+}
+.node-detail-overlay.open .node-detail-panel { right: 0; }
+.nd-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border, #E5E5EA);
+}
+.nd-header h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.nd-id { font-size: 12px; color: var(--text-ter, #9CA3AF); margin-top: 2px; display: block; }
+.nd-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.nd-status-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.nd-type { font-size: 13px; color: var(--text-sec, #6B7280); }
+.status-tag {
+  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px;
+  font-size: 12px; font-weight: 500;
+}
+.status-critical { background: #FEE2E2; color: #DC2626; }
+.status-warning { background: #FEF3C7; color: #D97706; }
+.status-normal { background: #D1FAE5; color: #059669; }
+.status-tag-sm {
+  display: inline-flex; padding: 1px 6px; border-radius: 4px;
+  font-size: 11px; font-weight: 500;
+}
+.nd-section { margin-bottom: 20px; }
+.nd-section-title {
+  font-size: 13px; font-weight: 600; color: var(--text, #182431);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.nd-section-title i { color: var(--brand, #007DFF); font-size: 12px; }
+.nd-metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.nd-metric-card {
+  background: var(--bg-sec, #F2F2F7); border-radius: 8px; padding: 10px 12px; text-align: center;
+}
+.metric-val { font-size: 16px; font-weight: 700; color: var(--text, #182431); }
+.metric-label { font-size: 11px; color: var(--text-ter, #9CA3AF); margin-top: 2px; }
+.nd-alert-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid var(--border, #E5E5EA); font-size: 12px;
+}
+.nd-alert-item:last-child { border-bottom: none; }
+.alert-time { color: var(--text-ter, #9CA3AF); min-width: 55px; }
+.alert-metric { font-weight: 500; }
+.alert-value { color: var(--text-sec, #6B7280); }
+.nd-deps { font-size: 12px; }
+.nd-deps > div { margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.dep-label { color: var(--text-ter, #9CA3AF); min-width: 30px; }
+.dep-node {
+  background: var(--bg-sec, #F2F2F7); padding: 2px 8px; border-radius: 4px;
+  font-family: 'SF Mono', Monaco, monospace; font-size: 11px;
+}
+.dep-center { font-weight: 600; color: var(--brand, #007DFF); }
+.nd-fix-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.fix-action-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid var(--border, #E5E5EA);
+  border-radius: 8px; background: #fff; color: var(--text, #182431);
+  cursor: pointer; font-size: 13px; transition: all 0.15s;
+}
+.fix-action-btn:hover { border-color: var(--brand, #007DFF); color: var(--brand, #007DFF); background: var(--brand-subtle, #EBF4FF); }
+
+/* 修复确认弹窗 */
+.fix-confirm-overlay {
+  position: fixed; inset: 0; z-index: 10001;
+  background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
+}
+.fix-confirm-dialog {
+  background: #fff; border-radius: 12px; width: 400px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.fix-confirm-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border, #E5E5EA);
+  font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px;
+}
+.fix-confirm-header i { color: #D97706; }
+.fix-confirm-body { padding: 20px; min-height: 80px; }
+.fix-confirm-body p { margin: 0 0 8px; font-size: 14px; line-height: 1.6; }
+.fix-warning { color: var(--text-ter, #9CA3AF); font-size: 12px !important; }
+.fix-progress { text-align: center; }
+.fix-spinner {
+  width: 36px; height: 36px; border: 3px solid var(--border, #E5E5EA);
+  border-top-color: var(--brand, #007DFF); border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.fix-verify { text-align: center; }
+.verify-icon { font-size: 32px; margin-bottom: 8px; }
+.verify-icon.success { color: #059669; }
+.verify-icon.warning { color: #D97706; }
+.verify-title { font-weight: 600; font-size: 15px; margin-bottom: 12px; }
+.verify-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+.verify-row { display: flex; border-bottom: 1px solid var(--border, #E5E5EA); }
+.verify-row > span { flex: 1; padding: 6px 8px; }
+.verify-header { font-weight: 600; background: var(--bg-sec, #F2F2F7); }
+.val-before { color: #DC2626; }
+.val-after { color: #059669; font-weight: 600; }
+.fix-confirm-footer {
+  padding: 12px 20px; border-top: 1px solid var(--border, #E5E5EA);
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+.btn-cancel {
+  padding: 8px 16px; border: 1px solid var(--border, #E5E5EA);
+  border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px;
+}
+.btn-confirm {
+  padding: 8px 16px; border: none; border-radius: 8px;
+  background: var(--brand, #007DFF); color: #fff; cursor: pointer; font-size: 13px;
+}
+.btn-confirm:hover { background: var(--brand-hover, #0066D6); }
 </style>

@@ -331,7 +331,7 @@ import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } 
 import { useRoute, useRouter } from 'vue-router'
 import { Graph } from '@antv/g6'
 import TreeNode from './TreeNode.vue'
-import { topoHighlight, clearTopoHighlight } from '../../composables/useEditorState.js'
+import { topoHighlight, clearTopoHighlight, topoRefreshTrigger } from '../../composables/useEditorState.js'
 
 const navItems = [
   { key: 'cloud-system', label: '云系统拓扑', icon: 'fa-cloud' },
@@ -463,6 +463,13 @@ function switchTopoTab(tab) {
 watch(() => route.query.tab, (tab) => {
   if (tab === 'application') activeNav.value = 'app'
 }, { immediate: true })
+
+watch(topoRefreshTrigger, () => {
+  if (activeNav.value === 'app') {
+    destroyAppGraph()
+    nextTick(() => initAppGraph(appTab.value))
+  }
+})
 
 const APP_TABS = [
   { key: 'all', label: '全局视图' },

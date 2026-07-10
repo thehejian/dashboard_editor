@@ -637,6 +637,79 @@ app.get('/api/mock/topology', (req, res) => {
   res.json({ success: true, data: { nodes: MOCK_TOPO_NODES, edges: MOCK_TOPO_EDGES } })
 })
 
+// 获取节点详细指标
+app.get('/api/mock/node/:id/metrics', (req, res) => {
+  const node = MOCK_TOPO_NODES.find(n => n.id === req.params.id)
+  if (!node) return res.status(404).json({ success: false, message: '节点不存在' })
+
+  const alerts = MOCK_ALERTS.filter(a => a.node === node.id)
+  const incoming = MOCK_TOPO_EDGES.filter(e => e.target === node.id).map(e => e.source)
+  const outgoing = MOCK_TOPO_EDGES.filter(e => e.source === node.id).map(e => e.target)
+
+  res.json({
+    success: true,
+    data: {
+      ...node,
+      alerts,
+      dependencies: { upstream: incoming, downstream: outgoing }
+    }
+  })
+})
+
+// 执行修复动作
+const FIX_HISTORY = []
+app.post('/api/mock/fix/:action', (req, res) => {
+  const { action } = req.params
+  const { nodeId } = req.body
+  const node = MOCK_TOPO_NODES.find(n => n.id === nodeId)
+  if (!node) return res.status(404).json({ success: false, message: '节点不存在' })
+
+  const before = { ...node.metrics, status: node.status }
+
+  const delays = { restart: 2500, scale: 2000, ratelimit: 1500, 'flush-cache': 1200 }
+  setTimeout(() => {
+    if (action === 'restart') {
+      node.metrics = { cpu: '45%', memory: '62%', latency: '85ms' }
+      node.status = 'normal'
+    } else if (action === 'scale') {
+      node.metrics = { cpu: '28%', memory: '45%', latency: '60ms' }
+      node.status = 'normal'
+    } else if (action === 'ratelimit') {
+      node.metrics = { ...node.metrics, latency: '120ms' }
+      if (node.type === 'gateway') node.status = 'normal'
+    } else if (action === 'flush-cache') {
+      node.metrics = { hitRate: '96%', memory: '65%', connections: '3.2k' }
+      node.status = 'normal'
+    }
+
+    const record = { nodeId, action, before, after: { ...node.metrics, status: node.status }, timestamp: new Date().toISOString() }
+    FIX_HISTORY.push(record)
+
+    res.json({ success: true, data: record })
+  }, delays[action] || 2000)
+})
+
+// 验证修复结果
+app.get('/api/mock/verify/:nodeId', (req, res) => {
+  const node = MOCK_TOPO_NODES.find(n => n.id === req.params.nodeId)
+  if (!node) return res.status(404).json({ success: false, message: '节点不存在' })
+
+  const lastFix = [...FIX_HISTORY].reverse().find(h => h.nodeId === req.params.nodeId)
+
+  setTimeout(() => {
+    res.json({
+      success: true,
+      data: {
+        nodeId: node.id,
+        status: node.status,
+        metrics: { ...node.metrics },
+        before: lastFix?.before || null,
+        verifiedAt: new Date().toISOString()
+      }
+    })
+  }, 1500)
+})
+
 // ==================== AI Chat ====================
 
 const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
@@ -680,7 +753,7 @@ app.post('/api/ai/chat', async (req, res) => {
   const { messages, context } = req.body
   const systemMsg = {
     role: 'system',
-    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。如果建议用户执行某个操作，在末尾用格式 [[action:按钮文字:发送给AI的补充内容]] 标记，例如建议查告警详情用 [[action:查看8条告警详情:列出当前8条触发告警的详细信息]]。当分析结果涉及特定拓扑节点（如 prod-order-01、redis-cache、mysql-master、prod-user-01、prod-pay-01、lb-api、cdn、waf、slb、nacos、k8s-master）时，添加一个 [[action:查看XX拓扑:跳转到该节点的拓扑高亮页面]] 按钮，XX替换为节点名。最多标记3个action。不要写多余格式。`
+    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。如果建议用户执行某个操作，在末尾用格式 [[action:按钮文字:发送给AI的补充内容]] 标记，例如建议查告警详情用 [[action:查看8条告警详情:列出当前8条触发告警的详细信息]]。当分析结果涉及特定拓扑节点（如 prod-order-01、redis-cache、mysql-master、prod-user-01、prod-pay-01、lb-api、cdn、waf、slb、nacos、k8s-master）时，添加一个 [[action:查看XX拓扑:跳转到该节点的拓扑高亮页面]] 按钮，XX替换为节点名。对于根因节点，额外添加一个 [[action:查看XX详情:查看该节点的详细指标和修复建议]] 按钮。最多标记4个action。不要写多余格式。当用户请求整理故障处理经验时，生成结构化报告，包含：故障概述、影响范围、根因分析、处理步骤、恢复结果、经验总结、预防建议。`
       + (context ? '\n当前页面上下文：' + JSON.stringify(context) : '')
   }
   const fullMessages = [systemMsg, ...(messages || [])]

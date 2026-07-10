@@ -1,4 +1,4 @@
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
 import { fetchChartData } from './usePrometheus'
 
 const METRICS_NEW = ['CPU使用率','内存使用率','网络流入速率','网络流出速率','云硬盘使用率','云硬盘I/O写入']
@@ -616,6 +616,11 @@ export function clearTopoHighlight() {
   topoHighlight.active = false
 }
 
+export const topoRefreshTrigger = ref(0)
+export function refreshTopology() {
+  topoRefreshTrigger.value++
+}
+
 export function useEditorState() {
   return {
     CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS, REFRESH_OPTIONS,
@@ -632,5 +637,6 @@ export function useEditorState() {
     refreshChart, refreshAllCharts,
     switchDashboard, switchDashboardBySlug, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts, createNewDashboard,
     setRefreshRate, clearRefresh,
+    topoRefreshTrigger, refreshTopology,
   }
 }
