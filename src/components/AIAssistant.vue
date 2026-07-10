@@ -74,7 +74,16 @@ function scrollToBottom() {
   })
 }
 
-const topoNodes = ['prod-order-01', 'prod-order-02', 'prod-pay-01', 'prod-user-01', 'mysql-master', 'mysql-slave', 'redis-cache', 'mq-order', 'lb-api', 'internet']
+const topoNodes = [
+  'cdn', 'waf', 'slb', 'lb-api', 'nacos',
+  'prod-order-01', 'prod-order-02', 'prod-order-03',
+  'prod-user-01', 'prod-user-02',
+  'prod-pay-01', 'prod-pay-02',
+  'prod-inventory-01', 'prod-product-01',
+  'redis-cache', 'mq-order', 'es-cluster',
+  'mysql-master', 'mysql-slave', 'mongodb',
+  'k8s-master', 'k8s-node-1', 'k8s-node-2', 'k8s-node-3',
+]
 
 if (typeof window !== 'undefined') {
   window.__openAIAssistant = async (text) => {

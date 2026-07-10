@@ -577,33 +577,99 @@ const MOCK_ALERTS = [
   { id: 3, time: '14:24:00', node: 'prod-order-01', type: 'service', metric: '响应时间', value: '3200ms', level: 'critical', summary: '订单服务-01 响应时间 3200ms，远超 500ms 阈值', detail: 'prod-order-01 订单接口 P99 响应时间 3200ms，正常基线为 200ms。已影响上游 API Gateway 超时重试。' },
   { id: 4, time: '14:25:30', node: 'mysql-master', type: 'database', metric: 'IO等待', value: '65%', level: 'warning', summary: 'MySQL 主库 IO 等待 65%，性能下降', detail: 'mysql-master 节点磁盘 IO 等待 65%，大量慢查询堆积，导致复制延迟增大。' },
   { id: 5, time: '14:26:00', node: 'redis-cache', type: 'cache', metric: '命中率', value: '72%', level: 'warning', summary: 'Redis 缓存命中率降至 72%', detail: 'redis-cache 节点缓存命中率从基线 95% 降至 72%，大量请求穿透到数据库。' },
+  { id: 6, time: '14:27:10', node: 'prod-inventory-01', type: 'service', metric: 'CPU使用率', value: '72%', level: 'warning', summary: '库存服务-01 CPU 使用率 72%，接近阈值', detail: 'prod-inventory-01 节点 CPU 使用率持续上升，可能受订单服务调用影响。' },
+  { id: 7, time: '14:28:00', node: 'k8s-node-2', type: 'infra', metric: '内存使用率', value: '85%', level: 'warning', summary: 'K8s Node-2 内存使用率 85%', detail: 'k8s-node-2 节点内存使用率 85%，Pod 调度可能受影响。' },
+  { id: 8, time: '14:29:15', node: 'lb-api', type: 'gateway', metric: '错误率', value: '2.3%', level: 'warning', summary: 'API Gateway 错误率 2.3%，上升明显', detail: 'lb-api 网关错误率从 0.1% 上升至 2.3%，主要为 504 超时错误。' },
 ]
 
 const MOCK_TOPO_NODES = [
-  { id: 'internet', label: 'Internet', type: 'internet', status: 'normal' },
-  { id: 'lb-api', label: 'API Gateway', type: 'lb', status: 'normal' },
-  { id: 'prod-order-01', label: '订单服务-01', type: 'service', status: 'critical' },
-  { id: 'prod-order-02', label: '订单服务-02', type: 'service', status: 'normal' },
-  { id: 'prod-user-01', label: '用户服务-01', type: 'service', status: 'normal' },
-  { id: 'prod-pay-01', label: '支付服务-01', type: 'service', status: 'normal' },
-  { id: 'redis-cache', label: 'Redis 缓存', type: 'cache', status: 'warning' },
-  { id: 'mysql-master', label: 'MySQL 主库', type: 'database', status: 'warning' },
-  { id: 'mysql-slave', label: 'MySQL 从库', type: 'database', status: 'normal' },
-  { id: 'mq-order', label: '订单消息队列', type: 'mq', status: 'normal' },
+  // 接入层
+  { id: 'cdn', label: 'CDN', type: 'access', status: 'normal', layer: 'access', metrics: { bandwidth: '2.4Gbps', hitRate: '94%' } },
+  { id: 'waf', label: 'WAF', type: 'security', status: 'normal', layer: 'access', metrics: { blocked: '1.2k/min', rules: 847 } },
+  { id: 'slb', label: 'SLB', type: 'lb', status: 'normal', layer: 'access', metrics: { qps: '45k', connections: '12k' } },
+  // 网关层
+  { id: 'lb-api', label: 'API Gateway', type: 'gateway', status: 'normal', layer: 'gateway', metrics: { latency: '12ms', errorRate: '0.1%' } },
+  { id: 'nacos', label: 'Nacos', type: 'registry', status: 'normal', layer: 'gateway', metrics: { services: 24, instances: 68 } },
+  // 服务层（保留旧节点 ID 保持兼容）
+  { id: 'prod-order-01', label: '订单服务-01', type: 'service', status: 'critical', layer: 'service', metrics: { cpu: '97%', memory: '94%', latency: '3200ms' } },
+  { id: 'prod-order-02', label: '订单服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '45%', memory: '62%', latency: '85ms' } },
+  { id: 'prod-order-03', label: '订单服务-03', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '42%', memory: '58%', latency: '80ms' } },
+  { id: 'prod-user-01', label: '用户服务-01', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '38%', memory: '55%', latency: '45ms' } },
+  { id: 'prod-user-02', label: '用户服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '35%', memory: '52%', latency: '42ms' } },
+  { id: 'prod-pay-01', label: '支付服务-01', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '32%', memory: '48%', latency: '120ms' } },
+  { id: 'prod-pay-02', label: '支付服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '30%', memory: '45%', latency: '115ms' } },
+  { id: 'prod-inventory-01', label: '库存服务-01', type: 'service', status: 'warning', layer: 'service', metrics: { cpu: '72%', memory: '68%', latency: '180ms' } },
+  { id: 'prod-product-01', label: '商品服务-01', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '28%', memory: '42%', latency: '35ms' } },
+  // 中间件层
+  { id: 'redis-cache', label: 'Redis Cluster', type: 'cache', status: 'warning', layer: 'middleware', metrics: { hitRate: '72%', memory: '78%', connections: '4.5k' } },
+  { id: 'mq-order', label: 'Kafka Cluster', type: 'mq', status: 'normal', layer: 'middleware', metrics: { throughput: '120MB/s', lag: '2.3k' } },
+  { id: 'es-cluster', label: 'ES Cluster', type: 'search', status: 'normal', layer: 'middleware', metrics: { indexRate: '5k/s', queryRate: '8k/s' } },
+  // 数据层
+  { id: 'mysql-master', label: 'MySQL Master', type: 'database', status: 'warning', layer: 'data', metrics: { qps: '8.5k', replication: '1.2s', ioWait: '65%' } },
+  { id: 'mysql-slave', label: 'MySQL Slave', type: 'database', status: 'normal', layer: 'data', metrics: { qps: '6.2k', replication: '1.2s', lag: '0ms' } },
+  { id: 'mongodb', label: 'MongoDB', type: 'database', status: 'normal', layer: 'data', metrics: { qps: '3.2k', connections: '1.2k' } },
+  // 基础设施层
+  { id: 'k8s-master', label: 'K8s Master', type: 'infra', status: 'normal', layer: 'infra', metrics: { pods: 68, nodes: 12 } },
+  { id: 'k8s-node-1', label: 'K8s Node-1', type: 'infra', status: 'normal', layer: 'infra', metrics: { cpu: '65%', memory: '72%', pods: 18 } },
+  { id: 'k8s-node-2', label: 'K8s Node-2', type: 'infra', status: 'warning', layer: 'infra', metrics: { cpu: '78%', memory: '85%', pods: 22 } },
+  { id: 'k8s-node-3', label: 'K8s Node-3', type: 'infra', status: 'normal', layer: 'infra', metrics: { cpu: '55%', memory: '60%', pods: 15 } },
 ]
 
 const MOCK_TOPO_EDGES = [
-  { id: 'e-internet-lb', source: 'internet', target: 'lb-api' },
-  { id: 'e-lb-order1', source: 'lb-api', target: 'prod-order-01' },
-  { id: 'e-lb-order2', source: 'lb-api', target: 'prod-order-02' },
-  { id: 'e-lb-user', source: 'lb-api', target: 'prod-user-01' },
-  { id: 'e-lb-pay', source: 'lb-api', target: 'prod-pay-01' },
-  { id: 'e-order1-cache', source: 'prod-order-01', target: 'redis-cache' },
-  { id: 'e-order2-cache', source: 'prod-order-02', target: 'redis-cache' },
-  { id: 'e-order1-db', source: 'prod-order-01', target: 'mysql-master' },
-  { id: 'e-order2-db', source: 'prod-order-02', target: 'mysql-master' },
-  { id: 'e-user-db', source: 'prod-user-01', target: 'mysql-master' },
-  { id: 'e-pay-mq', source: 'prod-pay-01', target: 'mq-order' },
+  // 接入层链路
+  { id: 'e-cdn-waf', source: 'cdn', target: 'waf' },
+  { id: 'e-waf-slb', source: 'waf', target: 'slb' },
+  { id: 'e-slb-gw', source: 'slb', target: 'lb-api' },
+  // 网关→服务
+  { id: 'e-gw-order1', source: 'lb-api', target: 'prod-order-01' },
+  { id: 'e-gw-order2', source: 'lb-api', target: 'prod-order-02' },
+  { id: 'e-gw-order3', source: 'lb-api', target: 'prod-order-03' },
+  { id: 'e-gw-user1', source: 'lb-api', target: 'prod-user-01' },
+  { id: 'e-gw-user2', source: 'lb-api', target: 'prod-user-02' },
+  { id: 'e-gw-pay1', source: 'lb-api', target: 'prod-pay-01' },
+  { id: 'e-gw-pay2', source: 'lb-api', target: 'prod-pay-02' },
+  { id: 'e-gw-inventory', source: 'lb-api', target: 'prod-inventory-01' },
+  { id: 'e-gw-product', source: 'lb-api', target: 'prod-product-01' },
+  // 服务间调用
+  { id: 'e-order1-user', source: 'prod-order-01', target: 'prod-user-01' },
+  { id: 'e-order1-pay', source: 'prod-order-01', target: 'prod-pay-01' },
+  { id: 'e-order1-inventory', source: 'prod-order-01', target: 'prod-inventory-01' },
+  { id: 'e-order2-user', source: 'prod-order-02', target: 'prod-user-01' },
+  { id: 'e-order2-pay', source: 'prod-order-02', target: 'prod-pay-01' },
+  { id: 'e-order3-user', source: 'prod-order-03', target: 'prod-user-02' },
+  { id: 'e-order3-pay', source: 'prod-order-03', target: 'prod-pay-02' },
+  { id: 'e-pay1-user', source: 'prod-pay-01', target: 'prod-user-01' },
+  { id: 'e-pay2-user', source: 'prod-pay-02', target: 'prod-user-02' },
+  // 服务→中间件
+  { id: 'e-order1-redis', source: 'prod-order-01', target: 'redis-cache' },
+  { id: 'e-order2-redis', source: 'prod-order-02', target: 'redis-cache' },
+  { id: 'e-order3-redis', source: 'prod-order-03', target: 'redis-cache' },
+  { id: 'e-user1-redis', source: 'prod-user-01', target: 'redis-cache' },
+  { id: 'e-user2-redis', source: 'prod-user-02', target: 'redis-cache' },
+  { id: 'e-pay1-redis', source: 'prod-pay-01', target: 'redis-cache' },
+  { id: 'e-pay2-redis', source: 'prod-pay-02', target: 'redis-cache' },
+  { id: 'e-order1-kafka', source: 'prod-order-01', target: 'mq-order' },
+  { id: 'e-order2-kafka', source: 'prod-order-02', target: 'mq-order' },
+  { id: 'e-order3-kafka', source: 'prod-order-03', target: 'mq-order' },
+  { id: 'e-pay1-kafka', source: 'prod-pay-01', target: 'mq-order' },
+  { id: 'e-pay2-kafka', source: 'prod-pay-02', target: 'mq-order' },
+  { id: 'e-order1-es', source: 'prod-order-01', target: 'es-cluster' },
+  { id: 'e-product-es', source: 'prod-product-01', target: 'es-cluster' },
+  // 服务→数据层
+  { id: 'e-order1-mysql', source: 'prod-order-01', target: 'mysql-master' },
+  { id: 'e-order2-mysql', source: 'prod-order-02', target: 'mysql-master' },
+  { id: 'e-order3-mysql', source: 'prod-order-03', target: 'mysql-master' },
+  { id: 'e-user1-mysql', source: 'prod-user-01', target: 'mysql-master' },
+  { id: 'e-user2-mysql', source: 'prod-user-02', target: 'mysql-master' },
+  { id: 'e-pay1-mysql', source: 'prod-pay-01', target: 'mysql-master' },
+  { id: 'e-pay2-mysql', source: 'prod-pay-02', target: 'mysql-master' },
+  { id: 'e-inventory-mysql', source: 'prod-inventory-01', target: 'mysql-master' },
+  { id: 'e-product-mongo', source: 'prod-product-01', target: 'mongodb' },
+  { id: 'e-mysql-repl', source: 'mysql-master', target: 'mysql-slave' },
+  // 基础设施
+  { id: 'e-k8s-node1', source: 'k8s-master', target: 'k8s-node-1' },
+  { id: 'e-k8s-node2', source: 'k8s-master', target: 'k8s-node-2' },
+  { id: 'e-k8s-node3', source: 'k8s-master', target: 'k8s-node-3' },
 ]
 
 // 获取当前活跃告警列表
@@ -659,7 +725,7 @@ app.post('/api/ai/chat', async (req, res) => {
   const { messages, context } = req.body
   const systemMsg = {
     role: 'system',
-    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。如果建议用户执行某个操作，在末尾用格式 [[action:按钮文字:发送给AI的补充内容]] 标记，例如建议查告警详情用 [[action:查看8条告警详情:列出当前8条触发告警的详细信息]]。当分析结果涉及特定拓扑节点（如 prod-order-01、mysql-master、redis-cache）时，添加一个 [[action:查看XX拓扑:跳转到该节点的拓扑高亮页面]] 按钮，XX替换为节点名。最多标记3个action。不要写多余格式。`
+    content: `你是一个专业的运维 AI 助手，帮助用户分析监控数据、故障排查、生成查询语句。回答简洁专业，用中文回复。如果建议用户执行某个操作，在末尾用格式 [[action:按钮文字:发送给AI的补充内容]] 标记，例如建议查告警详情用 [[action:查看8条告警详情:列出当前8条触发告警的详细信息]]。当分析结果涉及特定拓扑节点（如 prod-order-01、redis-cache、mysql-master、prod-user-01、prod-pay-01、lb-api、cdn、waf、slb、nacos、k8s-master）时，添加一个 [[action:查看XX拓扑:跳转到该节点的拓扑高亮页面]] 按钮，XX替换为节点名。最多标记3个action。不要写多余格式。`
       + (context ? '\n当前页面上下文：' + JSON.stringify(context) : '')
   }
   const fullMessages = [systemMsg, ...(messages || [])]

@@ -466,11 +466,32 @@ const APP_TABS = [
   { key: 'user', label: '用户系统' },
   { key: 'all', label: '全链路' },
 ]
-const APP_ICON_MAP = { internet: '\uf0ac', lb: '\uf0ec', service: '\uf233', database: '\uf1c0', cache: '\uf0a0', mq: '\uf0e7' }
+const APP_ICON_MAP = {
+  internet: '\uf0ac', access: '\uf0ac', security: '\uf132', lb: '\uf0ec', gateway: '\uf0e7',
+  registry: '\uf1c0', service: '\uf233', cache: '\uf0a0', mq: '\uf0e7', search: '\uf1c0',
+  database: '\uf1c0', infra: '\uf233',
+}
 const APP_FILTER_MAP = {
-  order: new Set(['lb-api', 'prod-order-01', 'prod-order-02', 'redis-cache', 'mysql-master', 'mq-order']),
-  payment: new Set(['lb-api', 'prod-pay-01', 'mq-order']),
-  user: new Set(['lb-api', 'prod-user-01', 'mysql-master', 'mysql-slave']),
+  order: new Set([
+    'cdn', 'waf', 'slb', 'lb-api', 'nacos',
+    'prod-order-01', 'prod-order-02', 'prod-order-03',
+    'prod-user-01', 'prod-user-02', 'prod-pay-01', 'prod-pay-02',
+    'prod-inventory-01',
+    'redis-cache', 'mq-order', 'es-cluster',
+    'mysql-master', 'mysql-slave',
+  ]),
+  payment: new Set([
+    'lb-api', 'nacos',
+    'prod-pay-01', 'prod-pay-02',
+    'prod-user-01', 'prod-user-02',
+    'redis-cache', 'mq-order',
+    'mysql-master',
+  ]),
+  user: new Set([
+    'lb-api', 'nacos',
+    'prod-user-01', 'prod-user-02',
+    'redis-cache', 'mysql-master', 'mysql-slave',
+  ]),
 }
 const appTab = computed(() => route.query.appTab || 'order')
 function switchAppTab(tab) {
@@ -914,9 +935,7 @@ async function initAppGraph(tab) {
         zIndex: 10,
         ports: [
           { key: 'top', placement: [0.5, 0], r: 0 },
-          { key: 'right', placement: [1, 0.5], r: 0 },
           { key: 'bottom', placement: [0.5, 1], r: 0 },
-          { key: 'left', placement: [0, 0.5], r: 0 },
         ],
       },
     },
@@ -926,14 +945,6 @@ async function initAppGraph(tab) {
         stroke: '#d9d9d9',
         lineWidth: 1.5,
         endArrow: true,
-        labelText: (d) => d.data?.label || '',
-        labelFontSize: 10,
-        labelFill: '#666',
-        labelBackground: true,
-        labelBackgroundFill: '#f9f9fa',
-        labelBackgroundOpacity: 0.9,
-        labelBackgroundRadius: 4,
-        labelPadding: [2, 6],
       },
     },
     layout: { type: 'dagre', rankdir: 'TB', nodesep: 30, ranksep: 80 },
@@ -949,6 +960,23 @@ async function initAppGraph(tab) {
   })
   await appGraph.render()
   appGraph.fitView({ padding: 40 })
+  // 修复竞态条件：如果 topoHighlight 已激活但 appGraph 刚初始化，手动触发高亮
+  if (topoHighlight.active && topoHighlight.nodes?.length) {
+    const aNodes = appGraph.getNodeData()
+    const anyMatch = aNodes.some(n => topoHighlight.nodes.includes(n.id))
+    if (anyMatch) {
+      aNodes.forEach(n => {
+        if (topoHighlight.nodes.includes(n.id)) {
+          appGraph.setItemState(n.id, 'ai-highlight', true)
+          appGraph.setItemState(n.id, 'dimmed', false)
+          appGraph.focusElement(n.id, { animation: { duration: 800 } })
+        } else {
+          appGraph.setItemState(n.id, 'dimmed', true)
+          appGraph.setItemState(n.id, 'ai-highlight', false)
+        }
+      })
+    }
+  }
 }
 
 function destroyAppGraph() {
