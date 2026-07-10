@@ -460,6 +460,10 @@ function switchTopoTab(tab) {
   router.push({ query: { ...route.query, tab } })
 }
 
+watch(() => route.query.tab, (tab) => {
+  if (tab === 'application') activeNav.value = 'app'
+}, { immediate: true })
+
 const APP_TABS = [
   { key: 'all', label: '全局视图' },
   { key: 'order', label: '订单系统' },
