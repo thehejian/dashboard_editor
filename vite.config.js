@@ -54,6 +54,10 @@ export default defineConfig({
       '/api/mock': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/api/intelligent': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },

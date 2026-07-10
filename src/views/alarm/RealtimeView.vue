@@ -203,6 +203,47 @@
           </a-table>
         </div>
       </a-tab-pane>
+
+      <a-tab-pane key="intelligent" tab="智能检测">
+        <div class="history-alerts">
+          <div class="filter-bar">
+            <a-select v-model:value="intelLevelFilter" placeholder="级别筛选" style="width:120px" allowClear>
+              <a-select-option value="critical">严重</a-select-option>
+              <a-select-option value="warning">警告</a-select-option>
+              <a-select-option value="info">提示</a-select-option>
+            </a-select>
+            <a-input-search v-model:value="intelSearch" placeholder="搜索节点、指标" class="search-input" />
+          </div>
+          <a-table
+            :columns="intelColumns"
+            :data-source="intelFilteredData"
+            :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: function(t) { return '共 ' + t + ' 条' } }"
+            row-key="id"
+            :scroll="{ y: scrollY, x: 1100 }"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'level'">
+                <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'blue'">
+                  {{ { critical: '严重', warning: '警告', info: '提示' }[record.level] || record.level }}
+                </a-tag>
+              </template>
+              <template v-if="column.key === 'score'">
+                <a-progress :percent="Math.round(record.score * 100)" :stroke-color="record.score > 0.7 ? '#F5222D' : record.score > 0.3 ? '#FF7D00' : '#07C160'" size="small" />
+              </template>
+              <template v-if="column.key === 'type'">
+                <a-tag>{{ { spike: '突增', drop: '骤降', trend: '趋势' }[record.type] || record.type }}</a-tag>
+              </template>
+              <template v-if="column.key === 'action'">
+                <div class="action-btns">
+                  <a-tooltip title="查看详情">
+                    <button class="icon-btn" @click="openIntelDetail(record)"><i class="fa-solid fa-eye"></i></button>
+                  </a-tooltip>
+                </div>
+              </template>
+            </template>
+          </a-table>
+        </div>
+      </a-tab-pane>
     </a-tabs>
 
     <div class="detail-panel" :class="{ open: detailVisible }">
@@ -346,6 +387,45 @@ const logsTimeRange = ref(null)
 const expSearch = ref('')
 const expCategory = ref(null)
 
+const intelSearch = ref('')
+const intelLevelFilter = ref(null)
+const intelData = ref([])
+
+const intelColumns = [
+  { title: '时间', dataIndex: 'time', key: 'time', width: 160 },
+  { title: '节点', dataIndex: 'nodeLabel', key: 'nodeLabel', width: 140 },
+  { title: '指标', dataIndex: 'metric', key: 'metric', width: 100 },
+  { title: '当前值', dataIndex: 'currentValue', key: 'currentValue', width: 80 },
+  { title: '基线', dataIndex: 'baseline', key: 'baseline', width: 80 },
+  { title: '偏离度', dataIndex: 'deviation', key: 'deviation', width: 90, sorter: (a, b) => Math.abs(a.deviation) - Math.abs(b.deviation) },
+  { title: '得分', dataIndex: 'score', key: 'score', width: 120, sorter: (a, b) => a.score - b.score },
+  { title: '级别', dataIndex: 'level', key: 'level', width: 80 },
+  { title: '类型', dataIndex: 'type', key: 'type', width: 80 },
+  { title: '操作', key: 'action', width: 60, fixed: 'right' },
+]
+
+const intelFilteredData = computed(() => {
+  let list = intelData.value
+  if (intelLevelFilter.value) list = list.filter(a => a.level === intelLevelFilter.value)
+  if (intelSearch.value) {
+    const kw = intelSearch.value.toLowerCase()
+    list = list.filter(a => a.nodeLabel?.toLowerCase().includes(kw) || a.metric?.toLowerCase().includes(kw))
+  }
+  return list
+})
+
+async function fetchIntelData() {
+  try {
+    const res = await fetch('/api/intelligent/anomalies')
+    const data = await res.json()
+    intelData.value = data.data || []
+  } catch {}
+}
+
+function openIntelDetail(record) {
+  // TODO: open detail modal
+}
+
 const realtimeAlerts = ref([
   { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001 (华北区域)', metric: 'CPU使用率', currentValue: '95%', threshold: '> 90%', duration: '5分钟', displayDuration: '5分钟', durationMinutes: 5, triggerTime: '2026-06-17 10:32:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查是否有异常进程占用CPU\n2. 查看应用日志定位慢查询\n3. 必要时重启相关服务' },
   { id: 2, level: 'critical', title: '磁盘空间不足', resource: 'db-primary (华东区域)', metric: '磁盘使用率', currentValue: '92%', threshold: '> 90%', duration: '12分钟', displayDuration: '12分钟', durationMinutes: 12, triggerTime: '2026-06-17 10:28:00', recoveryTime: '-', status: 'firing', suggestion: '1. 清理过期日志文件\n2. 检查大表并归档历史数据\n3. 扩容磁盘或迁移数据' },
@@ -416,6 +496,7 @@ const loading = ref(false)
 
 onMounted(async () => {
   loading.value = true
+  fetchIntelData()
   try {
     const res = await fetch('/api/cmdb/alerts?sort=id&order=ASC')
     const json = await res.json()

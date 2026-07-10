@@ -1,5 +1,15 @@
 <template>
   <div class="home-view">
+    <div class="home-tabs">
+      <button class="home-tab-btn" :class="{ active: homeTab === 'home' }" @click="switchTab('home')">
+        <i class="fa-solid fa-house"></i> 概览
+      </button>
+      <button class="home-tab-btn" :class="{ active: homeTab === 'aiops' }" @click="switchTab('aiops')">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> AI运维
+      </button>
+    </div>
+
+    <template v-if="homeTab === 'home'">
     <a-row :gutter="[16, 16]">
       <a-col :xs="12" :sm="12" :md="6" v-for="card in kpiCards" :key="card.title">
         <div class="kpi-card" :class="card.bgClass" :style="card.link ? 'cursor:pointer' : ''" @click="navigateCard(card)">
@@ -124,7 +134,107 @@
           </a-card>
         </a-col>
       </a-row>
-    </div>
+    </template>
+
+    <template v-if="homeTab === 'aiops'">
+      <div class="aiops-intent-bar">
+        <a-input-search v-model:value="aiopsIntent" placeholder="描述你想要分析的问题，例如：为什么订单服务CPU突然升高？" class="aiops-intent-input" @search="sendAiopsIntent" @keydown.enter="sendAiopsIntent" />
+        <a-button type="primary" @click="sendAiopsIntent" :loading="aiopsLoading"><i class="fa-solid fa-paper-plane"></i></a-button>
+      </div>
+
+      <div class="aiops-kpi-row">
+        <div class="aiops-kpi-card" v-for="kpi in aiopsKpiCards" :key="kpi.label">
+          <div class="aiops-kpi-icon" :style="{ background: kpi.iconBg }"><i :class="kpi.icon" :style="{ color: kpi.iconColor }"></i></div>
+          <div class="aiops-kpi-info">
+            <div class="aiops-kpi-val" :class="kpi.valClass">{{ kpi.value }}</div>
+            <div class="aiops-kpi-label">{{ kpi.label }}</div>
+          </div>
+          <div class="aiops-kpi-trend" :class="kpi.trendDir">{{ kpi.trendText }}</div>
+        </div>
+      </div>
+
+      <div class="aiops-heatmap" v-if="aiopsServiceHealth.length">
+        <div class="aiops-section-title"><i class="fa-solid fa-heart-pulse"></i> 服务健康度</div>
+        <div class="heatmap-grid">
+          <div v-for="group in aiopsServiceHealth" :key="group.name" class="heatmap-group">
+            <div class="heatmap-group-name">{{ group.name }}</div>
+            <div class="heatmap-cells">
+              <div v-for="svc in group.services" :key="svc.name" class="heatmap-cell" :class="'hm-' + svc.status" :title="svc.name + ': ' + svc.score + '%'">
+                <span class="hm-name">{{ svc.name }}</span>
+                <span class="hm-score">{{ svc.score }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <a-row :gutter="[16, 16]" class="aiops-body">
+        <a-col :xs="24" :lg="8">
+          <a-card class="aiops-card">
+            <template #title><i class="fa-solid fa-bolt" style="color:#F5222D;margin-right:6px"></i> 异常时间线</template>
+            <div class="anomaly-timeline">
+              <div v-for="a in aiopsAnomalies" :key="a.id" class="anomaly-item" :class="'ani-' + a.level">
+                <div class="ani-header">
+                  <span class="ani-time">{{ a.time.split(' ')[1] }}</span>
+                  <a-tag :color="a.level === 'critical' ? 'red' : a.level === 'warning' ? 'orange' : 'blue'" size="small">
+                    {{ { critical: '严重', warning: '警告', info: '提示' }[a.level] }}
+                  </a-tag>
+                </div>
+                <div class="ani-node">{{ a.nodeLabel }}</div>
+                <div class="ani-detail">{{ a.metric }}: {{ a.currentValue }} (基线{{ a.baseline }}) {{ a.deviation > 0 ? '+' : '' }}{{ a.deviation }}%</div>
+                <div class="ani-score-bar"><span class="ani-score-fill" :style="{ width: (a.score * 100) + '%' }"></span></div>
+              </div>
+            </div>
+          </a-card>
+        </a-col>
+        <a-col :xs="24" :lg="8">
+          <a-card class="aiops-card">
+            <template #title><i class="fa-solid fa-magnifying-glass-chart" style="color:#722ED1;margin-right:6px"></i> 根因分析</template>
+            <div class="root-cause" v-if="aiopsRootCause">
+              <div class="rc-node">
+                <span class="rc-label">根因节点</span>
+                <span class="rc-value">{{ aiopsRootCause.nodeLabel }}</span>
+              </div>
+              <div class="rc-metric">
+                <span class="rc-label">异常指标</span>
+                <span class="rc-value">{{ aiopsRootCause.metric }} = {{ aiopsRootCause.currentValue }}</span>
+              </div>
+              <div class="rc-score">
+                <span class="rc-label">异常得分</span>
+                <a-progress :percent="Math.round(aiopsRootCause.score * 100)" :stroke-color="'#F5222D'" size="small" />
+              </div>
+              <div class="rc-path" v-if="aiopsPropagationPath.length">
+                <span class="rc-label">传播路径</span>
+                <div class="rc-path-flow">
+                  <span v-for="(n, i) in aiopsPropagationPath" :key="n" class="rc-path-node">{{ n }}<span v-if="i < aiopsPropagationPath.length - 1" class="rc-arrow"> → </span></span>
+                </div>
+              </div>
+              <div class="rc-desc">{{ aiopsRootCause.detail }}</div>
+            </div>
+          </a-card>
+        </a-col>
+        <a-col :xs="24" :lg="8">
+          <a-card class="aiops-card">
+            <template #title><i class="fa-solid fa-lightbulb" style="color:#FF7D00;margin-right:6px"></i> AI推荐操作</template>
+            <div class="rec-list">
+              <div v-for="rec in aiopsRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
+                <div class="rec-icon"><i :class="rec.icon"></i></div>
+                <div class="rec-info">
+                  <div class="rec-label">{{ rec.label }}</div>
+                  <div class="rec-desc">{{ rec.desc }}</div>
+                </div>
+                <a-button size="small" :type="rec.priority === 'urgent' ? 'primary' : 'default'" :danger="rec.priority === 'urgent'" @click="executeRec(rec)">执行</a-button>
+              </div>
+            </div>
+          </a-card>
+        </a-col>
+      </a-row>
+
+      <a-card class="aiops-card aiops-trend-card" style="margin-top:16px">
+        <template #title><i class="fa-solid fa-chart-line" style="color:#007DFF;margin-right:6px"></i> 24小时告警趋势</template>
+        <div ref="aiopsTrendContainer" class="aiops-trend-chart"></div>
+      </a-card>
+    </template>
 
     <div class="detail-panel" :class="{ open: detailPanelOpen }">
       <div class="detail-mask" @click="closeDetailPanel"></div>
@@ -481,16 +591,37 @@
           </div>
           </template>
         </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { reactive, ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { Chart } from '@antv/g2'
 import { setTopoHighlight } from '../composables/useEditorState.js'
+
+const router = useRouter()
+const route = useRoute()
+
+const homeTab = ref(route.path === '/aiops' ? 'aiops' : 'home')
+
+function switchTab(tab) {
+  homeTab.value = tab
+  router.replace(tab === 'aiops' ? '/aiops' : '/overview')
+}
+const aiopsIntent = ref('订单服务为什么告警？')
+const aiopsLoading = ref(false)
+const aiopsKpiCards = ref([])
+const aiopsServiceHealth = ref([])
+const aiopsAnomalies = ref([])
+const aiopsRootCause = ref(null)
+const aiopsPropagationPath = ref([])
+const aiopsRecommendations = ref([])
+const aiopsTrendContainer = ref(null)
+let aiopsTrendChart = null
 
 const detailPanelOpen = ref(false)
 const currentCardTitle = ref('')
@@ -1133,8 +1264,6 @@ const alertEvents = reactive([
   { id: 5, time: '09:30', ciName: 'lb-api', ciType: 'Gateway', event: '后端健康检查失败', level: '警告', status: '已恢复' },
 ])
 
-const router = useRouter()
-
 function navigateCard(card) {
   if (card.link) router.push(card.link)
 }
@@ -1146,6 +1275,108 @@ function analyzeAlert(record) {
     win.__openAIAssistant(`分析告警：${record.event}（${record.level}，${record.ciName}），定位根因并给出排查建议`)
   }
 }
+
+async function fetchAiopsData() {
+  try {
+    const [anomalyRes, healthRes, predRes, remedRes, trendRes, topoRes] = await Promise.all([
+      fetch('/api/intelligent/anomalies').then(r => r.json()),
+      fetch('/api/intelligent/health').then(r => r.json()),
+      fetch('/api/intelligent/predictions').then(r => r.json()),
+      fetch('/api/intelligent/remediation').then(r => r.json()),
+      fetch('/api/intelligent/trend').then(r => r.json()),
+      fetch('/api/mock/topology').then(r => r.json()),
+    ])
+    const anomalies = anomalyRes.data || []
+    const summary = anomalyRes.summary || {}
+    const health = healthRes.data || {}
+    const pred = predRes.data || {}
+    const remed = remedRes.data || {}
+    const trend = trendRes.data || []
+    const topo = topoRes.data || {}
+
+    aiopsKpiCards.value = [
+      { label: '异常检测', value: summary.total || 0, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#FFF1F0', iconColor: '#F5222D', valClass: 'kpi-danger', trendText: '较昨日 +60%', trendDir: 'up' },
+      { label: '健康度', value: (health.score || 0) + '%', icon: 'fa-solid fa-heart-pulse', iconBg: '#F6FFED', iconColor: '#07C160', valClass: health.score < 90 ? 'kpi-warn' : 'kpi-ok', trendText: '较昨日 -5.4%', trendDir: 'down' },
+      { label: '预测告警', value: pred.items?.length || 0, icon: 'fa-solid fa-clock-rotate-left', iconBg: '#FFF7E6', iconColor: '#FF7D00', valClass: 'kpi-warn', trendText: '较昨日 +50%', trendDir: 'up' },
+      { label: '自动修复率', value: (remed.rate || 0) + '%', icon: 'fa-solid fa-rotate-right', iconBg: '#F0F5FF', iconColor: '#007DFF', valClass: 'kpi-ok', trendText: '较昨日 +8.2%', trendDir: 'up' },
+    ]
+
+    aiopsServiceHealth.value = health.services || []
+    aiopsAnomalies.value = anomalies
+
+    if (anomalies.length) {
+      const root = anomalies.reduce((max, a) => a.score > max.score ? a : max, anomalies[0])
+      aiopsRootCause.value = root
+      const edges = topo.edges || []
+      const upstreamMap = {}
+      edges.forEach(e => {
+        if (!upstreamMap[e.target]) upstreamMap[e.target] = []
+        upstreamMap[e.target].push(e.source)
+      })
+      const path = []
+      const visited = new Set()
+      function bfs(nodeId) {
+        if (visited.has(nodeId)) return
+        visited.add(nodeId)
+        path.unshift(nodeId)
+        const parents = upstreamMap[nodeId] || []
+        parents.forEach(p => bfs(p))
+      }
+      bfs(root.nodeId)
+      aiopsPropagationPath.value = path
+    }
+
+    aiopsRecommendations.value = [
+      { id: 'rec-001', action: 'restart', label: '重启订单服务-01', desc: '预计恢复CPU至45%', icon: 'fa-solid fa-rotate-right', priority: 'urgent', targetNode: 'prod-order-01' },
+      { id: 'rec-002', action: 'scale', label: '扩容订单服务实例', desc: '从3副本扩至5副本', icon: 'fa-solid fa-expand', priority: 'urgent', targetNode: 'prod-order-01' },
+      { id: 'rec-003', action: 'ratelimit', label: '限流降级 API网关', desc: '保护下游服务', icon: 'fa-solid fa-gauge-high', priority: 'urgent', targetNode: 'lb-api' },
+      { id: 'rec-004', action: 'view-topology', label: '查看拓扑影响范围', desc: '分析传播路径', icon: 'fa-solid fa-diagram-project', priority: 'diagnostic', targetNode: null },
+      { id: 'rec-005', action: 'report', label: '生成故障处理报告', desc: '结构化报告含根因分析', icon: 'fa-solid fa-file-lines', priority: 'diagnostic', targetNode: null },
+      { id: 'rec-006', action: 'restart', label: '重启MySQL主库', desc: '清除慢查询堆积', icon: 'fa-solid fa-rotate-right', priority: 'normal', targetNode: 'mysql-master' },
+      { id: 'rec-007', action: 'view-baseline', label: '查看基线偏离详情', desc: '对比历史基线', icon: 'fa-solid fa-chart-line', priority: 'diagnostic', targetNode: null },
+      { id: 'rec-008', action: 'flush-cache', label: '清除Redis缓存', desc: '重建缓存索引', icon: 'fa-solid fa-broom', priority: 'normal', targetNode: 'redis-cache' },
+    ]
+
+    renderAiopsTrend(trend)
+  } catch {}
+}
+
+function renderAiopsTrend(data) {
+  if (!aiopsTrendContainer.value || !data?.length) return
+  if (aiopsTrendChart) { aiopsTrendChart.destroy(); aiopsTrendChart = null }
+  aiopsTrendChart = new Chart({ container: aiopsTrendContainer.value, autoFit: true, padding: [10, 10, 30, 40] })
+  aiopsTrendChart.interval().data(data).encode('x', 'hour').encode('y', 'critical').style('fill', '#F5222D').style('radius', [2, 2, 0, 0])
+  aiopsTrendChart.interval().data(data).encode('x', 'hour').encode('y', 'warning').style('fill', '#FF7D00').style('radius', [2, 2, 0, 0])
+  aiopsTrendChart.interval().data(data).encode('x', 'hour').encode('y', 'info').style('fill', '#007DFF').style('radius', [2, 2, 0, 0])
+  aiopsTrendChart.render()
+}
+
+function sendAiopsIntent() {
+  if (!aiopsIntent.value.trim()) return
+  const win = window
+  if (win.__openAIAssistant) {
+    win.__openAIAssistant(aiopsIntent.value)
+    aiopsIntent.value = ''
+  }
+}
+
+function executeRec(rec) {
+  if (rec.targetNode) {
+    setTopoHighlight({ nodes: [rec.targetNode] })
+    router.push('/monitor/topology?tab=application&appTab=all')
+  } else {
+    const win = window
+    if (win.__openAIAssistant) {
+      win.__openAIAssistant(`执行推荐操作：${rec.label} - ${rec.desc}`)
+    }
+  }
+}
+
+watch(homeTab, (tab) => {
+  if (tab === 'aiops') {
+    fetchAiopsData()
+  }
+})
 
 const alertTrendContainer = ref(null)
 let alertTrendChart = null
@@ -1239,6 +1470,7 @@ onBeforeUnmount(() => {
   if (trendSingleChart) { trendSingleChart.destroy(); trendSingleChart = null }
   if (resourceTrendChart) { resourceTrendChart.destroy(); resourceTrendChart = null }
   if (mainDonutChart) { mainDonutChart.destroy(); mainDonutChart = null }
+  if (aiopsTrendChart) { aiopsTrendChart.destroy(); aiopsTrendChart = null }
 })
 
 const refreshCard = (card) => {
@@ -1247,7 +1479,7 @@ const refreshCard = (card) => {
 </script>
 
 <style scoped>
-.home-view { padding: 16px 24px 24px; min-height: 100%; }
+.home-view { padding: 8px 24px 24px; min-height: 100%; }
 .kpi-card {
   padding: 16px 20px;
   border-radius: 12px;
@@ -1569,4 +1801,87 @@ const refreshCard = (card) => {
 }
 .footer-actions { display: flex; gap: 16px; }
 .export-btn { display: flex; align-items: center; gap: 6px; }
+
+/* AI Ops Tab */
+.home-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid var(--border, #E5E5EA); padding-bottom: 0; }
+.home-tab-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-sec, #6B7280); font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+.home-tab-btn.active { color: var(--brand, #007DFF); border-bottom-color: var(--brand, #007DFF); }
+.home-tab-btn:hover { color: var(--brand, #007DFF); }
+
+.aiops-intent-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.aiops-intent-input { flex: 1; }
+
+.aiops-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.aiops-kpi-card { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.aiops-kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.aiops-kpi-info { flex: 1; }
+.aiops-kpi-val { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.aiops-kpi-label { font-size: 12px; color: var(--text-sec, #6B7280); }
+.aiops-kpi-trend { font-size: 11px; font-weight: 500; }
+.aiops-kpi-trend.up { color: var(--danger, #F5222D); }
+.aiops-kpi-trend.down { color: #07C160; }
+.kpi-danger { color: var(--danger, #F5222D); }
+.kpi-warn { color: var(--warn, #FF7D00); }
+.kpi-ok { color: #07C160; }
+
+.aiops-heatmap { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.aiops-section-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text, #182431); }
+.heatmap-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+.heatmap-group { flex: 1; min-width: 140px; }
+.heatmap-group-name { font-size: 11px; color: var(--text-sec, #6B7280); margin-bottom: 6px; font-weight: 500; }
+.heatmap-cells { display: flex; gap: 4px; }
+.heatmap-cell { flex: 1; padding: 6px 4px; border-radius: 6px; text-align: center; font-size: 10px; }
+.hm-normal { background: #F6FFED; color: #07C160; }
+.hm-warning { background: #FFF7E6; color: #FF7D00; }
+.hm-critical { background: #FFF1F0; color: #F5222D; }
+.hm-name { display: block; font-weight: 500; margin-bottom: 2px; }
+.hm-score { display: block; font-weight: 700; font-size: 12px; }
+
+.aiops-body { margin-bottom: 0; }
+.aiops-body :deep(.ant-col) { display: flex; }
+.aiops-body :deep(.aiops-card) { flex: 1; display: flex; flex-direction: column; }
+.aiops-body :deep(.aiops-card .ant-card-body) { flex: 1; display: flex; flex-direction: column; }
+.aiops-card { border-radius: 10px; }
+.aiops-card :deep(.ant-card-head) { min-height: 40px; padding: 0 16px; }
+.aiops-card :deep(.ant-card-head-title) { font-size: 13px; font-weight: 600; padding: 8px 0; }
+.aiops-card :deep(.ant-card-body) { padding: 12px 16px; }
+
+.anomaly-timeline { max-height: 400px; overflow-y: auto; flex: 1; }
+.anomaly-item { padding: 10px 0; border-bottom: 1px solid var(--border, #E5E5EA); }
+.anomaly-item:last-child { border-bottom: none; }
+.ani-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.ani-time { font-size: 12px; color: var(--text-sec, #6B7280); font-family: monospace; }
+.ani-node { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.ani-detail { font-size: 11px; color: var(--text-sec, #6B7280); }
+.ani-score-bar { height: 3px; background: #f0f0f0; border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.ani-score-fill { display: block; height: 100%; background: var(--danger, #F5222D); border-radius: 2px; transition: width 0.3s; }
+.ani-critical .ani-score-fill { background: var(--danger, #F5222D); }
+.ani-warning .ani-score-fill { background: var(--warn, #FF7D00); }
+
+.root-cause { font-size: 13px; flex: 1; }
+.rc-node, .rc-metric, .rc-score, .rc-path { margin-bottom: 10px; }
+.rc-label { display: block; font-size: 11px; color: var(--text-sec, #6B7280); margin-bottom: 2px; }
+.rc-value { font-weight: 600; }
+.rc-path-flow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; }
+.rc-path-node { background: var(--bg-sec, #F2F2F7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: monospace; }
+.rc-arrow { color: var(--text-ter, #9CA3AF); }
+.rc-desc { margin-top: 10px; padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; font-size: 12px; color: var(--text-sec, #6B7280); line-height: 1.5; }
+
+.rec-list { max-height: 400px; overflow-y: auto; flex: 1; }
+.rec-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border, #E5E5EA); }
+.rec-item:last-child { border-bottom: none; }
+.rec-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--bg-sec, #F2F2F7); }
+.rec-urgent .rec-icon { background: #FFF1F0; color: var(--danger, #F5222D); }
+.rec-diagnostic .rec-icon { background: #F0F5FF; color: var(--brand, #007DFF); }
+.rec-info { flex: 1; }
+.rec-label { font-size: 13px; font-weight: 500; }
+.rec-desc { font-size: 11px; color: var(--text-sec, #6B7280); }
+
+.aiops-trend-card { margin-top: 16px; }
+.aiops-trend-chart { height: 200px; }
+
+@media (max-width: 768px) {
+  .aiops-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .heatmap-grid { flex-direction: column; }
+}
 </style>

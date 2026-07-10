@@ -48,6 +48,10 @@ const METRIC_PROMQL = {
   '滚动更新中': p => `count(kube_workload_metadata_generation > 0)`,
   '就绪副本数': p => `sum(kube_pod_status_ready{condition="true"})`,
   '期望副本数': p => `sum(kube_replicaset_spec_replicas)`,
+  // 智能检测 PromQL
+  '异常检测得分': p => `max(avg_over_time(node_cpu_seconds_total{mode!="idle"}[${p}]))`,
+  '基线偏离度': p => `abs(node_cpu_seconds_total{mode="idle"} - avg_over_time(node_cpu_seconds_total{mode="idle"}[7d])) / avg_over_time(node_cpu_seconds_total{mode="idle"}[7d]) * 100`,
+  'EWMA趋势': p => `deriv(node_cpu_seconds_total{mode="idle"}[${p}])`,
 }
 
 const PERIOD_CFG = {
@@ -141,6 +145,9 @@ const MOCK_RANGES = {
   '滚动更新中': [0, 3],
   '就绪副本数': [3, 30],
   '期望副本数': [3, 30],
+  '异常检测得分': [0, 1],
+  '基线偏离度': [0, 200],
+  'EWMA趋势': [-5, 5],
 }
 
 function generateMockData(metricName, type, period, unit) {

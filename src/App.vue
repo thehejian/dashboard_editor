@@ -303,7 +303,7 @@ function goToDashboard(db) {
   --bg: #FFFFFF; --bg-sec: #F2F2F7; --bg-ter: #E8E8ED;
   --text: #182431; --text-sec: #6B7280; --text-ter: #9CA3AF;
   --border: #E5E5EA; --border-hover: #D1D5DB;
-  --danger: #F5222D; --warn: #FF7D00; --yellow: #FADB14; --info: #007DFF;
+  --danger: #F5222D; --warn: #FF7D00; --yellow: #FADB14; --info: #007DFF; --intelligent: #722ED1;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
   --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);

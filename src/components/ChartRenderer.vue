@@ -153,6 +153,26 @@ function renderChart() {
       .data(useData)
       .encode('x', 'item').encode('y', 'value')
       .style('fill', c).style('radius', [2, 2, 0, 0])
+  } else if (props.type === 'anomaly') {
+    chart.area()
+      .data(useData)
+      .encode('x', 'time').encode('y', 'value')
+      .style('fill', `l(0) 0:${c}20 1:${c}00`)
+      .style('shape', 'smooth')
+    chart.line()
+      .data(useData)
+      .encode('x', 'time').encode('y', 'value')
+      .style('stroke', c).style('lineWidth', 2)
+      .style('shape', 'smooth')
+    const anomalies = useData.filter(d => d.baseline && d.value > d.baseline * 1.2)
+    if (anomalies.length) {
+      chart.point()
+        .data(anomalies)
+        .encode('x', 'time').encode('y', 'value')
+        .style('fill', '#F5222D').style('stroke', '#FFF')
+        .style('lineWidth', 2).style('size', 6)
+        .style('shape', 'point')
+    }
   }
 
   chart.render()

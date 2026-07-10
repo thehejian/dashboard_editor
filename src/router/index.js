@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
+  { path: '/', redirect: '/overview' },
+  { path: '/overview', name: 'overview', component: () => import('../views/HomeView.vue') },
+  { path: '/aiops', name: 'aiops', component: () => import('../views/HomeView.vue') },
 
   { path: '/alarm/realtime', redirect: '/alarm/current' },
   { path: '/alarm/history', redirect: '/alarm/current' },

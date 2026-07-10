@@ -621,6 +621,35 @@ export function refreshTopology() {
   topoRefreshTrigger.value++
 }
 
+// ==================== 智能检测状态 ====================
+
+export const intelligentState = reactive({
+  anomalyMode: false,
+  anomalyNodes: [],
+  propagationPath: [],
+  propagationEdges: [],
+})
+
+export function setAnomalyMode(on) {
+  intelligentState.anomalyMode = on
+}
+
+export function setAnomalyNodes(nodes) {
+  intelligentState.anomalyNodes = nodes || []
+}
+
+export function setPropagationPath(nodes, edges) {
+  intelligentState.propagationPath = nodes || []
+  intelligentState.propagationEdges = edges || []
+}
+
+export function clearIntelligentState() {
+  intelligentState.anomalyMode = false
+  intelligentState.anomalyNodes = []
+  intelligentState.propagationPath = []
+  intelligentState.propagationEdges = []
+}
+
 export function useEditorState() {
   return {
     CASCADE, ALL_RESOURCES, TH_COLORS, GROUPS, CHART_DEFS, REGIONS, REFRESH_OPTIONS,
@@ -638,5 +667,6 @@ export function useEditorState() {
     switchDashboard, switchDashboardBySlug, switchRegion, setPeriod, enterEditMode, exitEditMode, saveDashboard, reorderCharts, createNewDashboard,
     setRefreshRate, clearRefresh,
     topoRefreshTrigger, refreshTopology,
+    intelligentState, setAnomalyMode, setAnomalyNodes, setPropagationPath, clearIntelligentState,
   }
 }

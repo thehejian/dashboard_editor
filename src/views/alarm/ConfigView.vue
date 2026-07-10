@@ -26,6 +26,11 @@
         <template v-if="column.key === 'enabled'">
           <a-switch v-model:checked="record.enabled" />
         </template>
+        <template v-if="column.key === 'detectionMode'">
+          <a-tag :color="record.detectionMode === 'baseline' ? 'purple' : 'default'">
+            {{ record.detectionMode === 'baseline' ? '智能基线' : '传统阈值' }}
+          </a-tag>
+        </template>
         <template v-if="column.key === 'action'">
           <div class="action-btns">
             <a-tooltip title="编辑"><button class="icon-btn"><i class="fa-solid fa-pen"></i></button></a-tooltip>
@@ -45,22 +50,22 @@ const filterLevel = ref(null)
 const scrollY = ref(500)
 
 const rules = ref([
-  { id: 1, name: 'CPU使用率过高', level: 'critical', target: '所有服务器', metric: 'cpu_usage', condition: '> 90%', duration: '5分钟', enabled: true, description: '当服务器CPU使用率持续超过90%时触发告警' },
-  { id: 2, name: '磁盘空间不足', level: 'critical', target: '数据库服务器', metric: 'disk_usage', condition: '> 90%', duration: '10分钟', enabled: true, description: '磁盘使用率超过90%时触发，防止磁盘写满' },
-  { id: 3, name: '数据库主从延迟', level: 'critical', target: '所有数据库', metric: 'replication_delay', condition: '> 10s', duration: '5分钟', enabled: true, description: '主从复制延迟超过10秒时触发' },
-  { id: 4, name: '内存使用率偏高', level: 'warning', target: '应用服务器', metric: 'mem_usage', condition: '> 80%', duration: '15分钟', enabled: true, description: '内存使用率超过80%持续15分钟时触发' },
-  { id: 5, name: '响应时间超时', level: 'warning', target: 'API网关', metric: 'response_time', condition: '> 2000ms', duration: '5分钟', enabled: true, description: 'API平均响应时间超过2秒时触发' },
-  { id: 6, name: 'HTTP 5xx错误率上升', level: 'warning', target: '所有负载均衡', metric: 'error_rate_5xx', condition: '> 1%', duration: '5分钟', enabled: false, description: '5xx错误率超过1%时触发' },
-  { id: 7, name: 'Redis连接数接近上限', level: 'info', target: 'Redis集群', metric: 'redis_connections', condition: '> 80%', duration: '10分钟', enabled: true, description: 'Redis连接数使用率超过80%时触发' },
-  { id: 8, name: 'SSL证书即将过期', level: 'info', target: '所有域名', metric: 'cert_days_left', condition: '< 30天', duration: '1天', enabled: true, description: 'SSL证书剩余有效期少于30天时提醒' },
-  { id: 9, name: 'K8s Pod频繁重启', level: 'critical', target: '生产环境', metric: 'pod_restart_rate', condition: '> 3次/小时', duration: '1小时', enabled: true, description: 'Pod每小时重启超过3次时触发' },
-  { id: 10, name: '消息队列积压', level: 'warning', target: 'Kafka消费者', metric: 'queue_backlog', condition: '> 10000条', duration: '15分钟', enabled: true, description: '消息队列积压超过1万条时触发' },
-  { id: 11, name: '网络丢包率过高', level: 'warning', target: '所有网络设备', metric: 'packet_loss', condition: '> 1%', duration: '10分钟', enabled: false, description: '网络丢包率超过1%时触发' },
-  { id: 12, name: 'NTP时间偏移', level: 'info', target: '所有服务器', metric: 'ntp_offset', condition: '> 500ms', duration: '30分钟', enabled: true, description: 'NTP时间偏移超过500ms时触发' },
-  { id: 13, name: 'MySQL慢查询增多', level: 'warning', target: '数据库主库', metric: 'slow_queries', condition: '> 50/分钟', duration: '10分钟', enabled: true, description: '慢查询数量超过50条/分钟时触发' },
-  { id: 14, name: '容器OOMKilled', level: 'critical', target: '所有容器', metric: 'oom_killed', condition: '> 0次', duration: '实时', enabled: true, description: '容器被OOM Kill时立即触发' },
-  { id: 15, name: '备份任务失败', level: 'info', target: '备份服务器', metric: 'backup_status', condition: 'failed', duration: '实时', enabled: true, description: '备份任务执行失败时触发' },
-  { id: 16, name: '负载均衡后端离线', level: 'critical', target: '所有SLB', metric: 'backend_health', condition: 'offline', duration: '实时', enabled: true, description: '负载均衡后端服务器不可用时触发' },
+  { id: 1, name: 'CPU使用率过高', level: 'critical', target: '所有服务器', metric: 'cpu_usage', condition: '> 90%', duration: '5分钟', enabled: true, detectionMode: 'threshold', description: '当服务器CPU使用率持续超过90%时触发告警' },
+  { id: 2, name: '磁盘空间不足', level: 'critical', target: '数据库服务器', metric: 'disk_usage', condition: '> 90%', duration: '10分钟', enabled: true, detectionMode: 'threshold', description: '磁盘使用率超过90%时触发，防止磁盘写满' },
+  { id: 3, name: '数据库主从延迟', level: 'critical', target: '所有数据库', metric: 'replication_delay', condition: '> 10s', duration: '5分钟', enabled: true, detectionMode: 'baseline', description: '主从复制延迟超过10秒时触发' },
+  { id: 4, name: '内存使用率偏高', level: 'warning', target: '应用服务器', metric: 'mem_usage', condition: '> 80%', duration: '15分钟', enabled: true, detectionMode: 'baseline', description: '内存使用率超过80%持续15分钟时触发' },
+  { id: 5, name: '响应时间超时', level: 'warning', target: 'API网关', metric: 'response_time', condition: '> 2000ms', duration: '5分钟', enabled: true, detectionMode: 'threshold', description: 'API平均响应时间超过2秒时触发' },
+  { id: 6, name: 'HTTP 5xx错误率上升', level: 'warning', target: '所有负载均衡', metric: 'error_rate_5xx', condition: '> 1%', duration: '5分钟', enabled: false, detectionMode: 'threshold', description: '5xx错误率超过1%时触发' },
+  { id: 7, name: 'Redis连接数接近上限', level: 'info', target: 'Redis集群', metric: 'redis_connections', condition: '> 80%', duration: '10分钟', enabled: true, detectionMode: 'baseline', description: 'Redis连接数使用率超过80%时触发' },
+  { id: 8, name: 'SSL证书即将过期', level: 'info', target: '所有域名', metric: 'cert_days_left', condition: '< 30天', duration: '1天', enabled: true, detectionMode: 'threshold', description: 'SSL证书剩余有效期少于30天时提醒' },
+  { id: 9, name: 'K8s Pod频繁重启', level: 'critical', target: '生产环境', metric: 'pod_restart_rate', condition: '> 3次/小时', duration: '1小时', enabled: true, detectionMode: 'threshold', description: 'Pod每小时重启超过3次时触发' },
+  { id: 10, name: '消息队列积压', level: 'warning', target: 'Kafka消费者', metric: 'queue_backlog', condition: '> 10000条', duration: '15分钟', enabled: true, detectionMode: 'baseline', description: '消息队列积压超过1万条时触发' },
+  { id: 11, name: '网络丢包率过高', level: 'warning', target: '所有网络设备', metric: 'packet_loss', condition: '> 1%', duration: '10分钟', enabled: false, detectionMode: 'threshold', description: '网络丢包率超过1%时触发' },
+  { id: 12, name: 'NTP时间偏移', level: 'info', target: '所有服务器', metric: 'ntp_offset', condition: '> 500ms', duration: '30分钟', enabled: true, detectionMode: 'threshold', description: 'NTP时间偏移超过500ms时触发' },
+  { id: 13, name: 'MySQL慢查询增多', level: 'warning', target: '数据库主库', metric: 'slow_queries', condition: '> 50/分钟', duration: '10分钟', enabled: true, detectionMode: 'baseline', description: '慢查询数量超过50条/分钟时触发' },
+  { id: 14, name: '容器OOMKilled', level: 'critical', target: '所有容器', metric: 'oom_killed', condition: '> 0次', duration: '实时', enabled: true, detectionMode: 'threshold', description: '容器被OOM Kill时立即触发' },
+  { id: 15, name: '备份任务失败', level: 'info', target: '备份服务器', metric: 'backup_status', condition: 'failed', duration: '实时', enabled: true, detectionMode: 'threshold', description: '备份任务执行失败时触发' },
+  { id: 16, name: '负载均衡后端离线', level: 'critical', target: '所有SLB', metric: 'backend_health', condition: 'offline', duration: '实时', enabled: true, detectionMode: 'threshold', description: '负载均衡后端服务器不可用时触发' },
 ])
 
 const columns = [
@@ -69,6 +74,7 @@ const columns = [
   { title: '目标资源', dataIndex: 'target', key: 'target', width: 140 },
   { title: '指标', dataIndex: 'metric', key: 'metric', width: 130 },
   { title: '条件', dataIndex: 'condition', key: 'condition', width: 100 },
+  { title: '检测模式', key: 'detectionMode', width: 100 },
   { title: '持续时长', dataIndex: 'duration', key: 'duration', width: 100 },
   { title: '状态', key: 'enabled', width: 70 },
   { title: '操作', key: 'action', width: 80, fixed: 'right' },

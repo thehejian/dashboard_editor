@@ -15,11 +15,17 @@
             <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
             <p class="welcome-title">你好，我是运维 AI 助手</p>
             <p class="welcome-desc">我可以帮你分析监控数据、排查故障、生成查询语句</p>
+            <div class="ai-kpi-bar" v-if="kpiData">
+              <div class="kpi-item"><span class="kpi-val kpi-danger">{{ kpiData.anomalyCount }}</span><span class="kpi-lbl">异常</span></div>
+              <div class="kpi-item"><span class="kpi-val" :class="kpiData.healthScore < 90 ? 'kpi-warn' : 'kpi-ok'">{{ kpiData.healthScore }}%</span><span class="kpi-lbl">健康度</span></div>
+              <div class="kpi-item"><span class="kpi-val kpi-warn">{{ kpiData.predictedAlerts }}</span><span class="kpi-lbl">预测告警</span></div>
+              <div class="kpi-item"><span class="kpi-val kpi-ok">{{ kpiData.autoRemediationRate }}%</span><span class="kpi-lbl">自动修复率</span></div>
+            </div>
             <div class="quick-actions">
-              <button class="quick-btn" @click="analyzePage"><i class="fa-solid fa-chart-line"></i> 分析当前页面</button>
-              <button class="quick-btn" @click="askPromQL"><i class="fa-solid fa-database"></i> 写 PromQL 查询</button>
-              <button class="quick-btn" @click="summarizeAlerts"><i class="fa-solid fa-bell"></i> 总结今日告警</button>
-              <button class="quick-btn" @click="detectFaults"><i class="fa-solid fa-stethoscope"></i> 检测系统故障</button>
+              <button class="quick-btn" @click="intelligentAnalyze"><i class="fa-solid fa-wand-magic-sparkles"></i> 智能异常分析</button>
+              <button class="quick-btn" @click="rootCauseAnalysis"><i class="fa-solid fa-magnifying-glass-chart"></i> 告警根因定位</button>
+              <button class="quick-btn" @click="baselineCheck"><i class="fa-solid fa-chart-line"></i> 基线偏离检查</button>
+              <button class="quick-btn" @click="propagationTrace"><i class="fa-solid fa-diagram-project"></i> 故障传播分析</button>
             </div>
           </div>
           <div v-for="(msg, i) in messages" :key="i" class="ai-msg" :class="msg.role">
@@ -98,6 +104,25 @@
             </div>
           </div>
 
+          <div class="nd-section" v-if="nodeIntelligent">
+            <div class="nd-section-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:#722ED1"></i> 智能检测</div>
+            <div class="nd-intelligent">
+              <div class="nd-intel-row">
+                <span class="nd-intel-label">异常得分</span>
+                <span class="nd-intel-val" :class="nodeIntelligent.score > 0.7 ? 'nd-intel-danger' : nodeIntelligent.score > 0.3 ? 'nd-intel-warn' : 'nd-intel-ok'">{{ (nodeIntelligent.score * 100).toFixed(0) }}%</span>
+              </div>
+              <div class="nd-intel-row">
+                <span class="nd-intel-label">基线偏离</span>
+                <span class="nd-intel-val" :class="Math.abs(nodeIntelligent.deviation) > 50 ? 'nd-intel-danger' : 'nd-intel-warn'">{{ nodeIntelligent.deviation }}%</span>
+              </div>
+              <div class="nd-intel-row">
+                <span class="nd-intel-label">检测类型</span>
+                <span class="nd-intel-val">{{ { spike: '突增', drop: '骤降', trend: '趋势' }[nodeIntelligent.type] || nodeIntelligent.type }}</span>
+              </div>
+              <div class="nd-intel-detail">{{ nodeIntelligent.detail }}</div>
+            </div>
+          </div>
+
           <div class="nd-section">
             <div class="nd-section-title"><i class="fa-solid fa-wrench"></i> 修复操作</div>
             <div class="nd-fix-actions">
@@ -152,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 import { setTopoHighlight, clearTopoHighlight, refreshTopology } from '../composables/useEditorState.js'
@@ -178,6 +203,27 @@ const fixNodeId = ref('')
 const fixLoading = ref(false)
 const fixProgressText = ref('')
 const verifyResult = ref(null)
+const kpiData = ref(null)
+const nodeIntelligent = ref(null)
+
+async function fetchKpiData() {
+  try {
+    const [anomalyRes, healthRes, predRes, remedRes] = await Promise.all([
+      fetch('/api/intelligent/anomalies').then(r => r.json()),
+      fetch('/api/intelligent/health').then(r => r.json()),
+      fetch('/api/intelligent/predictions').then(r => r.json()),
+      fetch('/api/intelligent/remediation').then(r => r.json()),
+    ])
+    kpiData.value = {
+      anomalyCount: (anomalyRes.summary || {}).total || 0,
+      healthScore: (healthRes.data || {}).score || 0,
+      predictedAlerts: ((predRes.data || {}).items || []).length || 0,
+      autoRemediationRate: (remedRes.data || {}).rate || 0,
+    }
+  } catch {}
+}
+
+onMounted(fetchKpiData)
 
 function statusLabel(s) {
   return { critical: '严重', warning: '警告', normal: '正常' }[s] || s
@@ -235,14 +281,16 @@ async function sendMessage() {
   scrollToBottom()
   loading.value = true
   try {
-    let overview = {}, alertStats = {}
+    let overview = {}, alertStats = {}, intelligent = {}
     try {
-      const [o, a] = await Promise.all([
+      const [o, a, i] = await Promise.all([
         fetch('/api/cmdb/dashboard/overview').then(r => r.json()),
-        fetch('/api/cmdb/alerts/stats').then(r => r.json())
+        fetch('/api/cmdb/alerts/stats').then(r => r.json()),
+        fetch('/api/intelligent/anomalies').then(r => r.json()),
       ])
       overview = o.data || o
       alertStats = a.data || a
+      intelligent = i.data || i
     } catch {}
     let topo = { nodes: [], edges: [] }
     try {
@@ -254,6 +302,10 @@ async function sendMessage() {
       title: document.title || '',
       overview,
       alertStats,
+      intelligent: {
+        anomalyCount: intelligent.length || 0,
+        anomalies: (intelligent || []).slice(0, 5).map(a => `${a.nodeLabel} ${a.metric}=${a.currentValue} 基线=${a.baseline} 偏离=${a.deviation}% 得分=${a.score}`),
+      },
       topology: {
         nodes: topo.nodes?.map(n => n.id) || [],
         edges: topo.edges?.map(e => `${e.source}→${e.target} (${e.label||''})`) || [],
@@ -275,9 +327,9 @@ async function sendMessage() {
         }
       })
       actions.sort((a, b) => {
-        const aScore = /查看.+?详情/.test(a.label) ? 0 : 1
-        const bScore = /查看.+?详情/.test(b.label) ? 0 : 1
-        return aScore - bScore
+        const aExec = /重启|扩容|限流|清除|执行|flush|restart|scale|ratelimit/.test(a.label) ? 0 : 1
+        const bExec = /重启|扩容|限流|清除|执行|flush|restart|scale|ratelimit/.test(b.label) ? 0 : 1
+        return aExec - bExec
       })
       messages.value.push({ role: 'assistant', content: data.reply || '请选择以下操作：', actions })
       if (matched.length) {
@@ -293,53 +345,98 @@ async function sendMessage() {
   scrollToBottom()
 }
 
-async function analyzePage() {
-  open.value = true
-  const pageName = route.path === '/' ? '首页' : route.path
-  inputText.value = `分析当前页面 ${pageName} 的监控数据和关键指标，给出总结`
-  await sendMessage()
-}
-
-async function askPromQL() {
-  open.value = true
-  inputText.value = '帮我写一个 PromQL 查询语句'
-  await sendMessage()
-}
-
-async function summarizeAlerts() {
+async function intelligentAnalyze() {
   open.value = true
   inputText.value = ''
   loading.value = true
   try {
-    const res = await fetch('/api/cmdb/alerts/stats')
-    const stats = await res.json()
-    inputText.value = `总结当前告警情况，数据：${JSON.stringify(stats)}`
+    const res = await fetch('/api/intelligent/anomalies')
+    const data = await res.json()
+    const alerts = data.data || []
+    const summary = data.summary || {}
+    const detail = alerts.map(a => `  ${a.nodeLabel} | ${a.metric} | 当前${a.currentValue} 基线${a.baseline} | 得分${a.score} | ${a.level}`).join('\n')
+    inputText.value = `执行智能异常分析。\n\n检测到 ${summary.total} 条异常（严重${summary.critical} 警告${summary.warning}）：\n${detail}\n\n请逐条分析异常原因、影响范围，给出优先级排序和处理建议。`
     loading.value = false
     await sendMessage()
   } catch {
-    messages.value.push({ role: 'assistant', content: '获取告警数据失败。' })
+    messages.value.push({ role: 'assistant', content: '获取智能检测数据失败。' })
     loading.value = false
   }
 }
 
-async function detectFaults() {
+async function rootCauseAnalysis() {
   open.value = true
   inputText.value = ''
   loading.value = true
   try {
-    const [alertRes, topoRes] = await Promise.all([
-      fetch('/api/mock/alerts').then(r => r.json()),
+    const [anomalyRes, topoRes] = await Promise.all([
+      fetch('/api/intelligent/anomalies').then(r => r.json()),
       fetch('/api/mock/topology').then(r => r.json())
     ])
-    const alerts = alertRes.data || alertRes
+    const alerts = (anomalyRes.data || [])
     const topo = topoRes.data || topoRes
-    const alertText = alerts.map(a => `  ${a.node} | ${a.metric} | ${a.value} | ${a.level}`).join('\n')
-    const nodeText = (topo.nodes||[]).map(n => n.id).join(', ')
-    inputText.value = '检测系统故障。\n\n当前告警：\n' + alertText + '\n\n拓扑节点：' + nodeText + '\n\n请分析是否存在关联故障，定位根因节点，给出修复建议。'
+    const rootCause = alerts.reduce((max, a) => a.score > max.score ? a : max, { score: 0 })
+    const edges = (topo.edges || []).map(e => `${e.source}→${e.target}`)
+    inputText.value = `执行告警根因分析。\n\n最高异常得分节点：${rootCause.nodeLabel} (${rootCause.metric} 得分${rootCause.score})\n\n拓扑连接：\n${edges.join('\n')}\n\n请分析：1) 根因节点是谁 2) 故障如何传播 3) 哪些下游受影响 4) 修复优先级`
     loading.value = false
     await sendMessage()
   } catch {
-    messages.value.push({ role: 'assistant', content: '获取故障检测数据失败。' })
+    messages.value.push({ role: 'assistant', content: '获取根因分析数据失败。' })
+    loading.value = false
+  }
+}
+
+async function baselineCheck() {
+  open.value = true
+  inputText.value = ''
+  loading.value = true
+  try {
+    const res = await fetch('/api/intelligent/anomalies')
+    const data = await res.json()
+    const alerts = (data.data || []).filter(a => Math.abs(a.deviation) > 20)
+    const detail = alerts.map(a => `  ${a.nodeLabel}.${a.metric}: 当前${a.currentValue} vs 基线${a.baseline} 偏离${a.deviation}%`).join('\n')
+    inputText.value = `执行基线偏离检查。\n\n以下指标偏离基线超过20%：\n${detail || '  无显著偏离'}\n\n请分析：1) 偏离是否异常 2) 可能原因 3) 是否需要干预`
+    loading.value = false
+    await sendMessage()
+  } catch {
+    messages.value.push({ role: 'assistant', content: '获取基线数据失败。' })
+    loading.value = false
+  }
+}
+
+async function propagationTrace() {
+  open.value = true
+  inputText.value = ''
+  loading.value = true
+  try {
+    const [anomalyRes, topoRes] = await Promise.all([
+      fetch('/api/intelligent/anomalies').then(r => r.json()),
+      fetch('/api/mock/topology').then(r => r.json())
+    ])
+    const alerts = (anomalyRes.data || [])
+    const topo = topoRes.data || topoRes
+    const nodes = topo.nodes || []
+    const edges = topo.edges || []
+    const criticalNodes = alerts.filter(a => a.level === 'critical').map(a => a.nodeLabel)
+    const upstreamMap = {}
+    edges.forEach(e => {
+      if (!upstreamMap[e.target]) upstreamMap[e.target] = []
+      upstreamMap[e.target].push(e.source)
+    })
+    const trace = criticalNodes.map(n => {
+      const path = []
+      let current = nodes.find(node => node.label === n)?.id
+      while (current && upstreamMap[current]) {
+        path.unshift(current)
+        current = upstreamMap[current][0]
+      }
+      return `  ${n} ← ${path.join(' ← ')}`
+    }).join('\n')
+    inputText.value = `执行故障传播分析。\n\n严重异常节点：${criticalNodes.join(', ')}\n\n传播路径：\n${trace}\n\n请分析：1) 传播链路 2) 根源在哪一层 3) 如何阻断传播`
+    loading.value = false
+    await sendMessage()
+  } catch {
+    messages.value.push({ role: 'assistant', content: '获取传播分析数据失败。' })
     loading.value = false
   }
 }
@@ -373,10 +470,19 @@ function runAction(act) {
 
 async function openNodeDetail(nodeId) {
   try {
-    const res = await fetch(`/api/mock/node/${nodeId}/metrics`)
-    const data = await res.json()
-    if (data.success) {
-      nodeDetailData.value = data.data
+    const [metricsRes, intelRes] = await Promise.all([
+      fetch(`/api/mock/node/${nodeId}/metrics`).then(r => r.json()),
+      fetch(`/api/intelligent/anomalies?nodeId=${nodeId}`).then(r => r.json()),
+    ])
+    if (metricsRes.success) {
+      nodeDetailData.value = metricsRes.data
+      const alerts = intelRes.data || []
+      nodeIntelligent.value = alerts.length ? {
+        score: alerts.reduce((max, a) => a.score > max ? a.score : max, 0),
+        deviation: alerts[0]?.deviation || 0,
+        type: alerts[0]?.type || 'unknown',
+        detail: alerts[0]?.detail || '',
+      } : null
       nodeDetailOpen.value = true
     }
   } catch {}
@@ -486,7 +592,16 @@ function openPanel() {
 .ai-welcome { text-align: center; padding: 40px 20px 20px; }
 .welcome-icon { font-size: 40px; color: var(--brand, #007DFF); margin-bottom: 12px; }
 .welcome-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.welcome-desc { font-size: 13px; color: var(--text-sec, #6B7280); margin-bottom: 24px; }
+.welcome-desc { font-size: 13px; color: var(--text-sec, #6B7280); margin-bottom: 16px; }
+
+.ai-kpi-bar { display: flex; gap: 6px; margin-bottom: 14px; }
+.kpi-item { flex: 1; background: var(--bg-sec, #F2F2F7); border-radius: 8px; padding: 8px 6px; text-align: center; }
+.kpi-val { display: block; font-size: 18px; font-weight: 700; line-height: 1.2; }
+.kpi-lbl { display: block; font-size: 11px; color: var(--text-sec, #6B7280); margin-top: 2px; }
+.kpi-danger { color: var(--danger, #F5222D); }
+.kpi-warn { color: var(--warn, #FF7D00); }
+.kpi-ok { color: #07C160; }
+
 .quick-actions { display: flex; flex-direction: column; gap: 8px; }
 .quick-btn {
   display: flex; align-items: center; gap: 8px;
@@ -650,6 +765,14 @@ function openPanel() {
   font-family: 'SF Mono', Monaco, monospace; font-size: 11px;
 }
 .dep-center { font-weight: 600; color: var(--brand, #007DFF); }
+.nd-intelligent { font-size: 12px; }
+.nd-intel-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border, #E5E5EA); }
+.nd-intel-label { color: var(--text-sec, #6B7280); }
+.nd-intel-val { font-weight: 600; }
+.nd-intel-danger { color: var(--danger, #F5222D); }
+.nd-intel-warn { color: var(--warn, #FF7D00); }
+.nd-intel-ok { color: #07C160; }
+.nd-intel-detail { margin-top: 8px; padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; color: var(--text-sec, #6B7280); line-height: 1.5; }
 .nd-fix-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .fix-action-btn {
   display: inline-flex; align-items: center; gap: 6px;

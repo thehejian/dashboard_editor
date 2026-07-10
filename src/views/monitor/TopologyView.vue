@@ -53,6 +53,9 @@
             <a-button size="small">导出PNG</a-button>
             <a-button size="small">刷新</a-button>
             <a-button size="small">帮助</a-button>
+            <a-button size="small" :type="anomalyMode ? 'primary' : 'default'" :danger="anomalyMode" @click="toggleAnomalyMode">
+              <i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i> {{ anomalyMode ? '退出异常模式' : '异常检测' }}
+            </a-button>
           </div>
           <div class="toolbar-divider"></div>
           <div class="toolbar-right">
@@ -331,7 +334,7 @@ import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } 
 import { useRoute, useRouter } from 'vue-router'
 import { Graph } from '@antv/g6'
 import TreeNode from './TreeNode.vue'
-import { topoHighlight, clearTopoHighlight, topoRefreshTrigger } from '../../composables/useEditorState.js'
+import { topoHighlight, clearTopoHighlight, topoRefreshTrigger, intelligentState, setAnomalyMode, setPropagationPath } from '../../composables/useEditorState.js'
 
 const navItems = [
   { key: 'cloud-system', label: '云系统拓扑', icon: 'fa-cloud' },
@@ -531,6 +534,94 @@ const networkContainer = ref(null)
 let networkGraph = null
 const appContainer = ref(null)
 let appGraph = null
+
+const anomalyMode = ref(false)
+const anomalyData = ref([])
+
+async function toggleAnomalyMode() {
+  anomalyMode.value = !anomalyMode.value
+  setAnomalyMode(anomalyMode.value)
+  if (!anomalyMode.value) {
+    anomalyData.value = []
+    setPropagationPath([], [])
+    clearAllAnomalyStates()
+    return
+  }
+  try {
+    const res = await fetch('/api/intelligent/detect', { method: 'POST' })
+    const data = await res.json()
+    anomalyData.value = data.data?.anomalies || []
+    applyAnomalyStates()
+  } catch {}
+}
+
+function clearAllAnomalyStates() {
+  if (networkGraph) {
+    networkGraph.getNodeData().forEach(n => {
+      networkGraph.setItemState(n.id, 'anomaly-highlight', false)
+      networkGraph.setItemState(n.id, 'dimmed', false)
+    })
+  }
+  if (appGraph) {
+    appGraph.getNodeData().forEach(n => {
+      appGraph.setItemState(n.id, 'anomaly-highlight', false)
+      appGraph.setItemState(n.id, 'dimmed', false)
+    })
+  }
+}
+
+function applyAnomalyStates() {
+  const anomalyIds = anomalyData.value.map(a => a.nodeId)
+  const rootCause = anomalyData.value.reduce((max, a) => a.score > (max?.score || 0) ? a : max, null)
+  const propagationNodes = computePropagationPath(rootCause?.nodeId, anomalyIds)
+
+  if (appGraph) {
+    const gNodes = appGraph.getNodeData()
+    gNodes.forEach(n => {
+      if (anomalyIds.includes(n.id)) {
+        appGraph.setItemState(n.id, 'anomaly-highlight', true)
+        appGraph.setItemState(n.id, 'dimmed', false)
+      } else {
+        appGraph.setItemState(n.id, 'dimmed', true)
+        appGraph.setItemState(n.id, 'anomaly-highlight', false)
+      }
+    })
+    if (propagationNodes.length > 1) {
+      const gEdges = appGraph.getEdgeData()
+      gEdges.forEach(e => {
+        const inPath = propagationNodes.some(n => n === e.source) && propagationNodes.some(n => n === e.target)
+        if (inPath) {
+          appGraph.updateEdgeData(e.id, { style: { stroke: '#F5222D', lineDash: [6, 3], lineWidth: 2.5 } })
+        }
+      })
+      appGraph.render()
+    }
+    if (rootCause) {
+      appGraph.focusElement(rootCause.nodeId, { animation: { duration: 800 } })
+    }
+  }
+}
+
+function computePropagationPath(rootId, anomalyIds) {
+  if (!rootId) return []
+  const edges = MOCK_TOPO_EDGES || []
+  const upstreamMap = {}
+  edges.forEach(e => {
+    if (!upstreamMap[e.target]) upstreamMap[e.target] = []
+    upstreamMap[e.target].push(e.source)
+  })
+  const path = []
+  const visited = new Set()
+  function bfs(nodeId) {
+    if (visited.has(nodeId)) return
+    visited.add(nodeId)
+    path.push(nodeId)
+    const parents = upstreamMap[nodeId] || []
+    parents.forEach(p => bfs(p))
+  }
+  bfs(rootId)
+  return path
+}
 
 watch(() => topoHighlight.active, (val) => {
   if (val && topoHighlight.nodes?.length) {
@@ -794,6 +885,14 @@ function initNetworkGraph() {
           shadowBlur: 12,
           iconFill: '#fff',
         },
+        'anomaly-highlight': {
+          fill: '#F5222D',
+          stroke: '#F5222D',
+          lineWidth: 3,
+          shadowColor: 'rgba(245,34,45,0.5)',
+          shadowBlur: 16,
+          iconFill: '#fff',
+        },
         dimmed: {
           opacity: 0.25,
           labelOpacity: 0.25,
@@ -917,6 +1016,7 @@ async function initAppGraph(tab) {
       type: 'rect',
       state: {
         'ai-highlight': { stroke: '#722ed1', lineWidth: 3, shadowBlur: 10, shadowColor: '#d3adf7', labelFontWeight: 'bold' },
+        'anomaly-highlight': { stroke: '#F5222D', lineWidth: 3, shadowBlur: 12, shadowColor: 'rgba(245,34,45,0.4)', labelFontWeight: 'bold' },
         dimmed: { opacity: 0.25, labelOpacity: 0.25 },
       },
       style: {

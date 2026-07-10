@@ -582,32 +582,121 @@ const MOCK_ALERTS = [
   { id: 8, time: '14:29:15', node: 'lb-api', type: 'gateway', metric: '错误率', value: '2.3%', level: 'warning', summary: 'API Gateway 错误率 2.3%，上升明显', detail: 'lb-api 网关错误率从 0.1% 上升至 2.3%，主要为 504 超时错误。' },
 ]
 
+function genHistory(base, current, points = 12) {
+  const arr = []
+  const step = (current - base) / points
+  for (let i = 0; i < points; i++) {
+    const t = Date.now() - (points - i) * 5 * 60000
+    const noise = (Math.random() - 0.5) * Math.abs(base) * 0.08
+    arr.push({ time: t, value: +(base + step * i + noise).toFixed(1), baseline: base })
+  }
+  return arr
+}
+
 const MOCK_TOPO_NODES = [
   // 接入层
-  { id: 'cdn', label: 'CDN', type: 'access', status: 'normal', layer: 'access', metrics: { bandwidth: '2.4Gbps', hitRate: '94%' } },
-  { id: 'waf', label: 'WAF', type: 'security', status: 'normal', layer: 'access', metrics: { blocked: '1.2k/min', rules: 847 } },
-  { id: 'slb', label: 'SLB', type: 'lb', status: 'normal', layer: 'access', metrics: { qps: '45k', connections: '12k' } },
+  { id: 'cdn', label: 'CDN', type: 'access', status: 'normal', layer: 'access',
+    metrics: { bandwidth: '2.4Gbps', hitRate: '94%' },
+    baseline: { bandwidth: 2.0, hitRate: 95 },
+    anomalyScore: 0, history: genHistory(2.0, 2.4) },
+  { id: 'waf', label: 'WAF', type: 'security', status: 'normal', layer: 'access',
+    metrics: { blocked: '1.2k/min', rules: 847 },
+    baseline: { blocked: 800, rules: 847 },
+    anomalyScore: 0, history: genHistory(800, 1200) },
+  { id: 'slb', label: 'SLB', type: 'lb', status: 'normal', layer: 'access',
+    metrics: { qps: '45k', connections: '12k' },
+    baseline: { qps: 40000, connections: 10000 },
+    anomalyScore: 0, history: genHistory(40000, 45000) },
   // 网关层
-  { id: 'lb-api', label: 'API Gateway', type: 'gateway', status: 'normal', layer: 'gateway', metrics: { latency: '12ms', errorRate: '0.1%' } },
+  { id: 'lb-api', label: 'API Gateway', type: 'gateway', status: 'warning', layer: 'gateway',
+    metrics: { latency: '12ms', errorRate: '2.3%' },
+    baseline: { latency: 8, errorRate: 0.1 },
+    anomalyScore: 0.62, history: genHistory(8, 12) },
   // 服务层
-  { id: 'prod-order-01', label: '订单服务-01', type: 'service', status: 'critical', layer: 'service', metrics: { cpu: '97%', memory: '94%', latency: '3200ms' } },
-  { id: 'prod-order-02', label: '订单服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '45%', memory: '62%', latency: '85ms' } },
-  { id: 'prod-order-03', label: '订单服务-03', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '42%', memory: '58%', latency: '80ms' } },
-  { id: 'prod-user-01', label: '用户服务-01', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '38%', memory: '55%', latency: '45ms' } },
-  { id: 'prod-user-02', label: '用户服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '35%', memory: '52%', latency: '42ms' } },
-  { id: 'prod-pay-01', label: '支付服务-01', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '32%', memory: '48%', latency: '120ms' } },
-  { id: 'prod-pay-02', label: '支付服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '30%', memory: '45%', latency: '115ms' } },
-  { id: 'prod-inventory-01', label: '库存服务-01', type: 'service', status: 'warning', layer: 'service', metrics: { cpu: '72%', memory: '68%', latency: '180ms' } },
+  { id: 'prod-order-01', label: '订单服务-01', type: 'service', status: 'critical', layer: 'service',
+    metrics: { cpu: '97%', memory: '94%', latency: '3200ms' },
+    baseline: { cpu: 45, memory: 60, latency: 200 },
+    anomalyScore: 0.95, history: genHistory(45, 97) },
+  { id: 'prod-order-02', label: '订单服务-02', type: 'service', status: 'normal', layer: 'service',
+    metrics: { cpu: '45%', memory: '62%', latency: '85ms' },
+    baseline: { cpu: 42, memory: 58, latency: 80 },
+    anomalyScore: 0.08, history: genHistory(42, 45) },
+  { id: 'prod-order-03', label: '订单服务-03', type: 'service', status: 'normal', layer: 'service',
+    metrics: { cpu: '42%', memory: '58%', latency: '80ms' },
+    baseline: { cpu: 40, memory: 55, latency: 75 },
+    anomalyScore: 0.05, history: genHistory(40, 42) },
+  { id: 'prod-user-01', label: '用户服务-01', type: 'service', status: 'normal', layer: 'service',
+    metrics: { cpu: '38%', memory: '55%', latency: '45ms' },
+    baseline: { cpu: 35, memory: 50, latency: 40 },
+    anomalyScore: 0.03, history: genHistory(35, 38) },
+  { id: 'prod-user-02', label: '用户服务-02', type: 'service', status: 'normal', layer: 'service',
+    metrics: { cpu: '35%', memory: '52%', latency: '42ms' },
+    baseline: { cpu: 33, memory: 50, latency: 40 },
+    anomalyScore: 0.02, history: genHistory(33, 35) },
+  { id: 'prod-pay-01', label: '支付服务-01', type: 'service', status: 'normal', layer: 'service',
+    metrics: { cpu: '32%', memory: '48%', latency: '120ms' },
+    baseline: { cpu: 30, memory: 45, latency: 100 },
+    anomalyScore: 0.04, history: genHistory(30, 32) },
+  { id: 'prod-pay-02', label: '支付服务-02', type: 'service', status: 'normal', layer: 'service',
+    metrics: { cpu: '30%', memory: '45%', latency: '115ms' },
+    baseline: { cpu: 28, memory: 43, latency: 100 },
+    anomalyScore: 0.03, history: genHistory(28, 30) },
+  { id: 'prod-inventory-01', label: '库存服务-01', type: 'service', status: 'warning', layer: 'service',
+    metrics: { cpu: '72%', memory: '68%', latency: '180ms' },
+    baseline: { cpu: 40, memory: 55, latency: 60 },
+    anomalyScore: 0.71, history: genHistory(40, 72) },
   // 中间件层
-  { id: 'redis-cache', label: 'Redis Cluster', type: 'cache', status: 'warning', layer: 'middleware', metrics: { hitRate: '72%', memory: '78%', connections: '4.5k' } },
+  { id: 'redis-cache', label: 'Redis Cluster', type: 'cache', status: 'warning', layer: 'middleware',
+    metrics: { hitRate: '72%', memory: '78%', connections: '4.5k' },
+    baseline: { hitRate: 95, memory: 55, connections: 3000 },
+    anomalyScore: 0.82, history: genHistory(95, 72) },
+  { id: 'mysql-master', label: 'MySQL主库', type: 'database', status: 'warning', layer: 'middleware',
+    metrics: { qps: '8.5k', connections: '450', ioWait: '65%' },
+    baseline: { qps: 6000, connections: 300, ioWait: 15 },
+    anomalyScore: 0.68, history: genHistory(15, 65) },
+  { id: 'mysql-slave', label: 'MySQL从库', type: 'database', status: 'normal', layer: 'middleware',
+    metrics: { qps: '4.2k', connections: '200', replicationLag: '2s' },
+    baseline: { qps: 4000, connections: 180, replicationLag: 0.5 },
+    anomalyScore: 0.15, history: genHistory(4000, 4200) },
+  { id: 'mongodb', label: 'MongoDB', type: 'database', status: 'normal', layer: 'middleware',
+    metrics: { connections: '850', oplog: '12k', storage: '45%' },
+    baseline: { connections: 800, oplog: 10000, storage: 40 },
+    anomalyScore: 0.05, history: genHistory(800, 850) },
+  { id: 'nacos', label: 'Nacos', type: 'service', status: 'normal', layer: 'middleware',
+    metrics: { services: 42, instances: 128, configHits: '99.8%' },
+    baseline: { services: 40, instances: 120, configHits: 99.9 },
+    anomalyScore: 0.02, history: genHistory(40, 42) },
+  { id: 'mq-order', label: 'RocketMQ', type: 'mq', status: 'normal', layer: 'middleware',
+    metrics: { tps: '12k', backlog: '2.3k', consumers: 16 },
+    baseline: { tps: 10000, backlog: 500, consumers: 16 },
+    anomalyScore: 0.12, history: genHistory(500, 2300) },
+  { id: 'es-cluster', label: 'Elasticsearch', type: 'search', status: 'normal', layer: 'middleware',
+    metrics: { nodes: 3, indices: 28, queryRate: '5.2k' },
+    baseline: { nodes: 3, indices: 25, queryRate: 5000 },
+    anomalyScore: 0.04, history: genHistory(5000, 5200) },
+  // 基础设施层
+  { id: 'k8s-master', label: 'K8s Master', type: 'infra', status: 'normal', layer: 'infra',
+    metrics: { cpu: '25%', memory: '40%', pods: 86 },
+    baseline: { cpu: 20, memory: 35, pods: 80 },
+    anomalyScore: 0.06, history: genHistory(20, 25) },
+  { id: 'k8s-node-1', label: 'K8s Node-1', type: 'infra', status: 'normal', layer: 'infra',
+    metrics: { cpu: '55%', memory: '68%', pods: 32 },
+    baseline: { cpu: 50, memory: 60, pods: 30 },
+    anomalyScore: 0.10, history: genHistory(50, 55) },
+  { id: 'k8s-node-2', label: 'K8s Node-2', type: 'infra', status: 'warning', layer: 'infra',
+    metrics: { cpu: '72%', memory: '85%', pods: 35 },
+    baseline: { cpu: 50, memory: 60, pods: 30 },
+    anomalyScore: 0.73, history: genHistory(60, 85) },
+  { id: 'k8s-node-3', label: 'K8s Node-3', type: 'infra', status: 'normal', layer: 'infra',
+    metrics: { cpu: '48%', memory: '58%', pods: 28 },
+    baseline: { cpu: 50, memory: 60, pods: 30 },
+    anomalyScore: 0.04, history: genHistory(50, 48) },
 ]
 
 const MOCK_TOPO_EDGES = [
-  // 接入层链路
   { id: 'e-cdn-waf', source: 'cdn', target: 'waf' },
   { id: 'e-waf-slb', source: 'waf', target: 'slb' },
   { id: 'e-slb-gw', source: 'slb', target: 'lb-api' },
-  // 网关→服务
   { id: 'e-gw-order1', source: 'lb-api', target: 'prod-order-01' },
   { id: 'e-gw-order2', source: 'lb-api', target: 'prod-order-02' },
   { id: 'e-gw-order3', source: 'lb-api', target: 'prod-order-03' },
@@ -615,16 +704,24 @@ const MOCK_TOPO_EDGES = [
   { id: 'e-gw-user2', source: 'lb-api', target: 'prod-user-02' },
   { id: 'e-gw-pay1', source: 'lb-api', target: 'prod-pay-01' },
   { id: 'e-gw-pay2', source: 'lb-api', target: 'prod-pay-02' },
-  // 服务间调用
   { id: 'e-order1-inventory', source: 'prod-order-01', target: 'prod-inventory-01' },
-  // 服务→Redis
   { id: 'e-order1-redis', source: 'prod-order-01', target: 'redis-cache' },
   { id: 'e-order2-redis', source: 'prod-order-02', target: 'redis-cache' },
   { id: 'e-order3-redis', source: 'prod-order-03', target: 'redis-cache' },
+  { id: 'e-user1-redis', source: 'prod-user-01', target: 'redis-cache' },
   { id: 'e-user2-redis', source: 'prod-user-02', target: 'redis-cache' },
   { id: 'e-pay1-redis', source: 'prod-pay-01', target: 'redis-cache' },
   { id: 'e-pay2-redis', source: 'prod-pay-02', target: 'redis-cache' },
   { id: 'e-inventory-redis', source: 'prod-inventory-01', target: 'redis-cache' },
+  { id: 'e-order1-mysql', source: 'prod-order-01', target: 'mysql-master' },
+  { id: 'e-order2-mysql', source: 'prod-order-02', target: 'mysql-master' },
+  { id: 'e-user1-mysql', source: 'prod-user-01', target: 'mysql-master' },
+  { id: 'e-pay1-mysql', source: 'prod-pay-01', target: 'mysql-master' },
+  { id: 'e-mysql-slave', source: 'mysql-master', target: 'mysql-slave' },
+  { id: 'e-order1-mq', source: 'prod-order-01', target: 'mq-order' },
+  { id: 'e-inventory-mq', source: 'prod-inventory-01', target: 'mq-order' },
+  { id: 'e-order1-es', source: 'prod-order-01', target: 'es-cluster' },
+  { id: 'e-order1-mongo', source: 'prod-order-01', target: 'mongodb' },
 ]
 
 // 获取当前活跃告警列表
@@ -710,6 +807,190 @@ app.get('/api/mock/verify/:nodeId', (req, res) => {
   }, 1500)
 })
 
+// ==================== 智能检测 Mock ====================
+
+const MOCK_INTELLIGENT_ALERTS = [
+  { id: 'ia-001', nodeId: 'prod-order-01', nodeLabel: '订单服务-01', metric: 'CPU使用率',
+    currentValue: 97, baseline: 45, deviation: 115, score: 0.95,
+    level: 'critical', type: 'spike',
+    time: '2026-07-10 14:22:30', status: 'active',
+    detail: 'CPU从基线45%突增至97%，Z-Score=4.2，偏离度115%' },
+  { id: 'ia-002', nodeId: 'prod-order-01', nodeLabel: '订单服务-01', metric: '内存使用率',
+    currentValue: 94, baseline: 60, deviation: 56.7, score: 0.88,
+    level: 'critical', type: 'spike',
+    time: '2026-07-10 14:22:45', status: 'active',
+    detail: '内存持续上升，EWMA斜率+3.2%/min，预测10分钟后达OOM阈值' },
+  { id: 'ia-003', nodeId: 'redis-cache', nodeLabel: 'Redis Cluster', metric: '命中率',
+    currentValue: 72, baseline: 95, deviation: -24.2, score: 0.82,
+    level: 'warning', type: 'drop',
+    time: '2026-07-10 14:23:15', status: 'active',
+    detail: '命中率从95%降至72%，大量请求穿透到数据库' },
+  { id: 'ia-004', nodeId: 'prod-inventory-01', nodeLabel: '库存服务-01', metric: 'CPU使用率',
+    currentValue: 72, baseline: 40, deviation: 80, score: 0.71,
+    level: 'warning', type: 'trend',
+    time: '2026-07-10 14:24:00', status: 'active',
+    detail: 'CPU呈持续上升趋势，EWMA斜率+1.8%/min，受上游订单服务调用影响' },
+  { id: 'ia-005', nodeId: 'mysql-master', nodeLabel: 'MySQL主库', metric: 'IO等待',
+    currentValue: 65, baseline: 15, deviation: 333, score: 0.68,
+    level: 'warning', type: 'spike',
+    time: '2026-07-10 14:25:30', status: 'active',
+    detail: 'IO等待从15%突增至65%，慢查询堆积导致复制延迟' },
+  { id: 'ia-006', nodeId: 'k8s-node-2', nodeLabel: 'K8s Node-2', metric: '内存使用率',
+    currentValue: 85, baseline: 60, deviation: 41.7, score: 0.73,
+    level: 'warning', type: 'trend',
+    time: '2026-07-10 14:26:10', status: 'active',
+    detail: '内存持续上升，Pod调度可能受影响' },
+  { id: 'ia-007', nodeId: 'lb-api', nodeLabel: 'API Gateway', metric: '错误率',
+    currentValue: 2.3, baseline: 0.1, deviation: 2200, score: 0.62,
+    level: 'warning', type: 'spike',
+    time: '2026-07-10 14:27:00', status: 'active',
+    detail: '5xx错误率从0.1%升至2.3%，主要为504超时，与订单服务异常关联' },
+  { id: 'ia-008', nodeId: 'mq-order', nodeLabel: 'RocketMQ', metric: '积压量',
+    currentValue: 2300, baseline: 500, deviation: 360, score: 0.55,
+    level: 'info', type: 'trend',
+    time: '2026-07-10 14:28:30', status: 'active',
+    detail: '消息积压持续上升，消费者处理速度低于生产速度' },
+]
+
+const MOCK_KPI_BASELINES = {
+  anomalyCount: { value: 8, baseline: 5, trend: 60, trendText: '较昨日 +60%' },
+  healthScore: { value: 87, baseline: 92, trend: -5.4, trendText: '较昨日 -5.4%' },
+  predictedAlerts: { value: 3, baseline: 2, trend: 50, trendText: '较昨日 +50%' },
+  autoRemediationRate: { value: 92, baseline: 85, trend: 8.2, trendText: '较昨日 +8.2%' },
+}
+
+const MOCK_SERVICE_HEALTH = [
+  { name: '订单服务', services: [
+    { name: 'order-01', status: 'critical', score: 15 },
+    { name: 'order-02', status: 'normal', score: 92 },
+    { name: 'order-03', status: 'normal', score: 94 },
+  ]},
+  { name: '支付服务', services: [
+    { name: 'pay-01', status: 'normal', score: 95 },
+    { name: 'pay-02', status: 'normal', score: 96 },
+  ]},
+  { name: '用户服务', services: [
+    { name: 'user-01', status: 'normal', score: 93 },
+    { name: 'user-02', status: 'normal', score: 94 },
+  ]},
+  { name: '库存服务', services: [
+    { name: 'inventory-01', status: 'warning', score: 68 },
+  ]},
+]
+
+const MOCK_RECOMMENDATIONS = [
+  { id: 'rec-001', action: 'restart', label: '重启订单服务-01', desc: '预计恢复CPU至45%',
+    icon: 'fa-solid fa-rotate-right', priority: 'urgent', targetNode: 'prod-order-01' },
+  { id: 'rec-002', action: 'scale', label: '扩容订单服务实例', desc: '从3副本扩至5副本',
+    icon: 'fa-solid fa-expand', priority: 'urgent', targetNode: 'prod-order-01' },
+  { id: 'rec-003', action: 'ratelimit', label: '限流降级 API网关', desc: '保护下游服务',
+    icon: 'fa-solid fa-gauge-high', priority: 'urgent', targetNode: 'lb-api' },
+  { id: 'rec-004', action: 'view-topology', label: '查看拓扑影响范围', desc: '分析传播路径',
+    icon: 'fa-solid fa-diagram-project', priority: 'diagnostic', targetNode: null },
+  { id: 'rec-005', action: 'report', label: '生成故障处理报告', desc: '结构化报告含根因分析',
+    icon: 'fa-solid fa-file-lines', priority: 'diagnostic', targetNode: null },
+  { id: 'rec-006', action: 'restart', label: '重启MySQL主库', desc: '清除慢查询堆积',
+    icon: 'fa-solid fa-rotate-right', priority: 'normal', targetNode: 'mysql-master' },
+  { id: 'rec-007', action: 'view-baseline', label: '查看基线偏离详情', desc: '对比历史基线',
+    icon: 'fa-solid fa-chart-line', priority: 'diagnostic', targetNode: null },
+  { id: 'rec-008', action: 'flush-cache', label: '清除Redis缓存', desc: '重建缓存索引',
+    icon: 'fa-solid fa-broom', priority: 'normal', targetNode: 'redis-cache' },
+]
+
+const MOCK_TREND_24H = [
+  { hour: '00:00', critical: 0, warning: 2, info: 1 },
+  { hour: '01:00', critical: 0, warning: 1, info: 0 },
+  { hour: '02:00', critical: 0, warning: 1, info: 1 },
+  { hour: '03:00', critical: 0, warning: 0, info: 0 },
+  { hour: '04:00', critical: 0, warning: 1, info: 1 },
+  { hour: '05:00', critical: 0, warning: 2, info: 1 },
+  { hour: '06:00', critical: 1, warning: 3, info: 2 },
+  { hour: '07:00', critical: 1, warning: 4, info: 3 },
+  { hour: '08:00', critical: 2, warning: 6, info: 4 },
+  { hour: '09:00', critical: 2, warning: 8, info: 5 },
+  { hour: '10:00', critical: 3, warning: 7, info: 4 },
+  { hour: '11:00', critical: 2, warning: 5, info: 3 },
+  { hour: '12:00', critical: 1, warning: 3, info: 2 },
+  { hour: '13:00', critical: 1, warning: 4, info: 3 },
+  { hour: '14:00', critical: 5, warning: 12, info: 6 },
+  { hour: '15:00', critical: 0, warning: 0, info: 0 },
+  { hour: '16:00', critical: 0, warning: 0, info: 0 },
+  { hour: '17:00', critical: 0, warning: 0, info: 0 },
+  { hour: '18:00', critical: 0, warning: 0, info: 0 },
+  { hour: '19:00', critical: 0, warning: 0, info: 0 },
+  { hour: '20:00', critical: 0, warning: 0, info: 0 },
+  { hour: '21:00', critical: 0, warning: 0, info: 0 },
+  { hour: '22:00', critical: 0, warning: 0, info: 0 },
+  { hour: '23:00', critical: 0, warning: 0, info: 0 },
+]
+
+// GET /api/intelligent/anomalies
+app.get('/api/intelligent/anomalies', (req, res) => {
+  const { nodeId } = req.query
+  let alerts = MOCK_INTELLIGENT_ALERTS
+  if (nodeId) alerts = alerts.filter(a => a.nodeId === nodeId)
+  const summary = {
+    total: alerts.length,
+    critical: alerts.filter(a => a.level === 'critical').length,
+    warning: alerts.filter(a => a.level === 'warning').length,
+    info: alerts.filter(a => a.level === 'info').length,
+  }
+  res.json({ success: true, data: alerts, summary })
+})
+
+// GET /api/intelligent/health
+app.get('/api/intelligent/health', (req, res) => {
+  res.json({ success: true, data: { score: 87, services: MOCK_SERVICE_HEALTH, trend: -5.4 } })
+})
+
+// GET /api/intelligent/predictions
+app.get('/api/intelligent/predictions', (req, res) => {
+  res.json({ success: true, data: { count: 3, items: [
+    { metric: 'prod-order-01 CPU', predicted: 99, confidence: 0.88, eta: '10分钟' },
+    { metric: 'redis-cache 命中率', predicted: 55, confidence: 0.75, eta: '25分钟' },
+    { metric: 'mysql-master IO', predicted: 80, confidence: 0.65, eta: '45分钟' },
+  ]}})
+})
+
+// GET /api/intelligent/remediation
+app.get('/api/intelligent/remediation', (req, res) => {
+  res.json({ success: true, data: { rate: 92, total: 8, success: 7 } })
+})
+
+// GET /api/intelligent/baseline/:metric
+app.get('/api/intelligent/baseline/:metric', (req, res) => {
+  const { metric } = req.params
+  const { nodeId } = req.query
+  const node = MOCK_TOPO_NODES.find(n => n.id === nodeId)
+  if (!node) return res.status(404).json({ success: false, message: '节点不存在' })
+  const baselineVal = node.baseline?.[metric]
+  const history = node.history || []
+  res.json({
+    success: true,
+    data: {
+      metric,
+      nodeId: node.id,
+      baseline: baselineVal ?? null,
+      current: node.metrics?.[metric] ?? null,
+      history,
+    }
+  })
+})
+
+// POST /api/intelligent/detect
+app.post('/api/intelligent/detect', (req, res) => {
+  const anomalies = MOCK_TOPO_NODES
+    .filter(n => n.anomalyScore > 0.1)
+    .map(n => ({ nodeId: n.id, label: n.label, score: n.anomalyScore, status: n.status }))
+    .sort((a, b) => b.score - a.score)
+  res.json({ success: true, data: { anomalies, detectedAt: new Date().toISOString() } })
+})
+
+// GET /api/intelligent/trend
+app.get('/api/intelligent/trend', (req, res) => {
+  res.json({ success: true, data: MOCK_TREND_24H, alerts: MOCK_ALERTS })
+})
+
 // ==================== AI Chat ====================
 
 const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
@@ -722,16 +1003,16 @@ const ZHIPU_MODEL = 'glm-4.7-flash'
 async function callProvider(apiKey, baseUrl, model, messages, extraParams) {
   const bodyObj = { model, messages, stream: false, ...extraParams }
   const bodyStr = JSON.stringify(bodyObj)
-  const curl = `curl -s --max-time 120 '${baseUrl}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${apiKey}' -d '${bodyStr.replace(/'/g, "'\\''")}'`
+  const curl = `curl -s --max-time 5 '${baseUrl}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${apiKey}' -d '${bodyStr.replace(/'/g, "'\\''")}'`
 
-  for (let i = 0; i <= 2; i++) {
+  for (let i = 0; i <= 1; i++) {
     if (i > 0) {
       console.log(`[AI Chat] ${model} 重试 #${i}`)
-      await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 500))
     }
     try {
       const stdout = await new Promise((resolve, reject) => {
-        exec(curl, { timeout: 130000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
+        exec(curl, { timeout: 8000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
           if (err || !stdout.trim()) return reject(err || new Error('无响应'))
           resolve(stdout)
         })
@@ -758,24 +1039,40 @@ app.post('/api/ai/chat', async (req, res) => {
   }
   const fullMessages = [systemMsg, ...(messages || [])]
 
-  let result = await callProvider(ZHIPU_API_KEY, ZHIPU_BASE_URL, ZHIPU_MODEL, fullMessages, { thinking: { type: 'enabled' } })
-  if (!result) {
-    console.log('[AI Chat] GLM 全部失败, 切换至 Agnes')
-    result = await callProvider(AGNES_API_KEY, AGNES_BASE_URL, 'agnes-2.0-flash', fullMessages)
+  // Mock mode — skip real AI APIs for demo flow
+  const userMsg = (messages || []).map(m => m.content).join(' ').toLowerCase()
+  let mockReply = ''
+  const mockActions = []
+  if (userMsg.includes('订单') || userMsg.includes('order')) {
+    mockReply = '## 订单服务告警分析\n\n**异常检测**：prod-order-01 节点 CPU 使用率达 92%，超出基线(45%) +104%，异常得分 0.95（严重）。\n\n**根因定位**：订单服务 01 实例在 10:15 开始出现 CPU 飙升，疑似存在死循环或资源泄漏。拓扑分析显示上游 lb-api → prod-order-01 → mysql-master 链路正常，故障集中在 prod-order-01 自身。\n\n**影响范围**：下游 prod-pay-01、prod-inventory-01 可能受到级联影响。\n\n**处置建议**：'
+    mockActions.push(
+      { label: '重启订单服务-01', prompt: '执行重启 prod-order-01，预计恢复 CPU 至 45%' },
+      { label: '扩容订单服务实例', prompt: '从 3 副本扩至 5 副本，分散负载' },
+      { label: '查看 prod-order-01 拓扑', prompt: '跳转到 prod-order-01 的拓扑高亮页面' },
+    )
+  } else if (userMsg.includes('告警') || userMsg.includes('alert')) {
+    mockReply = '## 当前告警概况\n\n检测到 **8 条异常**，其中严重 3 条、警告 5 条：\n\n| 节点 | 指标 | 当前值 | 基线 | 偏离 | 得分 |\n|---|---|---|---|---|---|\n| prod-order-01 | CPU | 92% | 45% | +104% | 0.95 |\n| redis-cache | 内存 | 89% | 65% | +37% | 0.82 |\n| mysql-master | 连接数 | 450 | 200 | +125% | 0.78 |\n| lb-api | QPS | 12000 | 8000 | +50% | 0.72 |\n| prod-user-01 | 响应时间 | 2.3s | 0.5s | +360% | 0.88 |\n\n**根因分析**：prod-order-01 为最高异常得分节点(0.95)，疑似死循环导致 CPU 飙升，请求堆积引发下游链路级联告警。\n\n**建议优先处理**：'
+    mockActions.push(
+      { label: '重启订单服务-01', prompt: '执行重启 prod-order-01' },
+      { label: '查看拓扑影响范围', prompt: '分析告警传播路径' },
+      { label: '查看 prod-order-01 详情', prompt: '查看 prod-order-01 详细指标和修复建议' },
+    )
+  } else if (userMsg.includes('根因') || userMsg.includes('root cause')) {
+    mockReply = '## 根因分析报告\n\n**根因节点**：prod-order-01\n**异常得分**：0.95（最高）\n**问题指标**：CPU 使用率 92%（基线 45%，偏离 +104%）\n\n**传播路径**：\n`cdn → waf → slb → lb-api → prod-order-01 → mysql-master`\n\n**分析结论**：故障源头为 prod-order-01，CPU 异常飙升（可能死循环或资源泄漏），导致请求处理延迟增大。下游 mysql-master 连接数被动升高（慢查询堆积），上游 lb-api QPS 正常但响应变慢。\n\n**修复优先级**：\n1. 立即重启 prod-order-01（预计 2 分钟恢复）\n2. 扩容 prod-order-01 至 5 副本\n3. 监控 mysql-master 连接数恢复情况'
+    mockActions.push(
+      { label: '重启订单服务-01', prompt: '执行重启 prod-order-01' },
+      { label: '扩容订单服务实例', prompt: '从 3 副本扩至 5 副本' },
+      { label: '查看 prod-order-01 拓扑', prompt: '跳转到 prod-order-01 的拓扑高亮页面' },
+      { label: '查看 prod-order-01 详情', prompt: '查看该节点的详细指标和修复建议' },
+    )
+  } else {
+    mockReply = '## 分析结果\n\n已收到您的问题，正在为您进行智能分析。当前系统检测到以下关键信息：\n\n- **异常检测**：8 条异常（3 严重 + 5 警告）\n- **健康度**：87%\n- **最高风险节点**：prod-order-01（得分 0.95）\n\n如需进一步分析，请点击下方按钮：'
+    mockActions.push(
+      { label: '智能异常分析', prompt: '执行智能异常分析，逐条分析异常原因和处理建议' },
+      { label: '告警根因定位', prompt: '执行告警根因分析，定位最高异常得分节点' },
+    )
   }
-
-  if (result) {
-    const actions = []
-    const clean = result.raw.replace(/\[\[action:([^\]]+)\]\]/g, (_, m) => {
-      const parts = m.split(':')
-      actions.push({ label: parts[0], prompt: parts.slice(1).join(':') || '' })
-      return ''
-    })
-    const replyText = clean.trim() || (actions.length ? `推荐操作：${actions.map(a => a.label).join('、')}` : '')
-    return res.json({ reply: replyText, actions: actions.length ? actions : undefined, usage: result.usage })
-  }
-
-  res.json({ reply: '', usage: null })
+  return res.json({ reply: mockReply, actions: mockActions.length ? mockActions : undefined, usage: null })
 })
 
 // ==================== Helper Functions ====================
