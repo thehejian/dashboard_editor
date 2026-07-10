@@ -589,8 +589,7 @@ const MOCK_TOPO_NODES = [
   { id: 'slb', label: 'SLB', type: 'lb', status: 'normal', layer: 'access', metrics: { qps: '45k', connections: '12k' } },
   // 网关层
   { id: 'lb-api', label: 'API Gateway', type: 'gateway', status: 'normal', layer: 'gateway', metrics: { latency: '12ms', errorRate: '0.1%' } },
-  { id: 'nacos', label: 'Nacos', type: 'registry', status: 'normal', layer: 'gateway', metrics: { services: 24, instances: 68 } },
-  // 服务层（保留旧节点 ID 保持兼容）
+  // 服务层
   { id: 'prod-order-01', label: '订单服务-01', type: 'service', status: 'critical', layer: 'service', metrics: { cpu: '97%', memory: '94%', latency: '3200ms' } },
   { id: 'prod-order-02', label: '订单服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '45%', memory: '62%', latency: '85ms' } },
   { id: 'prod-order-03', label: '订单服务-03', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '42%', memory: '58%', latency: '80ms' } },
@@ -599,20 +598,8 @@ const MOCK_TOPO_NODES = [
   { id: 'prod-pay-01', label: '支付服务-01', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '32%', memory: '48%', latency: '120ms' } },
   { id: 'prod-pay-02', label: '支付服务-02', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '30%', memory: '45%', latency: '115ms' } },
   { id: 'prod-inventory-01', label: '库存服务-01', type: 'service', status: 'warning', layer: 'service', metrics: { cpu: '72%', memory: '68%', latency: '180ms' } },
-  { id: 'prod-product-01', label: '商品服务-01', type: 'service', status: 'normal', layer: 'service', metrics: { cpu: '28%', memory: '42%', latency: '35ms' } },
   // 中间件层
   { id: 'redis-cache', label: 'Redis Cluster', type: 'cache', status: 'warning', layer: 'middleware', metrics: { hitRate: '72%', memory: '78%', connections: '4.5k' } },
-  { id: 'mq-order', label: 'Kafka Cluster', type: 'mq', status: 'normal', layer: 'middleware', metrics: { throughput: '120MB/s', lag: '2.3k' } },
-  { id: 'es-cluster', label: 'ES Cluster', type: 'search', status: 'normal', layer: 'middleware', metrics: { indexRate: '5k/s', queryRate: '8k/s' } },
-  // 数据层
-  { id: 'mysql-master', label: 'MySQL Master', type: 'database', status: 'warning', layer: 'data', metrics: { qps: '8.5k', replication: '1.2s', ioWait: '65%' } },
-  { id: 'mysql-slave', label: 'MySQL Slave', type: 'database', status: 'normal', layer: 'data', metrics: { qps: '6.2k', replication: '1.2s', lag: '0ms' } },
-  { id: 'mongodb', label: 'MongoDB', type: 'database', status: 'normal', layer: 'data', metrics: { qps: '3.2k', connections: '1.2k' } },
-  // 基础设施层
-  { id: 'k8s-master', label: 'K8s Master', type: 'infra', status: 'normal', layer: 'infra', metrics: { pods: 68, nodes: 12 } },
-  { id: 'k8s-node-1', label: 'K8s Node-1', type: 'infra', status: 'normal', layer: 'infra', metrics: { cpu: '65%', memory: '72%', pods: 18 } },
-  { id: 'k8s-node-2', label: 'K8s Node-2', type: 'infra', status: 'warning', layer: 'infra', metrics: { cpu: '78%', memory: '85%', pods: 22 } },
-  { id: 'k8s-node-3', label: 'K8s Node-3', type: 'infra', status: 'normal', layer: 'infra', metrics: { cpu: '55%', memory: '60%', pods: 15 } },
 ]
 
 const MOCK_TOPO_EDGES = [
@@ -628,48 +615,16 @@ const MOCK_TOPO_EDGES = [
   { id: 'e-gw-user2', source: 'lb-api', target: 'prod-user-02' },
   { id: 'e-gw-pay1', source: 'lb-api', target: 'prod-pay-01' },
   { id: 'e-gw-pay2', source: 'lb-api', target: 'prod-pay-02' },
-  { id: 'e-gw-inventory', source: 'lb-api', target: 'prod-inventory-01' },
-  { id: 'e-gw-product', source: 'lb-api', target: 'prod-product-01' },
   // 服务间调用
-  { id: 'e-order1-user', source: 'prod-order-01', target: 'prod-user-01' },
-  { id: 'e-order1-pay', source: 'prod-order-01', target: 'prod-pay-01' },
   { id: 'e-order1-inventory', source: 'prod-order-01', target: 'prod-inventory-01' },
-  { id: 'e-order2-user', source: 'prod-order-02', target: 'prod-user-01' },
-  { id: 'e-order2-pay', source: 'prod-order-02', target: 'prod-pay-01' },
-  { id: 'e-order3-user', source: 'prod-order-03', target: 'prod-user-02' },
-  { id: 'e-order3-pay', source: 'prod-order-03', target: 'prod-pay-02' },
-  { id: 'e-pay1-user', source: 'prod-pay-01', target: 'prod-user-01' },
-  { id: 'e-pay2-user', source: 'prod-pay-02', target: 'prod-user-02' },
-  // 服务→中间件
+  // 服务→Redis
   { id: 'e-order1-redis', source: 'prod-order-01', target: 'redis-cache' },
   { id: 'e-order2-redis', source: 'prod-order-02', target: 'redis-cache' },
   { id: 'e-order3-redis', source: 'prod-order-03', target: 'redis-cache' },
-  { id: 'e-user1-redis', source: 'prod-user-01', target: 'redis-cache' },
   { id: 'e-user2-redis', source: 'prod-user-02', target: 'redis-cache' },
   { id: 'e-pay1-redis', source: 'prod-pay-01', target: 'redis-cache' },
   { id: 'e-pay2-redis', source: 'prod-pay-02', target: 'redis-cache' },
-  { id: 'e-order1-kafka', source: 'prod-order-01', target: 'mq-order' },
-  { id: 'e-order2-kafka', source: 'prod-order-02', target: 'mq-order' },
-  { id: 'e-order3-kafka', source: 'prod-order-03', target: 'mq-order' },
-  { id: 'e-pay1-kafka', source: 'prod-pay-01', target: 'mq-order' },
-  { id: 'e-pay2-kafka', source: 'prod-pay-02', target: 'mq-order' },
-  { id: 'e-order1-es', source: 'prod-order-01', target: 'es-cluster' },
-  { id: 'e-product-es', source: 'prod-product-01', target: 'es-cluster' },
-  // 服务→数据层
-  { id: 'e-order1-mysql', source: 'prod-order-01', target: 'mysql-master' },
-  { id: 'e-order2-mysql', source: 'prod-order-02', target: 'mysql-master' },
-  { id: 'e-order3-mysql', source: 'prod-order-03', target: 'mysql-master' },
-  { id: 'e-user1-mysql', source: 'prod-user-01', target: 'mysql-master' },
-  { id: 'e-user2-mysql', source: 'prod-user-02', target: 'mysql-master' },
-  { id: 'e-pay1-mysql', source: 'prod-pay-01', target: 'mysql-master' },
-  { id: 'e-pay2-mysql', source: 'prod-pay-02', target: 'mysql-master' },
-  { id: 'e-inventory-mysql', source: 'prod-inventory-01', target: 'mysql-master' },
-  { id: 'e-product-mongo', source: 'prod-product-01', target: 'mongodb' },
-  { id: 'e-mysql-repl', source: 'mysql-master', target: 'mysql-slave' },
-  // 基础设施
-  { id: 'e-k8s-node1', source: 'k8s-master', target: 'k8s-node-1' },
-  { id: 'e-k8s-node2', source: 'k8s-master', target: 'k8s-node-2' },
-  { id: 'e-k8s-node3', source: 'k8s-master', target: 'k8s-node-3' },
+  { id: 'e-inventory-redis', source: 'prod-inventory-01', target: 'redis-cache' },
 ]
 
 // 获取当前活跃告警列表

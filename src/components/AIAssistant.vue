@@ -209,8 +209,17 @@ async function detectFaults() {
 function runAction(act) {
   const topoMatch = (act.label || '').match(/查看(.+?)拓扑/)
   if (topoMatch) {
-    setTopoHighlight({ nodes: [topoMatch[1]] })
-    router.push('/monitor/topology?tab=application')
+    const nodeId = topoMatch[1]
+    setTopoHighlight({ nodes: [nodeId] })
+    if (nodeId.startsWith('prod-order')) {
+      router.push('/monitor/topology?tab=application&appTab=order')
+    } else if (nodeId.startsWith('prod-pay')) {
+      router.push('/monitor/topology?tab=application&appTab=payment')
+    } else if (nodeId.startsWith('prod-user')) {
+      router.push('/monitor/topology?tab=application&appTab=user')
+    } else {
+      router.push('/monitor/topology?tab=application&appTab=all')
+    }
     return
   }
   inputText.value = act.prompt || act.label

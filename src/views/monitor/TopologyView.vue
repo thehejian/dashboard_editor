@@ -341,7 +341,7 @@ const navItems = [
 const activeNav = ref('cloud-system')
 const navCollapsed = ref(false)
 const cloudViewCollapsed = ref(false)
-const selectedNodeName = ref('生产云')
+const selectedNodeName = ref('应用拓扑')
 const nodeDetailPanelOpen = ref(false)
 const nodeDetailData = ref(null)
 
@@ -461,10 +461,10 @@ function switchTopoTab(tab) {
 }
 
 const APP_TABS = [
+  { key: 'all', label: '全局视图' },
   { key: 'order', label: '订单系统' },
   { key: 'payment', label: '支付系统' },
   { key: 'user', label: '用户系统' },
-  { key: 'all', label: '全链路' },
 ]
 const APP_ICON_MAP = {
   internet: '\uf0ac', access: '\uf0ac', security: '\uf132', lb: '\uf0ec', gateway: '\uf0e7',
@@ -473,24 +473,20 @@ const APP_ICON_MAP = {
 }
 const APP_FILTER_MAP = {
   order: new Set([
-    'cdn', 'waf', 'slb', 'lb-api', 'nacos',
+    'cdn', 'waf', 'slb', 'lb-api',
     'prod-order-01', 'prod-order-02', 'prod-order-03',
-    'prod-user-01', 'prod-user-02', 'prod-pay-01', 'prod-pay-02',
     'prod-inventory-01',
-    'redis-cache', 'mq-order', 'es-cluster',
-    'mysql-master', 'mysql-slave',
+    'redis-cache',
   ]),
   payment: new Set([
-    'lb-api', 'nacos',
+    'cdn', 'waf', 'slb', 'lb-api',
     'prod-pay-01', 'prod-pay-02',
-    'prod-user-01', 'prod-user-02',
-    'redis-cache', 'mq-order',
-    'mysql-master',
+    'redis-cache',
   ]),
   user: new Set([
-    'lb-api', 'nacos',
+    'cdn', 'waf', 'slb', 'lb-api',
     'prod-user-01', 'prod-user-02',
-    'redis-cache', 'mysql-master', 'mysql-slave',
+    'redis-cache',
   ]),
 }
 const appTab = computed(() => route.query.appTab || 'order')
@@ -902,6 +898,7 @@ async function initAppGraph(tab) {
         id: n.id,
         data: { label: n.label, status: n.status, type: n.type },
         iconText: APP_ICON_MAP[n.type] || '\uf233',
+        ...((['prod-order-03', 'prod-pay-01', 'prod-pay-02', 'prod-user-01', 'prod-user-02'].includes(n.id)) ? { layer: 2 } : {}),
       })),
       edges: filteredEdges.map(e => ({ source: e.source, target: e.target, data: { label: e.label || '' } })),
     },
@@ -944,7 +941,7 @@ async function initAppGraph(tab) {
       style: {
         stroke: '#d9d9d9',
         lineWidth: 1.5,
-        endArrow: true,
+        endArrow: false,
       },
     },
     layout: { type: 'dagre', rankdir: 'TB', nodesep: 30, ranksep: 80 },
