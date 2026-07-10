@@ -171,3 +171,10 @@ a-table
 - 所有 mock / seed 数据直接写在 views 文件中，无独立 mock 层
 - CMDB API 基础路径 `/api/cmdb`，支持自动 CRUD + 分页排序过滤
 - 首页使用 `useEditorState.js` 单例中的 `DASHBOARDS` / `CHARTS_DATA` 等配置数据
+
+## 开发规范
+
+- 遵循 **Plan 模式**：理解需求 → 多轮验证 → 确认执行
+- 遵循 **Karpathy Guidelines**：Think Before Coding、Simplicity First、Surgical Changes、Goal-Driven
+- 功能完成后用 **Playwright** 测试验证（`npx playwright test`）
+- 完整开发流程见 `开发文档.md`
