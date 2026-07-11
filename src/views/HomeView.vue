@@ -182,7 +182,7 @@
             <div class="anomaly-timeline">
               <div v-for="a in aiopsAnomalies" :key="a.id" class="anomaly-item" :class="'ani-' + a.level">
                 <div class="ani-header">
-                  <span class="ani-time">{{ a.time.split(' ')[1] }}</span>
+                  <span class="ani-time">{{ a.time ? a.time.split(' ')[1] : '' }}</span>
                   <a-tag :color="a.level === 'critical' ? 'red' : a.level === 'warning' ? 'orange' : 'blue'" size="small">
                     {{ { critical: '严重', warning: '警告', info: '提示' }[a.level] }}
                   </a-tag>
@@ -190,6 +190,10 @@
                 <div class="ani-node">{{ a.nodeLabel }}</div>
                 <div class="ani-detail">{{ a.metric }}: {{ a.currentValue }} (基线{{ a.baseline }}) {{ a.deviation > 0 ? '+' : '' }}{{ a.deviation }}%</div>
                 <div class="ani-score-bar"><span class="ani-score-fill" :style="{ width: (a.score * 100) + '%' }"></span></div>
+                <div class="ani-duration-bar">
+                  <span class="ani-duration-fill" :style="{ width: Math.min((a.score + 0.2) * 100, 95) + '%' }"></span>
+                  <span class="ani-duration-text">{{ a.time ? getElapsed(a.time) : '持续中' }}</span>
+                </div>
               </div>
             </div>
           </a-card>
@@ -213,7 +217,11 @@
               <div class="rc-path" v-if="aiopsPropagationPath.length">
                 <span class="rc-label">传播路径</span>
                 <div class="rc-path-flow">
-                  <span v-for="(n, i) in aiopsPropagationPath" :key="n" class="rc-path-node">{{ n }}<span v-if="i < aiopsPropagationPath.length - 1" class="rc-arrow"> → </span></span>
+                  <div v-for="(n, i) in aiopsPropagationPath" :key="n" class="rc-flow-node" :class="getNodeStatus(n)">
+                    <span class="rc-flow-dot"></span>
+                    <span class="rc-flow-name">{{ getNodeLabel(n) }}</span>
+                    <i v-if="i < aiopsPropagationPath.length - 1" class="fa-solid fa-chevron-right rc-flow-arrow"></i>
+                  </div>
                 </div>
               </div>
               <div class="rc-desc">{{ aiopsRootCause.detail }}</div>
@@ -1285,13 +1293,14 @@ function analyzeAlert(record) {
 
 async function fetchAiopsData() {
   try {
-    const [anomalyRes, healthRes, predRes, remedRes, trendRes, topoRes] = await Promise.all([
+    const [anomalyRes, healthRes, predRes, remedRes, trendRes, topoRes, recRes] = await Promise.all([
       fetch('/api/intelligent/anomalies').then(r => r.json()),
       fetch('/api/intelligent/health').then(r => r.json()),
       fetch('/api/intelligent/predictions').then(r => r.json()),
       fetch('/api/intelligent/remediation').then(r => r.json()),
       fetch('/api/intelligent/trend').then(r => r.json()),
       fetch('/api/mock/topology').then(r => r.json()),
+      fetch('/api/intelligent/recommendations').then(r => r.json()),
     ])
     const anomalies = anomalyRes.data || []
     const summary = anomalyRes.summary || {}
@@ -1300,7 +1309,9 @@ async function fetchAiopsData() {
     const remed = remedRes.data || {}
     const trend = trendRes.data || []
     const topo = topoRes.data || {}
+    const recData = recRes.data || []
 
+    aiopsTopoNodes.value = topo.nodes || []
     aiopsKpiCards.value = [
       { label: '异常检测', value: summary.total || 0, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#FFF1F0', iconColor: '#F5222D', valClass: 'kpi-danger', trendText: '较昨日 +60%', trendDir: 'up' },
       { label: '健康度', value: (health.score || 0) + '%', icon: 'fa-solid fa-heart-pulse', iconBg: '#F6FFED', iconColor: '#07C160', valClass: health.score < 90 ? 'kpi-warn' : 'kpi-ok', trendText: '较昨日 -5.4%', trendDir: 'down' },
@@ -1333,16 +1344,9 @@ async function fetchAiopsData() {
       aiopsPropagationPath.value = path
     }
 
-    aiopsRecommendations.value = [
-      { id: 'rec-001', action: 'restart', label: '重启订单服务-01', desc: '预计恢复CPU至45%', icon: 'fa-solid fa-rotate-right', priority: 'urgent', targetNode: 'prod-order-01' },
-      { id: 'rec-002', action: 'scale', label: '扩容订单服务实例', desc: '从3副本扩至5副本', icon: 'fa-solid fa-expand', priority: 'urgent', targetNode: 'prod-order-01' },
-      { id: 'rec-003', action: 'ratelimit', label: '限流降级 API网关', desc: '保护下游服务', icon: 'fa-solid fa-gauge-high', priority: 'urgent', targetNode: 'lb-api' },
-      { id: 'rec-004', action: 'view-topology', label: '查看拓扑影响范围', desc: '分析传播路径', icon: 'fa-solid fa-diagram-project', priority: 'diagnostic', targetNode: null },
-      { id: 'rec-005', action: 'report', label: '生成故障处理报告', desc: '结构化报告含根因分析', icon: 'fa-solid fa-file-lines', priority: 'diagnostic', targetNode: null },
-      { id: 'rec-006', action: 'restart', label: '重启MySQL主库', desc: '清除慢查询堆积', icon: 'fa-solid fa-rotate-right', priority: 'normal', targetNode: 'mysql-master' },
-      { id: 'rec-007', action: 'view-baseline', label: '查看基线偏离详情', desc: '对比历史基线', icon: 'fa-solid fa-chart-line', priority: 'diagnostic', targetNode: null },
-      { id: 'rec-008', action: 'flush-cache', label: '清除Redis缓存', desc: '重建缓存索引', icon: 'fa-solid fa-broom', priority: 'normal', targetNode: 'redis-cache' },
-    ]
+    aiopsRecommendations.value = recData.map(r => ({
+      ...r, icon: { restart: 'fa-solid fa-rotate-right', scale: 'fa-solid fa-expand', 'view-topology': 'fa-solid fa-diagram-project', report: 'fa-solid fa-file-lines', 'flush-cache': 'fa-solid fa-broom' }[r.action] || 'fa-solid fa-wrench'
+    }))
 
     renderAiopsTrend(trend)
   } catch {}
@@ -1371,6 +1375,24 @@ function autoResizeInput(e) {
   const el = e.target
   el.style.height = 'auto'
   el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+}
+
+const NODE_LABELS = { cdn: 'CDN', waf: 'WAF', slb: 'SLB', 'lb-api': 'API GW', 'prod-order-01': '订单-01', 'prod-order-02': '订单-02', 'prod-order-03': '订单-03', 'prod-user-01': '用户-01', 'prod-user-02': '用户-02', 'prod-pay-01': '支付-01', 'prod-pay-02': '支付-02', 'prod-inventory-01': '库存-01', 'redis-cache': 'Redis', 'mysql-master': 'MySQL主', 'mysql-slave': 'MySQL从', nacos: 'Nacos', 'mq-order': 'MQ', 'es-cluster': 'ES', 'k8s-master': 'K8s-M', 'k8s-node-1': 'K8s-N1', 'k8s-node-2': 'K8s-N2', 'k8s-node-3': 'K8s-N3', mongodb: 'Mongo' }
+const aiopsTopoNodes = ref([])
+
+function getNodeLabel(id) { return NODE_LABELS[id] || id }
+function getNodeStatus(id) {
+  const node = aiopsTopoNodes.value.find(n => n.id === id)
+  return node?.status || 'normal'
+}
+function getElapsed(timeStr) {
+  if (!timeStr) return '持续中'
+  const t = new Date(timeStr)
+  const now = new Date()
+  const diff = Math.round((now - t) / 60000)
+  if (diff < 1) return '刚刚'
+  if (diff < 60) return diff + '分钟前'
+  return Math.round(diff / 60) + '小时前'
 }
 
 function executeRec(rec) {
@@ -1891,8 +1913,11 @@ const refreshCard = (card) => {
 .aiops-card :deep(.ant-card-body) { padding: 12px 16px; }
 
 .anomaly-timeline { max-height: 400px; overflow-y: auto; flex: 1; }
-.anomaly-item { padding: 10px 0; border-bottom: 1px solid var(--border, #E5E5EA); }
+.anomaly-item { padding: 10px 0 10px 10px; border-left: 3px solid transparent; border-radius: 0 6px 6px 0; margin-bottom: 2px; }
 .anomaly-item:last-child { border-bottom: none; }
+.ani-critical { border-left-color: #F5222D; background: #FFF1F0; }
+.ani-warning  { border-left-color: #FF7D00; background: #FFF7E6; }
+.ani-info     { border-left-color: #007DFF; background: #F0F5FF; }
 .ani-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .ani-time { font-size: 12px; color: var(--text-sec, #6B7280); font-family: monospace; }
 .ani-node { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
@@ -1901,14 +1926,22 @@ const refreshCard = (card) => {
 .ani-score-fill { display: block; height: 100%; background: var(--danger, #F5222D); border-radius: 2px; transition: width 0.3s; }
 .ani-critical .ani-score-fill { background: var(--danger, #F5222D); }
 .ani-warning .ani-score-fill { background: var(--warn, #FF7D00); }
+.ani-duration-bar { height: 4px; background: #f0f0f0; border-radius: 2px; margin-top: 6px; overflow: hidden; position: relative; }
+.ani-duration-fill { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--brand, #007DFF), var(--intelligent, #722ED1)); transition: width 0.3s; }
+.ani-duration-text { position: absolute; right: 0; top: -14px; font-size: 10px; color: var(--text-ter, #9CA3AF); }
 
 .root-cause { font-size: 13px; flex: 1; }
 .rc-node, .rc-metric, .rc-score, .rc-path { margin-bottom: 10px; }
 .rc-label { display: block; font-size: 11px; color: var(--text-sec, #6B7280); margin-bottom: 2px; }
 .rc-value { font-weight: 600; }
-.rc-path-flow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; }
-.rc-path-node { background: var(--bg-sec, #F2F2F7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: monospace; }
-.rc-arrow { color: var(--text-ter, #9CA3AF); }
+.rc-path-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-top: 6px; }
+.rc-flow-node { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 11px; background: var(--bg-sec, #F2F2F7); }
+.rc-flow-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.rc-flow-node.normal .rc-flow-dot { background: #07C160; }
+.rc-flow-node.warning .rc-flow-dot { background: #FF7D00; }
+.rc-flow-node.critical .rc-flow-dot { background: #F5222D; }
+.rc-flow-name { font-family: monospace; font-size: 11px; }
+.rc-flow-arrow { font-size: 10px; color: var(--text-ter, #9CA3AF); margin: 0 2px; }
 .rc-desc { margin-top: 10px; padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; font-size: 12px; color: var(--text-sec, #6B7280); line-height: 1.5; }
 
 .rec-list { max-height: 400px; overflow-y: auto; flex: 1; }

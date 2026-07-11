@@ -1013,6 +1013,22 @@ app.get('/api/intelligent/trend', (req, res) => {
   res.json({ success: true, data: MOCK_TREND_24H, alerts: MOCK_ALERTS })
 })
 
+// GET /api/intelligent/recommendations
+app.get('/api/intelligent/recommendations', (req, res) => {
+  const active = MOCK_INTELLIGENT_ALERTS.filter(a => a.status === 'active')
+  const recs = []
+  active.filter(a => a.level === 'critical').forEach(a => {
+    recs.push({ id: 'rec-' + recs.length, action: 'restart', label: `重启${a.nodeLabel}`, desc: `${a.metric} ${a.currentValue}，偏离 +${a.deviation}%`, priority: 'urgent', targetNode: a.nodeId })
+    recs.push({ id: 'rec-' + recs.length, action: 'scale', label: `扩容${a.nodeLabel}`, desc: '增加冗余分散负载', priority: 'urgent', targetNode: a.nodeId })
+  })
+  active.filter(a => a.level === 'warning').forEach(a => {
+    recs.push({ id: 'rec-' + recs.length, action: 'restart', label: `检查${a.nodeLabel}`, desc: `${a.metric} ${a.currentValue}，偏离 +${a.deviation}%`, priority: 'normal', targetNode: a.nodeId })
+  })
+  recs.push({ id: 'rec-' + recs.length, action: 'view-topology', label: '查看拓扑影响范围', desc: '分析传播路径和受影响节点', priority: 'diagnostic', targetNode: null })
+  recs.push({ id: 'rec-' + recs.length, action: 'report', label: '生成故障处理报告', desc: '结构化报告含根因分析和处理步骤', priority: 'diagnostic', targetNode: null })
+  res.json({ success: true, data: recs.slice(0, 8) })
+})
+
 // ==================== AI Chat ====================
 
 const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
