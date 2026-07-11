@@ -138,8 +138,15 @@
 
     <template v-if="homeTab === 'aiops'">
       <div class="aiops-intent-bar">
-        <a-input-search v-model:value="aiopsIntent" placeholder="描述你想要分析的问题，例如：为什么订单服务CPU突然升高？" class="aiops-intent-input" @search="sendAiopsIntent" @keydown.enter="sendAiopsIntent" />
-        <a-button type="primary" @click="sendAiopsIntent" :loading="aiopsLoading"><i class="fa-solid fa-paper-plane"></i></a-button>
+        <div class="aiops-intent-wrapper">
+          <textarea v-model="aiopsIntent" class="aiops-intent-input" rows="1" placeholder="描述你想要分析的问题..." @keydown.enter.prevent="sendAiopsIntent" @input="autoResizeInput"></textarea>
+          <button class="aiops-intent-send" @click="sendAiopsIntent" :disabled="!aiopsIntent.trim() || aiopsLoading"><i class="fa-solid fa-arrow-up"></i></button>
+        </div>
+        <div class="aiops-suggestions" v-if="!aiopsIntent">
+          <span class="suggestion-chip" @click="aiopsIntent = '分析当前系统运行状态'; sendAiopsIntent()"><i class="fa-solid fa-magnifying-glass-chart"></i> 智能诊断</span>
+          <span class="suggestion-chip" @click="aiopsIntent = '查看所有异常告警并分析根因'; sendAiopsIntent()"><i class="fa-solid fa-bell"></i> 异常概览</span>
+          <span class="suggestion-chip" @click="aiopsIntent = '检查关键指标基线偏离'; sendAiopsIntent()"><i class="fa-solid fa-chart-line"></i> 基线检查</span>
+        </div>
       </div>
 
       <div class="aiops-kpi-row">
@@ -1360,6 +1367,12 @@ function sendAiopsIntent() {
   }
 }
 
+function autoResizeInput(e) {
+  const el = e.target
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+}
+
 function executeRec(rec) {
   if (rec.targetNode) {
     setTopoHighlight({ nodes: [rec.targetNode] })
@@ -1808,8 +1821,39 @@ const refreshCard = (card) => {
 .home-tab-btn.active { color: var(--brand, #007DFF); border-bottom-color: var(--brand, #007DFF); }
 .home-tab-btn:hover { color: var(--brand, #007DFF); }
 
-.aiops-intent-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-.aiops-intent-input { flex: 1; }
+.aiops-intent-bar { margin-bottom: 20px; }
+
+.aiops-intent-wrapper {
+  display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px 10px 16px;
+  background: #fff; border: 2px solid var(--border, #E5E5EA); border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.aiops-intent-wrapper:focus-within {
+  border-color: var(--intelligent, #722ED1);
+  box-shadow: 0 0 0 4px rgba(114,46,209,0.1), 0 4px 16px rgba(114,46,209,0.08);
+}
+.aiops-intent-input {
+  flex: 1; border: none; outline: none; font-size: 15px; line-height: 1.5;
+  color: var(--text, #1F2937); background: transparent; resize: none;
+  font-family: inherit; min-height: 22px; max-height: 120px; padding: 8px 0;
+}
+.aiops-intent-input::placeholder { color: #9CA3AF; }
+.aiops-intent-send {
+  width: 36px; height: 36px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, var(--intelligent, #722ED1), var(--brand, #007DFF));
+  color: #fff; font-size: 16px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;
+}
+.aiops-intent-send:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 4px 12px rgba(114,46,209,0.3); }
+.aiops-intent-send:disabled { opacity: 0.4; cursor: not-allowed; }
+.aiops-suggestions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.suggestion-chip {
+  padding: 5px 12px; border-radius: 20px; background: var(--bg-sec, #F2F2F7);
+  color: var(--text-sec, #6B7280); font-size: 12px; cursor: pointer;
+  transition: all 0.2s; border: 1px solid transparent; display: flex; align-items: center; gap: 4px;
+}
+.suggestion-chip:hover { border-color: var(--intelligent, #722ED1); color: var(--intelligent, #722ED1); background: rgba(114,46,209,0.05); }
 
 .aiops-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .aiops-kpi-card { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
