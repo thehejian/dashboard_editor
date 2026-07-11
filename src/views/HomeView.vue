@@ -1376,7 +1376,7 @@ watch(homeTab, (tab) => {
   if (tab === 'aiops') {
     fetchAiopsData()
   }
-})
+}, { immediate: true })
 
 const alertTrendContainer = ref(null)
 let alertTrendChart = null

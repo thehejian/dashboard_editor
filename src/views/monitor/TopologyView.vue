@@ -1076,10 +1076,8 @@ async function initAppGraph(tab) {
       aNodes.forEach(n => {
         if (topoHighlight.nodes.includes(n.id)) {
           appGraph.setItemState(n.id, 'ai-highlight', true)
-          appGraph.setItemState(n.id, 'dimmed', false)
           appGraph.focusElement(n.id, { animation: { duration: 800 } })
         } else {
-          appGraph.setItemState(n.id, 'dimmed', true)
           appGraph.setItemState(n.id, 'ai-highlight', false)
         }
       })

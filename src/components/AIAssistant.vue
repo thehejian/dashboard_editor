@@ -273,8 +273,8 @@ if (typeof window !== 'undefined') {
   }
 }
 
-async function sendMessage() {
-  const text = inputText.value.trim()
+async function sendMessage(text) {
+  if (typeof text !== 'string') text = inputText.value.trim()
   if (!text || loading.value) return
   inputText.value = ''
   messages.value.push({ role: 'user', content: text })
@@ -325,11 +325,6 @@ async function sendMessage() {
         if (!actions.some(a => a.label.includes(n))) {
           actions.push({ label: `查看${n}拓扑`, prompt: `跳转到${n}的拓扑高亮页面` })
         }
-      })
-      actions.sort((a, b) => {
-        const aExec = /重启|扩容|限流|清除|执行|flush|restart|scale|ratelimit/.test(a.label) ? 0 : 1
-        const bExec = /重启|扩容|限流|清除|执行|flush|restart|scale|ratelimit/.test(b.label) ? 0 : 1
-        return aExec - bExec
       })
       messages.value.push({ role: 'assistant', content: data.reply || '请选择以下操作：', actions })
       if (matched.length) {
@@ -446,21 +441,93 @@ function runAction(act) {
   if (topoMatch) {
     const nodeId = topoMatch[1]
     setTopoHighlight({ nodes: [nodeId] })
-    if (nodeId.startsWith('prod-order')) {
-      router.push('/monitor/topology?tab=application&appTab=order')
-    } else if (nodeId.startsWith('prod-pay')) {
-      router.push('/monitor/topology?tab=application&appTab=payment')
-    } else if (nodeId.startsWith('prod-user')) {
-      router.push('/monitor/topology?tab=application&appTab=user')
-    } else {
-      router.push('/monitor/topology?tab=application&appTab=all')
-    }
+    router.push('/monitor/topology?tab=application&appTab=all')
+    sendMessage(act.prompt || `分析 ${nodeId} 的根因和影响范围`)
     return
   }
 
   const detailMatch = (act.label || '').match(/查看(.+?)详情/)
   if (detailMatch) {
-    openNodeDetail(detailMatch[1])
+    openNodeDetail(detailMatch[1].trim())
+    return
+  }
+
+  // Executable actions — mock confirmation flow
+  const execMatch = (act.label || '').match(/(重启|扩容|限流|清除|执行)/)
+  if (execMatch) {
+    messages.value.push({ role: 'user', content: act.label })
+    scrollToBottom()
+    loading.value = true
+    setTimeout(() => {
+      loading.value = false
+      let result = ''
+      if (/重启/.test(act.label)) {
+        result = `✅ **${act.label}** 执行完成\n\n- 状态：服务已重启\n- 耗时：12s\n- 预计 CPU 恢复至 45%\n- 建议观察 5 分钟确认稳定性`
+      } else if (/扩容/.test(act.label)) {
+        result = `✅ **${act.label}** 执行完成\n\n- 状态：实例已扩容至 5 副本\n- 新增实例正在启动中\n- 预计 2 分钟后全部就绪`
+      } else if (/限流/.test(act.label)) {
+        result = `✅ **${act.label}** 执行完成\n\n- 状态：API 网关限流已开启\n- 降级策略：排队等待 + 超时自动拒绝\n- 保护下游服务稳定`
+      } else if (/清除/.test(act.label)) {
+        result = `✅ **${act.label}** 执行完成\n\n- 状态：缓存已清除\n- 索引重建中，预计 3 分钟完成`
+      } else {
+        result = `✅ **${act.label}** 执行完成`
+      }
+      messages.value.push({ role: 'assistant', content: result })
+      scrollToBottom()
+    }, 800)
+    return
+  }
+
+  // Download report as PDF/HTML
+  if ((act.label || '').includes('下载') || (act.label || '').includes('导出')) {
+    const lastMsg = messages.value.filter(m => m.role === 'assistant').pop()
+    const content = lastMsg?.content || act.prompt || ''
+    const lines = content.split('\n')
+    let html = '<h1>故障处理报告</h1>'
+    let inTable = false
+    lines.forEach(line => {
+      const clean = line.replace(/\*\*/g, '').trim()
+      if (!clean) { html += '<br>'; return }
+      if (line.startsWith('#') && line.startsWith('##') && !line.startsWith('###')) {
+        html += `<h2>${clean.replace(/^#+\s*/, '')}</h2>`
+      } else if (line.startsWith('###')) {
+        html += `<h3>${clean.replace(/^#+\s*/, '')}</h3>`
+      } else if (line.startsWith('#')) {
+        html += `<h2>${clean.replace(/^#+\s*/, '')}</h2>`
+      } else if (line.startsWith('|---') || line.startsWith('|---|---')) {
+        return
+      } else if (line.startsWith('|')) {
+        if (!inTable) { html += '<table>'; inTable = true }
+        const cells = clean.split('|').filter(c => c.trim())
+        const tag = line.includes('维度') || line.includes('步骤') || line.includes('指标') ? 'th' : 'td'
+        html += `<tr>${cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('')}</tr>`
+      } else {
+        if (inTable) { html += '</table>'; inTable = false }
+        const isBullet = line.trimStart().startsWith('-') || line.trimStart().startsWith('*')
+        if (isBullet) {
+          html += `<li>${clean.replace(/^[\s\-*]+/, '').replace(/^(\d+)\.\s*/, '<b>$1.</b> ')}</li>`
+        } else {
+          html += `<p>${clean.replace(/\*([^*]+)\*/g, '<em>$1</em>')}</p>`
+        }
+      }
+    })
+    if (inTable) html += '</table>'
+    const win = window.open('', '_blank')
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>故障处理报告</title><style>
+      body { font-family: 'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #333; }
+      h1 { font-size: 24px; text-align: center; color: #007DFF; margin-bottom: 30px; }
+      h2 { font-size: 18px; color: #007DFF; margin-top: 28px; padding-bottom: 8px; border-bottom: 2px solid #007DFF; }
+      h3 { font-size: 15px; color: #555; margin-top: 20px; }
+      p { font-size: 14px; line-height: 1.8; margin: 8px 0; }
+      li { font-size: 14px; line-height: 1.8; margin: 4px 0; }
+      table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+      th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+      th { background: #F0F5FF; color: #007DFF; font-weight: 600; }
+      tr:nth-child(even) td { background: #FAFAFA; }
+    </style></head><body>${html}</body></html>`)
+    win.document.close()
+    win.focus()
+    setTimeout(() => win.print(), 500)
     return
   }
 
@@ -532,7 +599,7 @@ async function executeFix() {
         refreshTopology()
       }
     }
-  } catch {}
+  } catch (e) { console.error('executeFix error:', e) }
   fixLoading.value = false
 }
 

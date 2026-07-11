@@ -693,6 +693,14 @@ const MOCK_TOPO_NODES = [
     anomalyScore: 0.04, history: genHistory(50, 48) },
 ]
 
+const MOCK_TOPO_NODES_INITIAL = JSON.parse(JSON.stringify(MOCK_TOPO_NODES))
+
+function resetMockData() {
+  MOCK_TOPO_NODES.length = 0
+  MOCK_TOPO_NODES_INITIAL.forEach(n => MOCK_TOPO_NODES.push(JSON.parse(JSON.stringify(n))))
+  FIX_HISTORY.length = 0
+}
+
 const MOCK_TOPO_EDGES = [
   { id: 'e-cdn-waf', source: 'cdn', target: 'waf' },
   { id: 'e-waf-slb', source: 'waf', target: 'slb' },
@@ -778,6 +786,20 @@ app.post('/api/mock/fix/:action', (req, res) => {
       node.metrics = { hitRate: '96%', memory: '65%', connections: '3.2k' }
       node.status = 'normal'
     }
+
+    MOCK_TOPO_NODES.forEach(n => {
+      if (n.status !== 'normal') {
+        n.status = 'normal'
+        if (n.metrics) {
+          if (n.metrics.cpu) n.metrics.cpu = '45%'
+          if (n.metrics.memory) n.metrics.memory = '62%'
+          if (n.metrics.latency) n.metrics.latency = '85ms'
+          if (n.metrics.connections) n.metrics.connections = '3.2k'
+          if (n.metrics.hitRate) n.metrics.hitRate = '92%'
+          if (n.metrics.qps) n.metrics.qps = '8.0k'
+        }
+      }
+    })
 
     const record = { nodeId, action, before, after: { ...node.metrics, status: node.status }, timestamp: new Date().toISOString() }
     FIX_HISTORY.push(record)
@@ -1043,12 +1065,25 @@ app.post('/api/ai/chat', async (req, res) => {
   const userMsg = (messages || []).map(m => m.content).join(' ').toLowerCase()
   let mockReply = ''
   const mockActions = []
-  if (userMsg.includes('订单') || userMsg.includes('order')) {
+  if (userMsg.includes('整理') || userMsg.includes('经验') || userMsg.includes('故障处理报告')) {
+    mockReply = '## 📋 故障处理报告\n\n**报告名称**：订单服务-01 故障处理报告\n**生成时间**：' + new Date().toLocaleString('zh-CN') + '\n\n### 一、故障概述\n\nprod-order-01（订单服务-01）于 2026-07-10 14:22 出现 CPU 异常飙升（97%，基线 45%），触发严重告警。经自动检测+人工处置，已完成修复，服务已恢复正常。\n\n### 二、影响范围\n\n- **直接影响**：订单服务-01 请求响应延迟从 200ms 上升至 3200ms，部分请求超时\n- **级联影响**：下游 mysql-master 连接数被动升高（慢查询堆积），上游 lb-api QPS 正常但响应变慢\n- **可能影响**：下游 prod-pay-01、prod-inventory-01 可能受到级联影响\n- **影响时段**：14:22 - 14:35，共约 13 分钟\n- **影响用户数**：约 2.3k 请求受影响\n\n### 三、根因分析\n\n| 维度 | 详情 |\n|---|---|\n| 根因节点 | prod-order-01（订单服务-01） |\n| 异常指标 | CPU 使用率 97%（基线 45%，偏离 +115%） |\n| 异常得分 | 0.95（严重） |\n| 传播路径 | cdn → waf → slb → lb-api → prod-order-01 → mysql-master |\n| 可能原因 | 代码死循环或资源泄漏，导致 CPU 持续飙升 |\n| 证据 | CPU 从 45% 突增至 97%，Z-Score=4.2，无突发流量增长 |\n\n### 四、处理步骤\n\n| 步骤 | 操作 | 执行人 | 状态 |\n|---|---|---|---|\n| 1 | 智能异常检测发现 prod-order-01 异常得分 0.95 | 系统 | ✅ 完成 |\n| 2 | 拓扑根因分析确认故障源头 | AI 助手 | ✅ 完成 |\n| 3 | 执行重启订单服务-01 | AI 助手 | ✅ 完成 |\n| 4 | 验证服务恢复（CPU 45%，内存 62%，响应时间 85ms） | 系统 | ✅ 完成 |\n| 5 | 通知相关方确认业务正常 | 值班人员 | ⏳ 待确认 |\n\n### 五、恢复结果\n\n| 指标 | 修复前 | 修复后 | 基线 | 状态 |\n|---|---|---|---|---|\n| CPU 使用率 | 97% | 45% | 45% | ✅ 正常 |\n| 内存使用率 | 94% | 62% | 60% | ✅ 正常 |\n| 响应时间 | 3200ms | 85ms | 200ms | ✅ 正常 |\n\n**结论**：服务已成功恢复，所有指标回归基线。\n\n### 六、经验总结\n\n1. **快速定位**：智能异常检测+拓扑根因分析将 MTTR 从平均 30min 缩短至 13min\n2. **自动修复**：一键执行重启操作，无需手动登录服务器\n3. **验证闭环**：修复后自动验证指标恢复，确保服务真正可用\n\n### 七、预防建议\n\n1. **代码层面**：排查死循环/资源泄漏根因，添加 CPU 熔断机制\n2. **监控层面**：对 prod-order-01 设置 CPU 预警告警（≥70% 即告警），提前干预\n3. **容量层面**：评估是否需从 3 副本扩容至 5 副本，增加冗余\n4. **流程层面**：建立故障处理经验库，定期复盘\n\n---\n\n*> 本报告由 AI 运维助手自动生成*'
+    mockActions.push(
+      { label: '下载故障处理报告', prompt: mockReply },
+    )
+  } else if (userMsg.includes('根因') && (userMsg.includes('prod-order') || userMsg.includes('order'))) {
+    mockReply = '## prod-order-01 根因分析\n\n**根因节点**：prod-order-01\n**异常得分**：0.95（最高）\n**问题指标**：CPU 使用率 92%（基线 45%，偏离 +104%）\n\n**传播路径**：\n`cdn → waf → slb → lb-api → prod-order-01 → mysql-master`\n\n**分析结论**：故障源头为 prod-order-01，CPU 异常飙升（疑似死循环或资源泄漏），导致请求处理延迟增大。下游 mysql-master 连接数被动升高（慢查询堆积），上游 lb-api QPS 正常但响应变慢。\n\n**影响范围**：下游 prod-pay-01、prod-inventory-01 可能受到级联影响。\n\n请点击下方按钮查看节点详情并执行修复：'
+    mockActions.push(
+      { label: '查看 prod-order-01 详情', prompt: '查看 prod-order-01 详细指标和修复建议' },
+      { label: '重启订单服务-01', prompt: '执行重启 prod-order-01' },
+      { label: '扩容订单服务实例', prompt: '从 3 副本扩至 5 副本' },
+    )
+  } else if (userMsg.includes('订单') || userMsg.includes('order')) {
+    resetMockData()
     mockReply = '## 订单服务告警分析\n\n**异常检测**：prod-order-01 节点 CPU 使用率达 92%，超出基线(45%) +104%，异常得分 0.95（严重）。\n\n**根因定位**：订单服务 01 实例在 10:15 开始出现 CPU 飙升，疑似存在死循环或资源泄漏。拓扑分析显示上游 lb-api → prod-order-01 → mysql-master 链路正常，故障集中在 prod-order-01 自身。\n\n**影响范围**：下游 prod-pay-01、prod-inventory-01 可能受到级联影响。\n\n**处置建议**：'
     mockActions.push(
+      { label: '查看 prod-order-01 拓扑', prompt: '分析 prod-order-01 的根因和影响范围' },
       { label: '重启订单服务-01', prompt: '执行重启 prod-order-01，预计恢复 CPU 至 45%' },
       { label: '扩容订单服务实例', prompt: '从 3 副本扩至 5 副本，分散负载' },
-      { label: '查看 prod-order-01 拓扑', prompt: '跳转到 prod-order-01 的拓扑高亮页面' },
     )
   } else if (userMsg.includes('告警') || userMsg.includes('alert')) {
     mockReply = '## 当前告警概况\n\n检测到 **8 条异常**，其中严重 3 条、警告 5 条：\n\n| 节点 | 指标 | 当前值 | 基线 | 偏离 | 得分 |\n|---|---|---|---|---|---|\n| prod-order-01 | CPU | 92% | 45% | +104% | 0.95 |\n| redis-cache | 内存 | 89% | 65% | +37% | 0.82 |\n| mysql-master | 连接数 | 450 | 200 | +125% | 0.78 |\n| lb-api | QPS | 12000 | 8000 | +50% | 0.72 |\n| prod-user-01 | 响应时间 | 2.3s | 0.5s | +360% | 0.88 |\n\n**根因分析**：prod-order-01 为最高异常得分节点(0.95)，疑似死循环导致 CPU 飙升，请求堆积引发下游链路级联告警。\n\n**建议优先处理**：'
@@ -1056,14 +1091,6 @@ app.post('/api/ai/chat', async (req, res) => {
       { label: '重启订单服务-01', prompt: '执行重启 prod-order-01' },
       { label: '查看拓扑影响范围', prompt: '分析告警传播路径' },
       { label: '查看 prod-order-01 详情', prompt: '查看 prod-order-01 详细指标和修复建议' },
-    )
-  } else if (userMsg.includes('根因') || userMsg.includes('root cause')) {
-    mockReply = '## 根因分析报告\n\n**根因节点**：prod-order-01\n**异常得分**：0.95（最高）\n**问题指标**：CPU 使用率 92%（基线 45%，偏离 +104%）\n\n**传播路径**：\n`cdn → waf → slb → lb-api → prod-order-01 → mysql-master`\n\n**分析结论**：故障源头为 prod-order-01，CPU 异常飙升（可能死循环或资源泄漏），导致请求处理延迟增大。下游 mysql-master 连接数被动升高（慢查询堆积），上游 lb-api QPS 正常但响应变慢。\n\n**修复优先级**：\n1. 立即重启 prod-order-01（预计 2 分钟恢复）\n2. 扩容 prod-order-01 至 5 副本\n3. 监控 mysql-master 连接数恢复情况'
-    mockActions.push(
-      { label: '重启订单服务-01', prompt: '执行重启 prod-order-01' },
-      { label: '扩容订单服务实例', prompt: '从 3 副本扩至 5 副本' },
-      { label: '查看 prod-order-01 拓扑', prompt: '跳转到 prod-order-01 的拓扑高亮页面' },
-      { label: '查看 prod-order-01 详情', prompt: '查看该节点的详细指标和修复建议' },
     )
   } else {
     mockReply = '## 分析结果\n\n已收到您的问题，正在为您进行智能分析。当前系统检测到以下关键信息：\n\n- **异常检测**：8 条异常（3 严重 + 5 警告）\n- **健康度**：87%\n- **最高风险节点**：prod-order-01（得分 0.95）\n\n如需进一步分析，请点击下方按钮：'
