@@ -246,7 +246,7 @@
       </a-row>
 
       <a-card class="aiops-card aiops-trend-card" style="margin-top:16px">
-        <template #title><i class="fa-solid fa-chart-line" style="color:#007DFF;margin-right:6px"></i> 24小时告警趋势</template>
+        <template #title><i class="fa-solid fa-chart-line" style="color:#007DFF;margin-right:6px"></i> 24小时告警趋势 <span class="trend-legend">严重 · 警告 · 提示</span></template>
         <div ref="aiopsTrendContainer" class="aiops-trend-chart"></div>
       </a-card>
     </template>
@@ -1355,10 +1355,23 @@ async function fetchAiopsData() {
 function renderAiopsTrend(data) {
   if (!aiopsTrendContainer.value || !data?.length) return
   if (aiopsTrendChart) { aiopsTrendChart.destroy(); aiopsTrendChart = null }
+
+  const longData = data.flatMap(d => [
+    { hour: d.hour, type: '严重', value: d.critical },
+    { hour: d.hour, type: '警告', value: d.warning },
+    { hour: d.hour, type: '提示', value: d.info },
+  ])
+
   aiopsTrendChart = new Chart({ container: aiopsTrendContainer.value, autoFit: true, padding: [10, 10, 30, 40] })
-  aiopsTrendChart.interval().data(data).encode('x', 'hour').encode('y', 'critical').style('fill', '#F5222D').style('radius', [2, 2, 0, 0])
-  aiopsTrendChart.interval().data(data).encode('x', 'hour').encode('y', 'warning').style('fill', '#FF7D00').style('radius', [2, 2, 0, 0])
-  aiopsTrendChart.interval().data(data).encode('x', 'hour').encode('y', 'info').style('fill', '#007DFF').style('radius', [2, 2, 0, 0])
+  aiopsTrendChart.interval()
+    .data(longData)
+    .encode('x', 'hour')
+    .encode('y', 'value')
+    .encode('color', 'type')
+    .scale('color', { range: ['#F5222D', '#FF7D00', '#007DFF'] })
+    .transform({ type: 'stackY' })
+    .style('radius', [2, 2, 0, 0])
+    .tooltip({ channel: 'y', valueFormatter: (v) => v + '条' })
   aiopsTrendChart.render()
 }
 
@@ -1956,6 +1969,7 @@ const refreshCard = (card) => {
 
 .aiops-trend-card { margin-top: 16px; }
 .aiops-trend-chart { height: 200px; }
+.trend-legend { font-size: 11px; font-weight: 400; color: var(--text-sec, #6B7280); margin-left: 8px; }
 
 @media (max-width: 768px) {
   .aiops-kpi-row { grid-template-columns: repeat(2, 1fr); }
