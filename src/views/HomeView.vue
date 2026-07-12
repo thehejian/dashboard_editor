@@ -157,6 +157,9 @@
             <div class="aiops-kpi-label">{{ kpi.label }}</div>
           </div>
           <div class="aiops-kpi-trend" :class="kpi.trendDir">{{ kpi.trendText }}</div>
+          <svg class="kpi-sparkline" width="60" height="24" viewBox="0 0 60 24">
+            <path :d="kpi.sparklinePath" fill="none" :stroke="kpi.iconColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
       </div>
 
@@ -180,19 +183,21 @@
           <a-card class="aiops-card">
             <template #title><i class="fa-solid fa-bolt" style="color:#F5222D;margin-right:6px"></i> 异常时间线</template>
             <div class="anomaly-timeline">
-              <div v-for="a in aiopsAnomalies" :key="a.id" class="anomaly-item" :class="'ani-' + a.level">
-                <div class="ani-header">
-                  <span class="ani-time">{{ a.time ? a.time.split(' ')[1] : '' }}</span>
-                  <a-tag :color="a.level === 'critical' ? 'red' : a.level === 'warning' ? 'orange' : 'blue'" size="small">
-                    {{ { critical: '严重', warning: '警告', info: '提示' }[a.level] }}
-                  </a-tag>
+              <div v-for="a in aiopsAnomalies" :key="a.id" class="ani-item" :class="'ani-' + a.level">
+                <div class="ani-axis">
+                  <span class="ani-dot"></span>
+                  <span class="ani-line"></span>
                 </div>
-                <div class="ani-node">{{ a.nodeLabel }}</div>
-                <div class="ani-detail">{{ a.metric }}: {{ a.currentValue }} (基线{{ a.baseline }}) {{ a.deviation > 0 ? '+' : '' }}{{ a.deviation }}%</div>
-                <div class="ani-score-bar"><span class="ani-score-fill" :style="{ width: (a.score * 100) + '%' }"></span></div>
-                <div class="ani-duration-bar">
-                  <span class="ani-duration-fill" :style="{ width: Math.min((a.score + 0.2) * 100, 95) + '%' }"></span>
-                  <span class="ani-duration-text">{{ a.time ? getElapsed(a.time) : '持续中' }}</span>
+                <div class="ani-body">
+                  <div class="ani-header">
+                    <span class="ani-time">{{ a.time ? a.time.split(' ')[1] : '' }}</span>
+                    <a-tag :color="a.level === 'critical' ? 'red' : a.level === 'warning' ? 'orange' : 'blue'" size="small">
+                      {{ { critical: '严重', warning: '警告', info: '提示' }[a.level] }}
+                    </a-tag>
+                  </div>
+                  <div class="ani-node">{{ a.nodeLabel }}</div>
+                  <div class="ani-detail">{{ a.metric }}: {{ a.currentValue }} (基线{{ a.baseline }}) {{ a.deviation > 0 ? '+' : '' }}{{ a.deviation }}%</div>
+                  <div class="ani-score-bar"><span class="ani-score-fill" :style="{ width: (a.score * 100) + '%' }"></span></div>
                 </div>
               </div>
             </div>
@@ -238,6 +243,7 @@
                   <div class="rec-label">{{ rec.label }}</div>
                   <div class="rec-desc">{{ rec.desc }}</div>
                 </div>
+                <span class="rec-confidence" :style="{ color: '#fff', background: confidenceColor(rec.confidence) }">{{ rec.confidence }}%</span>
                 <a-button size="small" :type="rec.priority === 'urgent' ? 'primary' : 'default'" :danger="rec.priority === 'urgent'" @click="executeRec(rec)">执行</a-button>
               </div>
             </div>
@@ -1312,11 +1318,12 @@ async function fetchAiopsData() {
     const recData = recRes.data || []
 
     aiopsTopoNodes.value = topo.nodes || []
+    const kpiHistory = health.kpiHistory || {}
     aiopsKpiCards.value = [
-      { label: '异常检测', value: summary.total || 0, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#FFF1F0', iconColor: '#F5222D', valClass: 'kpi-danger', trendText: '较昨日 +60%', trendDir: 'up' },
-      { label: '健康度', value: (health.score || 0) + '%', icon: 'fa-solid fa-heart-pulse', iconBg: '#F6FFED', iconColor: '#07C160', valClass: health.score < 90 ? 'kpi-warn' : 'kpi-ok', trendText: '较昨日 -5.4%', trendDir: 'down' },
-      { label: '预测告警', value: pred.items?.length || 0, icon: 'fa-solid fa-clock-rotate-left', iconBg: '#FFF7E6', iconColor: '#FF7D00', valClass: 'kpi-warn', trendText: '较昨日 +50%', trendDir: 'up' },
-      { label: '自动修复率', value: (remed.rate || 0) + '%', icon: 'fa-solid fa-rotate-right', iconBg: '#F0F5FF', iconColor: '#007DFF', valClass: 'kpi-ok', trendText: '较昨日 +8.2%', trendDir: 'up' },
+      { key: 'anomalyCount', label: '异常检测', value: summary.total || 0, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#FFF1F0', iconColor: '#F5222D', valClass: 'kpi-danger', trendText: '较昨日 +60%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.anomalyCount || []) },
+      { key: 'healthScore', label: '健康度', value: (health.score || 0) + '%', icon: 'fa-solid fa-heart-pulse', iconBg: '#F6FFED', iconColor: '#07C160', valClass: health.score < 90 ? 'kpi-warn' : 'kpi-ok', trendText: '较昨日 -5.4%', trendDir: 'down', sparklinePath: calcSparklinePath(kpiHistory.healthScore || []) },
+      { key: 'predictedAlerts', label: '预测告警', value: pred.items?.length || 0, icon: 'fa-solid fa-clock-rotate-left', iconBg: '#FFF7E6', iconColor: '#FF7D00', valClass: 'kpi-warn', trendText: '较昨日 +50%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.predictedAlerts || []) },
+      { key: 'autoRemediationRate', label: '自动修复率', value: (remed.rate || 0) + '%', icon: 'fa-solid fa-rotate-right', iconBg: '#F0F5FF', iconColor: '#007DFF', valClass: 'kpi-ok', trendText: '较昨日 +8.2%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.autoRemediationRate || []) },
     ]
 
     aiopsServiceHealth.value = health.services || []
@@ -1406,6 +1413,20 @@ function getElapsed(timeStr) {
   if (diff < 1) return '刚刚'
   if (diff < 60) return diff + '分钟前'
   return Math.round(diff / 60) + '小时前'
+}
+function calcSparklinePath(values, h = 24, w = 60) {
+  const max = Math.max(...values, 1)
+  const stepX = w / (values.length - 1)
+  return values.map((v, i) => {
+    const x = i * stepX
+    const y = h - (v / max) * (h - 4) - 2
+    return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1)
+  }).join(' ')
+}
+function confidenceColor(score) {
+  if (score >= 90) return '#07C160'
+  if (score >= 75) return '#FF7D00'
+  return '#9CA3AF'
 }
 
 function executeRec(rec) {
@@ -1899,6 +1920,7 @@ const refreshCard = (card) => {
 .aiops-kpi-trend { font-size: 11px; font-weight: 500; }
 .aiops-kpi-trend.up { color: var(--danger, #F5222D); }
 .aiops-kpi-trend.down { color: #07C160; }
+.kpi-sparkline { flex-shrink: 0; margin-left: 4px; }
 .kpi-danger { color: var(--danger, #F5222D); }
 .kpi-warn { color: var(--warn, #FF7D00); }
 .kpi-ok { color: #07C160; }
@@ -1925,23 +1947,24 @@ const refreshCard = (card) => {
 .aiops-card :deep(.ant-card-head-title) { font-size: 13px; font-weight: 600; padding: 8px 0; }
 .aiops-card :deep(.ant-card-body) { padding: 12px 16px; }
 
-.anomaly-timeline { max-height: 400px; overflow-y: auto; flex: 1; }
-.anomaly-item { padding: 10px 0 10px 10px; border-left: 3px solid transparent; border-radius: 0 6px 6px 0; margin-bottom: 2px; }
-.anomaly-item:last-child { border-bottom: none; }
-.ani-critical { border-left-color: #F5222D; background: #FFF1F0; }
-.ani-warning  { border-left-color: #FF7D00; background: #FFF7E6; }
-.ani-info     { border-left-color: #007DFF; background: #F0F5FF; }
-.ani-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.anomaly-timeline { max-height: 400px; overflow-y: auto; flex: 1; padding-left: 4px; }
+.ani-item { display: flex; gap: 12px; padding-bottom: 4px; }
+.ani-axis { display: flex; flex-direction: column; align-items: center; width: 12px; flex-shrink: 0; }
+.ani-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; z-index: 1; flex-shrink: 0; }
+.ani-critical .ani-dot { background: #F5222D; box-shadow: 0 0 0 3px rgba(245,34,45,0.15); }
+.ani-warning .ani-dot { background: #FF7D00; box-shadow: 0 0 0 3px rgba(255,125,0,0.15); }
+.ani-info .ani-dot { background: #007DFF; box-shadow: 0 0 0 3px rgba(0,125,255,0.15); }
+.ani-line { width: 2px; flex: 1; background: var(--border, #E5E5EA); margin-top: 2px; min-height: 20px; }
+.ani-item:last-child .ani-line { display: none; }
+.ani-body { flex: 1; padding-bottom: 10px; }
+.ani-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
 .ani-time { font-size: 12px; color: var(--text-sec, #6B7280); font-family: monospace; }
-.ani-node { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-.ani-detail { font-size: 11px; color: var(--text-sec, #6B7280); }
+.ani-node { font-size: 13px; font-weight: 600; }
+.ani-detail { font-size: 11px; color: var(--text-sec, #6B7280); margin-top: 2px; }
 .ani-score-bar { height: 3px; background: #f0f0f0; border-radius: 2px; margin-top: 4px; overflow: hidden; }
-.ani-score-fill { display: block; height: 100%; background: var(--danger, #F5222D); border-radius: 2px; transition: width 0.3s; }
-.ani-critical .ani-score-fill { background: var(--danger, #F5222D); }
-.ani-warning .ani-score-fill { background: var(--warn, #FF7D00); }
-.ani-duration-bar { height: 4px; background: #f0f0f0; border-radius: 2px; margin-top: 6px; overflow: hidden; position: relative; }
-.ani-duration-fill { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--brand, #007DFF), var(--intelligent, #722ED1)); transition: width 0.3s; }
-.ani-duration-text { position: absolute; right: 0; top: -14px; font-size: 10px; color: var(--text-ter, #9CA3AF); }
+.ani-score-fill { display: block; height: 100%; border-radius: 2px; transition: width 0.3s; }
+.ani-critical .ani-score-fill { background: #F5222D; }
+.ani-warning .ani-score-fill { background: #FF7D00; }
 
 .root-cause { font-size: 13px; flex: 1; }
 .rc-node, .rc-metric, .rc-score, .rc-path { margin-bottom: 10px; }
@@ -1966,6 +1989,7 @@ const refreshCard = (card) => {
 .rec-info { flex: 1; }
 .rec-label { font-size: 13px; font-weight: 500; }
 .rec-desc { font-size: 11px; color: var(--text-sec, #6B7280); }
+.rec-confidence { font-size: 10px; font-weight: 600; font-family: monospace; padding: 2px 6px; border-radius: 10px; flex-shrink: 0; }
 
 .aiops-trend-card { margin-top: 16px; }
 .aiops-trend-chart { height: 200px; }

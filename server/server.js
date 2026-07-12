@@ -962,7 +962,15 @@ app.get('/api/intelligent/anomalies', (req, res) => {
 
 // GET /api/intelligent/health
 app.get('/api/intelligent/health', (req, res) => {
-  res.json({ success: true, data: { score: 87, services: MOCK_SERVICE_HEALTH, trend: -5.4 } })
+  res.json({ success: true, data: {
+    score: 87, services: MOCK_SERVICE_HEALTH, trend: -5.4,
+    kpiHistory: {
+      anomalyCount: [2,3,1,4,5,3,6,8,7,5,4,3,2,4,6,8,10,12,8,6,5,3,2,1],
+      healthScore: [93,92,91,90,89,88,87,86,85,86,87,87,88,88,87,86,85,84,85,86,87,87,87,87],
+      predictedAlerts: [1,1,0,2,2,1,3,3,2,2,1,1,2,3,4,3,3,2,1,1,0,0,1,1],
+      autoRemediationRate: [85,86,87,88,89,90,91,92,92,92,91,91,90,90,91,92,93,93,92,92,92,92,92,92],
+    }
+  }})
 })
 
 // GET /api/intelligent/predictions
@@ -1017,15 +1025,16 @@ app.get('/api/intelligent/trend', (req, res) => {
 app.get('/api/intelligent/recommendations', (req, res) => {
   const active = MOCK_INTELLIGENT_ALERTS.filter(a => a.status === 'active')
   const recs = []
+  const confByScore = (s) => s >= 0.9 ? 92 + Math.round(Math.random() * 6) : s >= 0.7 ? 75 + Math.round(Math.random() * 13) : 60 + Math.round(Math.random() * 10)
   active.filter(a => a.level === 'critical').forEach(a => {
-    recs.push({ id: 'rec-' + recs.length, action: 'restart', label: `重启${a.nodeLabel}`, desc: `${a.metric} ${a.currentValue}，偏离 +${a.deviation}%`, priority: 'urgent', targetNode: a.nodeId })
-    recs.push({ id: 'rec-' + recs.length, action: 'scale', label: `扩容${a.nodeLabel}`, desc: '增加冗余分散负载', priority: 'urgent', targetNode: a.nodeId })
+    recs.push({ id: 'rec-' + recs.length, action: 'restart', label: `重启${a.nodeLabel}`, desc: `${a.metric} ${a.currentValue}，偏离 +${a.deviation}%`, priority: 'urgent', targetNode: a.nodeId, confidence: confByScore(a.score) })
+    recs.push({ id: 'rec-' + recs.length, action: 'scale', label: `扩容${a.nodeLabel}`, desc: '增加冗余分散负载', priority: 'urgent', targetNode: a.nodeId, confidence: confByScore(a.score) })
   })
   active.filter(a => a.level === 'warning').forEach(a => {
-    recs.push({ id: 'rec-' + recs.length, action: 'restart', label: `检查${a.nodeLabel}`, desc: `${a.metric} ${a.currentValue}，偏离 +${a.deviation}%`, priority: 'normal', targetNode: a.nodeId })
+    recs.push({ id: 'rec-' + recs.length, action: 'restart', label: `检查${a.nodeLabel}`, desc: `${a.metric} ${a.currentValue}，偏离 +${a.deviation}%`, priority: 'normal', targetNode: a.nodeId, confidence: confByScore(a.score) })
   })
-  recs.push({ id: 'rec-' + recs.length, action: 'view-topology', label: '查看拓扑影响范围', desc: '分析传播路径和受影响节点', priority: 'diagnostic', targetNode: null })
-  recs.push({ id: 'rec-' + recs.length, action: 'report', label: '生成故障处理报告', desc: '结构化报告含根因分析和处理步骤', priority: 'diagnostic', targetNode: null })
+  recs.push({ id: 'rec-' + recs.length, action: 'view-topology', label: '查看拓扑影响范围', desc: '分析传播路径和受影响节点', priority: 'diagnostic', targetNode: null, confidence: 65 })
+  recs.push({ id: 'rec-' + recs.length, action: 'report', label: '生成故障处理报告', desc: '结构化报告含根因分析和处理步骤', priority: 'diagnostic', targetNode: null, confidence: 72 })
   res.json({ success: true, data: recs.slice(0, 8) })
 })
 
