@@ -121,7 +121,7 @@
           </div>
         </aside>
 
-        <div class="topology-content">
+        <div class="topology-content" :class="{ 'has-timeline': activeNav === 'app' && incidentStages.length }">
           <div v-if="activeNav === 'cloud-system' && topoTab === 'resource'" class="region-cards">
           <div class="region-card" @click="openNodeDetail('华东1')" style="cursor:pointer">
             <div class="rc-header">
@@ -230,9 +230,112 @@
             </div>
           </div>
 
+          <IncidentTimeline v-if="activeNav === 'app' && incidentStages.length" :stages="incidentStages" :title="incidentTitle" :current="incidentCurrentStageId" @stage-change="onTimelineStageChange" />
+
           <div v-if="['cloud-system', 'app', 'service'].includes(activeNav)" class="network-topology">
             <div v-if="topoTab === 'network'" ref="networkContainer" class="network-canvas"></div>
             <div v-if="topoTab === 'application'" ref="appContainer" class="network-canvas"></div>
+          </div>
+
+          <!-- App Node Detail Panel -->
+          <div class="node-detail-panel" :class="{ open: panelMode === 'app-node' }">
+            <div class="node-detail-mask" @click="panelMode = ''"></div>
+            <div class="node-detail-content">
+              <div class="nd-header">
+                <h3>{{ appNodeDetail?.label || '' }}</h3>
+                <span class="nd-id">{{ appNodeDetail?.id || '' }}</span>
+                <button class="close-btn" @click="panelMode = ''"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="nd-body" v-if="appNodeDetail">
+                <div class="nd-status-row">
+                  <span class="status-tag-sm" :class="'status-nd-' + (appNodeDetail.status || 'normal')">{{ statusLabel(appNodeDetail.status) }}</span>
+                  <span class="nd-type-tag">{{ appNodeDetail.type }} / {{ appNodeDetail.layer }}</span>
+                </div>
+                <div class="nd-score-bar" v-if="appNodeDetail.anomalyScore">
+                  <span>异常得分</span>
+                  <a-progress :percent="Math.round(appNodeDetail.anomalyScore * 100)" :stroke-color="appNodeDetail.anomalyScore > 0.8 ? '#F5222D' : '#FF7D00'" size="small" />
+                </div>
+                <div class="nd-metrics-grid" v-if="appNodeDetail.metrics">
+                  <div v-for="(v, k) in appNodeDetail.metrics" :key="k" class="nd-metric-item">
+                    <span class="nm-label">{{ metricLabel(k) }}</span>
+                    <span class="nm-value" :class="appNodeDetail.status !== 'normal' ? 'nm-danger' : ''">{{ v }}</span>
+                    <span class="nm-baseline" v-if="appNodeDetail.baseline?.[k]">基线 {{ appNodeDetail.baseline[k] }}</span>
+                  </div>
+                </div>
+                <div class="nd-section">
+                  <h4><i class="fa-solid fa-bell"></i> 关联告警</h4>
+                  <div v-for="a in relatedAlerts" :key="a.id" class="nd-alert-item" :class="'na-' + a.level">
+                    <span class="na-metric">{{ a.metric }}</span>
+                    <span class="na-value">{{ a.currentValue }}</span>
+                    <span class="na-tag" :class="'na-tag-' + a.level">{{ { critical: '严重', warning: '警告', info: '提示' }[a.level] }}</span>
+                  </div>
+                  <a-empty v-if="!relatedAlerts.length" description="无关联告警" style="margin:12px 0" />
+                </div>
+                <div class="nd-section">
+                  <h4><i class="fa-solid fa-screwdriver-wrench"></i> 修复操作</h4>
+                  <div class="nd-fix-actions">
+                    <button class="fix-btn" :class="{ disabled: appNodeDetail.status === 'normal' }" @click="appNodeDetail.status !== 'normal' && executeNodeFix(appNodeDetail.id, 'restart')"><i class="fa-solid fa-rotate-right"></i> 重启服务</button>
+                    <button class="fix-btn" :class="{ disabled: appNodeDetail.status === 'normal' }" @click="appNodeDetail.status !== 'normal' && executeNodeFix(appNodeDetail.id, 'scale')"><i class="fa-solid fa-expand"></i> 扩容实例</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- App Edge Detail Panel -->
+          <div class="node-detail-panel" :class="{ open: panelMode === 'app-edge' }">
+            <div class="node-detail-mask" @click="panelMode = ''"></div>
+            <div class="node-detail-content">
+              <div class="nd-header">
+                <h3>连接详情</h3>
+                <span class="nd-id">{{ appEdgeDetail?.source }} → {{ appEdgeDetail?.target }}</span>
+                <button class="close-btn" @click="panelMode = ''"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="nd-body" v-if="appEdgeDetail">
+                <div class="nd-info-grid">
+                  <div class="nd-info-row"><span class="nd-label">源节点</span><span class="nd-value">{{ appEdgeDetail.sourceLabel || appEdgeDetail.source }}</span></div>
+                  <div class="nd-info-row"><span class="nd-label">目标节点</span><span class="nd-value">{{ appEdgeDetail.targetLabel || appEdgeDetail.target }}</span></div>
+                  <div class="nd-info-row"><span class="nd-label">状态</span><span class="nd-value"><span class="status-tag-sm" :class="'status-nd-' + (appEdgeDetail.status || 'normal')">{{ statusLabel(appEdgeDetail.status) }}</span></span></div>
+                  <div class="nd-info-row"><span class="nd-label">延迟</span><span class="nd-value">{{ appEdgeDetail.latency || '-' }}</span></div>
+                  <div class="nd-info-row"><span class="nd-label">吞吐量</span><span class="nd-value">{{ appEdgeDetail.throughput || '-' }}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline Stage Detail Panel -->
+          <div class="node-detail-panel" :class="{ open: panelMode === 'stage' }">
+            <div class="node-detail-mask" @click="panelMode = ''"></div>
+            <div class="node-detail-content">
+              <div class="nd-header">
+                <h3>{{ stageDetail?.label || '' }}</h3>
+                <span class="nd-id">{{ stageDetail?.time || '' }}</span>
+                <button class="close-btn" @click="panelMode = ''"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="nd-body" v-if="stageDetail">
+                <div class="nd-status-row">
+                  <span class="status-tag-sm" :class="'tt-' + stageDetail.severity">{{ { critical: '严重', warning: '警告', info: '提示', success: '已恢复' }[stageDetail.severity] || stageDetail.severity }}</span>
+                </div>
+                <p class="stage-desc">{{ stageDetail.desc }}</p>
+                <div class="nd-section">
+                  <h4><i class="fa-solid fa-circle-nodes"></i> 影响节点 ({{ stageDetail.nodes.length }})</h4>
+                  <div v-for="nid in stageDetail.nodes" :key="nid" class="stage-node-item">
+                    <i class="fa-solid fa-circle" :class="getNodeDotClass(nid)" style="font-size:8px"></i>
+                    <span>{{ nid }}</span>
+                  </div>
+                </div>
+                <div class="nd-section" v-if="stageDetail.nodeMetrics && Object.keys(stageDetail.nodeMetrics).length">
+                  <h4><i class="fa-solid fa-chart-simple"></i> 指标数据</h4>
+                  <div v-for="(metrics, nid) in stageDetail.nodeMetrics" :key="nid" class="stage-metrics">
+                    <div class="sm-header">{{ nid }}</div>
+                    <div v-for="(v, k) in metrics" :key="k" class="sm-row">
+                      <span class="sm-label">{{ k }}</span>
+                      <span class="sm-value" :class="v !== 'normal' && v !== '0.1%' ? 'nm-danger' : ''">{{ v }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -335,6 +438,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { Graph } from '@antv/g6'
 import TreeNode from './TreeNode.vue'
 import { topoHighlight, clearTopoHighlight, topoRefreshTrigger, intelligentState, setAnomalyMode, setPropagationPath } from '../../composables/useEditorState.js'
+import IncidentTimeline from '../../components/IncidentTimeline.vue'
+
+let savedOriginalStatuses = null
+
+// G6 v5 uses setElementState instead of G6 v4 setItemState — add compat shim
+if (typeof Graph !== 'undefined' && Graph.prototype && !Graph.prototype.setItemState) {
+  Graph.prototype.setItemState = function(id, state, active) {
+    const current = this.getElementState ? this.getElementState(id) : []
+    const next = active
+      ? [...new Set([...current, state])]
+      : current.filter(s => s !== state)
+    if (this.setElementState) this.setElementState(id, next).catch(() => {})
+  }
+}
 
 const navItems = [
   { key: 'cloud-system', label: '云系统拓扑', icon: 'fa-cloud' },
@@ -523,8 +640,99 @@ function closeNodeDetailPanel() {
   nodeDetailPanelOpen.value = false
 }
 
-const placeholderText = computed(() => {
+function metricLabel(key) {
+  return { cpu: 'CPU使用率', mem: '内存使用率', latency: '响应时间', errRate: '错误率', qps: '吞吐量', ioWait: 'IO等待', connections: '连接数', hitRate: '命中率', bandwidth: '带宽', storage: '存储' }[key] || key
+}
+
+function getNodeDotClass(nodeId) {
+  const n = topoNodesData.value.find(n => n.id === nodeId)
+  if (!n) return 'dot-normal'
+  return 'dot-' + (n.status || 'normal')
+}
+
+async function fetchIncidentTimeline() {
+  try {
+    const res = await fetch('/api/intelligent/incident-timeline')
+    const d = await res.json()
+    if (d.success && d.data) {
+      incidentStages.value = d.data.stages || []
+      incidentTitle.value = d.data.title || ''
+    }
+  } catch {}
+}
+
+async function onTimelineStageChange(stage) {
+  if (!stage) return
+  stageDetail.value = stage
+  incidentCurrentStageId.value = stage.id
+  panelMode.value = 'stage'
+
+  if (!appGraph) return
+  const aNodes = appGraph.getNodeData()
+
+  // Save original statuses on first interaction
+  if (!savedOriginalStatuses) {
+    savedOriginalStatuses = {}
+    aNodes.forEach(n => { savedOriginalStatuses[n.id] = n.data?.status })
+  }
+
+  // Build update payload: update data.status directly so style.fill function picks it up
+  const updates = aNodes.map(n => {
+    let newStatus = n.data?.status
+    if (stage.nodes?.length) {
+      if (stage.nodes.includes(n.id)) {
+        newStatus = (stage.nodeMetrics || {})[n.id]?.status || 'normal'
+      } else {
+        newStatus = savedOriginalStatuses[n.id] || 'normal'
+      }
+    } else {
+      newStatus = savedOriginalStatuses[n.id] || 'normal'
+    }
+    return { id: n.id, data: { status: newStatus } }
   })
+  appGraph.updateNodeData(updates)
+  await appGraph.draw()
+
+  if (stage.nodes?.length) {
+    appGraph.focusElement(stage.nodes[0], { animation: { duration: 600 } })
+  }
+}
+
+function openAppNodeDetail(nodeId) {
+  const node = topoNodesData.value.find(n => n.id === nodeId)
+  if (!node) return
+  appNodeDetail.value = node
+  panelMode.value = 'app-node'
+  relatedAlerts.value = []
+
+  fetch(`/api/intelligent/anomalies?nodeId=${nodeId}`).then(r => r.json()).then(d => {
+    if (d.success) relatedAlerts.value = d.data || []
+  }).catch(() => {})
+}
+
+function openAppEdgeDetail(edgeId, source, target) {
+  appEdgeDetail.value = { id: edgeId, source, target, sourceLabel: '', targetLabel: '', status: 'normal', latency: '-', throughput: '-' }
+  const src = topoNodesData.value.find(n => n.id === source)
+  const tgt = topoNodesData.value.find(n => n.id === target)
+  if (src) appEdgeDetail.value.sourceLabel = src.label
+  if (tgt) appEdgeDetail.value.targetLabel = tgt.label
+  panelMode.value = 'app-edge'
+}
+
+async function executeNodeFix(nodeId, action) {
+  try {
+    const res = await fetch(`/api/mock/fix/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nodeId }) })
+    const d = await res.json()
+    if (d.success) {
+      const verify = await fetch(`/api/mock/verify/${nodeId}`).then(r => r.json())
+      if (verify.success) {
+        appNodeDetail.value = { ...appNodeDetail.value, status: verify.data.status, metrics: verify.data.metrics }
+        const n = topoNodesData.value.find(n => n.id === nodeId)
+        if (n) { n.status = verify.data.status; n.metrics = verify.data.metrics }
+      }
+    }
+  } catch {}
+}
 
 const topoInfo = ref(null)
 
@@ -534,6 +742,16 @@ const networkContainer = ref(null)
 let networkGraph = null
 const appContainer = ref(null)
 let appGraph = null
+
+const incidentStages = ref([])
+const incidentTitle = ref('')
+const incidentCurrentStageId = ref('')
+const panelMode = ref('')
+const appNodeDetail = ref(null)
+const appEdgeDetail = ref(null)
+const stageDetail = ref(null)
+const relatedAlerts = ref([])
+const topoNodesData = ref([])
 
 const anomalyMode = ref(false)
 const anomalyData = ref([])
@@ -986,6 +1204,7 @@ function destroyNetworkGraph() {
 }
 
 async function initAppGraph(tab) {
+  savedOriginalStatuses = null
   if (!appContainer.value) return
   if (appGraph) appGraph.destroy()
   let topoData = { nodes: [], edges: [] }
@@ -994,6 +1213,8 @@ async function initAppGraph(tab) {
     const d = await res.json()
     topoData = d.data || d
   } catch {}
+  topoNodesData.value = topoData.nodes || []
+  fetchIncidentTimeline()
   const filterSet = tab && tab !== 'all' ? APP_FILTER_MAP[tab] : null
   const filteredNodes = filterSet ? topoData.nodes.filter(n => filterSet.has(n.id)) : topoData.nodes
   const filteredIds = new Set(filteredNodes.map(n => n.id))
@@ -1064,10 +1285,32 @@ async function initAppGraph(tab) {
         padding: 10,
         maskStyle: { fill: 'rgba(24,144,255,0.08)', stroke: '#1890ff', lineWidth: 1.5 },
       },
+      {
+        type: 'tooltip',
+        getContent: (d) => {
+          if (d.id) {
+            const s = d.data?.status || 'normal'
+            const c = { normal: '#1890ff', warning: '#fa8c16', critical: '#f5222d' }[s] || '#1890ff'
+            const m = d.data?.metrics || {}
+            const metricStr = Object.entries(m).slice(0, 2).map(([k, v]) => `${metricLabel(k)}: ${v}`).join(' | ')
+            return `<div style="font-size:12px;padding:4px 8px"><b>${d.data?.label || d.id}</b><br><span style="color:${c}">● ${statusLabel(s)}</span>${metricStr ? '<br>' + metricStr : ''}</div>`
+          }
+          return `<div style="font-size:12px;padding:4px 8px">${d.source} → ${d.target}</div>`
+        },
+      },
     ],
   })
+  window.__appGraph = appGraph
   await appGraph.render()
   appGraph.fitView({ padding: 40 })
+
+  appGraph.on('node:click', (e) => {
+    openAppNodeDetail(e.itemId)
+  })
+  appGraph.on('edge:click', (e) => {
+    const edgeData = appGraph.getEdgeData(e.itemId)
+    if (edgeData) openAppEdgeDetail(e.itemId, edgeData.source, edgeData.target)
+  })
   // 修复竞态条件：如果 topoHighlight 已激活但 appGraph 刚初始化，手动触发高亮
   if (topoHighlight.active && topoHighlight.nodes?.length) {
     const aNodes = appGraph.getNodeData()
@@ -1303,6 +1546,9 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   min-height: 0;
 }
+.topology-content.has-timeline { display: flex; flex-direction: column; }
+.topology-content.has-timeline .network-topology { flex: 1; height: auto; min-height: 300px; }
+.topology-content.has-timeline .network-canvas { min-height: 300px; }
 .placeholder-content {
   display: flex;
   align-items: center;
@@ -1450,6 +1696,49 @@ onBeforeUnmount(() => {
 .lg-line.solid-orange { background: #fa8c16; }
 .lg-line.solid-blue { background: #1890ff; }
 .lg-line.solid-green { background: #52c41a; }
+
+/* ── App Node / Edge / Stage detail panels ── */
+.nd-header { display: flex; align-items: center; gap: 8px; padding: 16px 20px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+.nd-header h3 { margin: 0; font-size: 16px; font-weight: 600; flex: 1; }
+.nd-header .nd-id { font-size: 11px; color: var(--text-sec, #6B7280); font-family: monospace; }
+.nd-header .close-btn { font-size: 16px; color: #8c8c8c; background: none; border: none; cursor: pointer; }
+.nd-header .close-btn:hover { color: #1890ff; }
+.nd-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.nd-status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.nd-type-tag { font-size: 12px; color: var(--text-sec, #6B7280); }
+.nd-score-bar { margin-bottom: 12px; }
+.nd-score-bar span { display: block; font-size: 12px; color: var(--text-sec, #6B7280); margin-bottom: 4px; }
+.nd-metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.nd-metric-item { padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; }
+.nm-label { display: block; font-size: 11px; color: var(--text-sec, #6B7280); }
+.nm-value { font-size: 16px; font-weight: 700; }
+.nm-danger { color: #F5222D; }
+.nm-baseline { display: block; font-size: 10px; color: var(--text-ter, #9CA3AF); margin-top: 2px; }
+.nd-section { margin-bottom: 16px; }
+.nd-section h4 { font-size: 13px; font-weight: 600; margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+.nd-alert-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
+.na-metric { flex: 1; }
+.na-value { font-weight: 600; min-width: 50px; }
+.na-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; }
+.na-tag-critical { background: #FFF1F0; color: #F5222D; }
+.na-tag-warning { background: #FFF7E6; color: #FF7D00; }
+.na-tag-info { background: #F0F5FF; color: #007DFF; }
+.nd-fix-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.fix-btn { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border, #E5E5EA); background: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.fix-btn:hover { border-color: var(--brand, #007DFF); color: var(--brand, #007DFF); }
+.fix-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.stage-desc { font-size: 13px; line-height: 1.6; color: var(--text, #1F2937); margin: 8px 0 16px; padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; }
+.stage-node-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; }
+.dot-normal { color: #07C160; } .dot-warning { color: #FF7D00; } .dot-critical { color: #F5222D; }
+.stage-metrics { margin-bottom: 8px; padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; }
+.sm-header { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.sm-row { display: flex; gap: 8px; font-size: 11px; padding: 2px 0; }
+.sm-label { color: var(--text-sec, #6B7280); min-width: 60px; }
+.sm-value { font-weight: 600; }
+.nd-info-grid { display: flex; flex-direction: column; gap: 8px; }
+.nd-info-row { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.nd-label { font-size: 12px; color: #8c8c8c; min-width: 56px; }
+.nd-value { color: var(--text); }
 @media (max-width: 1024px) {
   .region-cards { grid-template-columns: 1fr; }
   .sidebar-cloud { width: 200px; }

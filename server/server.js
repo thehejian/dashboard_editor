@@ -1071,6 +1071,31 @@ app.get('/api/intelligent/recommendations', (req, res) => {
   res.json({ success: true, data: recs.slice(0, 8) })
 })
 
+// ==================== 故障时间轴 Mock ====================
+
+const MOCK_INCIDENT_TIMELINE = {
+  incidentId: "inc-001",
+  title: "订单服务-01 CPU异常故障传播",
+  startTime: "14:22:30",
+  endTime: "14:33:00",
+  stages: [
+    { id: "s1", time: "14:22:30", sort: 1, label: "CPU突增", desc: "prod-order-01 CPU从基线45%突增至97%，触发阈值告警", nodes: ["prod-order-01"], edges: [], type: "cause", severity: "critical", nodeMetrics: { "prod-order-01": { cpu: "97%", mem: "94%", latency: "3200ms", status: "critical" } } },
+    { id: "s2", time: "14:23:00", sort: 2, label: "响应延迟", desc: "订单服务响应时间从200ms飙升至3200ms，请求开始堆积", nodes: ["prod-order-01"], edges: ["e-gw-order1"], type: "impact", severity: "critical", nodeMetrics: { "prod-order-01": { cpu: "97%", mem: "94%", latency: "3200ms", status: "critical" } } },
+    { id: "s3", time: "14:23:30", sort: 3, label: "网关影响", desc: "lb-api 5xx错误率从0.1%升至2.3%，504超时增多", nodes: ["lb-api"], edges: ["e-slb-gw", "e-gw-order1"], type: "impact", severity: "warning", nodeMetrics: { "lb-api": { errRate: "2.3%", qps: "12k", latency: "320ms", status: "warning" } } },
+    { id: "s4", time: "14:24:00", sort: 4, label: "数据库影响", desc: "mysql-master IO等待从15%升至65%，慢查询堆积", nodes: ["mysql-master"], edges: ["e-order1-mysql"], type: "impact", severity: "warning", nodeMetrics: { "mysql-master": { ioWait: "65%", connections: "450", status: "warning" } } },
+    { id: "s5", time: "14:24:30", sort: 5, label: "缓存穿透", desc: "Redis命中率从95%降至72%，大量请求穿透到数据库", nodes: ["redis-cache"], edges: ["e-order1-redis"], type: "impact", severity: "warning", nodeMetrics: { "redis-cache": { hitRate: "72%", memory: "89%", status: "warning" } } },
+    { id: "s6", time: "14:25:00", sort: 6, label: "业务受损", desc: "订单超时率>5%，部分用户下单失败，影响约2300请求", nodes: ["prod-order-01", "lb-api"], edges: ["e-slb-gw", "e-gw-order1", "e-order1-mysql", "e-order1-redis"], type: "business", severity: "critical", nodeMetrics: { "prod-order-01": { cpu: "97%", errRate: "5.2%", status: "critical" }, "lb-api": { errRate: "5.2%", status: "warning" } } },
+    { id: "s7", time: "14:26:00", sort: 7, label: "AI检测", desc: "智能异常检测发现8条异常，prod-order-01得分0.95", nodes: [], edges: [], type: "detection", severity: "info", nodeMetrics: {} },
+    { id: "s8", time: "14:27:00", sort: 8, label: "根因定位", desc: "AI拓扑分析确定根因为prod-order-01 CPU死循环/资源泄漏", nodes: ["prod-order-01"], edges: [], type: "diagnosis", severity: "info", nodeMetrics: { "prod-order-01": { cpu: "97%", status: "critical" } } },
+    { id: "s9", time: "14:30:00", sort: 9, label: "执行重启", desc: "AI助手自动执行重启订单服务-01，耗时12s", nodes: ["prod-order-01"], edges: [], type: "action", severity: "info", nodeMetrics: {} },
+    { id: "s10", time: "14:33:00", sort: 10, label: "服务恢复", desc: "CPU降至45%，响应时间85ms，所有指标回归基线", nodes: ["prod-order-01", "lb-api", "mysql-master", "redis-cache", "prod-inventory-01", "k8s-node-2"], edges: ["e-gw-order1", "e-order1-mysql", "e-order1-redis", "e-slb-gw"], type: "recovery", severity: "success", nodeMetrics: { "prod-order-01": { cpu: "45%", mem: "62%", latency: "85ms", status: "normal" }, "lb-api": { errRate: "0.1%", qps: "8k", status: "normal" }, "mysql-master": { ioWait: "15%", status: "normal" }, "redis-cache": { hitRate: "95%", status: "normal" }, "prod-inventory-01": { cpu: "32%", mem: "55%", status: "normal" }, "k8s-node-2": { cpu: "38%", mem: "48%", status: "normal" } } },
+  ]
+}
+
+app.get('/api/intelligent/incident-timeline', (req, res) => {
+  res.json({ success: true, data: MOCK_INCIDENT_TIMELINE })
+})
+
 // ==================== AI Chat ====================
 
 const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
