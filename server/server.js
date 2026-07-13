@@ -836,42 +836,50 @@ const MOCK_INTELLIGENT_ALERTS = [
     currentValue: 97, baseline: 45, deviation: 115, score: 0.95,
     level: 'critical', type: 'spike',
     time: '2026-07-10 14:22:30', status: 'active',
-    detail: 'CPU从基线45%突增至97%，Z-Score=4.2，偏离度115%' },
+    detail: 'CPU从基线45%突增至97%，Z-Score=4.2，偏离度115%',
+    evidence: { zScore: 4.2, ewmaSlope: 3.2, deviation: 115, historicalSimilarity: 0.87, duration: '13分钟', confidence: '极高' } },
   { id: 'ia-002', nodeId: 'prod-order-01', nodeLabel: '订单服务-01', metric: '内存使用率',
     currentValue: 94, baseline: 60, deviation: 56.7, score: 0.88,
     level: 'critical', type: 'spike',
     time: '2026-07-10 14:22:45', status: 'active',
-    detail: '内存持续上升，EWMA斜率+3.2%/min，预测10分钟后达OOM阈值' },
+    detail: '内存持续上升，EWMA斜率+3.2%/min，预测10分钟后达OOM阈值',
+    evidence: { zScore: 3.8, ewmaSlope: 3.2, deviation: 56.7, historicalSimilarity: 0.72, duration: '13分钟', confidence: '高' } },
   { id: 'ia-003', nodeId: 'redis-cache', nodeLabel: 'Redis Cluster', metric: '命中率',
     currentValue: 72, baseline: 95, deviation: -24.2, score: 0.82,
     level: 'warning', type: 'drop',
     time: '2026-07-10 14:23:15', status: 'active',
-    detail: '命中率从95%降至72%，大量请求穿透到数据库' },
+    detail: '命中率从95%降至72%，大量请求穿透到数据库',
+    evidence: { zScore: 2.5, ewmaSlope: -1.8, deviation: -24.2, historicalSimilarity: 0.65, duration: '12分钟', confidence: '中' } },
   { id: 'ia-004', nodeId: 'prod-inventory-01', nodeLabel: '库存服务-01', metric: 'CPU使用率',
     currentValue: 72, baseline: 40, deviation: 80, score: 0.71,
     level: 'warning', type: 'trend',
     time: '2026-07-10 14:24:00', status: 'active',
-    detail: 'CPU呈持续上升趋势，EWMA斜率+1.8%/min，受上游订单服务调用影响' },
+    detail: 'CPU呈持续上升趋势，EWMA斜率+1.8%/min，受上游订单服务调用影响',
+    evidence: { zScore: 2.1, ewmaSlope: 1.8, deviation: 80, historicalSimilarity: 0.58, duration: '11分钟', confidence: '中' } },
   { id: 'ia-005', nodeId: 'mysql-master', nodeLabel: 'MySQL主库', metric: 'IO等待',
     currentValue: 65, baseline: 15, deviation: 333, score: 0.68,
     level: 'warning', type: 'spike',
     time: '2026-07-10 14:25:30', status: 'active',
-    detail: 'IO等待从15%突增至65%，慢查询堆积导致复制延迟' },
+    detail: 'IO等待从15%突增至65%，慢查询堆积导致复制延迟',
+    evidence: { zScore: 3.1, ewmaSlope: 2.5, deviation: 333, historicalSimilarity: 0.62, duration: '10分钟', confidence: '中' } },
   { id: 'ia-006', nodeId: 'k8s-node-2', nodeLabel: 'K8s Node-2', metric: '内存使用率',
     currentValue: 85, baseline: 60, deviation: 41.7, score: 0.73,
     level: 'warning', type: 'trend',
     time: '2026-07-10 14:26:10', status: 'active',
-    detail: '内存持续上升，Pod调度可能受影响' },
+    detail: '内存持续上升，Pod调度可能受影响',
+    evidence: { zScore: 2.3, ewmaSlope: 1.5, deviation: 41.7, historicalSimilarity: 0.55, duration: '9分钟', confidence: '中' } },
   { id: 'ia-007', nodeId: 'lb-api', nodeLabel: 'API Gateway', metric: '错误率',
     currentValue: 2.3, baseline: 0.1, deviation: 2200, score: 0.62,
     level: 'warning', type: 'spike',
     time: '2026-07-10 14:27:00', status: 'active',
-    detail: '5xx错误率从0.1%升至2.3%，主要为504超时，与订单服务异常关联' },
+    detail: '5xx错误率从0.1%升至2.3%，主要为504超时，与订单服务异常关联',
+    evidence: { zScore: 4.5, ewmaSlope: 0.8, deviation: 2200, historicalSimilarity: 0.6, duration: '8分钟', confidence: '中' } },
   { id: 'ia-008', nodeId: 'mq-order', nodeLabel: 'RocketMQ', metric: '积压量',
     currentValue: 2300, baseline: 500, deviation: 360, score: 0.55,
     level: 'info', type: 'trend',
     time: '2026-07-10 14:28:30', status: 'active',
-    detail: '消息积压持续上升，消费者处理速度低于生产速度' },
+    detail: '消息积压持续上升，消费者处理速度低于生产速度',
+    evidence: null },
 ]
 
 const MOCK_KPI_BASELINES = {
@@ -1018,7 +1026,32 @@ app.post('/api/intelligent/detect', (req, res) => {
 
 // GET /api/intelligent/trend
 app.get('/api/intelligent/trend', (req, res) => {
-  res.json({ success: true, data: MOCK_TREND_24H, alerts: MOCK_ALERTS })
+  res.json({
+    success: true, data: MOCK_TREND_24H,
+    predicted: [
+      { hour: '15:00', value: 3 }, { hour: '16:00', value: 2 },
+      { hour: '17:00', value: 1 }, { hour: '18:00', value: 0 },
+    ],
+    events: [
+      { hour: '14:00', label: '故障爆发', type: 'incident' },
+      { hour: '08:30', label: '版本发布', type: 'deploy' },
+      { hour: '12:00', label: '配置变更', type: 'config' },
+    ],
+  })
+})
+
+// GET /api/intelligent/golden-signals
+app.get('/api/intelligent/golden-signals', (req, res) => {
+  const { nodeId } = req.query
+  res.json({ success: true, data: {
+    nodeId: nodeId || 'prod-order-01',
+    signals: [
+      { key: 'latency', label: '延迟', unit: 'ms', value: 3200, baseline: 200, deviation: 1500, icon: 'fa-solid fa-clock', status: 'critical', history: [180,195,210,3200,3100,3050,3000] },
+      { key: 'traffic', label: '流量', unit: 'QPS', value: 12000, baseline: 8000, deviation: 50, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'warning', history: [7500,7800,8200,11000,12000,11800,11500] },
+      { key: 'errors', label: '错误率', unit: '%', value: 2.3, baseline: 0.1, deviation: 2200, icon: 'fa-solid fa-circle-exclamation', status: 'critical', history: [0.08,0.09,0.1,2.3,2.1,1.8,1.5] },
+      { key: 'saturation', label: '饱和度', unit: '%', value: 97, baseline: 45, deviation: 115, icon: 'fa-solid fa-gauge-high', status: 'critical', history: [42,44,43,97,95,92,88] },
+    ]
+  }})
 })
 
 // GET /api/intelligent/recommendations

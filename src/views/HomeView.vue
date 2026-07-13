@@ -137,6 +137,8 @@
     </template>
 
     <template v-if="homeTab === 'aiops'">
+    <a-skeleton v-if="aiopsLoading" active :paragraph="{ rows: 6 }" style="padding: 24px" />
+    <template v-else>
       <div class="aiops-intent-bar">
         <div class="aiops-intent-wrapper">
           <textarea v-model="aiopsIntent" class="aiops-intent-input" rows="1" placeholder="描述你想要分析的问题..." @keydown.enter.prevent="sendAiopsIntent" @input="autoResizeInput"></textarea>
@@ -178,11 +180,30 @@
         </div>
       </div>
 
+      <div class="golden-signals" v-if="aiopsGoldenSignals.length">
+        <div class="aiops-section-title"><i class="fa-solid fa-gauge-high" style="color:#722ED1;margin-right:6px"></i> 黄金信号 — {{ aiopsGoldenSignals[0]?.nodeId || 'prod-order-01' }}</div>
+        <div class="gs-grid">
+          <div v-for="sig in aiopsGoldenSignals" :key="sig.key" class="gs-card" :class="'gs-' + sig.status">
+            <div class="gs-header">
+              <i :class="sig.icon"></i>
+              <span class="gs-label">{{ sig.label }}</span>
+            </div>
+            <div class="gs-value">{{ sig.value }}<span class="gs-unit">{{ sig.unit }}</span></div>
+            <div class="gs-baseline">基线 {{ sig.baseline }}{{ sig.unit }}</div>
+            <div class="gs-deviation" :class="sig.deviation > 100 ? 'gs-danger' : 'gs-warn'">+{{ sig.deviation }}%</div>
+            <svg class="gs-sparkline" width="80" height="24" viewBox="0 0 80 24">
+              <path :d="calcSparklinePath(sig.history, 24, 80)" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
       <a-row :gutter="[16, 16]" class="aiops-body">
         <a-col :xs="24" :lg="8">
           <a-card class="aiops-card">
             <template #title><i class="fa-solid fa-bolt" style="color:#F5222D;margin-right:6px"></i> 异常时间线</template>
             <div class="anomaly-timeline">
+              <a-empty v-if="!aiopsAnomalies.length" description="当前无异常，系统运行正常" style="margin:24px 0" />
               <div v-for="a in aiopsAnomalies" :key="a.id" class="ani-item" :class="'ani-' + a.level">
                 <div class="ani-axis">
                   <span class="ani-dot"></span>
@@ -230,6 +251,19 @@
                 </div>
               </div>
               <div class="rc-desc">{{ aiopsRootCause.detail }}</div>
+              <div class="rc-evidence" v-if="aiopsRootCause.evidence">
+                <div class="rc-evidence-toggle" @click="evidenceOpen = !evidenceOpen">
+                  <i class="fa-solid" :class="evidenceOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                  {{ evidenceOpen ? '收起证据详情' : '查看证据详情' }}
+                </div>
+                <div class="rc-evidence-body" v-if="evidenceOpen">
+                  <div class="ev-item"><span class="ev-label">Z-Score</span><span class="ev-value">{{ aiopsRootCause.evidence.zScore }}</span><span class="ev-note">> 2.0 异常</span></div>
+                  <div class="ev-item"><span class="ev-label">EWMA 斜率</span><span class="ev-value">{{ aiopsRootCause.evidence.ewmaSlope }}/min</span><span class="ev-note">{{ aiopsRootCause.evidence.ewmaSlope > 0 ? '正向趋势' : '负向趋势' }}</span></div>
+                  <div class="ev-item"><span class="ev-label">偏离度</span><span class="ev-value">{{ aiopsRootCause.evidence.deviation }}%</span><span class="ev-note">远超基线</span></div>
+                  <div class="ev-item"><span class="ev-label">历史相似</span><span class="ev-value">{{ Math.round(aiopsRootCause.evidence.historicalSimilarity * 100) }}%</span><span class="ev-note">7天前类似故障</span></div>
+                  <div class="ev-item"><span class="ev-label">置信度</span><span class="ev-value">{{ aiopsRootCause.evidence.confidence }}</span><span class="ev-note">依据量化分析</span></div>
+                </div>
+              </div>
             </div>
           </a-card>
         </a-col>
@@ -237,6 +271,7 @@
           <a-card class="aiops-card">
             <template #title><i class="fa-solid fa-lightbulb" style="color:#FF7D00;margin-right:6px"></i> AI推荐操作</template>
             <div class="rec-list">
+              <a-empty v-if="!aiopsRecommendations.length" description="暂无推荐操作" style="margin:24px 0" />
               <div v-for="rec in aiopsRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
                 <div class="rec-icon"><i :class="rec.icon"></i></div>
                 <div class="rec-info">
@@ -255,6 +290,7 @@
         <template #title><i class="fa-solid fa-chart-line" style="color:#007DFF;margin-right:6px"></i> 24小时告警趋势 <span class="trend-legend">严重 · 警告 · 提示</span></template>
         <div ref="aiopsTrendContainer" class="aiops-trend-chart"></div>
       </a-card>
+    </template>
     </template>
 
     <div class="detail-panel" :class="{ open: detailPanelOpen }">
@@ -634,15 +670,17 @@ function switchTab(tab) {
   router.replace(tab === 'aiops' ? '/aiops' : '/overview')
 }
 const aiopsIntent = ref('订单服务为什么告警？')
-const aiopsLoading = ref(false)
+const aiopsLoading = ref(true)
 const aiopsKpiCards = ref([])
 const aiopsServiceHealth = ref([])
 const aiopsAnomalies = ref([])
 const aiopsRootCause = ref(null)
 const aiopsPropagationPath = ref([])
 const aiopsRecommendations = ref([])
+const aiopsGoldenSignals = ref([])
 const aiopsTrendContainer = ref(null)
 let aiopsTrendChart = null
+const evidenceOpen = ref(false)
 
 const detailPanelOpen = ref(false)
 const currentCardTitle = ref('')
@@ -1298,8 +1336,10 @@ function analyzeAlert(record) {
 }
 
 async function fetchAiopsData() {
+  let trendData = [], predictedData = null, eventsData = null
   try {
-    const [anomalyRes, healthRes, predRes, remedRes, trendRes, topoRes, recRes] = await Promise.all([
+    aiopsLoading.value = true
+    const [anomalyRes, healthRes, predRes, remedRes, trendRes, topoRes, recRes, goldenRes] = await Promise.all([
       fetch('/api/intelligent/anomalies').then(r => r.json()),
       fetch('/api/intelligent/health').then(r => r.json()),
       fetch('/api/intelligent/predictions').then(r => r.json()),
@@ -1307,6 +1347,7 @@ async function fetchAiopsData() {
       fetch('/api/intelligent/trend').then(r => r.json()),
       fetch('/api/mock/topology').then(r => r.json()),
       fetch('/api/intelligent/recommendations').then(r => r.json()),
+      fetch('/api/intelligent/golden-signals?nodeId=prod-order-01').then(r => r.json()),
     ])
     const anomalies = anomalyRes.data || []
     const summary = anomalyRes.summary || {}
@@ -1316,6 +1357,12 @@ async function fetchAiopsData() {
     const trend = trendRes.data || []
     const topo = topoRes.data || {}
     const recData = recRes.data || []
+    const goldenData = goldenRes.data || {}
+    trendData = trend
+    predictedData = trendRes.predicted
+    eventsData = trendRes.events
+
+    aiopsGoldenSignals.value = goldenData.signals || []
 
     aiopsTopoNodes.value = topo.nodes || []
     const kpiHistory = health.kpiHistory || {}
@@ -1355,11 +1402,12 @@ async function fetchAiopsData() {
       ...r, icon: { restart: 'fa-solid fa-rotate-right', scale: 'fa-solid fa-expand', 'view-topology': 'fa-solid fa-diagram-project', report: 'fa-solid fa-file-lines', 'flush-cache': 'fa-solid fa-broom' }[r.action] || 'fa-solid fa-wrench'
     }))
 
-    renderAiopsTrend(trend)
   } catch {}
+  aiopsLoading.value = false
+  if (trendData.length) nextTick(() => renderAiopsTrend(trendData, predictedData, eventsData))
 }
 
-function renderAiopsTrend(data) {
+function renderAiopsTrend(data, predicted, events) {
   if (!aiopsTrendContainer.value || !data?.length) return
   if (aiopsTrendChart) { aiopsTrendChart.destroy(); aiopsTrendChart = null }
 
@@ -1379,6 +1427,17 @@ function renderAiopsTrend(data) {
     .transform({ type: 'stackY' })
     .style('radius', [2, 2, 0, 0])
     .tooltip({ channel: 'y', valueFormatter: (v) => v + '条' })
+
+  if (predicted?.length) {
+    aiopsTrendChart.line().data(predicted).encode('x', 'hour').encode('y', 'value')
+      .style('stroke', '#722ED1').style('lineDash', [4, 4]).style('lineWidth', 2)
+  }
+
+  if (events?.length) {
+    aiopsTrendChart.point().data(events).encode('x', 'hour').encode('y', () => 0)
+      .style('fill', '#FF7D00').encode('size', 8)
+  }
+
   aiopsTrendChart.render()
 }
 
@@ -1444,6 +1503,11 @@ function executeRec(rec) {
 watch(homeTab, (tab) => {
   if (tab === 'aiops') {
     fetchAiopsData()
+  } else if (tab === 'home') {
+    nextTick(() => {
+      renderAlertTrendChart()
+      renderMainDonutChart()
+    })
   }
 }, { immediate: true })
 
@@ -1979,6 +2043,14 @@ const refreshCard = (card) => {
 .rc-flow-name { font-family: monospace; font-size: 11px; }
 .rc-flow-arrow { font-size: 10px; color: var(--text-ter, #9CA3AF); margin: 0 2px; }
 .rc-desc { margin-top: 10px; padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; font-size: 12px; color: var(--text-sec, #6B7280); line-height: 1.5; }
+.rc-evidence { margin-top: 10px; }
+.rc-evidence-toggle { font-size: 12px; color: var(--intelligent, #722ED1); cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 4px; }
+.rc-evidence-toggle:hover { opacity: 0.8; }
+.rc-evidence-body { margin-top: 6px; padding: 8px; background: var(--bg-sec, #F2F2F7); border-radius: 6px; }
+.ev-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+.ev-label { color: var(--text-sec, #6B7280); min-width: 70px; }
+.ev-value { font-weight: 600; min-width: 50px; }
+.ev-note { font-size: 10px; color: var(--text-ter, #9CA3AF); }
 
 .rec-list { max-height: 400px; overflow-y: auto; flex: 1; }
 .rec-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border, #E5E5EA); }
@@ -1994,6 +2066,19 @@ const refreshCard = (card) => {
 .aiops-trend-card { margin-top: 16px; }
 .aiops-trend-chart { height: 200px; }
 .trend-legend { font-size: 11px; font-weight: 400; color: var(--text-sec, #6B7280); margin-left: 8px; }
+
+.gs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.gs-card { padding: 14px; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 3px solid transparent; }
+.gs-critical { border-left-color: #F5222D; }
+.gs-warning { border-left-color: #FF7D00; }
+.gs-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; color: var(--text-sec, #6B7280); }
+.gs-value { font-size: 22px; font-weight: 700; }
+.gs-unit { font-size: 12px; font-weight: 400; color: var(--text-sec, #6B7280); margin-left: 2px; }
+.gs-baseline { font-size: 11px; color: var(--text-ter, #9CA3AF); margin-top: 2px; }
+.gs-deviation { font-size: 12px; font-weight: 600; }
+.gs-danger { color: #F5222D; }
+.gs-warn { color: #FF7D00; }
+.gs-sparkline { margin-top: 4px; color: var(--text-ter, #9CA3AF); }
 
 @media (max-width: 768px) {
   .aiops-kpi-row { grid-template-columns: repeat(2, 1fr); }
