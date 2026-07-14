@@ -232,6 +232,15 @@
 
           <IncidentTimeline v-if="hasTimeline" :stages="incidentStages" :title="incidentTitle" :current="incidentCurrentStageId" @stage-change="onTimelineStageChange" />
 
+          <!-- 拓扑节点自定义 tooltip（样式对齐时间轴 tooltip） -->
+          <div v-if="nodeTip.visible" class="node-tip" :style="{ top: nodeTip.y + 'px', left: nodeTip.x + 'px' }" @mouseenter="onNodeTipEnter" @mouseleave="onNodeTipLeave">
+            <div class="nt-name">{{ nodeTip.label }}</div>
+            <div class="nt-row" v-if="nodeTip.ip"><span class="nt-label">IP</span><span class="nt-value">{{ nodeTip.ip }}</span></div>
+            <div class="nt-row"><span class="nt-label">状态</span><span class="nt-value" :class="'nt-' + nodeTip.status">{{ statusLabel(nodeTip.status) }}</span></div>
+            <div class="nt-row"><span class="nt-label">关联告警</span><span class="nt-value" :class="{ 'nt-alert': nodeTip.alertCount }">{{ nodeTip.alertCount ? nodeTip.alertCount + ' 条' : '无' }}</span></div>
+            <button class="nt-detail-btn" @click="openNodeDetailFromTip">查看详情</button>
+          </div>
+
           <!-- 时间轴模式：左 3/4 拓扑 + 右 1/4 阶段详情常驻面板 -->
           <div class="topo-split" :class="{ 'split-active': hasTimeline, 'has-panel': ['app-node', 'app-edge'].includes(panelMode) }">
             <div class="topo-split-left">
@@ -573,7 +582,7 @@ const nodeDetailMap = {
 }
 
 function statusLabel(s) {
-  return ({ normal: '正常', warning: '警告', error: '异常' })[s] || s || ''
+  return ({ normal: '正常', warning: '警告', error: '异常', critical: '异常' })[s] || s || ''
 }
 
 const route = useRoute()
@@ -755,6 +764,41 @@ const networkContainer = ref(null)
 let networkGraph = null
 const appContainer = ref(null)
 let appGraph = null
+
+// ── 拓扑节点自定义 tooltip（替代 G6 内置 tooltip，样式对齐时间轴） ──
+const nodeTip = reactive({ visible: false, id: '', label: '', ip: '', status: 'normal', alertCount: 0, x: 0, y: 0 })
+let nodeTipHideTimer = null
+
+function showNodeTip(e) {
+  const id = e.target?.id
+  if (!id || !appGraph) return
+  const node = appGraph.getNodeData().find(n => n.id === id)
+  if (!node) return
+  const d = node.data || {}
+  nodeTip.id = id
+  nodeTip.label = d.label || id
+  nodeTip.ip = d.ip || ''
+  nodeTip.status = d.status || 'normal'
+  nodeTip.alertCount = d.alertCount || 0
+  nodeTip.x = e.client?.x ?? 0
+  nodeTip.y = e.client?.y ?? 0
+  nodeTip.visible = true
+  if (nodeTipHideTimer) { clearTimeout(nodeTipHideTimer); nodeTipHideTimer = null }
+}
+function scheduleHideNodeTip() {
+  if (nodeTipHideTimer) clearTimeout(nodeTipHideTimer)
+  nodeTipHideTimer = setTimeout(() => { nodeTip.visible = false }, 150)
+}
+function onNodeTipEnter() {
+  if (nodeTipHideTimer) { clearTimeout(nodeTipHideTimer); nodeTipHideTimer = null }
+}
+function onNodeTipLeave() {
+  nodeTip.visible = false
+}
+function openNodeDetailFromTip() {
+  if (nodeTip.id) openAppNodeDetail(nodeTip.id)
+  nodeTip.visible = false
+}
 
 const incidentStages = ref([])
 const incidentTitle = ref('')
@@ -1249,7 +1293,7 @@ async function initAppGraph(tab) {
     data: {
       nodes: filteredNodes.map(n => ({
         id: n.id,
-        data: { label: n.label, status: n.status, type: n.type, metrics: n.metrics },
+        data: { label: n.label, status: n.status, type: n.type, metrics: n.metrics, ip: n.ip, alertCount: n.alertCount },
         iconText: APP_ICON_MAP[n.type] || '\uf233',
         ...((['prod-order-03', 'prod-pay-01', 'prod-pay-02', 'prod-user-01', 'prod-user-02'].includes(n.id)) ? { layer: 2 } : {}),
       })),
@@ -1310,23 +1354,6 @@ async function initAppGraph(tab) {
         padding: 10,
         maskStyle: { fill: 'rgba(24,144,255,0.08)', stroke: '#1890ff', lineWidth: 1.5 },
       },
-      {
-        type: 'tooltip',
-        getContent: (d) => {
-          if (!d) return ''
-          if (d.id) {
-            const s = d.data?.status || 'normal'
-            const c = { normal: '#1890ff', warning: '#fa8c16', critical: '#f5222d' }[s] || '#1890ff'
-            const m = d.data?.metrics || {}
-            const metricStr = Object.entries(m).slice(0, 2).map(([k, v]) => `${metricLabel(k)}: ${v}`).join(' | ')
-            return `<div style="font-size:12px;padding:4px 8px;pointer-events:none"><b>${d.data?.label || d.id}</b><br><span style="color:${c}">● ${statusLabel(s)}</span>${metricStr ? '<br>' + metricStr : ''}</div>`
-          }
-          if (d.source && d.target) {
-            return `<div style="font-size:12px;padding:4px 8px;pointer-events:none">${d.source} → ${d.target}</div>`
-          }
-          return ''
-        },
-      },
     ],
   })
   window.__appGraph = appGraph
@@ -1337,10 +1364,12 @@ async function initAppGraph(tab) {
   appGraph.on('node:pointerenter', (e) => {
     const id = e.target?.id
     if (id) appGraph.setItemState(id, 'hover', true)
+    showNodeTip(e)
   })
   appGraph.on('node:pointerleave', (e) => {
     const id = e.target?.id
     if (id) appGraph.setItemState(id, 'hover', false)
+    scheduleHideNodeTip()
   })
 
   appGraph.on('node:click', (e) => {
@@ -1715,6 +1744,26 @@ onBeforeUnmount(() => {
   transition: right 0.3s;
 }
 .node-detail-panel.open .node-detail-content { right: 0; }
+
+/* ── 拓扑节点自定义 tooltip（样式对齐时间轴 .tl-tooltip） ── */
+.node-tip {
+  position: fixed; transform: translateX(-50%) translateY(calc(-100% - 12px));
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 8px 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 9999; font-size: 11px;
+  pointer-events: auto; min-width: 150px;
+}
+.nt-name { font-weight: 600; font-size: 12px; margin-bottom: 4px; color: #1F2937; }
+.nt-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
+.nt-label { color: #9CA3AF; }
+.nt-value { color: #6B7280; font-family: monospace; }
+.nt-critical, .nt-warning { color: #F5222D; }
+.nt-normal { color: #07C160; }
+.nt-alert { color: #F5222D; font-weight: 600; }
+.nt-detail-btn {
+  margin-top: 6px; width: 100%; padding: 4px 0; border: 1px solid #007DFF;
+  background: #fff; color: #007DFF; border-radius: 4px; cursor: pointer; font-size: 11px;
+}
+.nt-detail-btn:hover { background: #007DFF; color: #fff; }
 .node-detail-header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 16px 20px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;

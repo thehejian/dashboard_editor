@@ -100,6 +100,8 @@ a-table
 - G6 v5 事件对象用 `e.target?.id` 获取节点 ID，**不是** `e.itemId`（`itemId` 为 undefined）。`node:pointerenter`/`node:pointerleave` 事件正常触发但需手动调用 `setItemState`
 - G6 v5 `getPosition()` 返回错误坐标，用 `getElementPosition()` 或 `style.x`/`style.y`；`getClientByCanvas([graphX, graphY])` 转屏幕坐标
 - G6 v5 hover-activate behavior 注册后不响应 DOM 事件，需用 `graph.on('node:pointerenter', ...)` 手动实现
+- G6 v5 内置 `tooltip` 插件（`getContent` 返回字符串）无法满足「可点击按钮 + 自定义样式」，拓扑节点 tooltip 改用 Vue 自定义浮层（`.node-tip`，`position: fixed` 用 `e.client.x/y` 定位），参考 `TopologyView.vue` 的 `nodeTip` / `showNodeTip`
+- 拓扑节点 tooltip 内容：名称 / IP（`v-if` 有则显示）/ 状态 / 关联告警 / 查看详情（点击 → `openAppNodeDetail`）；节点 `ip`、`alertCount` 字段在 `server.js` 的 `MOCK_TOPO_NODES` 中定义
 - fixed 元素在 `overflow: auto/hidden` 父容器内被裁剪 → 挂 body 层级
 
 ## 告警管理布局规范
