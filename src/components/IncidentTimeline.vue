@@ -10,18 +10,18 @@
     </div>
     <div class="tl-track" ref="trackRef">
       <div class="tl-slider" :style="{ left: sliderPos + '%' }" v-if="stages.length > 1"></div>
-      <div v-for="(stage, i) in stages" :key="stage.id" class="tl-stage" :class="['tl-' + stage.type, { active: currentIdx === i }]" @click="selectStage(i)" @mouseenter="hoveredIdx = i" @mouseleave="hoveredIdx = -1">
+      <div v-for="(stage, i) in stages" :key="stage.id" class="tl-stage" :class="['tl-' + stage.type, { active: currentIdx === i }]" @click="selectStage(i)" @mouseenter="onStageEnter($event, i)" @mouseleave="onStageLeave">
         <div class="tl-dot-wrap">
           <span class="tl-dot"></span>
-          <div class="tl-tooltip" v-if="hoveredIdx === i">
-            <div class="tt-type" :class="'tt-' + stage.severity">{{ stage.label }}</div>
-            <div class="tt-time">{{ stage.time }}</div>
-            <div class="tt-desc">{{ stage.desc.length > 30 ? stage.desc.slice(0, 30) + '...' : stage.desc }}</div>
-          </div>
         </div>
         <span class="tl-label">{{ stage.label }}</span>
         <span class="tl-time">{{ stage.time }}</span>
       </div>
+    </div>
+    <div class="tl-tooltip" v-if="hoveredIdx >= 0" :style="{ top: tooltipPos.top + 'px', left: tooltipPos.left + 'px' }">
+      <div class="tt-type" :class="'tt-' + stages[hoveredIdx].severity">{{ stages[hoveredIdx].label }}</div>
+      <div class="tt-time">{{ stages[hoveredIdx].time }}</div>
+      <div class="tt-desc">{{ stages[hoveredIdx].desc.length > 30 ? stages[hoveredIdx].desc.slice(0, 30) + '...' : stages[hoveredIdx].desc }}</div>
     </div>
   </div>
 </template>
@@ -40,10 +40,24 @@ const emit = defineEmits(['stage-change'])
 const isPlaying = ref(false)
 const hoveredIdx = ref(-1)
 const currentIdx = ref(0)
+const tooltipPos = ref({ top: 0, left: 0 })
 let playTimer = null
 
 const currentStage = computed(() => props.stages[currentIdx.value] || null)
 const sliderPos = computed(() => props.stages.length > 1 ? (currentIdx.value / (props.stages.length - 1)) * 100 : 0)
+
+function onStageEnter(e, i) {
+  hoveredIdx.value = i
+  const dot = e.currentTarget.querySelector('.tl-dot')
+  if (dot) {
+    const rect = dot.getBoundingClientRect()
+    tooltipPos.value = { top: rect.top - 8, left: rect.left + rect.width / 2 }
+  }
+}
+
+function onStageLeave() {
+  hoveredIdx.value = -1
+}
 
 function selectStage(i) {
   if (i < 0 || i >= props.stages.length) return
@@ -106,7 +120,7 @@ onBeforeUnmount(() => {
 .tl-stage.active .tl-label { color: var(--text, #1F2937); font-weight: 600; }
 .tl-time { font-size: 9px; color: var(--text-ter, #9CA3AF); font-family: monospace; }
 .tl-stage.active .tl-time { color: var(--intelligent, #722ED1); font-weight: 600; }
-.tl-tooltip { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 6px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); white-space: nowrap; z-index: 100; font-size: 11px; }
+.tl-tooltip { position: fixed; transform: translateX(-50%) translateY(-100%); background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 6px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); white-space: nowrap; z-index: 9999; font-size: 11px; pointer-events: none; }
 .tt-type { font-weight: 600; margin-bottom: 2px; }
 .tt-critical { color: #F5222D; } .tt-warning { color: #FF7D00; } .tt-info { color: #007DFF; } .tt-success { color: #07C160; }
 .tt-time { color: var(--text-sec, #6B7280); font-family: monospace; }

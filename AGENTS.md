@@ -97,6 +97,9 @@ a-table
 - 避免 template 箭头函数绑定 — AntD 回调用 `function() {}`
 - G2 `chart.render()` 是 async
 - G6 v5 无 `sourceAnchor`，用 port 系统；`getChildrenData(comboId)` 返回空 → 改用 `getNodeData().filter(d => d.combo === id)`
+- G6 v5 事件对象用 `e.target?.id` 获取节点 ID，**不是** `e.itemId`（`itemId` 为 undefined）。`node:pointerenter`/`node:pointerleave` 事件正常触发但需手动调用 `setItemState`
+- G6 v5 `getPosition()` 返回错误坐标，用 `getElementPosition()` 或 `style.x`/`style.y`；`getClientByCanvas([graphX, graphY])` 转屏幕坐标
+- G6 v5 hover-activate behavior 注册后不响应 DOM 事件，需用 `graph.on('node:pointerenter', ...)` 手动实现
 - fixed 元素在 `overflow: auto/hidden` 父容器内被裁剪 → 挂 body 层级
 
 ## 告警管理布局规范

@@ -680,6 +680,12 @@ async function onTimelineStageChange(stage) {
     if (!appGraph) return
     appGraph.resize()
 
+    // 清除选中状态
+    appGraph.getNodeData().forEach(n => {
+      const states = appGraph.getElementState(n.id) || []
+      if (states.includes('selected')) appGraph.setItemState(n.id, 'selected', false)
+    })
+
     const aNodes = appGraph.getNodeData()
     if (!savedOriginalStatuses) {
       savedOriginalStatuses = {}
@@ -1243,7 +1249,7 @@ async function initAppGraph(tab) {
     data: {
       nodes: filteredNodes.map(n => ({
         id: n.id,
-        data: { label: n.label, status: n.status, type: n.type },
+        data: { label: n.label, status: n.status, type: n.type, metrics: n.metrics },
         iconText: APP_ICON_MAP[n.type] || '\uf233',
         ...((['prod-order-03', 'prod-pay-01', 'prod-pay-02', 'prod-user-01', 'prod-user-02'].includes(n.id)) ? { layer: 2 } : {}),
       })),
@@ -1255,6 +1261,8 @@ async function initAppGraph(tab) {
         'ai-highlight': { stroke: '#722ed1', lineWidth: 3, shadowBlur: 10, shadowColor: '#d3adf7', labelFontWeight: 'bold' },
         'anomaly-highlight': { stroke: '#F5222D', lineWidth: 3, shadowBlur: 12, shadowColor: 'rgba(245,34,45,0.4)', labelFontWeight: 'bold' },
         dimmed: { opacity: 0.25, labelOpacity: 0.25 },
+        hover: { stroke: '#1890ff', lineWidth: 2, shadowBlur: 8, shadowColor: 'rgba(24,144,255,0.3)' },
+        selected: { stroke: '#1890ff', lineWidth: 2.5, shadowBlur: 12, shadowColor: 'rgba(24,144,255,0.4)' },
       },
       style: {
         size: 48,
@@ -1305,14 +1313,18 @@ async function initAppGraph(tab) {
       {
         type: 'tooltip',
         getContent: (d) => {
+          if (!d) return ''
           if (d.id) {
             const s = d.data?.status || 'normal'
             const c = { normal: '#1890ff', warning: '#fa8c16', critical: '#f5222d' }[s] || '#1890ff'
             const m = d.data?.metrics || {}
             const metricStr = Object.entries(m).slice(0, 2).map(([k, v]) => `${metricLabel(k)}: ${v}`).join(' | ')
-            return `<div style="font-size:12px;padding:4px 8px"><b>${d.data?.label || d.id}</b><br><span style="color:${c}">● ${statusLabel(s)}</span>${metricStr ? '<br>' + metricStr : ''}</div>`
+            return `<div style="font-size:12px;padding:4px 8px;pointer-events:none"><b>${d.data?.label || d.id}</b><br><span style="color:${c}">● ${statusLabel(s)}</span>${metricStr ? '<br>' + metricStr : ''}</div>`
           }
-          return `<div style="font-size:12px;padding:4px 8px">${d.source} → ${d.target}</div>`
+          if (d.source && d.target) {
+            return `<div style="font-size:12px;padding:4px 8px;pointer-events:none">${d.source} → ${d.target}</div>`
+          }
+          return ''
         },
       },
     ],
@@ -1321,12 +1333,33 @@ async function initAppGraph(tab) {
   await appGraph.render()
   appGraph.fitView({ padding: 40 })
 
+  // 手动悬停效果：pointerenter/pointerleave
+  appGraph.on('node:pointerenter', (e) => {
+    const id = e.target?.id
+    if (id) appGraph.setItemState(id, 'hover', true)
+  })
+  appGraph.on('node:pointerleave', (e) => {
+    const id = e.target?.id
+    if (id) appGraph.setItemState(id, 'hover', false)
+  })
+
   appGraph.on('node:click', (e) => {
-    openAppNodeDetail(e.itemId)
+    const id = e.target?.id
+    if (!id) return
+    // 清除之前的选中状态
+    appGraph.getNodeData().forEach(n => {
+      const states = appGraph.getElementState(n.id) || []
+      if (states.includes('selected')) appGraph.setItemState(n.id, 'selected', false)
+    })
+    // 设置当前节点为选中状态
+    appGraph.setItemState(id, 'selected', true)
+    openAppNodeDetail(id)
   })
   appGraph.on('edge:click', (e) => {
-    const edgeData = appGraph.getEdgeData(e.itemId)
-    if (edgeData) openAppEdgeDetail(e.itemId, edgeData.source, edgeData.target)
+    const id = e.target?.id
+    if (!id) return
+    const edgeData = appGraph.getEdgeData(id)
+    if (edgeData) openAppEdgeDetail(id, edgeData.source, edgeData.target)
   })
   // 修复竞态条件：如果 topoHighlight 已激活但 appGraph 刚初始化，手动触发高亮
   if (topoHighlight.active && topoHighlight.nodes?.length) {
@@ -1400,7 +1433,16 @@ watch(stagePanelOpen, () => {
   }))
 }, { flush: 'post' })
 
-watch(panelMode, () => {
+watch(panelMode, (newVal, oldVal) => {
+  // 面板关闭时清除选中状态
+  if ((oldVal === 'app-node' || oldVal === 'app-edge') && newVal === '') {
+    if (appGraph) {
+      appGraph.getNodeData().forEach(n => {
+        const states = appGraph.getElementState(n.id) || []
+        if (states.includes('selected')) appGraph.setItemState(n.id, 'selected', false)
+      })
+    }
+  }
   requestAnimationFrame(() => requestAnimationFrame(() => {
     try { if (appGraph) { appGraph.resize(); appGraph.fitView({ padding: 40 }) } } catch (e) {}
   }))
@@ -1582,6 +1624,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
 }
+.topology-content.has-timeline { padding-top: 6px; }
 /* ── topo split (时间轴模式: 左 3/4 拓扑 + 右 1/4 阶段详情) ── */
 .topo-split { flex: 1; min-height: 0; display: flex; }
 .topo-split-left { flex: 1; min-width: 0; display: flex; position: relative; }
