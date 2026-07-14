@@ -2078,10 +2078,25 @@ const refreshCard = (card) => {
 .gs-deviation { font-size: 12px; font-weight: 600; }
 .gs-danger { color: #F5222D; }
 .gs-warn { color: #FF7D00; }
-.gs-sparkline { margin-top: 4px; color: var(--text-ter, #9CA3AF); }
+  .gs-sparkline { margin-top: 4px; color: var(--text-ter, #9CA3AF); }
+
+@media (max-width: 480px) {
+  .aiops-kpi-row { grid-template-columns: 1fr; }
+  .gs-grid { grid-template-columns: 1fr; }
+  .home-tab-btn { padding: 6px 10px; font-size: 12px; }
+}
 
 @media (max-width: 768px) {
   .aiops-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .aiops-kpi-card { padding: 10px 12px; gap: 8px; }
+  .aiops-kpi-icon { width: 32px; height: 32px; font-size: 14px; }
+  .aiops-kpi-val { font-size: 18px; }
+  .kpi-sparkline { display: none; }
   .heatmap-grid { flex-direction: column; }
+  .gs-grid { grid-template-columns: repeat(2, 1fr); }
+  .anomaly-timeline { max-height: 300px; }
+  .rec-list { max-height: 300px; }
+  .aiops-intent-wrapper { padding: 8px 10px 8px 12px; }
+  .aiops-intent-input { font-size: 14px; }
 }
 </style>

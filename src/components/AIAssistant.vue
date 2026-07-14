@@ -768,6 +768,10 @@ function openPanel() {
 @media (max-width: 768px) {
   .ai-fab { bottom: 70px; right: 16px; width: 44px; height: 44px; font-size: 18px; }
   .ai-panel-content { width: 100%; right: -100%; }
+  .node-detail-panel { width: 100%; right: -100%; }
+  .nd-header { padding: 16px; }
+  .nd-body { padding: 16px; }
+  .nd-metrics-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* 节点详情面板 */
@@ -897,4 +901,11 @@ function openPanel() {
   background: var(--brand, #007DFF); color: #fff; cursor: pointer; font-size: 13px;
 }
 .btn-confirm:hover { background: var(--brand-hover, #0066D6); }
+
+@media (max-width: 480px) {
+  .fix-confirm-dialog { width: calc(100% - 32px); margin: 0 16px; }
+  .nd-metrics-grid { grid-template-columns: 1fr; }
+  .ai-kpi-bar { flex-wrap: wrap; }
+  .kpi-item { min-width: calc(50% - 3px); }
+}
 </style>
