@@ -1250,8 +1250,14 @@ function initNetworkGraph() {
       {
         type: 'minimap',
         position: 'right-bottom',
-        size: [180, 140],
-        padding: 10,
+        size: [140, 110],
+        padding: 6,
+        containerStyle: {
+          border: '1px solid #ddd',
+          background: '#fff',
+          top: 'auto',
+          bottom: '0px',
+        },
         maskStyle: {
           fill: 'rgba(24,144,255,0.08)',
           stroke: '#1890ff',
@@ -1350,8 +1356,14 @@ async function initAppGraph(tab) {
       {
         type: 'minimap',
         position: 'right-bottom',
-        size: [180, 140],
-        padding: 10,
+        size: [140, 110],
+        padding: 6,
+        containerStyle: {
+          border: '1px solid #ddd',
+          background: '#fff',
+          top: 'auto',
+          bottom: '0px',
+        },
         maskStyle: { fill: 'rgba(24,144,255,0.08)', stroke: '#1890ff', lineWidth: 1.5 },
       },
     ],
@@ -1816,7 +1828,7 @@ onBeforeUnmount(() => {
   display: flex; height: 100%; gap: 0; position: relative;
 }
 .network-canvas {
-  flex: 1; height: 100%; min-width: 0; min-height: 500px; background: #fafafa;
+  flex: 1; height: 100%; min-width: 0; min-height: 320px; background: #fafafa;
 }
 .sd-popup {
   min-width: 180px; background: #fff; border-radius: 6px;

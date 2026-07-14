@@ -78,6 +78,20 @@ test.describe('Topology 时间轴模式左右分栏', () => {
     expect(canvases).toBeGreaterThanOrEqual(1)
   })
 
+  test('缩略图缩小为约 140x110 且底边距阶段面板 8px', async ({ page }) => {
+    const mm = page.locator('.topo-split-left .network-canvas .g6-minimap')
+    await expect(mm).toHaveCount(1)
+    const box = await mm.boundingBox()
+    expect(box.width).toBeGreaterThan(130)
+    expect(box.width).toBeLessThan(155)
+    expect(box.height).toBeGreaterThan(100)
+    expect(box.height).toBeLessThan(125)
+    // 底边与右侧阶段面板(.topo-split-right)底边的间隙约 8px
+    const stageBox = await page.locator('.topo-split-right').boundingBox()
+    const gap = stageBox.y + stageBox.height - (box.y + box.height)
+    expect(Math.abs(gap - 0)).toBeLessThan(3)
+  })
+
   test('非时间轴模式(云系统)保持全宽布局', async ({ page }) => {
     await page.goto('/monitor/topology')
     await page.waitForSelector('.topo-split', { timeout: 15000 })
