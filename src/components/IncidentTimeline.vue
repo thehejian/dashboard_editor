@@ -91,7 +91,7 @@ onBeforeUnmount(() => {
 .tl-title { font-size: 11px; color: var(--text-ter, #9CA3AF); margin-left: auto; }
 .tl-track { display: flex; align-items: flex-start; gap: 0; position: relative; padding: 4px 0; }
 .tl-slider { position: absolute; top: 10px; height: 2px; background: var(--intelligent, #722ED1); transition: left 0.4s; z-index: 1; width: 0; }
-.tl-stage { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; flex: 1; position: relative; min-width: 0; }
+.tl-stage { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; position: relative; min-width: 0; }
 .tl-dot-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
 .tl-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #d9d9d9; background: #fff; transition: all 0.2s; z-index: 2; }
 .tl-stage.active .tl-dot { transform: scale(1.3); border-width: 3px; }

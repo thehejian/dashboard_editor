@@ -230,11 +230,47 @@
             </div>
           </div>
 
-          <IncidentTimeline v-if="activeNav === 'app' && incidentStages.length" :stages="incidentStages" :title="incidentTitle" :current="incidentCurrentStageId" @stage-change="onTimelineStageChange" />
+          <IncidentTimeline v-if="hasTimeline" :stages="incidentStages" :title="incidentTitle" :current="incidentCurrentStageId" @stage-change="onTimelineStageChange" />
 
-          <div v-if="['cloud-system', 'app', 'service'].includes(activeNav)" class="network-topology">
-            <div v-if="topoTab === 'network'" ref="networkContainer" class="network-canvas"></div>
-            <div v-if="topoTab === 'application'" ref="appContainer" class="network-canvas"></div>
+          <!-- 时间轴模式：左 3/4 拓扑 + 右 1/4 阶段详情常驻面板 -->
+          <div class="topo-split" :class="{ 'split-active': hasTimeline, 'has-panel': ['app-node', 'app-edge'].includes(panelMode) }">
+            <div class="topo-split-left">
+              <div v-if="['cloud-system', 'app', 'service'].includes(activeNav)" class="network-topology">
+                <div v-if="topoTab === 'network'" ref="networkContainer" class="network-canvas"></div>
+                <div v-if="topoTab === 'application'" ref="appContainer" class="network-canvas"></div>
+              </div>
+            </div>
+            <aside class="topo-split-right" :class="{ 'panel-hidden': !stagePanelOpen }">
+              <div class="nd-header">
+                <h3>{{ stageDetail?.label || '' }}</h3>
+                <span class="nd-id">{{ stageDetail?.time || '' }}</span>
+                <button class="close-btn" @click="closeStagePanel"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="nd-body" v-if="stageDetail">
+                <div class="nd-status-row">
+                  <span class="status-tag-sm" :class="'tt-' + stageDetail.severity">{{ { critical: '严重', warning: '警告', info: '提示', success: '已恢复' }[stageDetail.severity] || stageDetail.severity }}</span>
+                </div>
+                <p class="stage-desc">{{ stageDetail.desc }}</p>
+                <div class="nd-section">
+                  <h4><i class="fa-solid fa-circle-nodes"></i> 影响节点 ({{ stageDetail.nodes.length }})</h4>
+                  <div v-for="nid in stageDetail.nodes" :key="nid" class="stage-node-item">
+                    <i class="fa-solid fa-circle" :class="getNodeDotClass(nid)" style="font-size:8px"></i>
+                    <span>{{ nid }}</span>
+                  </div>
+                </div>
+                <div class="nd-section" v-if="stageDetail.nodeMetrics && Object.keys(stageDetail.nodeMetrics).length">
+                  <h4><i class="fa-solid fa-chart-simple"></i> 指标数据</h4>
+                  <div v-for="(metrics, nid) in stageDetail.nodeMetrics" :key="nid" class="stage-metrics">
+                    <div class="sm-header">{{ nid }}</div>
+                    <div v-for="(v, k) in metrics" :key="k" class="sm-row">
+                      <span class="sm-label">{{ k }}</span>
+                      <span class="sm-value" :class="v !== 'normal' && v !== '0.1%' ? 'nm-danger' : ''">{{ v }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="nd-empty">点击上方时间轴阶段查看详情</div>
+            </aside>
           </div>
 
           <!-- App Node Detail Panel -->
@@ -303,40 +339,7 @@
             </div>
           </div>
 
-          <!-- Timeline Stage Detail Panel -->
-          <div class="node-detail-panel" :class="{ open: panelMode === 'stage' }">
-            <div class="node-detail-mask" @click="panelMode = ''"></div>
-            <div class="node-detail-content">
-              <div class="nd-header">
-                <h3>{{ stageDetail?.label || '' }}</h3>
-                <span class="nd-id">{{ stageDetail?.time || '' }}</span>
-                <button class="close-btn" @click="panelMode = ''"><i class="fa-solid fa-xmark"></i></button>
-              </div>
-              <div class="nd-body" v-if="stageDetail">
-                <div class="nd-status-row">
-                  <span class="status-tag-sm" :class="'tt-' + stageDetail.severity">{{ { critical: '严重', warning: '警告', info: '提示', success: '已恢复' }[stageDetail.severity] || stageDetail.severity }}</span>
-                </div>
-                <p class="stage-desc">{{ stageDetail.desc }}</p>
-                <div class="nd-section">
-                  <h4><i class="fa-solid fa-circle-nodes"></i> 影响节点 ({{ stageDetail.nodes.length }})</h4>
-                  <div v-for="nid in stageDetail.nodes" :key="nid" class="stage-node-item">
-                    <i class="fa-solid fa-circle" :class="getNodeDotClass(nid)" style="font-size:8px"></i>
-                    <span>{{ nid }}</span>
-                  </div>
-                </div>
-                <div class="nd-section" v-if="stageDetail.nodeMetrics && Object.keys(stageDetail.nodeMetrics).length">
-                  <h4><i class="fa-solid fa-chart-simple"></i> 指标数据</h4>
-                  <div v-for="(metrics, nid) in stageDetail.nodeMetrics" :key="nid" class="stage-metrics">
-                    <div class="sm-header">{{ nid }}</div>
-                    <div v-for="(v, k) in metrics" :key="k" class="sm-row">
-                      <span class="sm-label">{{ k }}</span>
-                      <span class="sm-value" :class="v !== 'normal' && v !== '0.1%' ? 'nm-danger' : ''">{{ v }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Timeline Stage Detail Panel 已内嵌至右侧常驻面板 (.topo-split-right) -->
         </div>
       </div>
 
@@ -657,45 +660,49 @@ async function fetchIncidentTimeline() {
     if (d.success && d.data) {
       incidentStages.value = d.data.stages || []
       incidentTitle.value = d.data.title || ''
+      if (incidentStages.value.length) {
+        stageDetail.value = incidentStages.value[0]
+        incidentCurrentStageId.value = incidentStages.value[0].id
+      }
     }
   } catch {}
 }
 
 async function onTimelineStageChange(stage) {
-  if (!stage) return
-  stageDetail.value = stage
-  incidentCurrentStageId.value = stage.id
-  panelMode.value = 'stage'
+  try {
+    if (!stage) return
+    stageDetail.value = stage
+    incidentCurrentStageId.value = stage.id
+    stagePanelOpen.value = true
 
-  if (!appGraph) return
-  const aNodes = appGraph.getNodeData()
+    await nextTick()
 
-  // Save original statuses on first interaction
-  if (!savedOriginalStatuses) {
-    savedOriginalStatuses = {}
-    aNodes.forEach(n => { savedOriginalStatuses[n.id] = n.data?.status })
-  }
+    if (!appGraph) return
+    appGraph.resize()
 
-  // Build update payload: update data.status directly so style.fill function picks it up
-  const updates = aNodes.map(n => {
-    let newStatus = n.data?.status
-    if (stage.nodes?.length) {
-      if (stage.nodes.includes(n.id)) {
-        newStatus = (stage.nodeMetrics || {})[n.id]?.status || 'normal'
+    const aNodes = appGraph.getNodeData()
+    if (!savedOriginalStatuses) {
+      savedOriginalStatuses = {}
+      aNodes.forEach(n => { savedOriginalStatuses[n.id] = n.data?.status })
+    }
+    const updates = aNodes.map(n => {
+      let newStatus = n.data?.status
+      if (stage.nodes?.length) {
+        newStatus = stage.nodes.includes(n.id)
+          ? (stage.nodeMetrics || {})[n.id]?.status || 'normal'
+          : savedOriginalStatuses[n.id] || 'normal'
       } else {
         newStatus = savedOriginalStatuses[n.id] || 'normal'
       }
-    } else {
-      newStatus = savedOriginalStatuses[n.id] || 'normal'
-    }
-    return { id: n.id, data: { status: newStatus } }
-  })
-  appGraph.updateNodeData(updates)
-  await appGraph.draw()
+      return { id: n.id, data: { status: newStatus } }
+    })
+    appGraph.updateNodeData(updates)
+    await appGraph.draw()
 
-  if (stage.nodes?.length) {
-    appGraph.focusElement(stage.nodes[0], { animation: { duration: 600 } })
-  }
+    if (stage.nodes?.length) {
+      appGraph.focusElement(stage.nodes[0], { animation: { duration: 600 } })
+    }
+  } catch (e) { console.error('[Timeline]', e) }
 }
 
 function openAppNodeDetail(nodeId) {
@@ -750,6 +757,14 @@ const panelMode = ref('')
 const appNodeDetail = ref(null)
 const appEdgeDetail = ref(null)
 const stageDetail = ref(null)
+const hasTimeline = computed(() => activeNav.value === 'app' && incidentStages.value.length)
+const stagePanelOpen = ref(true)
+function closeStagePanel() {
+  stagePanelOpen.value = false
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try { if (appGraph) { appGraph.resize(); appGraph.fitView({ padding: 40 }) } } catch (e) {}
+  }))
+}
 const relatedAlerts = ref([])
 const topoNodesData = ref([])
 
@@ -1184,6 +1199,7 @@ function initNetworkGraph() {
     plugins: [
       {
         type: 'minimap',
+        position: 'right-bottom',
         size: [180, 140],
         padding: 10,
         maskStyle: {
@@ -1281,6 +1297,7 @@ async function initAppGraph(tab) {
     plugins: [
       {
         type: 'minimap',
+        position: 'right-bottom',
         size: [180, 140],
         padding: 10,
         maskStyle: { fill: 'rgba(24,144,255,0.08)', stroke: '#1890ff', lineWidth: 1.5 },
@@ -1370,6 +1387,23 @@ watch(topoTab, (val) => {
   if (val === 'network') nextTick(() => initNetworkGraph())
   else if (val === 'application') nextTick(() => initAppGraph(appTab.value))
   else { destroyNetworkGraph(); destroyAppGraph() }
+})
+
+watch(hasTimeline, () => {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try { if (appGraph) { appGraph.resize(); appGraph.fitView({ padding: 40 }) } } catch (e) {}
+  }))
+}, { flush: 'post' })
+watch(stagePanelOpen, () => {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try { if (appGraph) { appGraph.resize() } } catch (e) {}
+  }))
+}, { flush: 'post' })
+
+watch(panelMode, () => {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try { if (appGraph) { appGraph.resize(); appGraph.fitView({ padding: 40 }) } } catch (e) {}
+  }))
 })
 
 watch(appTab, (val) => {
@@ -1545,10 +1579,24 @@ onBeforeUnmount(() => {
   padding: 20px;
   overflow-y: auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
-.topology-content.has-timeline { display: flex; flex-direction: column; }
-.topology-content.has-timeline .network-topology { flex: 1; height: auto; min-height: 300px; }
-.topology-content.has-timeline .network-canvas { min-height: 300px; }
+/* ── topo split (时间轴模式: 左 3/4 拓扑 + 右 1/4 阶段详情) ── */
+.topo-split { flex: 1; min-height: 0; display: flex; }
+.topo-split-left { flex: 1; min-width: 0; display: flex; position: relative; }
+.topo-split.split-active { gap: 12px; }
+.topo-split.split-active .topo-split-left { flex: 3; }
+.topo-split.split-active .topo-split-left .network-topology { flex: 1; min-width: 0; min-height: 0; height: 100%; }
+.topo-split-right { display: none; }
+.topo-split.split-active .topo-split-right {
+  display: flex; flex-direction: column; flex: 1; min-width: 0;
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden;
+}
+.topo-split.split-active .topo-split-right.panel-hidden { display: none; }
+.topo-split.has-panel { margin-right: 500px; }
+.topo-split-right .nd-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.nd-empty { padding: 40px 20px; text-align: center; color: var(--text-ter, #9CA3AF); font-size: 13px; }
 .placeholder-content {
   display: flex;
   align-items: center;
@@ -1676,7 +1724,7 @@ onBeforeUnmount(() => {
   display: flex; height: 100%; gap: 0; position: relative;
 }
 .network-canvas {
-  flex: 1; height: 100%; min-height: 500px; background: #fafafa;
+  flex: 1; height: 100%; min-width: 0; min-height: 500px; background: #fafafa;
 }
 .sd-popup {
   min-width: 180px; background: #fff; border-radius: 6px;

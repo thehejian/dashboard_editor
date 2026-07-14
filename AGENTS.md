@@ -174,6 +174,7 @@ a-table
 
 ## 开发规范
 
+- 后续所有回复使用**简体中文**
 - 遵循 **Plan 模式**：理解需求 → 多轮验证 → 确认执行
 - 遵循 **Karpathy Guidelines**：Think Before Coding、Simplicity First、Surgical Changes、Goal-Driven
 - 功能完成后用 **Playwright** 测试验证（`npx playwright test`）
