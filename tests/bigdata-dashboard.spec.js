@@ -9,16 +9,16 @@ test.describe('大数据监控 Dashboard', () => {
   test('页面加载正常，核心容器存在', async ({ page }) => {
     await expect(page.locator('.bd-dashboard')).toBeAttached()
     await expect(page.locator('.bd-toolbar')).toBeAttached()
-    await expect(page.locator('.bd-summary')).toBeAttached()
+    await expect(page.locator('.bd-top-cards')).toBeAttached()
   })
 
-  test('摘要卡片渲染 4 个', async ({ page }) => {
-    const cards = page.locator('.bd-summary-card')
+  test('顶部统计卡片渲染 4 个', async ({ page }) => {
+    const cards = page.locator('.bd-top-card')
     await expect(cards).toHaveCount(4)
-    await expect(cards.nth(0).locator('.bd-summary-label')).toHaveText('集群节点')
-    await expect(cards.nth(1).locator('.bd-summary-label')).toHaveText('活跃告警')
-    await expect(cards.nth(2).locator('.bd-summary-label')).toHaveText('运行任务')
-    await expect(cards.nth(3).locator('.bd-summary-label')).toHaveText('集群健康率')
+    await expect(cards.nth(0).locator('.bd-top-card-title')).toHaveText('总接口')
+    await expect(cards.nth(1).locator('.bd-top-card-title')).toHaveText('平均时延')
+    await expect(cards.nth(2).locator('.bd-top-card-title')).toHaveText('总吞吐')
+    await expect(cards.nth(3).locator('.bd-top-card-title')).toHaveText('总成功率')
   })
 
   test('时间范围 pills 可点击切换', async ({ page }) => {
@@ -28,10 +28,9 @@ test.describe('大数据监控 Dashboard', () => {
     await expect(page.locator('.bd-time-pill.active')).toHaveCount(1)
   })
 
-  test('云服务 API 表格 + 统计行 + 缩略图', async ({ page }) => {
+  test('云服务 API 表格 + 缩略图', async ({ page }) => {
     const section = page.locator('.bd-section').first()
     await expect(section.locator('.bd-section-title')).toContainText('云服务 API 监测')
-    await expect(section.locator('.bd-stats-row .bd-stat-pill')).toHaveCount(7)
     await expect(section.locator('.ant-table-thead th')).toHaveCount(4)
     await expect(section.locator('.ant-table-tbody tr')).toHaveCount(7)
     await expect(section.locator('.bd-cell-spark')).toHaveCount(21)

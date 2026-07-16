@@ -28,27 +28,60 @@
       </div>
     </div>
 
-    <div class="bd-summary">
-      <div class="bd-summary-card" v-for="s in summaryCards" :key="s.label">
-        <div class="bd-summary-icon" :style="{ background: s.bg }"><i :class="s.icon"></i></div>
-        <div class="bd-summary-body">
-          <div class="bd-summary-value" :style="{ color: s.color }">{{ s.value }}</div>
-          <div class="bd-summary-label">{{ s.label }}</div>
+    <div class="bd-top-cards">
+      <div class="bd-top-card">
+        <div class="bd-top-card-icon" style="background: linear-gradient(135deg, #1890ff, #096dd9)">
+          <i class="fa-solid fa-cloud"></i>
+        </div>
+        <div class="bd-top-card-body">
+          <div class="bd-top-card-title">总接口</div>
+          <div class="bd-top-card-primary">
+            <span class="bd-top-card-val">{{ apiCards.length }}</span>
+            <div class="bd-top-pills">
+              <span class="bd-top-pill bd-top-pill-ok">● 正常 {{ apiNormalCount }}</span>
+              <span class="bd-top-pill bd-top-pill-warn">● 偏高 {{ apiWarnCount }}</span>
+              <span class="bd-top-pill bd-top-pill-danger">● 异常 {{ apiDangerCount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bd-top-card">
+        <div class="bd-top-card-icon" style="background: linear-gradient(135deg, #722ed1, #531dab)">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+        <div class="bd-top-card-body">
+          <div class="bd-top-card-title">平均时延</div>
+          <div class="bd-top-card-primary">
+            <span class="bd-top-card-val">{{ apiAvgLatency }}<span class="bd-top-card-unit">ms</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="bd-top-card">
+        <div class="bd-top-card-icon" style="background: linear-gradient(135deg, #13c2c2, #08979c)">
+          <i class="fa-solid fa-gauge-high"></i>
+        </div>
+        <div class="bd-top-card-body">
+          <div class="bd-top-card-title">总吞吐</div>
+          <div class="bd-top-card-primary">
+            <span class="bd-top-card-val">{{ apiTotalTps.toLocaleString() }}<span class="bd-top-card-unit">次/秒</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="bd-top-card">
+        <div class="bd-top-card-icon" style="background: linear-gradient(135deg, #52c41a, #389e0d)">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="bd-top-card-body">
+          <div class="bd-top-card-title">总成功率</div>
+          <div class="bd-top-card-primary">
+            <span class="bd-top-card-val">{{ apiAvgRate }}<span class="bd-top-card-unit">%</span></span>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="bd-section">
       <div class="bd-section-title">云服务 API 监测</div>
-      <div class="bd-stats-row">
-        <span class="bd-stat-pill">总接口 {{ apiCards.length }}</span>
-        <span v-if="apiNormalCount" class="bd-stat-pill bd-stat-ok">正常 {{ apiNormalCount }}</span>
-        <span v-if="apiWarnCount" class="bd-stat-pill bd-stat-warn">偏高 {{ apiWarnCount }}</span>
-        <span v-if="apiDangerCount" class="bd-stat-pill bd-stat-danger">异常 {{ apiDangerCount }}</span>
-        <span class="bd-stat-pill">平均时延 {{ apiAvgLatency }}ms</span>
-        <span class="bd-stat-pill">总 TPS {{ apiTotalTps.toLocaleString() }}</span>
-        <span class="bd-stat-pill">总成功率 {{ apiAvgRate }}%</span>
-      </div>
       <a-table :columns="apiColumns" :data-source="apiCards" :pagination="false" size="small" :row-class-name="() => 'bd-api-row'">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'avgLatency'">
@@ -137,13 +170,6 @@ function setRefreshRate(rate) {
     refreshTimer = setInterval(() => { lastRefresh.value = new Date().toLocaleString() }, parseInt(rate) * 1000)
   }
 }
-
-const summaryCards = [
-  { label: '集群节点', value: '128', icon: 'fa-solid fa-server', bg: 'linear-gradient(135deg, #1890ff, #096dd9)', color: '#1890ff' },
-  { label: '活跃告警', value: '7', icon: 'fa-solid fa-triangle-exclamation', bg: 'linear-gradient(135deg, #f5222d, #cf1322)', color: '#f5222d' },
-  { label: '运行任务', value: '1,024', icon: 'fa-solid fa-gears', bg: 'linear-gradient(135deg, #52c41a, #389e0d)', color: '#52c41a' },
-  { label: '集群健康率', value: '98.4%', icon: 'fa-solid fa-heart-pulse', bg: 'linear-gradient(135deg, #13c2c2, #08979c)', color: '#13c2c2' },
-]
 
 function genTrend(n, min, max) {
   return Array.from({ length: n }, () => Math.round(min + Math.random() * (max - min)))
@@ -453,33 +479,41 @@ onBeforeUnmount(() => {
 .bd-header-btn:hover { border-color: #d1d5db; color: #1a1a1a; }
 .bd-last-refresh { font-size: 11px; color: #8c8c8c; }
 
-/* ② Summary Cards */
-.bd-summary {
+/* ② Top Cards */
+.bd-top-cards {
   display: flex;
-  gap: 16px;
+  gap: 12px;
 }
-.bd-summary-card {
+.bd-top-card {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   background: #fff;
   border-radius: 10px;
-  padding: 20px 24px;
+  padding: 14px 18px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.bd-summary-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+.bd-top-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.bd-summary-icon i { font-size: 22px; color: #fff; }
-.bd-summary-value { font-size: 28px; font-weight: 700; line-height: 1.2; }
-.bd-summary-label { font-size: 13px; color: #8c8c8c; margin-top: 2px; }
+.bd-top-card-icon i { font-size: 18px; color: #fff; }
+.bd-top-card-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; justify-content: center; }
+.bd-top-card-title { font-size: 12px; color: #8c8c8c; font-weight: 500; white-space: nowrap; }
+.bd-top-card-primary { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.bd-top-card-val { font-size: 24px; font-weight: 700; color: #1a1a1a; line-height: 1; white-space: nowrap; margin-bottom: -2px; }
+.bd-top-card-unit { font-size: 13px; font-weight: 500; color: #8c8c8c; margin-left: 2px; }
+.bd-top-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.bd-top-pill { font-size: 11px; font-weight: 500; white-space: nowrap; }
+.bd-top-pill-ok { color: #52c41a; }
+.bd-top-pill-warn { color: #fa8c16; }
+.bd-top-pill-danger { color: #f5222d; }
 
 /* ③ Section */
 .bd-section {
@@ -497,27 +531,6 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
 }
-
-/* API Stats Row */
-.bd-stats-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.bd-stat-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 6px;
-  background: #f5f5f5;
-  color: #595959;
-}
-.bd-stat-ok { background: #f6ffed; color: #52c41a; }
-.bd-stat-warn { background: #fff7e6; color: #fa8c16; }
-.bd-stat-danger { background: #fff1f0; color: #f5222d; }
 
 /* API Table styles */
 .bd-latency { font-weight: 600; }
@@ -645,12 +658,12 @@ onBeforeUnmount(() => {
 @media (max-width: 1200px) { .bd-subsys-card { width: calc(33.33% - 11px); } }
 @media (max-width: 768px) {
   .bd-subsys-card { width: calc(50% - 8px); }
-  .bd-summary { flex-wrap: wrap; }
-  .bd-summary-card { width: calc(50% - 8px); flex: none; }
+  .bd-top-cards { flex-wrap: wrap; }
+  .bd-top-card { width: calc(50% - 6px); flex: none; }
   .bd-toolbar { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
 @media (max-width: 420px) {
   .bd-subsys-card { width: 100%; }
-  .bd-summary-card { width: 100%; }
+  .bd-top-card { width: 100%; }
 }
 </style>
