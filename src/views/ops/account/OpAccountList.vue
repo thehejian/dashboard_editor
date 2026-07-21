@@ -2,7 +2,7 @@
   <div>
     <div class="page-header"><h3>OP账号</h3></div>
     <div class="filter-actions-bar">
-      <a-button>创建</a-button>
+      <a-button type="primary">创建</a-button>
       <a-button>删除</a-button>
     </div>
     <div class="filter-bar">
@@ -94,7 +94,7 @@ onMounted(async () => {
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-header h3 { font-size: 18px; font-weight: 600; margin: 0; color: var(--text); }
-.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
 .filter-bar :deep(.ant-input-search) { flex: 1; }
 .link-blue { color: var(--brand); cursor: pointer; font-size: 13px; }

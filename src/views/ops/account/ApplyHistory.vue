@@ -84,7 +84,7 @@ onMounted(async () => {
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-header h3 { font-size: 18px; font-weight: 600; margin: 0; color: var(--text); }
-.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; justify-content: flex-end; }
+.filter-actions-bar { display: flex; gap: 8px; margin-bottom: 8px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
 .filter-bar :deep(.ant-input-search) { flex: 1; }
 .link-blue { color: var(--brand); cursor: pointer; font-size: 13px; }
