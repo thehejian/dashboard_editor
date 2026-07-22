@@ -1,11 +1,11 @@
 <template>
   <div class="home-view">
     <div class="home-tabs">
-      <button class="home-tab-btn" :class="{ active: homeTab === 'home' }" @click="switchTab('home')">
-        <i class="fa-solid fa-house"></i> 概览
-      </button>
       <button class="home-tab-btn" :class="{ active: homeTab === 'aiops' }" @click="switchTab('aiops')">
-        <i class="fa-solid fa-wand-magic-sparkles"></i> AI运维
+ AI运维
+      </button>
+      <button class="home-tab-btn" :class="{ active: homeTab === 'home' }" @click="switchTab('home')">
+ 概览
       </button>
     </div>
 
@@ -181,19 +181,22 @@
       </div>
 
       <div class="golden-signals" v-if="aiopsGoldenSignals.length">
-        <div class="aiops-section-title"><i class="fa-solid fa-gauge-high" style="color:#722ED1;margin-right:6px"></i> 黄金信号 — {{ aiopsGoldenSignals[0]?.nodeId || 'prod-order-01' }}</div>
+        <div class="aiops-section-title">黄金信号 — {{ aiopsGoldenSignals[0]?.nodeId || 'prod-order-01' }}</div>
         <div class="gs-grid">
           <div v-for="sig in aiopsGoldenSignals" :key="sig.key" class="gs-card" :class="'gs-' + sig.status">
-            <div class="gs-header">
-              <i :class="sig.icon"></i>
-              <span class="gs-label">{{ sig.label }}</span>
+            <div class="gs-body">
+              <div class="gs-left">
+                <div class="gs-label"><i :class="sig.icon"></i> {{ sig.label }}</div>
+                <div class="gs-value">{{ sig.value }}<span class="gs-unit">{{ sig.unit }}</span></div>
+              </div>
+              <div class="gs-info">
+                <div class="gs-baseline">基线 {{ sig.baseline }}{{ sig.unit }}</div>
+                <div class="gs-deviation" :class="sig.deviation > 100 ? 'gs-danger' : 'gs-warn'">+{{ sig.deviation }}%</div>
+                <svg class="gs-sparkline" width="80" height="24" viewBox="0 0 80 24">
+                  <rect v-for="(bar, i) in calcSparkbarRects(sig.history, 24, 80)" :key="i" :x="bar.x" :y="bar.y" :width="bar.width" :height="bar.height" fill="currentColor" rx="1" />
+                </svg>
+              </div>
             </div>
-            <div class="gs-value">{{ sig.value }}<span class="gs-unit">{{ sig.unit }}</span></div>
-            <div class="gs-baseline">基线 {{ sig.baseline }}{{ sig.unit }}</div>
-            <div class="gs-deviation" :class="sig.deviation > 100 ? 'gs-danger' : 'gs-warn'">+{{ sig.deviation }}%</div>
-            <svg class="gs-sparkline" width="80" height="24" viewBox="0 0 80 24">
-              <path :d="calcSparklinePath(sig.history, 24, 80)" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
           </div>
         </div>
       </div>
@@ -272,14 +275,14 @@
             <template #title><i class="fa-solid fa-lightbulb" style="color:#FF7D00;margin-right:6px"></i> AI推荐操作</template>
             <div class="rec-list">
               <a-empty v-if="!aiopsRecommendations.length" description="暂无推荐操作" style="margin:24px 0" />
-              <div v-for="rec in aiopsRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
+              <div v-for="(rec, i) in aiopsRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
                 <div class="rec-icon"><i :class="rec.icon"></i></div>
                 <div class="rec-info">
                   <div class="rec-label">{{ rec.label }}</div>
                   <div class="rec-desc">{{ rec.desc }}</div>
                 </div>
-                <span class="rec-confidence" :style="{ color: '#fff', background: confidenceColor(rec.confidence) }">{{ rec.confidence }}%</span>
-                <a-button size="small" :type="rec.priority === 'urgent' ? 'primary' : 'default'" :danger="rec.priority === 'urgent'" @click="executeRec(rec)">执行</a-button>
+                <span class="rec-confidence">{{ rec.confidence }}%</span>
+                <a-button size="small" type="primary" :ghost="i >= 4" @click="executeRec(rec)">执行</a-button>
               </div>
             </div>
           </a-card>
@@ -1482,12 +1485,17 @@ function calcSparklinePath(values, h = 24, w = 60) {
     return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1)
   }).join(' ')
 }
-function confidenceColor(score) {
-  if (score >= 90) return '#07C160'
-  if (score >= 75) return '#FF7D00'
-  return '#9CA3AF'
+function calcSparkbarRects(values, h = 24, w = 80) {
+  const max = Math.max(...values, 1)
+  const count = values.length
+  const barW = Math.max(2, w / count - 2)
+  return values.map((v, i) => {
+    const x = i * (w / count) + 1
+    const barH = (v / max) * (h - 4)
+    const y = h - 2 - barH
+    return { x: x.toFixed(1), y: y.toFixed(1), width: barW.toFixed(1), height: Math.max(barH, 1).toFixed(1) }
+  })
 }
-
 function executeRec(rec) {
   if (rec.targetNode) {
     setTopoHighlight({ nodes: [rec.targetNode] })
@@ -1612,7 +1620,7 @@ const refreshCard = (card) => {
 </script>
 
 <style scoped>
-.home-view { padding: 8px 24px 24px; min-height: 100%; }
+.home-view { padding: 16px 24px 16px; min-height: 100%; }
 .kpi-card {
   padding: 16px 20px;
   border-radius: 12px;
@@ -1941,7 +1949,7 @@ const refreshCard = (card) => {
 .home-tab-btn.active { color: var(--brand, #007DFF); border-bottom-color: var(--brand, #007DFF); }
 .home-tab-btn:hover { color: var(--brand, #007DFF); }
 
-.aiops-intent-bar { margin-bottom: 20px; }
+.aiops-intent-bar { margin-bottom: 16px; }
 
 .aiops-intent-wrapper {
   display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px 10px 16px;
@@ -1961,11 +1969,11 @@ const refreshCard = (card) => {
 .aiops-intent-input::placeholder { color: #9CA3AF; }
 .aiops-intent-send {
   width: 36px; height: 36px; border-radius: 10px; border: none;
-  background: linear-gradient(135deg, var(--intelligent, #722ED1), var(--brand, #007DFF));
+  background: var(--brand, #007DFF);
   color: #fff; font-size: 16px; cursor: pointer; display: flex;
   align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;
 }
-.aiops-intent-send:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 4px 12px rgba(114,46,209,0.3); }
+.aiops-intent-send:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,125,255,0.35); }
 .aiops-intent-send:disabled { opacity: 0.4; cursor: not-allowed; }
 .aiops-suggestions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .suggestion-chip {
@@ -1975,8 +1983,8 @@ const refreshCard = (card) => {
 }
 .suggestion-chip:hover { border-color: var(--intelligent, #722ED1); color: var(--intelligent, #722ED1); background: rgba(114,46,209,0.05); }
 
-.aiops-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
-.aiops-kpi-card { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.aiops-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+.aiops-kpi-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .aiops-kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .aiops-kpi-info { flex: 1; }
 .aiops-kpi-val { font-size: 22px; font-weight: 700; line-height: 1.2; }
@@ -1990,7 +1998,7 @@ const refreshCard = (card) => {
 .kpi-ok { color: #07C160; }
 
 .aiops-heatmap { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-.aiops-section-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text, #182431); }
+.aiops-section-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text, #182431); }
 .heatmap-grid { display: flex; gap: 16px; flex-wrap: wrap; }
 .heatmap-group { flex: 1; min-width: 140px; }
 .heatmap-group-name { font-size: 11px; color: var(--text-sec, #6B7280); margin-bottom: 6px; font-weight: 500; }
@@ -2061,24 +2069,26 @@ const refreshCard = (card) => {
 .rec-info { flex: 1; }
 .rec-label { font-size: 13px; font-weight: 500; }
 .rec-desc { font-size: 11px; color: var(--text-sec, #6B7280); }
-.rec-confidence { font-size: 10px; font-weight: 600; font-family: monospace; padding: 2px 6px; border-radius: 10px; flex-shrink: 0; }
+.rec-confidence { font-size: 12px; font-weight: 600; font-family: monospace; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; background: var(--bg-sec, #F2F2F7); color: var(--text-sec, #6B7280); }
 
 .aiops-trend-card { margin-top: 16px; }
 .aiops-trend-chart { height: 200px; }
 .trend-legend { font-size: 11px; font-weight: 400; color: var(--text-sec, #6B7280); margin-left: 8px; }
 
-.gs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
-.gs-card { padding: 14px; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 3px solid transparent; }
-.gs-critical { border-left-color: #F5222D; }
-.gs-warning { border-left-color: #FF7D00; }
-.gs-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; color: var(--text-sec, #6B7280); }
-.gs-value { font-size: 22px; font-weight: 700; }
+.gs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+.gs-card { padding: 16px; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.gs-body { display: flex; justify-content: space-between; align-items: center; }
+.gs-left { display: flex; flex-direction: column; }
+.gs-label { font-size: 12px; color: var(--text-sec, #6B7280); margin-bottom: 4px; }
+.gs-label i { margin-right: 4px; color: var(--brand); }
+.gs-value { font-size: 26px; font-weight: 700; white-space: nowrap; line-height: 1; }
 .gs-unit { font-size: 12px; font-weight: 400; color: var(--text-sec, #6B7280); margin-left: 2px; }
-.gs-baseline { font-size: 11px; color: var(--text-ter, #9CA3AF); margin-top: 2px; }
+.gs-info { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.gs-baseline { font-size: 11px; color: var(--text-ter, #9CA3AF); }
 .gs-deviation { font-size: 12px; font-weight: 600; }
 .gs-danger { color: #F5222D; }
 .gs-warn { color: #FF7D00; }
-  .gs-sparkline { margin-top: 4px; color: var(--text-ter, #9CA3AF); }
+.gs-sparkline { margin-top: 2px; color: #F5222D; }
 
 @media (max-width: 480px) {
   .aiops-kpi-row { grid-template-columns: 1fr; }

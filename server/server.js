@@ -1049,7 +1049,6 @@ app.get('/api/intelligent/golden-signals', (req, res) => {
       { key: 'latency', label: '延迟', unit: 'ms', value: 3200, baseline: 200, deviation: 1500, icon: 'fa-solid fa-clock', status: 'critical', history: [180,195,210,3200,3100,3050,3000] },
       { key: 'traffic', label: '流量', unit: 'QPS', value: 12000, baseline: 8000, deviation: 50, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'warning', history: [7500,7800,8200,11000,12000,11800,11500] },
       { key: 'errors', label: '错误率', unit: '%', value: 2.3, baseline: 0.1, deviation: 2200, icon: 'fa-solid fa-circle-exclamation', status: 'critical', history: [0.08,0.09,0.1,2.3,2.1,1.8,1.5] },
-      { key: 'saturation', label: '饱和度', unit: '%', value: 97, baseline: 45, deviation: 115, icon: 'fa-solid fa-gauge-high', status: 'critical', history: [42,44,43,97,95,92,88] },
     ]
   }})
 })

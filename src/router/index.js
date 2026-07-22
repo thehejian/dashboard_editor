@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  { path: '/', redirect: '/overview' },
+  { path: '/', redirect: '/aiops' },
   { path: '/overview', name: 'overview', component: () => import('../views/HomeView.vue') },
   { path: '/aiops', name: 'aiops', component: () => import('../views/HomeView.vue') },
 
