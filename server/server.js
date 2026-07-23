@@ -1097,12 +1097,106 @@ app.get('/api/intelligent/incident-timeline', (req, res) => {
 
 // ==================== AI Chat ====================
 
-const AGNES_API_KEY = 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
+const AGNES_API_KEY = process.env.AI_CHAT_KEY || 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
 const AGNES_BASE_URL = 'https://apihub.agnes-ai.com/v1'
 
-const ZHIPU_API_KEY = '8329553cf0bd83a57bd45502d80688b7.MoH21npPA0tXNPfw'
-const ZHIPU_BASE_URL = 'https://open.bigmodel.cn/api/paas/v4'
+const ZHIPU_API_KEY = process.env.ZHIPU_TOKEN || '8329553cf0bd83a57bd45502d80688b7.MoH21npPA0tXNPfw'
+const ZHIPU_BASE_URL = process.env.ZHIPU_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4'
 const ZHIPU_MODEL = 'glm-4.7-flash'
+
+// ==================== AI Model Connection Test ====================
+
+const AI_MODEL_GROUPS = [
+  {
+    provider: 'Agnes',
+    tokenLabel: 'thehejian',
+    apiKey: process.env.AGNES_TOKEN_THEHEJIAN,
+    baseUrl: process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
+    models: ['agnes-2.0-flash', 'agnes-image-2.0-flash', 'agnes-image-2.1-flash', 'agnes-video-v2.0'],
+  },
+  {
+    provider: 'Agnes',
+    tokenLabel: 'Google',
+    apiKey: process.env.AGNES_TOKEN_GOOGLE,
+    baseUrl: process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
+    models: ['agnes-2.0-flash', 'agnes-image-2.0-flash', 'agnes-image-2.1-flash', 'agnes-video-v2.0'],
+  },
+  {
+    provider: 'Agnes',
+    tokenLabel: 'github',
+    apiKey: process.env.AGNES_TOKEN_GITHUB,
+    baseUrl: process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
+    models: ['agnes-2.0-flash', 'agnes-image-2.0-flash', 'agnes-image-2.1-flash', 'agnes-video-v2.0'],
+  },
+  {
+    provider: 'SenseNova',
+    tokenLabel: null,
+    apiKey: process.env.SENSENOVA_TOKEN,
+    baseUrl: process.env.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1',
+    models: ['sensenova-6.7-flash-lite', 'sensenova-u1-fast', 'deepseek-v4-flash'],
+  },
+  {
+    provider: 'Zhipu GLM',
+    tokenLabel: null,
+    apiKey: process.env.ZHIPU_TOKEN,
+    baseUrl: process.env.ZHIPU_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4',
+    models: ['glm-4.7-flash'],
+  },
+]
+
+async function testModelConnection(apiKey, baseUrl, model) {
+  const bodyObj = { model, messages: [{ role: 'user', content: 'hi' }], stream: false, max_tokens: 5 }
+  const bodyStr = JSON.stringify(bodyObj)
+  const curl = `curl -s --max-time 10 '${baseUrl}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${apiKey}' -d '${bodyStr.replace(/'/g, "'\\''")}'`
+  const start = Date.now()
+  try {
+    const stdout = await new Promise((resolve, reject) => {
+      exec(curl, { timeout: 12000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
+        if (err || !stdout.trim()) return reject(err || new Error('无响应'))
+        resolve(stdout)
+      })
+    })
+    const trimmed = stdout.trim()
+    if (trimmed.startsWith('<')) {
+      return { status: 'error', latencyMs: Date.now() - start, errorMessage: 'API returned HTML (model may not support chat completions)' }
+    }
+    const data = JSON.parse(trimmed)
+    if (data.error) {
+      return { status: 'error', latencyMs: Date.now() - start, errorMessage: data.error.message || JSON.stringify(data.error) }
+    }
+    return { status: 'success', latencyMs: Date.now() - start }
+  } catch (e) {
+    return { status: 'error', latencyMs: Date.now() - start, errorMessage: e.message?.slice(0, 200) || 'unknown' }
+  }
+}
+
+app.post('/api/ai/test-connection', async (_req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  })
+  for (const group of AI_MODEL_GROUPS) {
+    for (const model of group.models) {
+      const r = await testModelConnection(group.apiKey, group.baseUrl, model)
+      res.write(`data: ${JSON.stringify({ provider: group.provider, tokenLabel: group.tokenLabel, model, ...r })}\n\n`)
+      if (!res.writableEnded && r.status !== 'success') {
+        // continue even on error
+      }
+    }
+  }
+  res.write('data: [DONE]\n\n')
+  res.end()
+})
+
+app.post('/api/ai/test-single', async (req, res) => {
+  const { provider, tokenLabel, model } = req.body
+  if (!provider || !model) return res.status(400).json({ error: 'Missing provider or model' })
+  const group = AI_MODEL_GROUPS.find(g => g.provider === provider && g.tokenLabel === tokenLabel)
+  if (!group) return res.status(404).json({ error: 'Provider group not found' })
+  const r = await testModelConnection(group.apiKey, group.baseUrl, model)
+  res.json(r)
+})
 
 async function callProvider(apiKey, baseUrl, model, messages, extraParams) {
   const bodyObj = { model, messages, stream: false, ...extraParams }

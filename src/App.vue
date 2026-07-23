@@ -176,6 +176,7 @@
             <NASDashboard v-else-if="isNASDashboard" />
             <ContainerDashboard v-else-if="isContainerDashboard" />
             <BigDataDashboard v-else-if="isBigDataDashboard" />
+            <AiModelDashboard v-else-if="isAiModelDashboard" />
             <ChartGrid v-else />
           </div>
           <button v-if="!isCustomDashboard" class="fab-add" @click="addChart()" title="添加图表">
@@ -210,6 +211,7 @@ import VMDashboard from './components/VMDashboard.vue'
 import NASDashboard from './components/NASDashboard.vue'
 import ContainerDashboard from './components/ContainerDashboard.vue'
 import BigDataDashboard from './components/BigDataDashboard.vue'
+import AiModelDashboard from './components/AiModelDashboard.vue'
 import AIAssistant from './components/AIAssistant.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
@@ -239,7 +241,8 @@ const isVMDashboard = computed(() => currentDashboard.value?.title === '虚拟�
 const isNASDashboard = computed(() => currentDashboard.value?.title === 'NAS监控')
 const isContainerDashboard = computed(() => currentDashboard.value?.title === '容器监控')
 const isBigDataDashboard = computed(() => currentDashboard.value?.title === '大数据监控')
-const isCustomDashboard = computed(() => isOBSDashboard.value || isVMDashboard.value || isNASDashboard.value || isContainerDashboard.value || isBigDataDashboard.value)
+const isAiModelDashboard = computed(() => currentDashboard.value?.title === 'AI模型监控')
+const isCustomDashboard = computed(() => isOBSDashboard.value || isVMDashboard.value || isNASDashboard.value || isContainerDashboard.value || isBigDataDashboard.value || isAiModelDashboard.value)
 
 function scrollToChart(chartId) {
   const el = document.querySelector(`[data-chart-id="${chartId}"]`)

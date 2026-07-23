@@ -202,6 +202,7 @@ const DASHBOARDS = [
   createDashboard(4, '测试环境仪表盘', 'cn-east-1', '24h', null, 'test'),
   createDashboard(5, 'OBS监控', 'cn-north-1', '24h', null, 'obs'),
   createDashboard(8, '大数据监控', 'cn-north-1', '24h', null, 'bigdata'),
+  createDashboard(9, 'AI模型监控', 'cn-north-1', '24h', null, 'aimodel'),
 ]
 
 function cloneDashboards() {

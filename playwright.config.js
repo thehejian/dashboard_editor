@@ -15,7 +15,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" && npm run dev',
+    command: 'export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" && node server/server.js & npm run dev',
     url: 'http://admin:745544752@localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
