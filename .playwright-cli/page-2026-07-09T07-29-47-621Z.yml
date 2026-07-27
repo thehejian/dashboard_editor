@@ -1,0 +1,67 @@
+- generic [ref=f9e3]:
+  - banner [ref=f9e4]:
+    - generic [ref=f9e5]:
+      - generic [ref=f9e6]:
+        - img "Logo" [ref=f9e7]
+        - generic [ref=f9e8]: 运维中心
+      - navigation [ref=f9e9]:
+        - link " 首页" [ref=f9e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f9e11]: 
+          - generic [ref=f9e12]: 首页
+        - link " 告警" [ref=f9e13] [cursor=pointer]:
+          - /url: /alarm/current
+          - generic [ref=f9e14]: 
+          - generic [ref=f9e15]: 告警
+        - generic [ref=f9e16]:
+          - generic [ref=f9e17]: 
+          - generic [ref=f9e18]: 监控
+          - generic [ref=f9e19]: 
+        - generic [ref=f9e20]:
+          - generic [ref=f9e21]: 
+          - generic [ref=f9e22]: 资源
+          - generic [ref=f9e23]: 
+        - generic [ref=f9e24]:
+          - generic [ref=f9e25]: 
+          - generic [ref=f9e26]: 运维
+          - generic [ref=f9e27]: 
+        - generic [ref=f9e28]:
+          - generic [ref=f9e29]: 
+          - generic [ref=f9e30]: 系统
+          - generic [ref=f9e31]: 
+    - generic [ref=f9e33] [cursor=pointer]: A
+  - generic:
+    - button "" [ref=f9e36] [cursor=pointer]:
+      - generic [ref=f9e37]: 
+    - generic:
+      - generic:
+        - generic:
+          - heading " AI 助手" [level=3]:
+            - generic: 
+            - text: AI 助手
+          - button "":
+            - generic: 
+        - generic:
+          - generic:
+            - generic:
+              - generic: 
+            - paragraph: 你好，我是运维 AI 助手
+            - paragraph: 我可以帮你分析监控数据、排查故障、生成查询语句
+            - generic:
+              - button " 分析当前页面":
+                - generic: 
+                - text: 分析当前页面
+              - button " 写 PromQL 查询":
+                - generic: 
+                - text: 写 PromQL 查询
+              - button " 总结今日告警":
+                - generic: 
+                - text: 总结今日告警
+              - button " 检测系统故障":
+                - generic: 
+                - text: 检测系统故障
+        - generic:
+          - generic:
+            - textbox "输入你的问题..."
+            - button "" [disabled]:
+              - generic: 

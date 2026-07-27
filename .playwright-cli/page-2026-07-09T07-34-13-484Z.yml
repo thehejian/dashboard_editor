@@ -1,0 +1,386 @@
+- generic [ref=f23e3]:
+  - banner [ref=f23e4]:
+    - generic [ref=f23e5]:
+      - generic [ref=f23e6]:
+        - img "Logo" [ref=f23e7]
+        - generic [ref=f23e8]: 运维中心
+      - navigation [ref=f23e9]:
+        - link " 首页" [ref=f23e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f23e11]: 
+          - generic [ref=f23e12]: 首页
+        - link " 告警" [ref=f23e13] [cursor=pointer]:
+          - /url: /alarm/current
+          - generic [ref=f23e14]: 
+          - generic [ref=f23e15]: 告警
+        - generic [ref=f23e16]:
+          - generic [ref=f23e17]: 
+          - generic [ref=f23e18]: 监控
+          - generic [ref=f23e19]: 
+        - generic [ref=f23e20]:
+          - generic [ref=f23e21]: 
+          - generic [ref=f23e22]: 资源
+          - generic [ref=f23e23]: 
+        - generic [ref=f23e24]:
+          - generic [ref=f23e25]: 
+          - generic [ref=f23e26]: 运维
+          - generic [ref=f23e27]: 
+        - generic [ref=f23e28]:
+          - generic [ref=f23e29]: 
+          - generic [ref=f23e30]: 系统
+          - generic [ref=f23e31]: 
+    - generic [ref=f23e33] [cursor=pointer]: A
+  - generic [ref=f23e35]:
+    - generic [ref=f23e37]:
+      - generic [ref=f23e39]:
+        - generic [ref=f23e40]:
+          - generic [ref=f23e42]: 
+          - generic [ref=f23e43]: 资源总数
+          - generic [ref=f23e44]:
+            - button "" [ref=f23e45] [cursor=pointer]:
+              - generic [ref=f23e46]: 
+            - button "" [ref=f23e47] [cursor=pointer]:
+              - generic [ref=f23e48]: 
+            - button "" [ref=f23e49] [cursor=pointer]:
+              - generic [ref=f23e50]: 
+        - generic [ref=f23e51]:
+          - generic [ref=f23e52]: 1,234,567
+          - generic [ref=f23e53]:
+            - generic [ref=f23e54]: 
+            - text: 较上月 +12%
+      - generic [ref=f23e57]:
+        - generic [ref=f23e58]:
+          - generic [ref=f23e60]: 
+          - generic [ref=f23e61]: 健康资源
+          - generic [ref=f23e62]:
+            - button "" [ref=f23e63] [cursor=pointer]:
+              - generic [ref=f23e64]: 
+            - button "" [ref=f23e65] [cursor=pointer]:
+              - generic [ref=f23e66]: 
+            - button "" [ref=f23e67] [cursor=pointer]:
+              - generic [ref=f23e68]: 
+        - generic [ref=f23e70]: 1,180,234
+        - generic [ref=f23e71]: 健康率 95.6%
+      - generic [ref=f23e73] [cursor=pointer]:
+        - generic [ref=f23e74]:
+          - generic [ref=f23e76]: 
+          - generic [ref=f23e77]: 当日告警
+          - generic [ref=f23e78]:
+            - button "" [ref=f23e79]:
+              - generic [ref=f23e80]: 
+            - button "" [ref=f23e81]:
+              - generic [ref=f23e82]: 
+            - button "" [ref=f23e83]:
+              - generic [ref=f23e84]: 
+        - generic [ref=f23e85]:
+          - generic [ref=f23e86]: 54,333
+          - generic [ref=f23e87]:
+            - generic [ref=f23e88]: 
+            - text: 较上周 -8%
+      - generic [ref=f23e91]:
+        - generic [ref=f23e92]:
+          - generic [ref=f23e94]: 
+          - generic [ref=f23e95]: 今日事件
+          - generic [ref=f23e96]:
+            - button "" [ref=f23e97] [cursor=pointer]:
+              - generic [ref=f23e98]: 
+            - button "" [ref=f23e99] [cursor=pointer]:
+              - generic [ref=f23e100]: 
+            - button "" [ref=f23e101] [cursor=pointer]:
+              - generic [ref=f23e102]: 
+        - generic [ref=f23e103]:
+          - generic [ref=f23e104]: "128"
+          - generic [ref=f23e105]:
+            - generic [ref=f23e106]: 
+            - text: 较昨日 +5%
+      - generic [ref=f23e111] [cursor=pointer]:
+        - generic [ref=f23e112]: 资源分类分布
+        - generic [ref=f23e114]:
+          - button "" [ref=f23e115]:
+            - generic [ref=f23e116]: 
+          - button "" [ref=f23e117]:
+            - generic [ref=f23e118]: 
+          - button "" [ref=f23e119]:
+            - generic [ref=f23e120]: 
+      - generic [ref=f23e127] [cursor=pointer]:
+        - generic [ref=f23e128]: 告警趋势
+        - generic [ref=f23e130]:
+          - button "" [ref=f23e131]:
+            - generic [ref=f23e132]: 
+          - button "" [ref=f23e133]:
+            - generic [ref=f23e134]: 
+          - button "" [ref=f23e135]:
+            - generic [ref=f23e136]: 
+      - generic [ref=f23e141]:
+        - generic [ref=f23e143]:
+          - generic [ref=f23e144]: 最近告警事件
+          - button "查看全部" [ref=f23e146] [cursor=pointer]:
+            - generic [ref=f23e147]: 查看全部
+        - table [ref=f23e155]:
+          - rowgroup [ref=f23e164]:
+            - row "时间 CI名称 CI类型 事件 级别 状态 操作" [ref=f23e165]:
+              - columnheader "时间" [ref=f23e166]
+              - columnheader "CI名称" [ref=f23e167]
+              - columnheader "CI类型" [ref=f23e168]
+              - columnheader "事件" [ref=f23e169]
+              - columnheader "级别" [ref=f23e170]
+              - columnheader "状态" [ref=f23e171]
+              - columnheader "操作" [ref=f23e172]
+          - rowgroup [ref=f23e173]:
+            - row "2026-06-16T15:00:00.000Z ntp-server info NTP同步偏移过大 info resolved 查看详情  AI分析" [ref=f23e174]:
+              - cell "2026-06-16T15:00:00.000Z" [ref=f23e175]
+              - cell "ntp-server" [ref=f23e176]
+              - cell "info" [ref=f23e177]
+              - cell "NTP同步偏移过大" [ref=f23e178]
+              - cell "info" [ref=f23e179]:
+                - generic [ref=f23e180]: info
+              - cell "resolved" [ref=f23e181]
+              - cell "查看详情  AI分析" [ref=f23e182]:
+                - button "查看详情" [ref=f23e183] [cursor=pointer]:
+                  - generic [ref=f23e184]: 查看详情
+                - button " AI分析" [ref=f23e185] [cursor=pointer]:
+                  - generic [ref=f23e186]: 
+                  - generic [ref=f23e187]: AI分析
+            - row "2026-06-16T22:30:00.000Z switch-01 warning 网络丢包率过高 warning firing 查看详情  AI分析" [ref=f23e188]:
+              - cell "2026-06-16T22:30:00.000Z" [ref=f23e189]
+              - cell "switch-01" [ref=f23e190]
+              - cell "warning" [ref=f23e191]
+              - cell "网络丢包率过高" [ref=f23e192]
+              - cell "warning" [ref=f23e193]:
+                - generic [ref=f23e194]: warning
+              - cell "firing" [ref=f23e195]
+              - cell "查看详情  AI分析" [ref=f23e196]:
+                - button "查看详情" [ref=f23e197] [cursor=pointer]:
+                  - generic [ref=f23e198]: 查看详情
+                - button " AI分析" [ref=f23e199] [cursor=pointer]:
+                  - generic [ref=f23e200]: 
+                  - generic [ref=f23e201]: AI分析
+            - row "2026-06-16T23:30:00.000Z kafka-consumer-group order warning 消息队列积压 warning resolved 查看详情  AI分析" [ref=f23e202]:
+              - cell "2026-06-16T23:30:00.000Z" [ref=f23e203]
+              - cell "kafka-consumer-group order" [ref=f23e204]
+              - cell "warning" [ref=f23e205]
+              - cell "消息队列积压" [ref=f23e206]
+              - cell "warning" [ref=f23e207]:
+                - generic [ref=f23e208]: warning
+              - cell "resolved" [ref=f23e209]
+              - cell "查看详情  AI分析" [ref=f23e210]:
+                - button "查看详情" [ref=f23e211] [cursor=pointer]:
+                  - generic [ref=f23e212]: 查看详情
+                - button " AI分析" [ref=f23e213] [cursor=pointer]:
+                  - generic [ref=f23e214]: 
+                  - generic [ref=f23e215]: AI分析
+            - row "2026-06-17T00:45:00.000Z payment-service critical K8s Pod频繁重启 critical resolved 查看详情  AI分析" [ref=f23e216]:
+              - cell "2026-06-17T00:45:00.000Z" [ref=f23e217]
+              - cell "payment-service" [ref=f23e218]
+              - cell "critical" [ref=f23e219]
+              - cell "K8s Pod频繁重启" [ref=f23e220]
+              - cell "critical" [ref=f23e221]:
+                - generic [ref=f23e222]: critical
+              - cell "resolved" [ref=f23e223]
+              - cell "查看详情  AI分析" [ref=f23e224]:
+                - button "查看详情" [ref=f23e225] [cursor=pointer]:
+                  - generic [ref=f23e226]: 查看详情
+                - button " AI分析" [ref=f23e227] [cursor=pointer]:
+                  - generic [ref=f23e228]: 
+                  - generic [ref=f23e229]: AI分析
+            - row "2026-06-17T00:00:00.000Z cdn-domain.example.com info 证书即将过期 info firing 查看详情  AI分析" [ref=f23e230]:
+              - cell "2026-06-17T00:00:00.000Z" [ref=f23e231]
+              - cell "cdn-domain.example.com" [ref=f23e232]
+              - cell "info" [ref=f23e233]
+              - cell "证书即将过期" [ref=f23e234]
+              - cell "info" [ref=f23e235]:
+                - generic [ref=f23e236]: info
+              - cell "firing" [ref=f23e237]
+              - cell "查看详情  AI分析" [ref=f23e238]:
+                - button "查看详情" [ref=f23e239] [cursor=pointer]:
+                  - generic [ref=f23e240]: 查看详情
+                - button " AI分析" [ref=f23e241] [cursor=pointer]:
+                  - generic [ref=f23e242]: 
+                  - generic [ref=f23e243]: AI分析
+    - generic:
+      - generic:
+        - generic:
+          - heading "- 历史详情" [level=3]
+          - button "":
+            - generic: 
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - radio "今日"
+                - generic: 今日
+              - generic:
+                - generic:
+                  - radio "本周" [checked]
+                - generic: 本周
+              - generic:
+                - generic:
+                  - radio "本月"
+                - generic: 本月
+              - generic:
+                - generic:
+                  - radio "本季度"
+                - generic: 本季度
+          - generic:
+            - generic:
+              - generic: 当前资源总数
+              - generic: 1,234,567
+            - generic:
+              - generic: 峰值
+              - generic: 1,235,000
+            - generic:
+              - generic: 平均值
+              - generic: 1,229,000
+            - generic:
+              - generic: 同比变化
+              - generic: +15%
+          - generic:
+            - heading "详细数据" [level=4]
+            - generic:
+              - generic:
+                - generic:
+                  - textbox "搜索资源类型"
+                  - generic:
+                    - button "search":
+                      - img "search":
+                        - img
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - table:
+                          - rowgroup:
+                            - row "资源类型 filter 新增 caret-up caret-down 退出 caret-up caret-down 净变化 caret-up caret-down 当前总数":
+                              - columnheader "资源类型 filter":
+                                - generic:
+                                  - generic: 资源类型
+                                  - button "filter":
+                                    - img "filter":
+                                      - img
+                              - columnheader "新增 caret-up caret-down":
+                                - generic:
+                                  - generic: 新增
+                                  - generic:
+                                    - generic:
+                                      - generic "caret-up":
+                                        - img
+                                      - generic "caret-down":
+                                        - img
+                              - columnheader "退出 caret-up caret-down":
+                                - generic:
+                                  - generic: 退出
+                                  - generic:
+                                    - generic:
+                                      - generic "caret-up":
+                                        - img
+                                      - generic "caret-down":
+                                        - img
+                              - columnheader "净变化 caret-up caret-down":
+                                - generic:
+                                  - generic: 净变化
+                                  - generic:
+                                    - generic:
+                                      - generic "caret-up":
+                                        - img
+                                      - generic "caret-down":
+                                        - img
+                              - columnheader "当前总数"
+                          - rowgroup:
+                            - row "ECS +320 -85 +235 555,555":
+                              - cell "ECS"
+                              - cell "+320"
+                              - cell "-85"
+                              - cell "+235"
+                              - cell "555,555"
+                            - row "MySQL +45 -12 +33 1,850":
+                              - cell "MySQL"
+                              - cell "+45"
+                              - cell "-12"
+                              - cell "+33"
+                              - cell "1,850"
+                            - row "Redis +28 -8 +20 1,200":
+                              - cell "Redis"
+                              - cell "+28"
+                              - cell "-8"
+                              - cell "+20"
+                              - cell "1,200"
+                            - row "K8s Pod +580 -165 +415 370,370":
+                              - cell "K8s Pod"
+                              - cell "+580"
+                              - cell "-165"
+                              - cell "+415"
+                              - cell "370,370"
+                            - row "SLB +18 -5 +13 850":
+                              - cell "SLB"
+                              - cell "+18"
+                              - cell "-5"
+                              - cell "+13"
+                              - cell "850"
+                  - list:
+                    - listitem: 共 7 条
+                    - listitem "Previous Page":
+                      - button "left" [disabled]:
+                        - img "left":
+                          - img
+                    - listitem "1":
+                      - generic: "1"
+                    - listitem "2":
+                      - generic: "2"
+                    - listitem "Next Page":
+                      - button "right":
+                        - img "right":
+                          - img
+                    - listitem:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - combobox
+                          - generic: 5 / page
+                        - generic:
+                          - img:
+                            - img
+        - generic:
+          - generic:
+            - button " 导出数据":
+              - generic: 
+              - generic: 导出数据
+            - button "关 闭":
+              - generic: 关 闭
+  - generic:
+    - button "" [ref=f23e244] [cursor=pointer]:
+      - generic [ref=f23e245]: 
+    - generic:
+      - generic:
+        - generic:
+          - heading " AI 助手" [level=3]:
+            - generic: 
+            - text: AI 助手
+          - button "":
+            - generic: 
+        - generic:
+          - generic:
+            - generic:
+              - generic: 
+            - paragraph: 你好，我是运维 AI 助手
+            - paragraph: 我可以帮你分析监控数据、排查故障、生成查询语句
+            - generic:
+              - button " 分析当前页面":
+                - generic: 
+                - text: 分析当前页面
+              - button " 写 PromQL 查询":
+                - generic: 
+                - text: 写 PromQL 查询
+              - button " 总结今日告警":
+                - generic: 
+                - text: 总结今日告警
+              - button " 检测系统故障":
+                - generic: 
+                - text: 检测系统故障
+        - generic:
+          - generic:
+            - textbox "输入你的问题..."
+            - button "" [disabled]:
+              - generic: 

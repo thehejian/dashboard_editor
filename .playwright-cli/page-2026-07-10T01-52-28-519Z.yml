@@ -1,0 +1,213 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img "Logo" [ref=e7]
+        - generic [ref=e8]: 运维中心
+      - navigation [ref=e9]:
+        - link "首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e11]: 首页
+        - link "告警" [ref=e12] [cursor=pointer]:
+          - /url: /alarm/current
+          - generic [ref=e13]: 告警
+        - generic [ref=e15]: 监控
+        - generic [ref=e17]: 资源
+        - generic [ref=e19]: 运维
+        - generic [ref=e21]: 系统
+    - generic [ref=e23] [cursor=pointer]: A
+  - generic [ref=e26]:
+    - complementary [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e29]: 拓扑视图
+        - button [ref=e30] [cursor=pointer]
+      - generic [ref=e31]:
+        - generic [ref=e33] [cursor=pointer]: 云系统拓扑
+        - generic [ref=e35] [cursor=pointer]: 应用拓扑
+        - generic [ref=e37] [cursor=pointer]: 云服务拓扑
+    - main [ref=e38]:
+      - heading "应用拓扑" [level=2] [ref=e41]
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - button "全局视图" [ref=e44] [cursor=pointer]
+          - button "订单系统" [ref=e45] [cursor=pointer]
+          - button "支付系统" [ref=e46] [cursor=pointer]
+          - button "用户系统" [ref=e47] [cursor=pointer]
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e51]:
+              - textbox "搜索节点..." [ref=e52]
+              - button "search" [ref=e54] [cursor=pointer]:
+                - img "search" [ref=e55]:
+                  - img [ref=e56]
+            - button "导出PNG" [ref=e58] [cursor=pointer]:
+              - generic [ref=e59]: 导出PNG
+            - button "刷 新" [ref=e60] [cursor=pointer]:
+              - generic [ref=e61]: 刷 新
+            - button "帮 助" [ref=e62] [cursor=pointer]:
+              - generic [ref=e63]: 帮 助
+          - generic [ref=e65]:
+            - button [ref=e66] [cursor=pointer]
+            - button [ref=e67] [cursor=pointer]
+            - button [ref=e68] [cursor=pointer]
+            - button [ref=e69] [cursor=pointer]
+            - button [ref=e70] [cursor=pointer]
+            - button [ref=e71] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic:
+            - heading [level=3]
+            - button
+          - generic:
+            - generic:
+              - heading "基本信息" [level=4]
+              - generic:
+                - generic:
+                  - generic: 类型
+                - generic:
+                  - generic: ID
+                - generic:
+                  - generic: 状态
+            - generic:
+              - heading "云服务 ( 0 /0)" [level=4]:
+                - text: 云服务 (
+                - generic: "0"
+                - text: /0)
+              - generic:
+                - generic:
+                  - textbox "搜索服务..."
+                  - generic:
+                    - button "search":
+                      - img "search":
+                        - img
+              - table:
+                - rowgroup:
+                  - row "服务名称 部署主机/POD 状态 描述":
+                    - columnheader "服务名称"
+                    - columnheader "部署主机/POD"
+                    - columnheader "状态"
+                    - columnheader "描述"
+                - rowgroup
+              - list:
+                - listitem "Previous Page":
+                  - button "left" [disabled]:
+                    - img "left":
+                      - img
+                - listitem "1":
+                  - generic: "1"
+                - listitem "Next Page":
+                  - button "right" [disabled]:
+                    - img "right":
+                      - img
+                - listitem:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - combobox
+                      - generic: 5 / page
+                    - generic:
+                      - img:
+                        - img
+            - generic:
+              - heading "可用分区 ( 0 /0)" [level=4]:
+                - text: 可用分区 (
+                - generic: "0"
+                - text: /0)
+              - generic:
+                - generic:
+                  - textbox "搜索可用分区..."
+                  - generic:
+                    - button "search":
+                      - img "search":
+                        - img
+              - table:
+                - rowgroup:
+                  - row "可用分区名称 状态 描述":
+                    - columnheader "可用分区名称"
+                    - columnheader "状态"
+                    - columnheader "描述"
+                - rowgroup
+              - list:
+                - listitem "Previous Page":
+                  - button "left" [disabled]:
+                    - img "left":
+                      - img
+                - listitem "1":
+                  - generic: "1"
+                - listitem "Next Page":
+                  - button "right" [disabled]:
+                    - img "right":
+                      - img
+                - listitem:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - combobox
+                      - generic: 5 / page
+                    - generic:
+                      - img:
+                        - img
+            - generic:
+              - heading "物理资源 ( 0 /0)" [level=4]:
+                - text: 物理资源 (
+                - generic: "0"
+                - text: /0)
+              - generic:
+                - generic:
+                  - textbox "搜索物理服务器..."
+                  - generic:
+                    - button "search":
+                      - img "search":
+                        - img
+              - table:
+                - rowgroup:
+                  - row "名称 IP地址 状态":
+                    - columnheader "名称"
+                    - columnheader "IP地址"
+                    - columnheader "状态"
+                - rowgroup
+              - list:
+                - listitem "Previous Page":
+                  - button "left" [disabled]:
+                    - img "left":
+                      - img
+                - listitem "1":
+                  - generic: "1"
+                - listitem "Next Page":
+                  - button "right" [disabled]:
+                    - img "right":
+                      - img
+                - listitem:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - combobox
+                      - generic: 5 / page
+                    - generic:
+                      - img:
+                        - img
+          - generic:
+            - button "下钻查看":
+              - generic: 下钻查看
+            - button "查看详情":
+              - generic: 查看详情
+  - generic:
+    - button "打开AI助手" [ref=e77] [cursor=pointer]
+    - generic:
+      - generic:
+        - generic:
+          - heading "AI 助手" [level=3]: AI 助手
+          - button
+        - generic:
+          - generic:
+            - paragraph: 你好，我是运维 AI 助手
+            - paragraph: 我可以帮你分析监控数据、排查故障、生成查询语句
+            - generic:
+              - button "分析当前页面": 分析当前页面
+              - button "写 PromQL 查询": 写 PromQL 查询
+              - button "总结今日告警": 总结今日告警
+              - button "检测系统故障": 检测系统故障
+        - generic:
+          - generic:
+            - textbox "输入你的问题..."
+            - button [disabled]

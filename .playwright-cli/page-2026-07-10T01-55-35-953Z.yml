@@ -1,0 +1,279 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img "Logo" [ref=e7]
+        - generic [ref=e8]: 运维中心
+      - navigation [ref=e9]:
+        - link "首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e11]: 首页
+        - link "告警" [ref=e12] [cursor=pointer]:
+          - /url: /alarm/current
+          - generic [ref=e13]: 告警
+        - generic [ref=e15]: 监控
+        - generic [ref=e17]: 资源
+        - generic [ref=e19]: 运维
+        - generic [ref=e21]: 系统
+    - generic [ref=e23] [cursor=pointer]: A
+  - generic [ref=e279]:
+    - complementary [ref=e280]:
+      - generic [ref=e281]:
+        - generic [ref=e282]: 拓扑视图
+        - button [ref=e283] [cursor=pointer]
+      - generic [ref=e284]:
+        - generic [ref=e286] [cursor=pointer]: 云系统拓扑
+        - generic [ref=e288] [cursor=pointer]: 应用拓扑
+        - generic [ref=e290] [cursor=pointer]: 云服务拓扑
+    - main [ref=e291]:
+      - generic [ref=e293]:
+        - heading "应用拓扑" [level=2] [ref=e294]
+        - generic [ref=e295]:
+          - generic [ref=e296]: AI 分析高亮：
+          - generic [ref=e297]: prod-order-01
+          - button [ref=e298] [cursor=pointer]
+      - generic [ref=e299]:
+        - generic [ref=e300]:
+          - button "全局视图" [ref=e301] [cursor=pointer]
+          - button "订单系统" [ref=e302] [cursor=pointer]
+          - button "支付系统" [ref=e303] [cursor=pointer]
+          - button "用户系统" [ref=e304] [cursor=pointer]
+        - generic [ref=e305]:
+          - generic [ref=e306]:
+            - generic [ref=e308]:
+              - textbox "搜索节点..." [ref=e309]
+              - button "search" [ref=e311] [cursor=pointer]:
+                - img "search" [ref=e312]:
+                  - img [ref=e313]
+            - button "导出PNG" [ref=e315] [cursor=pointer]:
+              - generic [ref=e316]: 导出PNG
+            - button "刷 新" [ref=e317] [cursor=pointer]:
+              - generic [ref=e318]: 刷 新
+            - button "帮 助" [ref=e319] [cursor=pointer]:
+              - generic [ref=e320]: 帮 助
+          - generic [ref=e322]:
+            - button [ref=e323] [cursor=pointer]
+            - button [ref=e324] [cursor=pointer]
+            - button [ref=e325] [cursor=pointer]
+            - button [ref=e326] [cursor=pointer]
+            - button [ref=e327] [cursor=pointer]
+            - button [ref=e328] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic:
+            - heading [level=3]
+            - button
+          - generic:
+            - generic:
+              - heading "基本信息" [level=4]
+              - generic:
+                - generic:
+                  - generic: 类型
+                - generic:
+                  - generic: ID
+                - generic:
+                  - generic: 状态
+            - generic:
+              - heading "云服务 ( 0 /0)" [level=4]:
+                - text: 云服务 (
+                - generic: "0"
+                - text: /0)
+              - generic:
+                - generic:
+                  - textbox "搜索服务..."
+                  - generic:
+                    - button "search":
+                      - img "search":
+                        - img
+              - table:
+                - rowgroup:
+                  - row "服务名称 部署主机/POD 状态 描述":
+                    - columnheader "服务名称"
+                    - columnheader "部署主机/POD"
+                    - columnheader "状态"
+                    - columnheader "描述"
+                - rowgroup
+              - list:
+                - listitem "Previous Page":
+                  - button "left" [disabled]:
+                    - img "left":
+                      - img
+                - listitem "1":
+                  - generic: "1"
+                - listitem "Next Page":
+                  - button "right" [disabled]:
+                    - img "right":
+                      - img
+                - listitem:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - combobox
+                      - generic: 5 / page
+                    - generic:
+                      - img:
+                        - img
+            - generic:
+              - heading "可用分区 ( 0 /0)" [level=4]:
+                - text: 可用分区 (
+                - generic: "0"
+                - text: /0)
+              - generic:
+                - generic:
+                  - textbox "搜索可用分区..."
+                  - generic:
+                    - button "search":
+                      - img "search":
+                        - img
+              - table:
+                - rowgroup:
+                  - row "可用分区名称 状态 描述":
+                    - columnheader "可用分区名称"
+                    - columnheader "状态"
+                    - columnheader "描述"
+                - rowgroup
+              - list:
+                - listitem "Previous Page":
+                  - button "left" [disabled]:
+                    - img "left":
+                      - img
+                - listitem "1":
+                  - generic: "1"
+                - listitem "Next Page":
+                  - button "right" [disabled]:
+                    - img "right":
+                      - img
+                - listitem:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - combobox
+                      - generic: 5 / page
+                    - generic:
+                      - img:
+                        - img
+            - generic:
+              - heading "物理资源 ( 0 /0)" [level=4]:
+                - text: 物理资源 (
+                - generic: "0"
+                - text: /0)
+              - generic:
+                - generic:
+                  - textbox "搜索物理服务器..."
+                  - generic:
+                    - button "search":
+                      - img "search":
+                        - img
+              - table:
+                - rowgroup:
+                  - row "名称 IP地址 状态":
+                    - columnheader "名称"
+                    - columnheader "IP地址"
+                    - columnheader "状态"
+                - rowgroup
+              - list:
+                - listitem "Previous Page":
+                  - button "left" [disabled]:
+                    - img "left":
+                      - img
+                - listitem "1":
+                  - generic: "1"
+                - listitem "Next Page":
+                  - button "right" [disabled]:
+                    - img "right":
+                      - img
+                - listitem:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - combobox
+                      - generic: 5 / page
+                    - generic:
+                      - img:
+                        - img
+          - generic:
+            - button "下钻查看":
+              - generic: 下钻查看
+            - button "查看详情":
+              - generic: 查看详情
+  - generic:
+    - button "关闭AI助手" [ref=e205] [cursor=pointer]
+    - generic [ref=e208]:
+      - generic [ref=e209]:
+        - heading "AI 助手" [level=3] [ref=e210]: AI 助手
+        - button [ref=e211] [cursor=pointer]
+      - generic [ref=e212]:
+        - generic [ref=e225]:
+          - generic [ref=e226]: U
+          - generic [ref=e229]:
+            - paragraph [ref=e230]: 检测系统故障。
+            - paragraph [ref=e231]:
+              - text: 当前告警：
+              - text: prod-order-01 | CPU使用率 | 97% | critical
+              - text: prod-order-01 | 内存使用率 | 94% | critical
+              - text: prod-order-01 | 响应时间 | 3200ms | critical
+              - text: mysql-master | IO等待 | 65% | warning
+              - text: redis-cache | 命中率 | 72% | warning
+              - text: prod-inventory-01 | CPU使用率 | 72% | warning
+              - text: k8s-node-2 | 内存使用率 | 85% | warning
+              - text: lb-api | 错误率 | 2.3% | warning
+            - paragraph [ref=e232]: 拓扑节点：cdn, waf, slb, lb-api, prod-order-01, prod-order-02, prod-order-03, prod-user-01, prod-user-02, prod-pay-01, prod-pay-02, prod-inventory-01, redis-cache
+            - paragraph [ref=e233]: 请分析是否存在关联故障，定位根因节点，给出修复建议。
+        - generic [ref=e238]:
+          - generic [ref=e239]: AI
+          - generic [ref=e240]:
+            - generic [ref=e242]:
+              - paragraph [ref=e243]:
+                - strong [ref=e244]: 故障分析：
+              - paragraph [ref=e245]:
+                - text: 核心故障点为
+                - strong [ref=e246]: prod-order-01
+                - text: 。该节点 CPU（97%）和内存（94%）严重过载，导致响应时间飙升至 3200ms。
+              - paragraph [ref=e247]:
+                - strong [ref=e248]: 关联故障：
+              - list [ref=e249]:
+                - listitem [ref=e250]:
+                  - strong [ref=e251]: lb-api 错误率上升（2.3%）
+                  - text: ：这是
+                  - code [ref=e252]: prod-order-01
+                  - text: 响应慢的直接结果，请求堆积导致负载均衡层超时。
+                - listitem [ref=e253]:
+                  - strong [ref=e254]: redis-cache 命中率下降（72%）
+                  - text: ：应用无法有效读取缓存，频繁回源数据库。
+                - listitem [ref=e255]:
+                  - strong [ref=e256]: mysql-master IO 等待（65%）
+                  - text: ：应用层的高并发请求加剧了数据库压力，导致 IO 瓶颈。
+                - listitem [ref=e257]:
+                  - strong [ref=e258]: 级联效应
+                  - text: ：
+                  - code [ref=e259]: prod-inventory-01
+                  - text: CPU 升高，可能是因为订单服务请求库存接口时被阻塞。
+              - paragraph [ref=e260]:
+                - strong [ref=e261]: 根因定位：
+                - strong [ref=e262]: prod-order-01
+                - text: 资源耗尽导致服务不可用，进而引发下游数据库和缓存层的连锁反应。
+              - paragraph [ref=e263]:
+                - strong [ref=e264]: 修复建议：
+              - list [ref=e265]:
+                - listitem [ref=e266]:
+                  - strong [ref=e267]: 紧急处理
+                  - text: ：立即对
+                  - code [ref=e268]: prod-order-01
+                  - text: 进行扩容或重启服务，释放资源。
+                - listitem [ref=e269]:
+                  - strong [ref=e270]: 流量控制
+                  - text: ：检查
+                  - code [ref=e271]: lb-api
+                  - text: 配置，必要时对异常节点进行限流。
+                - listitem [ref=e272]:
+                  - strong [ref=e273]: 数据库优化
+                  - text: ：排查
+                  - code [ref=e274]: mysql-master
+                  - text: 慢查询日志，优化订单相关 SQL 语句。
+            - generic [ref=e275]:
+              - button "查看prod-order-01详情" [ref=e276] [cursor=pointer]: 查看prod-order-01详情
+              - button "查看lb-api详情" [ref=e277] [cursor=pointer]: 查看lb-api详情
+              - button "查看prod-order-01拓扑" [active] [ref=e278] [cursor=pointer]: 查看prod-order-01拓扑
+      - generic [ref=e222]:
+        - textbox "输入你的问题..." [ref=e223]
+        - button [disabled] [ref=e224]

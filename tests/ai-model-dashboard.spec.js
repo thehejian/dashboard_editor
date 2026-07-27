@@ -9,8 +9,19 @@ test.describe('AI模型监控 Dashboard', () => {
   test('页面加载正常，核心容器存在', async ({ page }) => {
     await expect(page.locator('.ai-dashboard')).toBeAttached()
     await expect(page.locator('.ai-toolbar')).toBeAttached()
+    await expect(page.locator('.ai-stat-cards')).toBeAttached()
     await expect(page.locator('.ai-row-agnes')).toBeAttached()
     await expect(page.locator('.ai-row-other')).toBeAttached()
+  })
+
+  test('顶部统计卡片渲染 5 个', async ({ page }) => {
+    const cards = page.locator('.ai-stat-card')
+    await expect(cards).toHaveCount(5)
+    await expect(cards.nth(0).locator('.ai-stat-card-label')).toHaveText('总模型')
+    await expect(cards.nth(1).locator('.ai-stat-card-label')).toHaveText('正常')
+    await expect(cards.nth(2).locator('.ai-stat-card-label')).toHaveText('异常')
+    await expect(cards.nth(3).locator('.ai-stat-card-label')).toHaveText('未测试')
+    await expect(cards.nth(4).locator('.ai-stat-card-label')).toHaveText('平均时延')
   })
 
   test('Agnes 3 卡片一行，SenseNova + Zhipu 另一行', async ({ page }) => {

@@ -1,0 +1,53 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img "Logo" [ref=e7]
+        - generic [ref=e8]: 运维中心
+      - navigation [ref=e9]:
+        - link " 首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e11]: 
+          - generic [ref=e12]: 首页
+        - link " 告警" [ref=e13] [cursor=pointer]:
+          - /url: /alarm/current
+          - generic [ref=e14]: 
+          - generic [ref=e15]: 告警
+        - generic [ref=e16]:
+          - generic [ref=e17]: 
+          - generic [ref=e18]: 监控
+          - generic [ref=e19]: 
+        - generic [ref=e20]:
+          - generic [ref=e21]: 
+          - generic [ref=e22]: 资源
+          - generic [ref=e23]: 
+        - generic [ref=e24]:
+          - generic [ref=e25]: 
+          - generic [ref=e26]: 运维
+          - generic [ref=e27]: 
+        - generic [ref=e28]:
+          - generic [ref=e29]: 
+          - generic [ref=e30]: 系统
+          - generic [ref=e31]: 
+    - generic [ref=e33] [cursor=pointer]: A
+  - main [ref=e35]:
+    - generic [ref=e37]:
+      - generic [ref=e38] [cursor=pointer]: 宿主机监控 ×
+      - generic [ref=e39] [cursor=pointer]: 虚拟机监控 ×
+      - generic [ref=e40] [cursor=pointer]: 容器监控 ×
+      - generic [ref=e41] [cursor=pointer]: 开发环境监控 ×
+      - generic [ref=e42] [cursor=pointer]: 测试环境仪表盘 ×
+      - generic [ref=e43] [cursor=pointer]: OBS监控 ×
+      - button "+" [ref=e44] [cursor=pointer]
+    - generic [ref=e325]:
+      - generic [ref=e326]:
+        - heading "虚拟机监控" [level=2] [ref=e328]
+        - generic [ref=e329]:
+          - button " 手动刷新" [ref=e330] [cursor=pointer]:
+            - generic [ref=e331]: 
+            - generic [ref=e332]: 手动刷新
+          - generic [ref=e333]: "最后更新: --"
+      - generic [ref=e334]:
+        - generic [ref=e335]: 
+        - generic [ref=e336]: "获取数据失败: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+        - button "重试" [ref=e337] [cursor=pointer]

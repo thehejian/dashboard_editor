@@ -12,6 +12,54 @@
       </div>
     </div>
 
+    <div class="ai-stat-cards">
+      <div class="ai-stat-card">
+        <div class="ai-stat-card-icon" style="background: linear-gradient(135deg, #1890ff, #096dd9)">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="ai-stat-card-body">
+          <div class="ai-stat-card-label">总模型</div>
+          <div class="ai-stat-card-value">{{ totalCount }}</div>
+        </div>
+      </div>
+      <div class="ai-stat-card">
+        <div class="ai-stat-card-icon" style="background: linear-gradient(135deg, #52c41a, #389e0d)">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="ai-stat-card-body">
+          <div class="ai-stat-card-label">正常</div>
+          <div class="ai-stat-card-value ai-stat-value-success">{{ successCount }}</div>
+        </div>
+      </div>
+      <div class="ai-stat-card">
+        <div class="ai-stat-card-icon" style="background: linear-gradient(135deg, #f5222d, #cf1322)">
+          <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+        <div class="ai-stat-card-body">
+          <div class="ai-stat-card-label">异常</div>
+          <div class="ai-stat-card-value ai-stat-value-error">{{ errorCount }}</div>
+        </div>
+      </div>
+      <div class="ai-stat-card">
+        <div class="ai-stat-card-icon" style="background: linear-gradient(135deg, #8c8c8c, #595959)">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+        <div class="ai-stat-card-body">
+          <div class="ai-stat-card-label">未测试</div>
+          <div class="ai-stat-card-value ai-stat-value-pending">{{ pendingCount }}</div>
+        </div>
+      </div>
+      <div class="ai-stat-card">
+        <div class="ai-stat-card-icon" style="background: linear-gradient(135deg, #722ed1, #531dab)">
+          <i class="fa-solid fa-gauge-high"></i>
+        </div>
+        <div class="ai-stat-card-body">
+          <div class="ai-stat-card-label">平均时延</div>
+          <div class="ai-stat-card-value">{{ avgLatency }}</div>
+        </div>
+      </div>
+    </div>
+
     <div class="ai-row ai-row-agnes">
       <div class="ai-provider-card" v-for="group in agnesGroups" :key="group.key">
         <div class="ai-provider-header">
@@ -208,6 +256,15 @@ const otherGroups = computed(() => [
   computeGroup('Zhipu GLM', null),
 ])
 
+const totalCount = computed(() => modelStates.value.length)
+const successCount = computed(() => modelStates.value.filter(m => m.status === 'success').length)
+const errorCount = computed(() => modelStates.value.filter(m => m.status === 'error').length)
+const pendingCount = computed(() => modelStates.value.filter(m => m.status === 'pending' || m.status === 'testing').length)
+const avgLatency = computed(() => {
+  const suc = modelStates.value.filter(m => m.status === 'success' && m.latencyMs != null)
+  return suc.length ? (suc.reduce((s, m) => s + m.latencyMs, 0) / suc.length).toFixed(0) + 'ms' : '—'
+})
+
 function getColor(provider) {
   const colors = {
     Agnes: 'linear-gradient(135deg, #1890ff, #096dd9)',
@@ -341,6 +398,38 @@ onMounted(() => {
 .ai-test-btn.testing { background: #fa8c16; }
 .ai-last-test { font-size: 11px; color: #8c8c8c; }
 
+/* Stat Cards */
+.ai-stat-cards {
+  display: flex;
+  gap: 12px;
+}
+.ai-stat-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.ai-stat-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ai-stat-card-icon i { font-size: 16px; color: #fff; }
+.ai-stat-card-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ai-stat-card-label { font-size: 11px; color: #8c8c8c; font-weight: 500; white-space: nowrap; }
+.ai-stat-card-value { font-size: 20px; font-weight: 700; color: #1a1a1a; line-height: 1; }
+.ai-stat-value-success { color: #52c41a; }
+.ai-stat-value-error { color: #f5222d; }
+.ai-stat-value-pending { color: #8c8c8c; }
+
 /* Rows */
 .ai-row {
   display: flex;
@@ -451,9 +540,13 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 900px) {
+  .ai-stat-cards { flex-wrap: wrap; }
+  .ai-stat-card { width: calc(33.33% - 8px); flex: none; }
   .ai-row { flex-direction: column; }
 }
 @media (max-width: 768px) {
+  .ai-stat-cards { flex-wrap: wrap; }
+  .ai-stat-card { width: calc(50% - 6px); flex: none; }
   .ai-toolbar { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
 </style>

@@ -1,0 +1,241 @@
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e6]:
+        - img "Logo" [ref=f1e7]
+        - generic [ref=f1e8]: 运维中心
+      - navigation [ref=f1e9]:
+        - link " 首页" [ref=f1e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f1e11]: 
+          - generic [ref=f1e12]: 首页
+        - link " 告警" [ref=f1e13] [cursor=pointer]:
+          - /url: /alarm/current
+          - generic [ref=f1e14]: 
+          - generic [ref=f1e15]: 告警
+        - generic [ref=f1e16]:
+          - generic [ref=f1e17]: 
+          - generic [ref=f1e18]: 监控
+          - generic [ref=f1e19]: 
+        - generic [ref=f1e20]:
+          - generic [ref=f1e21]: 
+          - generic [ref=f1e22]: 资源
+          - generic [ref=f1e23]: 
+        - generic [ref=f1e24]:
+          - generic [ref=f1e25]: 
+          - generic [ref=f1e26]: 运维
+          - generic [ref=f1e27]: 
+        - generic [ref=f1e28]:
+          - generic [ref=f1e29]: 
+          - generic [ref=f1e30]: 系统
+          - generic [ref=f1e31]: 
+    - generic [ref=f1e33] [cursor=pointer]: A
+  - main [ref=f1e35]:
+    - generic [ref=f1e37]:
+      - generic [ref=f1e38] [cursor=pointer]: 宿主机监控 ×
+      - generic [ref=f1e39] [cursor=pointer]: 虚拟机监控 ×
+      - generic [ref=f1e40] [cursor=pointer]: NAS监控 ×
+      - generic [ref=f1e41] [cursor=pointer]: 容器监控 ×
+      - generic [ref=f1e42] [cursor=pointer]: 开发环境监控 ×
+      - generic [ref=f1e43] [cursor=pointer]: 测试环境仪表盘 ×
+      - generic [ref=f1e44] [cursor=pointer]: OBS监控 ×
+      - button "+" [ref=f1e45] [cursor=pointer]
+    - generic [ref=f1e47]:
+      - generic [ref=f1e49]:
+        - button "" [ref=f1e50] [cursor=pointer]:
+          - generic [ref=f1e51]: 
+        - button " 自动刷新" [ref=f1e52] [cursor=pointer]:
+          - generic [ref=f1e53]: 
+          - generic [ref=f1e54]: 自动刷新
+        - generic [ref=f1e57]: "最后更新: 2026/7/9 11:36:09"
+      - generic [ref=f1e58]:
+        - generic [ref=f1e59]:
+          - generic [ref=f1e61]: 
+          - generic [ref=f1e62]:
+            - generic [ref=f1e63]: 8.147.132.193
+            - generic [ref=f1e64]: 公网 IP
+            - generic [ref=f1e65]: iZ2ze6hq6n95tyktegjaksZ
+        - generic [ref=f1e66]:
+          - generic [ref=f1e68]: 
+          - generic [ref=f1e69]:
+            - generic [ref=f1e70]: 171天, 1小时, 45分钟
+            - generic [ref=f1e71]: 运行时间
+        - generic [ref=f1e72]:
+          - generic [ref=f1e74]: 
+          - generic [ref=f1e75]:
+            - generic [ref=f1e76]: "2"
+            - generic [ref=f1e77]: CPU 核心
+        - generic [ref=f1e78]:
+          - generic [ref=f1e80]: 
+          - generic [ref=f1e81]:
+            - generic [ref=f1e82]: "0"
+            - generic [ref=f1e83]: Docker 运行
+      - generic [ref=f1e84]:
+        - generic [ref=f1e85]:
+          - generic [ref=f1e86]: CPU 负载
+          - generic [ref=f1e87]:
+            - generic [ref=f1e88]:
+              - generic [ref=f1e89]: 1 分钟
+              - generic [ref=f1e90]: "0.01"
+            - generic [ref=f1e91]:
+              - generic [ref=f1e92]: 5 分钟
+              - generic [ref=f1e93]: "0.04"
+            - generic [ref=f1e94]:
+              - generic [ref=f1e95]: 15 分钟
+              - generic [ref=f1e96]: "0.01"
+        - generic [ref=f1e97]:
+          - generic [ref=f1e98]: 内存使用
+          - generic [ref=f1e99]:
+            - generic [ref=f1e100]:
+              - generic [ref=f1e101]: 已用 522.6 MB
+              - generic [ref=f1e103]: 空闲 105.5 MB
+              - generic [ref=f1e105]: 总计 1.6 GB
+            - progressbar [ref=f1e106]
+            - generic [ref=f1e110]: 32.4%
+        - generic [ref=f1e111]:
+          - generic [ref=f1e112]: 磁盘使用
+          - generic [ref=f1e113]:
+            - generic [ref=f1e114]:
+              - generic [ref=f1e115]: /
+              - generic [ref=f1e116]: 30%
+            - progressbar [ref=f1e117]
+      - generic [ref=f1e121]:
+        - generic [ref=f1e122]:
+          - generic [ref=f1e123]: CPU Top 5 进程
+          - table [ref=f1e125]:
+            - rowgroup [ref=f1e126]:
+              - row "进程 CPU%" [ref=f1e127]:
+                - columnheader "进程" [ref=f1e128]
+                - columnheader "CPU%" [ref=f1e129]
+            - rowgroup [ref=f1e130]:
+              - row "/usr/lib/systemd/systemd 6.8%" [ref=f1e131]:
+                - cell "/usr/lib/systemd/systemd" [ref=f1e132]
+                - cell "6.8%" [ref=f1e133]
+              - 'row "sshd: 2.9%" [ref=f1e134]':
+                - cell "sshd:" [ref=f1e135]
+                - cell "2.9%" [ref=f1e136]
+              - row "/usr/local/aegis/aegis_client/aegis_12_93/AliYunDunMonitor 1.1%" [ref=f1e137]:
+                - cell "/usr/local/aegis/aegis_client/aegis_12_93/AliYunDunMonitor" [ref=f1e138]
+                - cell "1.1%" [ref=f1e139]
+              - row "/usr/local/cloudmonitor/bin/argusagent 1%" [ref=f1e140]:
+                - cell "/usr/local/cloudmonitor/bin/argusagent" [ref=f1e141]
+                - cell "1%" [ref=f1e142]
+              - row "/usr/local/aegis/aegis_client/aegis_12_93/AliYunDun 0.6%" [ref=f1e143]:
+                - cell "/usr/local/aegis/aegis_client/aegis_12_93/AliYunDun" [ref=f1e144]
+                - cell "0.6%" [ref=f1e145]
+        - generic [ref=f1e146]:
+          - generic [ref=f1e147]: 内存 Top 5 进程
+          - table [ref=f1e149]:
+            - rowgroup [ref=f1e150]:
+              - row "进程 MEM%" [ref=f1e151]:
+                - columnheader "进程" [ref=f1e152]
+                - columnheader "MEM%" [ref=f1e153]
+            - rowgroup [ref=f1e154]:
+              - row "/usr/lib/systemd/systemd-journald 9.9%" [ref=f1e155]:
+                - cell "/usr/lib/systemd/systemd-journald" [ref=f1e156]
+                - cell "9.9%" [ref=f1e157]
+              - row "/root/frp_0.66.0_linux_amd64/frps 3.9%" [ref=f1e158]:
+                - cell "/root/frp_0.66.0_linux_amd64/frps" [ref=f1e159]
+                - cell "3.9%" [ref=f1e160]
+              - row "/usr/local/aegis/aegis_client/aegis_12_93/AliYunDunMonitor 2.5%" [ref=f1e161]:
+                - cell "/usr/local/aegis/aegis_client/aegis_12_93/AliYunDunMonitor" [ref=f1e162]
+                - cell "2.5%" [ref=f1e163]
+              - row "/usr/bin/python3 2.4%" [ref=f1e164]:
+                - cell "/usr/bin/python3" [ref=f1e165]
+                - cell "2.4%" [ref=f1e166]
+              - row "/usr/bin/dockerd 1.9%" [ref=f1e167]:
+                - cell "/usr/bin/dockerd" [ref=f1e168]
+                - cell "1.9%" [ref=f1e169]
+        - generic [ref=f1e170]:
+          - generic [ref=f1e171]: Docker 容器
+          - table [ref=f1e173]:
+            - rowgroup [ref=f1e174]:
+              - row "名称 状态" [ref=f1e175]:
+                - columnheader "名称" [ref=f1e176]
+                - columnheader "状态" [ref=f1e177]
+            - rowgroup [ref=f1e178]:
+              - row "无运行容器" [ref=f1e179]:
+                - cell "无运行容器" [ref=f1e180]
+      - generic [ref=f1e181]:
+        - generic [ref=f1e182]:
+          - generic [ref=f1e183]: SSH 安全
+          - generic [ref=f1e184]:
+            - generic [ref=f1e185]:
+              - generic [ref=f1e186]: 失败登录
+              - generic [ref=f1e187]: 4475 次
+            - generic [ref=f1e188]:
+              - generic [ref=f1e189]: 成功登录
+              - generic [ref=f1e190]: 23 次
+            - generic [ref=f1e192]: 暴力破解 TOP
+          - table [ref=f1e194]:
+            - rowgroup [ref=f1e195]:
+              - row "IP 次数" [ref=f1e196]:
+                - columnheader "IP" [ref=f1e197]
+                - columnheader "次数" [ref=f1e198]
+            - rowgroup [ref=f1e199]:
+              - row "213.209.159.238 438 次" [ref=f1e200]:
+                - cell "213.209.159.238" [ref=f1e201]
+                - cell "438 次" [ref=f1e202]
+              - row "213.209.159.228 438 次" [ref=f1e203]:
+                - cell "213.209.159.228" [ref=f1e204]
+                - cell "438 次" [ref=f1e205]
+              - row "213.209.159.226 438 次" [ref=f1e206]:
+                - cell "213.209.159.226" [ref=f1e207]
+                - cell "438 次" [ref=f1e208]
+              - row "213.209.159.225 437 次" [ref=f1e209]:
+                - cell "213.209.159.225" [ref=f1e210]
+                - cell "437 次" [ref=f1e211]
+              - row "213.209.159.231 436 次" [ref=f1e212]:
+                - cell "213.209.159.231" [ref=f1e213]
+                - cell "436 次" [ref=f1e214]
+        - generic [ref=f1e215]:
+          - generic [ref=f1e216]: 系统评估
+          - generic [ref=f1e217]:
+            - generic [ref=f1e218]:
+              - generic [ref=f1e219]: CPU 负载
+              - generic [ref=f1e220]: 正常
+              - generic [ref=f1e221]: load/core = --
+            - generic [ref=f1e222]:
+              - generic [ref=f1e223]: 内存使用
+              - generic [ref=f1e224]: 正常
+              - generic [ref=f1e225]: 32.4%
+        - generic [ref=f1e226]:
+          - generic [ref=f1e227]: 网络
+          - generic [ref=f1e228]:
+            - generic [ref=f1e229]:
+              - generic [ref=f1e230]: 公网 IP
+              - generic [ref=f1e231]: 8.147.132.193
+            - generic [ref=f1e232]:
+              - generic [ref=f1e233]: 监听端口
+              - generic [ref=f1e234]: 53,1222,1688,2222,3004,3222,4097,4098,4099,4222,4389,5244,5245,5900,6800,6880,6901,7000,7500,7901,8000,8097,9000,12342,12346,13002,13389,14040,15001,15244,23389,25900,28096,52222,53002,53489,54321,55000,55245,56800,56901,57901,58096,59000,59001,60809,62222,63389,65000,65244
+            - generic [ref=f1e235]:
+              - generic [ref=f1e236]: ESTABLISHED
+              - generic [ref=f1e237]: "26"
+  - generic:
+    - button "" [active] [ref=f1e55] [cursor=pointer]:
+      - generic [ref=f1e56]: 
+    - generic [ref=f1e240]:
+      - generic [ref=f1e241]:
+        - heading " AI 助手" [level=3] [ref=f1e242]:
+          - generic [ref=f1e243]: 
+          - text: AI 助手
+        - button "" [ref=f1e244] [cursor=pointer]:
+          - generic [ref=f1e245]: 
+      - generic [ref=f1e247]:
+        - generic [ref=f1e249]: 
+        - paragraph [ref=f1e250]: 你好，我是运维 AI 助手
+        - paragraph [ref=f1e251]: 我可以帮你分析监控数据、排查故障、生成查询语句
+        - generic [ref=f1e252]:
+          - button " 分析当前页面" [ref=f1e253] [cursor=pointer]:
+            - generic [ref=f1e254]: 
+            - text: 分析当前页面
+          - button " 写 PromQL 查询" [ref=f1e255] [cursor=pointer]:
+            - generic [ref=f1e256]: 
+            - text: 写 PromQL 查询
+          - button " 总结今日告警" [ref=f1e257] [cursor=pointer]:
+            - generic [ref=f1e258]: 
+            - text: 总结今日告警
+      - generic [ref=f1e260]:
+        - textbox "输入你的问题..." [ref=f1e261]
+        - button "" [disabled] [ref=f1e262]:
+          - generic [ref=f1e263]: 
