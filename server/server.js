@@ -1043,14 +1043,45 @@ app.get('/api/intelligent/trend', (req, res) => {
 // GET /api/intelligent/golden-signals
 app.get('/api/intelligent/golden-signals', (req, res) => {
   const { nodeId } = req.query
-  res.json({ success: true, data: {
-    nodeId: nodeId || 'prod-order-01',
-    signals: [
+  const signalsByNode = {
+    'prod-order-01': [
       { key: 'latency', label: '延迟', unit: 'ms', value: 3200, baseline: 200, deviation: 1500, icon: 'fa-solid fa-clock', status: 'critical', history: [180,195,210,3200,3100,3050,3000] },
       { key: 'traffic', label: '流量', unit: 'QPS', value: 12000, baseline: 8000, deviation: 50, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'warning', history: [7500,7800,8200,11000,12000,11800,11500] },
       { key: 'errors', label: '错误率', unit: '%', value: 2.3, baseline: 0.1, deviation: 2200, icon: 'fa-solid fa-circle-exclamation', status: 'critical', history: [0.08,0.09,0.1,2.3,2.1,1.8,1.5] },
-    ]
-  }})
+    ],
+    'redis-cache': [
+      { key: 'latency', label: '延迟', unit: 'ms', value: 45, baseline: 5, deviation: 800, icon: 'fa-solid fa-clock', status: 'warning', history: [3,4,5,38,42,45,43] },
+      { key: 'traffic', label: '流量', unit: 'QPS', value: 15000, baseline: 12000, deviation: 25, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'warning', history: [11000,11500,12000,14000,15000,14800,14500] },
+      { key: 'errors', label: '错误率', unit: '%', value: 0.8, baseline: 0.05, deviation: 1500, icon: 'fa-solid fa-circle-exclamation', status: 'warning', history: [0.03,0.04,0.05,0.6,0.7,0.8,0.75] },
+    ],
+    'prod-inventory-01': [
+      { key: 'latency', label: '延迟', unit: 'ms', value: 850, baseline: 120, deviation: 608, icon: 'fa-solid fa-clock', status: 'warning', history: [100,110,120,680,750,850,820] },
+      { key: 'traffic', label: '流量', unit: 'QPS', value: 5500, baseline: 4000, deviation: 37, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'normal', history: [3800,3900,4000,5000,5500,5300,5200] },
+      { key: 'errors', label: '错误率', unit: '%', value: 0.3, baseline: 0.05, deviation: 500, icon: 'fa-solid fa-circle-exclamation', status: 'normal', history: [0.03,0.04,0.05,0.2,0.25,0.3,0.28] },
+    ],
+    'mysql-master': [
+      { key: 'latency', label: '延迟', unit: 'ms', value: 580, baseline: 50, deviation: 1060, icon: 'fa-solid fa-clock', status: 'critical', history: [40,45,50,420,500,580,560] },
+      { key: 'traffic', label: '流量', unit: 'QPS', value: 8000, baseline: 6000, deviation: 33, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'warning', history: [5500,5800,6000,7200,8000,7800,7600] },
+      { key: 'errors', label: '错误率', unit: '%', value: 1.2, baseline: 0.02, deviation: 5900, icon: 'fa-solid fa-circle-exclamation', status: 'critical', history: [0.01,0.01,0.02,0.8,1.0,1.2,1.1] },
+    ],
+    'k8s-node-2': [
+      { key: 'latency', label: '延迟', unit: 'ms', value: 35, baseline: 10, deviation: 250, icon: 'fa-solid fa-clock', status: 'normal', history: [8,9,10,28,32,35,33] },
+      { key: 'traffic', label: '流量', unit: 'QPS', value: 3000, baseline: 2500, deviation: 20, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'normal', history: [2300,2400,2500,2800,3000,2900,2850] },
+      { key: 'errors', label: '错误率', unit: '%', value: 0.1, baseline: 0.02, deviation: 400, icon: 'fa-solid fa-circle-exclamation', status: 'normal', history: [0.01,0.01,0.02,0.08,0.09,0.1,0.09] },
+    ],
+    'lb-api': [
+      { key: 'latency', label: '延迟', unit: 'ms', value: 320, baseline: 30, deviation: 967, icon: 'fa-solid fa-clock', status: 'critical', history: [25,28,30,240,280,320,310] },
+      { key: 'traffic', label: '流量', unit: 'QPS', value: 18000, baseline: 15000, deviation: 20, icon: 'fa-solid fa-arrow-right-arrow-left', status: 'normal', history: [14000,14500,15000,17000,18000,17500,17200] },
+      { key: 'errors', label: '错误率', unit: '%', value: 2.3, baseline: 0.1, deviation: 2200, icon: 'fa-solid fa-circle-exclamation', status: 'critical', history: [0.08,0.09,0.1,1.8,2.0,2.3,2.2] },
+    ],
+  }
+  if (nodeId) {
+    const signals = signalsByNode[nodeId] || signalsByNode['prod-order-01']
+    res.json({ success: true, data: { nodeId, signals } })
+  } else {
+    const all = Object.entries(signalsByNode).map(([id, signals]) => ({ nodeId: id, signals }))
+    res.json({ success: true, data: { nodes: all } })
+  }
 })
 
 // GET /api/intelligent/recommendations

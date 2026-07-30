@@ -181,10 +181,21 @@
       </div>
 
       <a-card class="aiops-card aiops-fault-card">
-        <template #title><i class="fa-solid fa-circle-nodes" style="color:#722ED1;margin-right:6px"></i> 故障根节点 — {{ aiopsGoldenSignals[0]?.nodeId || 'prod-order-01' }}</template>
-        <div class="golden-signals" v-if="aiopsGoldenSignals.length">
+        <template #title><i class="fa-solid fa-circle-nodes" style="color:#722ED1;margin-right:6px"></i> 故障根节点</template>
+        <a-tabs v-if="faultNodes.length" v-model:activeKey="activeFaultNode" class="fault-tabs" size="small" animated>
+          <a-tab-pane v-for="node in faultNodes" :key="node.nodeId">
+            <template #tab>
+              <span class="fault-tab-label" :class="{ 'is-root': aiopsRootCause?.nodeId === node.nodeId }">
+                {{ node.nodeLabel }}
+                <span v-if="aiopsRootCause?.nodeId === node.nodeId" class="root-badge">根因</span>
+              </span>
+            </template>
+          </a-tab-pane>
+        </a-tabs>
+
+        <div class="golden-signals" v-if="faultGoldenSignals.length">
           <div class="gs-grid">
-            <div v-for="sig in aiopsGoldenSignals" :key="sig.key" class="gs-card" :class="'gs-' + sig.status">
+            <div v-for="sig in faultGoldenSignals" :key="sig.key" class="gs-card" :class="'gs-' + sig.status">
               <div class="gs-body">
                 <div class="gs-left">
                   <div class="gs-label"><i :class="sig.icon"></i> {{ sig.label }}</div>
@@ -207,8 +218,8 @@
           <a-card class="aiops-card">
             <template #title><i class="fa-solid fa-bolt" style="color:#F5222D;margin-right:6px"></i> 异常时间线</template>
             <div class="anomaly-timeline">
-              <a-empty v-if="!aiopsAnomalies.length" description="当前无异常，系统运行正常" style="margin:24px 0" />
-              <div v-for="a in aiopsAnomalies" :key="a.id" class="ani-item" :class="'ani-' + a.level">
+              <a-empty v-if="!faultAnomalies.length" description="当前无异常，系统运行正常" style="margin:24px 0" />
+              <div v-for="a in faultAnomalies" :key="a.id" class="ani-item" :class="'ani-' + a.level">
                 <div class="ani-axis">
                   <span class="ani-dot"></span>
                   <span class="ani-line"></span>
@@ -231,7 +242,7 @@
         <a-col :xs="24" :lg="8">
           <a-card class="aiops-card">
             <template #title><i class="fa-solid fa-magnifying-glass-chart" style="color:#722ED1;margin-right:6px"></i> 根因分析</template>
-            <div class="root-cause" v-if="aiopsRootCause">
+            <div class="root-cause" v-if="aiopsRootCause && aiopsRootCause.nodeId === activeFaultNode">
               <div class="rc-node">
                 <span class="rc-label">根因节点</span>
                 <span class="rc-value">{{ aiopsRootCause.nodeLabel }}</span>
@@ -269,14 +280,15 @@
                 </div>
               </div>
             </div>
+            <a-empty v-else description="该节点非根因节点" style="margin:24px 0" />
           </a-card>
         </a-col>
         <a-col :xs="24" :lg="8">
           <a-card class="aiops-card">
             <template #title><i class="fa-solid fa-lightbulb" style="color:#FF7D00;margin-right:6px"></i> AI推荐操作</template>
             <div class="rec-list">
-              <a-empty v-if="!aiopsRecommendations.length" description="暂无推荐操作" style="margin:24px 0" />
-              <div v-for="(rec, i) in aiopsRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
+              <a-empty v-if="!faultRecommendations.length" description="暂无推荐操作" style="margin:24px 0" />
+              <div v-for="(rec, i) in faultRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
                 <div class="rec-icon"><i :class="rec.icon"></i></div>
                 <div class="rec-info">
                   <div class="rec-label">{{ rec.label }}</div>
@@ -683,9 +695,30 @@ const aiopsRootCause = ref(null)
 const aiopsPropagationPath = ref([])
 const aiopsRecommendations = ref([])
 const aiopsGoldenSignals = ref([])
+const aiopsGoldenSignalsByNode = ref({})
+const activeFaultNode = ref('')
 const aiopsTrendContainer = ref(null)
 let aiopsTrendChart = null
 const evidenceOpen = ref(false)
+
+const faultNodes = computed(() => {
+  const nodes = new Map()
+  aiopsAnomalies.value.forEach(a => {
+    if (!nodes.has(a.nodeId)) nodes.set(a.nodeId, { nodeId: a.nodeId, nodeLabel: a.nodeLabel, maxScore: a.score })
+    else nodes.get(a.nodeId).maxScore = Math.max(nodes.get(a.nodeId).maxScore, a.score)
+  })
+  const root = aiopsRootCause.value
+  const arr = [...nodes.values()].sort((a, b) => b.maxScore - a.maxScore)
+  if (root) {
+    const idx = arr.findIndex(n => n.nodeId === root.nodeId)
+    if (idx > 0) { arr.splice(idx, 1); arr.unshift({ nodeId: root.nodeId, nodeLabel: root.nodeLabel, maxScore: root.score }) }
+  }
+  return arr
+})
+
+const faultGoldenSignals = computed(() => aiopsGoldenSignalsByNode.value[activeFaultNode.value] || [])
+const faultAnomalies = computed(() => aiopsAnomalies.value.filter(a => a.nodeId === activeFaultNode.value))
+const faultRecommendations = computed(() => aiopsRecommendations.value.filter(r => !r.targetNode || r.targetNode === activeFaultNode.value))
 
 const detailPanelOpen = ref(false)
 const currentCardTitle = ref('')
@@ -1352,7 +1385,7 @@ async function fetchAiopsData() {
       fetch('/api/intelligent/trend').then(r => r.json()),
       fetch('/api/mock/topology').then(r => r.json()),
       fetch('/api/intelligent/recommendations').then(r => r.json()),
-      fetch('/api/intelligent/golden-signals?nodeId=prod-order-01').then(r => r.json()),
+      fetch('/api/intelligent/golden-signals').then(r => r.json()),
     ])
     const anomalies = anomalyRes.data || []
     const summary = anomalyRes.summary || {}
@@ -1367,7 +1400,13 @@ async function fetchAiopsData() {
     predictedData = trendRes.predicted
     eventsData = trendRes.events
 
-    aiopsGoldenSignals.value = goldenData.signals || []
+    if (goldenData.nodes) {
+      const byNode = {}
+      goldenData.nodes.forEach(n => { byNode[n.nodeId] = n.signals })
+      aiopsGoldenSignalsByNode.value = byNode
+    } else {
+      aiopsGoldenSignals.value = goldenData.signals || []
+    }
 
     aiopsTopoNodes.value = topo.nodes || []
     const kpiHistory = health.kpiHistory || {}
@@ -1406,6 +1445,10 @@ async function fetchAiopsData() {
     aiopsRecommendations.value = recData.map(r => ({
       ...r, icon: { restart: 'fa-solid fa-rotate-right', scale: 'fa-solid fa-expand', 'view-topology': 'fa-solid fa-diagram-project', report: 'fa-solid fa-file-lines', 'flush-cache': 'fa-solid fa-broom' }[r.action] || 'fa-solid fa-wrench'
     }))
+
+    if (!activeFaultNode.value && faultNodes.value.length) {
+      activeFaultNode.value = faultNodes.value[0].nodeId
+    }
 
   } catch {}
   aiopsLoading.value = false
@@ -2013,10 +2056,16 @@ const refreshCard = (card) => {
 .hm-score { display: block; font-weight: 700; font-size: 12px; }
 
 .aiops-fault-card { border: 1px solid #E8E8E8; }
-.aiops-fault-card :deep(.ant-card-head) { border-bottom: 1px solid #F0F0F0; margin-bottom: 16px; }
+.aiops-fault-card :deep(.ant-card-head) { border-bottom: 1px solid #F0F0F0; margin-bottom: 0; }
 .aiops-fault-card .golden-signals { margin-bottom: 16px; }
 .aiops-fault-card .gs-grid { gap: 16px; }
 .aiops-fault-card .aiops-body { margin-top: 0; }
+
+.fault-tabs { margin-bottom: 16px; }
+.fault-tabs :deep(.ant-tabs-nav) { margin-bottom: 12px; }
+.fault-tabs :deep(.ant-tabs-tab) { padding: 6px 12px; font-size: 13px; }
+.fault-tab-label { display: inline-flex; align-items: center; gap: 6px; }
+.root-badge { font-size: 10px; background: #F5222D; color: #fff; padding: 1px 6px; border-radius: 8px; font-weight: 500; }
 
 .aiops-body { margin-bottom: 0; }
 .aiops-body :deep(.ant-col) { display: flex; }
