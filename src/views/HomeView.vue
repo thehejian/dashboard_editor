@@ -180,28 +180,29 @@
         </div>
       </div>
 
-      <div class="golden-signals" v-if="aiopsGoldenSignals.length">
-        <div class="aiops-section-title">黄金信号 — {{ aiopsGoldenSignals[0]?.nodeId || 'prod-order-01' }}</div>
-        <div class="gs-grid">
-          <div v-for="sig in aiopsGoldenSignals" :key="sig.key" class="gs-card" :class="'gs-' + sig.status">
-            <div class="gs-body">
-              <div class="gs-left">
-                <div class="gs-label"><i :class="sig.icon"></i> {{ sig.label }}</div>
-                <div class="gs-value">{{ sig.value }}<span class="gs-unit">{{ sig.unit }}</span></div>
-              </div>
-              <div class="gs-info">
-                <div class="gs-baseline">基线 {{ sig.baseline }}{{ sig.unit }}</div>
-                <div class="gs-deviation" :class="sig.deviation > 100 ? 'gs-danger' : 'gs-warn'">+{{ sig.deviation }}%</div>
-                <svg class="gs-sparkline" width="80" height="24" viewBox="0 0 80 24">
-                  <rect v-for="(bar, i) in calcSparkbarRects(sig.history, 24, 80)" :key="i" :x="bar.x" :y="bar.y" :width="bar.width" :height="bar.height" fill="currentColor" rx="1" />
-                </svg>
+      <a-card class="aiops-card aiops-fault-card">
+        <template #title><i class="fa-solid fa-circle-nodes" style="color:#722ED1;margin-right:6px"></i> 故障根节点 — {{ aiopsGoldenSignals[0]?.nodeId || 'prod-order-01' }}</template>
+        <div class="golden-signals" v-if="aiopsGoldenSignals.length">
+          <div class="gs-grid">
+            <div v-for="sig in aiopsGoldenSignals" :key="sig.key" class="gs-card" :class="'gs-' + sig.status">
+              <div class="gs-body">
+                <div class="gs-left">
+                  <div class="gs-label"><i :class="sig.icon"></i> {{ sig.label }}</div>
+                  <div class="gs-value">{{ sig.value }}<span class="gs-unit">{{ sig.unit }}</span></div>
+                </div>
+                <div class="gs-info">
+                  <div class="gs-baseline">基线 {{ sig.baseline }}{{ sig.unit }}</div>
+                  <div class="gs-deviation" :class="sig.deviation > 100 ? 'gs-danger' : 'gs-warn'">+{{ sig.deviation }}%</div>
+                  <svg class="gs-sparkline" width="80" height="24" viewBox="0 0 80 24">
+                    <rect v-for="(bar, i) in calcSparkbarRects(sig.history, 24, 80)" :key="i" :x="bar.x" :y="bar.y" :width="bar.width" :height="bar.height" fill="currentColor" rx="1" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <a-row :gutter="[16, 16]" class="aiops-body">
+        <a-row :gutter="[16, 16]" class="aiops-body">
         <a-col :xs="24" :lg="8">
           <a-card class="aiops-card">
             <template #title><i class="fa-solid fa-bolt" style="color:#F5222D;margin-right:6px"></i> 异常时间线</template>
@@ -289,9 +290,10 @@
         </a-col>
       </a-row>
 
-      <a-card class="aiops-card aiops-trend-card" style="margin-top:16px">
+      <a-card class="aiops-card aiops-trend-card">
         <template #title><i class="fa-solid fa-chart-line" style="color:#007DFF;margin-right:6px"></i> 24小时告警趋势 <span class="trend-legend">严重 · 警告 · 提示</span></template>
         <div ref="aiopsTrendContainer" class="aiops-trend-chart"></div>
+      </a-card>
       </a-card>
     </template>
     </template>
@@ -2010,6 +2012,12 @@ const refreshCard = (card) => {
 .hm-name { display: block; font-weight: 500; margin-bottom: 2px; }
 .hm-score { display: block; font-weight: 700; font-size: 12px; }
 
+.aiops-fault-card { border: 1px solid #E8E8E8; }
+.aiops-fault-card :deep(.ant-card-head) { border-bottom: 1px solid #F0F0F0; margin-bottom: 16px; }
+.aiops-fault-card .golden-signals { margin-bottom: 16px; }
+.aiops-fault-card .gs-grid { gap: 16px; }
+.aiops-fault-card .aiops-body { margin-top: 0; }
+
 .aiops-body { margin-bottom: 0; }
 .aiops-body :deep(.ant-col) { display: flex; }
 .aiops-body :deep(.aiops-card) { flex: 1; display: flex; flex-direction: column; }
@@ -2071,12 +2079,12 @@ const refreshCard = (card) => {
 .rec-desc { font-size: 11px; color: var(--text-sec, #6B7280); }
 .rec-confidence { font-size: 12px; font-weight: 600; font-family: monospace; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; background: var(--bg-sec, #F2F2F7); color: var(--text-sec, #6B7280); }
 
-.aiops-trend-card { margin-top: 16px; }
+.aiops-trend-card { margin-top: 16px; border-radius: 10px; }
 .aiops-trend-chart { height: 200px; }
 .trend-legend { font-size: 11px; font-weight: 400; color: var(--text-sec, #6B7280); margin-left: 8px; }
 
 .gs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
-.gs-card { padding: 16px; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.gs-card { padding: 16px; border-radius: 10px; background: #fff; border: 1px solid #E8E8E8; }
 .gs-body { display: flex; justify-content: space-between; align-items: center; }
 .gs-left { display: flex; flex-direction: column; }
 .gs-label { font-size: 12px; color: var(--text-sec, #6B7280); margin-bottom: 4px; }
