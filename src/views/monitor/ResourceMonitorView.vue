@@ -91,7 +91,7 @@
                 </div>
               </div>
             </div>
-            <template v-if="carouselNeed(group.key)">
+            <template v-if="carouselNeeds[group.key]">
               <button class="carousel-btn carousel-prev" @click.stop="moveCarousel(group.key, -1)"><i class="fa-solid fa-chevron-left"></i></button>
               <button class="carousel-btn carousel-next" @click.stop="moveCarousel(group.key, 1)"><i class="fa-solid fa-chevron-right"></i></button>
             </template>
@@ -156,13 +156,15 @@ const groupCollapsed = reactive({})
 const carouselOffset = reactive({})
 const carouselRefs = {}
 const autoPlayTimers = {}
+const carouselNeeds = reactive({})
 
-const carouselRef = (key, el) => { if (el) carouselRefs[key] = el }
-
-const carouselNeed = (key) => {
-  const el = carouselRefs[key]
-  if (!el) return false
-  return el.scrollWidth > el.clientWidth + 2
+const carouselRef = (key, el) => {
+  if (el) {
+    carouselRefs[key] = el
+    nextTick(() => {
+      carouselNeeds[key] = el.scrollWidth > el.clientWidth + 2
+    })
+  }
 }
 
 const moveCarousel = (key, dir) => {
@@ -596,7 +598,7 @@ onMounted(async function() {
 .carousel-wrap {
   position: relative;
   overflow: hidden;
-  max-height: 148px;
+  max-height: 152px;
 }
 .carousel-wrap:hover .carousel-btn { opacity: 1; }
 .carousel-btn {
@@ -851,6 +853,6 @@ onMounted(async function() {
   .sub-tabs { overflow-x: auto; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
-  .carousel-wrap { max-height: 148px; }
+  .carousel-wrap { max-height: 152px; }
 }
 </style>
