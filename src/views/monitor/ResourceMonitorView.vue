@@ -72,23 +72,29 @@
             <span class="group-badge" :class="{ alert: group.alertCount > 0 }">告警 {{ group.alertCount }}</span>
             <span class="group-total">共 {{ group.items.length }} 个</span>
           </div>
-          <div class="card-grid" v-show="!groupCollapsed[group.key]">
-            <div class="res-card" v-for="record in group.items" :key="record.id" @click="openDetail(record)">
-              <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
-                <i :class="group.icon"></i>
-              </div>
-              <div class="res-info">
-                <div class="res-name">{{ record.name }}</div>
-                <div class="res-alert">
-                  <template v-if="record.alertStatus === '紧急'">
-                    <span class="alert-count">紧急 {{ getEmergencyCount(record) }}</span>
-                  </template>
-                  <template v-else>
-                    <span class="alert-label">运行正常</span>
-                  </template>
+          <div class="carousel-wrap" v-show="!groupCollapsed[group.key]" @mouseenter="pauseAutoPlay(group.key)" @mouseleave="resumeAutoPlay(group.key)">
+            <div class="card-grid" :ref="el => carouselRef(group.key, el)" :style="{ transform: `translateX(${carouselOffset[group.key] || 0}px)` }">
+              <div class="res-card" v-for="record in group.items" :key="record.id" @click="openDetail(record)">
+                <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
+                  <i :class="group.icon"></i>
+                </div>
+                <div class="res-info">
+                  <div class="res-name">{{ record.name }}</div>
+                  <div class="res-alert">
+                    <template v-if="record.alertStatus === '紧急'">
+                      <span class="alert-count">紧急 {{ getEmergencyCount(record) }}</span>
+                    </template>
+                    <template v-else>
+                      <span class="alert-label">运行正常</span>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
+            <template v-if="carouselNeed(group.key)">
+              <button class="carousel-btn carousel-prev" @click.stop="moveCarousel(group.key, -1)"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="carousel-btn carousel-next" @click.stop="moveCarousel(group.key, 1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </template>
           </div>
         </div>
       </div>
@@ -127,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useResourceDetail } from '../../composables/useResourceDetail'
 import { ALARM_MOCK } from '../../mock/resourceDetailMock'
@@ -146,6 +152,51 @@ const subActive = ref(0)
 const viewMode = ref('card')
 const statsCollapsed = ref(true)
 const groupCollapsed = reactive({})
+
+const carouselOffset = reactive({})
+const carouselRefs = {}
+const autoPlayTimers = {}
+
+const carouselRef = (key, el) => { if (el) carouselRefs[key] = el }
+
+const carouselNeed = (key) => {
+  const el = carouselRefs[key]
+  if (!el) return false
+  return el.scrollWidth > el.clientWidth + 2
+}
+
+const moveCarousel = (key, dir) => {
+  const el = carouselRefs[key]
+  if (!el) return
+  const step = el.clientWidth * 0.75
+  const maxOffset = el.scrollWidth - el.clientWidth
+  const cur = carouselOffset[key] || 0
+  const next = Math.max(-maxOffset, Math.min(0, cur - dir * step))
+  carouselOffset[key] = next
+}
+
+const startAutoPlay = (key) => {
+  stopAutoPlay(key)
+  autoPlayTimers[key] = setInterval(() => {
+    const el = carouselRefs[key]
+    if (!el) return
+    const maxOffset = el.scrollWidth - el.clientWidth
+    if (maxOffset <= 0) return
+    const cur = carouselOffset[key] || 0
+    if (cur <= -maxOffset) {
+      carouselOffset[key] = 0
+    } else {
+      moveCarousel(key, 1)
+    }
+  }, 4000)
+}
+
+const stopAutoPlay = (key) => {
+  if (autoPlayTimers[key]) { clearInterval(autoPlayTimers[key]); delete autoPlayTimers[key] }
+}
+
+const pauseAutoPlay = (key) => stopAutoPlay(key)
+const resumeAutoPlay = (key) => startAutoPlay(key)
 
 const syncFromRoute = () => {
   const mode = props.mode || 'list'
@@ -351,6 +402,10 @@ const cardGroupsComputed = computed(() => {
 
 const loading = ref(false)
 
+onBeforeUnmount(() => {
+  Object.keys(autoPlayTimers).forEach(stopAutoPlay)
+})
+
 onMounted(async function() {
   loading.value = true
   try {
@@ -387,6 +442,9 @@ onMounted(async function() {
     console.error('加载资源监控数据失败:', e)
   } finally {
     loading.value = false
+    nextTick(() => {
+      cardGroupsComputed.value.forEach(g => startAutoPlay(g.key))
+    })
   }
 })
 </script>
@@ -499,9 +557,37 @@ onMounted(async function() {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
+.carousel-wrap {
+  position: relative;
+  overflow: hidden;
+  max-height: 148px;
+}
+.carousel-wrap:hover .carousel-btn { opacity: 1; }
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background: rgba(255,255,255,0.92);
+  color: #666;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.carousel-btn:hover { background: #fff; color: #1890ff; border-color: #1890ff; }
+.carousel-prev { left: 6px; }
+.carousel-next { right: 6px; }
 .res-card {
   display: flex;
   align-items: center;
@@ -732,12 +818,6 @@ onMounted(async function() {
   .sub-tabs { overflow-x: auto; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 1200px) {
-  .card-grid { grid-template-columns: repeat(4, 1fr); }
-}
-@media (max-width: 900px) {
-  .card-grid { grid-template-columns: repeat(3, 1fr); }
+  .carousel-wrap { max-height: 148px; }
 }
 </style>
