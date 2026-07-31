@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('资源详情面板依赖关系', () => {
   test('点击资源行打开面板 → 切到依赖关系 → 拓扑 canvas 有内容', async ({ page }) => {
-    await page.goto('/monitor/resource')
+    await page.goto('/monitor/resource/list')
     await page.waitForSelector('.ant-table', { timeout: 15000 })
     await page.waitForTimeout(500)
 

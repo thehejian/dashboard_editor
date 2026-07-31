@@ -101,7 +101,7 @@ async function initGraph() {
         iconText: (d) => d.data?.icon || '',
       },
       state: {
-        hover: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 2, shadowColor: 'rgba(24,144,255,0.3)', shadowBlur: 8 },
+        hover: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 2 },
         selected: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 3, shadowColor: 'rgba(24,144,255,0.4)', shadowBlur: 12 },
         dimmed: { opacity: 0.25, labelOpacity: 0.25, labelBackgroundOpacity: 0.1 },
       },
@@ -162,6 +162,7 @@ async function initGraph() {
 
   graph.on('node:pointerleave', (e) => {
     const id = e.target?.id
+    console.log('[MT-DEBUG] pointerleave id=', id, 'target=', e.target?.constructor?.name)
     if (!id || !graph) return
     graph.setElementState(id, [])
     graph.getEdgeData().forEach(edge => graph.setElementState(edge.id, []))
@@ -180,6 +181,7 @@ async function initGraph() {
 
   await graph.render()
   graph.fitView({ padding: 40 })
+  window.__mtGraph = graph
 }
 
 function zoomIn() { if (graph) { zoomLevel.value = Math.min(zoomLevel.value + 0.2, 3); graph.zoomTo(zoomLevel.value) } }

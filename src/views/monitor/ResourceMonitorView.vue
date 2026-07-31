@@ -80,8 +80,13 @@
                 </div>
                 <div class="res-name">{{ record.name }}</div>
               </div>
-              <div class="res-alert" :class="{ alert: record.alertStatus === '紧急' }">
-                {{ record.alertStatus === '紧急' ? '告警：紧急 ' + getEmergencyCount(record) : '运行正常' }}
+              <div class="res-alert">
+                <template v-if="record.alertStatus === '紧急'">
+                  <span class="alert-count">紧急 {{ getEmergencyCount(record) }}</span>
+                </template>
+                <template v-else>
+                  <span class="alert-label">运行正常</span>
+                </template>
               </div>
             </div>
           </div>
@@ -100,12 +105,12 @@
             <a class="app-link" href="javascript:;" @click="openDetail(record)">{{ record.name }}</a>
           </template>
           <template v-if="column.key === 'alertStatus'">
-            <span v-if="record.alertStatus === '紧急'" class="status-tag emergency">
-              <i class="fa-solid fa-circle-exclamation"></i> 紧急
-            </span>
-            <span v-else class="status-tag normal">
-              <i class="fa-solid fa-circle-check"></i> 正常
-            </span>
+            <template v-if="record.alertStatus === '紧急'">
+              <span class="alert-count">紧急 {{ getEmergencyCount(record) }}</span>
+            </template>
+            <template v-else>
+              <span class="alert-label">正常</span>
+            </template>
           </template>
           <template v-if="column.key === 'runStatus'">
             <span class="run-status"><span class="dot-green"></span> 运行中</span>
@@ -548,16 +553,13 @@ onMounted(async function() {
 }
 .res-alert {
   font-size: 12px;
-  color: #1890ff;
   padding-left: 42px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.res-alert.alert {
-  color: #f5222d;
-  font-weight: 500;
-}
+.alert-label { color: #8c8c8c; }
+.alert-count { color: #f5222d; font-weight: 500; }
 
 .card-body {
   display: flex;
