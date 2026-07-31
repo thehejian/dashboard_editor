@@ -14,55 +14,34 @@
         <button class="rdp-close" @click="closeDetail"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <a-tabs v-model:activeKey="state.activeTab" class="rdp-tabs">
-        <a-tab-pane key="overview" tab="概览">
-          <div class="rdp-tab-content">
-            <OverviewPanel />
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="topology" tab="依赖关系">
-          <div class="rdp-tab-content">
-            <MiniTopology v-if="state.activeTab === 'topology'" :data="topoData" :currentId="'current'" />
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="alarm" tab="告警">
-          <div class="rdp-tab-content">
-            <AlarmTable :data="alarmData" />
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="trace" tab="调用链">
-          <div class="rdp-tab-content">
-            <TraceWaterfall v-if="state.activeTab === 'trace'" :data="traceData" />
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="log" tab="日志">
-          <div class="rdp-tab-content">
-            <LogList :data="logData" />
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="ops" tab="运维操作">
-          <div class="rdp-tab-content">
-            <div class="ops-select-bar">
-              <a-dropdown :trigger="['click']" :getPopupContainer="() => document.body">
-                <span class="ops-select-trigger">
-                  <i class="fa-solid fa-terminal ops-select-icon"></i>
-                  <span>{{ currentOpsLabel }}</span>
-                  <i class="fa-solid fa-chevron-down ops-select-arrow"></i>
-                </span>
-                <template #overlay>
-                  <a-menu @click="onOpsMenuClick" :selectedKeys="[state.opsGroupKey]">
-                    <a-menu-item key="auto-job"><i class="fa-solid fa-robot ops-menu-icon"></i> 自动作业</a-menu-item>
-                    <a-menu-item key="net-probe"><i class="fa-solid fa-network-wired ops-menu-icon"></i> 网络探测</a-menu-item>
-                    <a-menu-item key="dial-test"><i class="fa-solid fa-tower-broadcast ops-menu-icon"></i> 拨测任务</a-menu-item>
-                    <a-menu-item key="host-locate"><i class="fa-solid fa-crosshairs ops-menu-icon"></i> 异常主机定位</a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
+      <div class="rdp-tabs-wrap">
+        <a-tabs v-model:activeKey="state.activeTab" class="rdp-tabs">
+          <a-tab-pane key="overview" tab="概览" />
+          <a-tab-pane key="topology" tab="依赖关系" />
+          <a-tab-pane key="alarm" tab="告警" />
+          <a-tab-pane key="trace" tab="调用链" />
+          <a-tab-pane key="log" tab="日志" />
+          <a-tab-pane key="ops" tab="运维操作" />
+        </a-tabs>
+        <span ref="opsTriggerRef" class="ops-chevron" @click.stop="opsDropdownOpen = !opsDropdownOpen">
+          <i class="fa-solid fa-chevron-down"></i>
+        </span>
+        <teleport to="body">
+          <div v-if="opsDropdownOpen" class="ops-dropdown" :style="opsDropdownStyle" @click.stop>
+            <div v-for="item in OPS_OPTIONS" :key="item.key" class="ops-dropdown-item" :class="{ active: state.opsGroupKey === item.key }" @click="onOpsSelect(item.key)">
+              <i :class="item.icon" class="ops-dropdown-icon"></i>
+              {{ item.label }}
             </div>
-            <OperationsPanel :data="operationsData" :groupKey="state.opsGroupKey" />
           </div>
-        </a-tab-pane>
-      </a-tabs>
+        </teleport>
+      </div>
+
+      <div class="rdp-tab-content" v-show="state.activeTab === 'overview'"><OverviewPanel /></div>
+      <div class="rdp-tab-content" v-show="state.activeTab === 'topology'"><MiniTopology v-if="state.activeTab === 'topology'" :data="topoData" :currentId="'current'" /></div>
+      <div class="rdp-tab-content" v-show="state.activeTab === 'alarm'"><AlarmTable :data="alarmData" /></div>
+      <div class="rdp-tab-content" v-show="state.activeTab === 'trace'"><TraceWaterfall v-if="state.activeTab === 'trace'" :data="traceData" /></div>
+      <div class="rdp-tab-content" v-show="state.activeTab === 'log'"><LogList :data="logData" /></div>
+      <div class="rdp-tab-content" v-show="state.activeTab === 'ops'"><OperationsPanel :data="operationsData" :groupKey="state.opsGroupKey" /></div>
 
       <div class="rdp-footer">
         <a class="rdp-footer-link" href="javascript:;"><i class="fa-solid fa-chart-line"></i> 关联仪表盘</a>
@@ -74,7 +53,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useResourceDetail } from '../../composables/useResourceDetail'
 import MiniTopology from '../../components/resource-detail/MiniTopology.vue'
 import AlarmTable from '../../components/resource-detail/AlarmTable.vue'
@@ -85,12 +64,36 @@ import OverviewPanel from '../../components/resource-detail/OverviewPanel.vue'
 
 const { state, closeDetail, setOpsGroup, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
 
-const OPS_LABELS = { 'auto-job': '自动作业', 'net-probe': '网络探测', 'dial-test': '拨测任务', 'host-locate': '异常主机定位' }
-const currentOpsLabel = computed(() => OPS_LABELS[state.opsGroupKey] || '自动作业')
+const OPS_OPTIONS = [
+  { key: 'auto-job', label: '自动作业', icon: 'fa-solid fa-robot' },
+  { key: 'net-probe', label: '网络探测', icon: 'fa-solid fa-network-wired' },
+  { key: 'dial-test', label: '拨测任务', icon: 'fa-solid fa-tower-broadcast' },
+  { key: 'host-locate', label: '异常主机定位', icon: 'fa-solid fa-crosshairs' },
+]
 
-function onOpsMenuClick({ key }) {
-  setOpsGroup(key)
+const opsDropdownOpen = ref(false)
+const opsTriggerRef = ref(null)
+const opsDropdownStyle = ref({})
+
+function updateDropdownPos() {
+  if (!opsTriggerRef.value) return
+  const r = opsTriggerRef.value.getBoundingClientRect()
+  opsDropdownStyle.value = { position: 'fixed', top: r.bottom + 4 + 'px', left: r.left + 'px', zIndex: 1100 }
 }
+
+function onOpsSelect(key) {
+  setOpsGroup(key)
+  opsDropdownOpen.value = false
+}
+
+function onClickOutside(e) {
+  if (opsDropdownOpen.value && opsTriggerRef.value && !opsTriggerRef.value.contains(e.target)) {
+    opsDropdownOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', onClickOutside, true))
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
 
 const resourceTags = computed(() => {
   const r = state.currentResource
@@ -119,26 +122,29 @@ const resourceTags = computed(() => {
 .rdp-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 16px; color: #8c8c8c; flex-shrink: 0; transition: all 0.15s; }
 .rdp-close:hover { background: #f0f0f0; color: #1a1a1a; }
 
+.rdp-tabs-wrap { position: relative; flex-shrink: 0; }
 .rdp-tabs { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 :deep(.rdp-tabs .ant-tabs-nav) { margin: 0; padding: 0 20px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
-:deep(.rdp-tabs .ant-tabs-content-holder) { flex: 1; min-height: 0; overflow: hidden; }
-:deep(.rdp-tabs .ant-tabs-content) { height: 100%; }
-:deep(.rdp-tabs .ant-tabs-tabpane) { height: 100%; }
-.rdp-tab-content { height: 100%; overflow-y: auto; }
+:deep(.rdp-tabs .ant-tabs-content-holder) { display: none; }
+.rdp-tab-content { flex: 1; min-height: 0; overflow-y: auto; }
+
+.ops-chevron { position: absolute; right: 20px; bottom: 8px; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; cursor: pointer; font-size: 9px; color: #8c8c8c; transition: all 0.15s; z-index: 10; }
+.ops-chevron:hover { background: rgba(0,0,0,0.06); color: #1890ff; }
 
 .rdp-footer { display: flex; gap: 20px; padding: 10px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0; }
 .rdp-footer-link { font-size: 12px; color: #8c8c8c; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
 .rdp-footer-link:hover { color: #1890ff; }
 
-.ops-select-bar { padding: 0 20px 12px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
-.ops-select-trigger { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; cursor: pointer; font-size: 13px; color: #1a1a1a; background: #fff; transition: all 0.15s; user-select: none; }
-.ops-select-trigger:hover { border-color: #1890ff; color: #1890ff; }
-.ops-select-icon { color: #1890ff; font-size: 12px; }
-.ops-select-arrow { font-size: 10px; color: #8c8c8c; margin-left: 4px; }
-.ops-menu-icon { margin-right: 6px; color: #1890ff; width: 16px; text-align: center; }
-
 @media (max-width: 768px) {
   .rdp { width: 100vw; right: -100vw; max-width: none; }
   .rdp-header-left h3 { font-size: 14px; }
 }
+</style>
+
+<style>
+.ops-dropdown { background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; padding: 4px; min-width: 160px; }
+.ops-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #1a1a1a; transition: background 0.12s; }
+.ops-dropdown-item:hover { background: #f0f5ff; }
+.ops-dropdown-item.active { background: #e6f4ff; color: #1890ff; font-weight: 500; }
+.ops-dropdown-icon { width: 16px; text-align: center; color: #1890ff; font-size: 12px; }
 </style>
