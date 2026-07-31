@@ -247,16 +247,88 @@
     </a-tabs>
 
     <div class="detail-panel" :class="{ open: detailVisible }">
-      <div class="detail-mask" @click="detailVisible = false"></div>
+      <div class="detail-mask" @click="closeDetail"></div>
       <div class="detail-panel-content">
         <div class="detail-header">
-          <h3>{{ currentAlert ? currentAlert.title : '告警详情' }}</h3>
-          <button class="close-btn" @click="detailVisible = false">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+          <div class="detail-title">
+            <h3>{{ currentAlert ? currentAlert.title : '告警详情' }}</h3>
+            <a-tag v-if="currentAlert" :color="getLevelColor(currentAlert.level)" class="detail-level-tag">{{ getLevelText(currentAlert.level) }}</a-tag>
+          </div>
+          <div class="detail-actions">
+            <a-button size="small" :type="alertConfirmed ? 'default' : 'primary'" :disabled="alertConfirmed" @click="onConfirmAlert">
+              <i class="fa-solid fa-check"></i> {{ alertConfirmed ? '已确认' : '确认' }}
+            </a-button>
+            <a-button size="small" @click="onHandleAlert"><i class="fa-solid fa-hammer"></i> 处理</a-button>
+            <button class="close-btn" @click="closeDetail"><i class="fa-solid fa-xmark"></i></button>
+          </div>
         </div>
-        <div class="detail-body" v-if="currentAlert">
-          <a-tabs v-model:activeKey="activeDetailTab" class="detail-tabs-comp">
+
+        <div class="detail-scroll" v-if="currentAlert">
+          <div class="trend-card">
+            <div class="trend-title">
+              <span class="trend-name">指标趋势（{{ currentAlert.status === 'resolved' ? '触发至恢复' : '触发前24小时' }}）</span>
+              <span class="trend-legend">
+                <span class="legend-item"><i class="legend-dot current-dot"></i>当前值 <b>{{ currentAlert.currentValue }}</b></span>
+                <span class="legend-item"><i class="legend-dot threshold-dot"></i>阈值 <b>{{ currentAlert.threshold }}</b></span>
+                <span class="legend-item"><i class="legend-dot baseline-dot"></i>基线</span>
+              </span>
+            </div>
+            <div ref="trendContainer" class="trend-chart"></div>
+          </div>
+
+          <div class="time-tags">
+            <div class="trigger-time-tag">
+              <i class="fa-solid fa-clock"></i> 触发时间：{{ formatTime(currentAlert.triggerTime) }}
+            </div>
+            <div v-if="currentAlert.status === 'resolved' && currentAlert.recoveryTime && currentAlert.recoveryTime !== '-'" class="recovery-time-tag">
+              <i class="fa-solid fa-check"></i> 恢复时间：{{ formatTime(currentAlert.recoveryTime) }}
+            </div>
+          </div>
+
+          <div class="info-cards">
+            <div class="info-card">
+              <div class="info-card-title">数据源信息</div>
+              <div class="info-list">
+                <div class="info-item"><span class="info-label">来源系统</span><span class="info-value">{{ currentAlert.sourceSystem || '运维监控平台' }}</span></div>
+                <div class="info-item"><span class="info-label">云服务</span><span class="info-value">{{ currentAlert.cloudService || '-' }}</span></div>
+                <div class="info-item"><span class="info-label">告警指标</span><span class="info-value">{{ currentAlert.metric || '-' }}</span></div>
+                <div class="info-item"><span class="info-label">当前值</span><span class="info-value">{{ currentAlert.currentValue }}</span></div>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-title">异常对象</div>
+              <div class="info-list">
+                <div class="info-item"><span class="info-label">告警源</span><span class="info-value clickable" title="点击筛选该资源" @click="filterByResource(currentAlert.resource)">{{ currentAlert.resource }}</span></div>
+                <div class="info-item"><span class="info-label">IP地址</span><span class="info-value clickable" title="点击复制" @click="copyText(currentAlert.ip)">{{ currentAlert.ip || '-' }}</span></div>
+                <div class="info-item"><span class="info-label">状态</span><span class="info-value">{{ currentAlert.status === 'firing' ? '告警中' : currentAlert.status === 'resolved' ? '已恢复' : '已屏蔽' }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="impact-section">
+            <div class="impact-block impact-red">
+              <div class="impact-title"><i class="fa-solid fa-triangle-exclamation"></i> 告警影响</div>
+              <div class="impact-body">{{ currentAlert.impact || '告警持续期间可能影响相关业务服务的稳定性与可用性，需尽快处理。' }}</div>
+            </div>
+            <div class="impact-block impact-green">
+              <div class="impact-title"><i class="fa-solid fa-wrench"></i> 修复建议</div>
+              <div class="impact-body">{{ currentAlert.suggestion }}</div>
+            </div>
+          </div>
+
+          <div class="jump-links">
+            <a class="jump-link" @click="jumpTo('dashboard')"><i class="fa-solid fa-chart-line"></i> 关联仪表盘</a>
+            <a class="jump-link" @click="jumpTo('logs')"><i class="fa-solid fa-file-lines"></i> 相关日志</a>
+            <a class="jump-link" @click="jumpTo('host')"><i class="fa-solid fa-server"></i> 主机详情</a>
+          </div>
+
+          <div class="expand-toggle" @click="detailExpanded = !detailExpanded">
+            <span>{{ detailExpanded ? '收起完整信息' : '展开完整信息' }}</span>
+            <i class="fa-solid fa-chevron-down" :class="{ 'is-rotated': detailExpanded }"></i>
+          </div>
+
+          <div v-show="detailExpanded" class="detail-tabs-wrap">
+            <a-tabs v-model:activeKey="activeDetailTab" class="detail-tabs-comp">
             <a-tab-pane key="info" tab="告警详情和处理建议">
               <div class="tab-panel">
                 <div class="detail-kpi">
@@ -301,9 +373,16 @@
             </a-tab-pane>
             <a-tab-pane key="experience" tab="维护经验">
               <div class="tab-panel">
-                <div class="tab-empty">
+                <div v-if="relatedExperience.length" class="exp-list">
+                  <div v-for="exp in relatedExperience" :key="exp.id" class="exp-item">
+                    <div class="exp-title"><i class="fa-solid fa-book"></i> {{ exp.title }}</div>
+                    <div class="exp-meta">{{ exp.category }} · {{ exp.author }} · {{ exp.time }} · 有帮助 {{ exp.helpful }}</div>
+                    <div class="exp-content">{{ exp.content }}</div>
+                  </div>
+                </div>
+                <div v-else class="tab-empty">
                   <i class="fa-solid fa-book"></i>
-                  <p>暂无维护经验记录</p>
+                  <p>暂无相关维护经验</p>
                 </div>
               </div>
             </a-tab-pane>
@@ -352,6 +431,44 @@
               </div>
             </a-tab-pane>
           </a-tabs>
+          </div>
+        </div>
+
+        <div class="detail-footer">
+          <div class="timeline">
+            <div class="timeline-title"><i class="fa-solid fa-clock-rotate-left"></i> 事件时间线</div>
+            <div class="timeline-list">
+              <div v-for="ev in detailTimeline.slice().reverse()" :key="ev.id" class="timeline-item">
+                <i class="timeline-dot" :class="'tl-' + ev.type"></i>
+                <div class="timeline-content">
+                  <div class="timeline-head">
+                    <span class="tl-tag" :class="'tl-tag-' + ev.type">{{ ev.label }}</span>
+                    <span class="tl-meta">{{ ev.operator }} · {{ ev.time }}</span>
+                  </div>
+                  <div class="tl-text">{{ ev.content }}</div>
+                </div>
+              </div>
+              <div v-if="!detailTimeline.length" class="note-empty">暂无事件记录</div>
+            </div>
+          </div>
+          <div class="footer-actions">
+            <a-button size="small" @click="onIgnoreAlert"><i class="fa-solid fa-ban"></i> 忽略</a-button>
+            <a-button size="small" @click="assignVisible = !assignVisible"><i class="fa-solid fa-user-check"></i> 设置处理人</a-button>
+            <a-button size="small" type="primary" @click="commentVisible = !commentVisible"><i class="fa-solid fa-comment"></i> 注释</a-button>
+          </div>
+          <div v-if="assignVisible" class="footer-row">
+            <a-select v-model:value="assignTarget" size="small" style="width: 120px" placeholder="选择处理人">
+              <a-select-option value="张工">张工</a-select-option>
+              <a-select-option value="李工">李工</a-select-option>
+              <a-select-option value="王工">王工</a-select-option>
+              <a-select-option value="赵工">赵工</a-select-option>
+            </a-select>
+            <a-button size="small" type="primary" @click="onAssign">确定</a-button>
+          </div>
+          <div v-if="commentVisible" class="footer-row">
+            <a-input v-model:value="commentText" size="small" placeholder="输入注释内容，回车提交" @pressEnter="onAddComment" />
+            <a-button size="small" type="primary" @click="onAddComment">提交</a-button>
+          </div>
         </div>
       </div>
     </div>
@@ -359,8 +476,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Chart } from '@antv/g2'
+
+const route = useRoute()
+const router = useRouter()
 
 const activeTab = ref('current')
 const searchText = ref('')
@@ -370,7 +491,18 @@ const templateValue = ref(null)
 const detailVisible = ref(false)
 const currentAlert = ref(null)
 const activeDetailTab = ref('info')
+const detailExpanded = ref(true)
+const alertConfirmed = ref(false)
 const scrollY = ref(500)
+
+const detailTimeline = ref([])
+const commentVisible = ref(false)
+const commentText = ref('')
+const assignVisible = ref(false)
+const assignTarget = ref(null)
+
+const trendContainer = ref(null)
+let trendChart = null
 
 const historySearch = ref('')
 const historyLevel = ref(null)
@@ -427,18 +559,18 @@ function openIntelDetail(record) {
 }
 
 const realtimeAlerts = ref([
-  { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001 (华北区域)', metric: 'CPU使用率', currentValue: '95%', threshold: '> 90%', duration: '5分钟', displayDuration: '5分钟', durationMinutes: 5, triggerTime: '2026-06-17 10:32:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查是否有异常进程占用CPU\n2. 查看应用日志定位慢查询\n3. 必要时重启相关服务' },
-  { id: 2, level: 'critical', title: '磁盘空间不足', resource: 'db-primary (华东区域)', metric: '磁盘使用率', currentValue: '92%', threshold: '> 90%', duration: '12分钟', displayDuration: '12分钟', durationMinutes: 12, triggerTime: '2026-06-17 10:28:00', recoveryTime: '-', status: 'firing', suggestion: '1. 清理过期日志文件\n2. 检查大表并归档历史数据\n3. 扩容磁盘或迁移数据' },
-  { id: 3, level: 'critical', title: '数据库主从延迟', resource: 'db-replica-02 (华东区域)', metric: '复制延迟', currentValue: '35s', threshold: '> 10s', duration: '37分钟', displayDuration: '37分钟', durationMinutes: 37, triggerTime: '2026-06-17 09:55:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查主库写入压力\n2. 检查从库IO/SQL线程状态\n3. 确认网络带宽是否充足' },
-  { id: 4, level: 'warning', title: '内存使用率偏高', resource: 'app-server-03 (华南区域)', metric: '内存使用率', currentValue: '82%', threshold: '> 80%', duration: '20分钟', displayDuration: '20分钟', durationMinutes: 20, triggerTime: '2026-06-17 10:15:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查JVM堆内存使用情况\n2. 分析是否有内存泄漏\n3. 调整容器内存限制' },
+  { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: 'server-001 (华北区域)', metric: 'CPU使用率', currentValue: '95%', threshold: '> 90%', duration: '5分钟', displayDuration: '5分钟', durationMinutes: 5, triggerTime: '2026-06-17 10:32:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查是否有异常进程占用CPU\n2. 查看应用日志定位慢查询\n3. 必要时重启相关服务', sourceSystem: 'Prometheus', cloudService: '云服务器ECS', ip: '10.0.1.15', impact: '服务器处理能力下降，业务接口响应变慢，可能影响高峰期用户体验。' },
+  { id: 2, level: 'critical', title: '磁盘空间不足', resource: 'db-primary (华东区域)', metric: '磁盘使用率', currentValue: '92%', threshold: '> 90%', duration: '12分钟', displayDuration: '12分钟', durationMinutes: 12, triggerTime: '2026-06-17 10:28:00', recoveryTime: '-', status: 'firing', suggestion: '1. 清理过期日志文件\n2. 检查大表并归档历史数据\n3. 扩容磁盘或迁移数据', sourceSystem: 'Prometheus', cloudService: '云数据库RDS', ip: '10.0.2.31', impact: '磁盘写满将导致数据库写入失败，存在数据丢失风险。' },
+  { id: 3, level: 'critical', title: '数据库主从延迟', resource: 'db-replica-02 (华东区域)', metric: '复制延迟', currentValue: '35s', threshold: '> 10s', duration: '37分钟', displayDuration: '37分钟', durationMinutes: 37, triggerTime: '2026-06-17 09:55:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查主库写入压力\n2. 检查从库IO/SQL线程状态\n3. 确认网络带宽是否充足', sourceSystem: 'Prometheus', cloudService: '云数据库RDS', ip: '10.0.2.32', impact: '读写分离场景下从库数据延迟，实时报表与查询结果滞后。' },
+  { id: 4, level: 'warning', title: '内存使用率偏高', resource: 'app-server-03 (华南区域)', metric: '内存使用率', currentValue: '82%', threshold: '> 80%', duration: '20分钟', displayDuration: '20分钟', durationMinutes: 20, triggerTime: '2026-06-17 10:15:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查JVM堆内存使用情况\n2. 分析是否有内存泄漏\n3. 调整容器内存限制', sourceSystem: '自研Agent', cloudService: '云服务器ECS', ip: '10.0.1.45', impact: '应用响应变慢，内存耗尽可能导致容器OOM重启。' },
   { id: 5, level: 'warning', title: '响应时间超时', resource: 'api-gateway (华北区域)', metric: '响应时间', currentValue: '2500ms', threshold: '> 2000ms', duration: '1小时', displayDuration: '1小时', durationMinutes: 60, triggerTime: '2026-06-17 09:45:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查下游服务响应时间\n2. 分析慢请求链路\n3. 考虑增加限流或降级策略' },
-  { id: 6, level: 'warning', title: 'HTTP 5xx错误率上升', resource: 'nginx-ingress (华北区域)', metric: '5xx错误率', currentValue: '3.2%', threshold: '> 1%', duration: '1.5小时', displayDuration: '1.5小时', durationMinutes: 90, triggerTime: '2026-06-17 09:30:00', recoveryTime: '-', status: 'suppressed', suggestion: '1. 检查后端服务健康状态\n2. 查看nginx错误日志\n3. 回滚最近变更' },
-  { id: 7, level: 'info', title: '连接数接近上限', resource: 'redis-cluster (华东区域)', metric: '连接数', currentValue: '85%', threshold: '> 80%', duration: '2小时', displayDuration: '2小时', durationMinutes: 120, triggerTime: '2026-06-17 09:20:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查连接池配置\n2. 排查是否有连接泄漏\n3. 考虑扩容Redis节点' },
-  { id: 8, level: 'info', title: '证书即将过期', resource: 'cdn-domain.example.com', metric: '证书剩余天数', currentValue: '15天', threshold: '< 30天', duration: '2.5小时', displayDuration: '2.5小时', durationMinutes: 150, triggerTime: '2026-06-17 08:00:00', recoveryTime: '-', status: 'firing', suggestion: '1. 申请新证书\n2. 更新证书配置\n3. 验证HTTPS访问正常' },
-  { id: 9, level: 'critical', title: 'K8s Pod频繁重启', resource: 'payment-service (prod)', metric: 'Pod重启率', currentValue: '5次/小时', threshold: '> 3次/小时', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-17 08:45:00', recoveryTime: '2026-06-17 10:00:00', status: 'resolved', suggestion: '1. 查看Pod事件和日志\n2. 检查OOMKilled情况\n3. 调整resources限制' },
-  { id: 10, level: 'warning', title: '消息队列积压', resource: 'kafka-consumer-group order', metric: '积压量', currentValue: '50000条', threshold: '> 10000条', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-17 07:30:00', recoveryTime: '2026-06-17 10:30:00', status: 'resolved', suggestion: '1. 检查消费者处理逻辑\n2. 增加消费者实例数\n3. 检查生产者发送速率' },
-  { id: 11, level: 'warning', title: '网络丢包率过高', resource: 'switch-01 (华北区域)', metric: '丢包率', currentValue: '2.1%', threshold: '> 1%', duration: '45分钟', displayDuration: '45分钟', durationMinutes: 45, triggerTime: '2026-06-17 06:30:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查网络链路质量\n2. 排查交换机端口错误\n3. 联系网络运维处理' },
-  { id: 12, level: 'info', title: 'NTP同步偏移过大', resource: 'ntp-server', metric: '时间偏移', currentValue: '850ms', threshold: '> 500ms', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-16 23:00:00', recoveryTime: '2026-06-17 01:00:00', status: 'resolved', suggestion: '1. 检查NTP服务状态\n2. 确认时间源可达\n3. 手动同步时间' },
+  { id: 6, level: 'warning', title: 'HTTP 5xx错误率上升', resource: 'nginx-ingress (华北区域)', metric: '5xx错误率', currentValue: '3.2%', threshold: '> 1%', duration: '1.5小时', displayDuration: '1.5小时', durationMinutes: 90, triggerTime: '2026-06-17 09:30:00', recoveryTime: '-', status: 'suppressed', suggestion: '1. 检查后端服务健康状态\n2. 查看nginx错误日志\n3. 回滚最近变更', sourceSystem: 'Prometheus', cloudService: '负载均衡SLB', ip: '10.0.3.11', impact: '部分用户请求返回5xx错误，核心业务交易可能受影响。' },
+  { id: 7, level: 'info', title: '连接数接近上限', resource: 'redis-cluster (华东区域)', metric: '连接数', currentValue: '85%', threshold: '> 80%', duration: '2小时', displayDuration: '2小时', durationMinutes: 120, triggerTime: '2026-06-17 09:20:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查连接池配置\n2. 排查是否有连接泄漏\n3. 考虑扩容Redis节点', sourceSystem: '云监控', cloudService: '云数据库Redis', ip: '10.0.4.20', impact: '连接数耗尽后新连接无法建立，业务高峰可能拒绝服务。' },
+  { id: 8, level: 'info', title: '证书即将过期', resource: 'cdn-domain.example.com', metric: '证书剩余天数', currentValue: '15天', threshold: '< 30天', duration: '2.5小时', displayDuration: '2.5小时', durationMinutes: 150, triggerTime: '2026-06-17 08:00:00', recoveryTime: '-', status: 'firing', suggestion: '1. 申请新证书\n2. 更新证书配置\n3. 验证HTTPS访问正常', sourceSystem: '证书监控', cloudService: 'CDN域名服务', ip: '-', impact: '证书过期后HTTPS访问中断，影响全站安全访问。' },
+  { id: 9, level: 'critical', title: 'K8s Pod频繁重启', resource: 'payment-service (prod)', metric: 'Pod重启率', currentValue: '5次/小时', threshold: '> 3次/小时', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-17 08:45:00', recoveryTime: '2026-06-17 10:00:00', status: 'resolved', suggestion: '1. 查看Pod事件和日志\n2. 检查OOMKilled情况\n3. 调整resources限制', sourceSystem: 'Prometheus', cloudService: '容器服务ACK', ip: '10.0.5.60', impact: '业务实例频繁重启，服务可用性显著下降。' },
+  { id: 10, level: 'warning', title: '消息队列积压', resource: 'kafka-consumer-group order', metric: '积压量', currentValue: '50000条', threshold: '> 10000条', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-17 07:30:00', recoveryTime: '2026-06-17 10:30:00', status: 'resolved', suggestion: '1. 检查消费者处理逻辑\n2. 增加消费者实例数\n3. 检查生产者发送速率', sourceSystem: 'Prometheus', cloudService: '消息队列Kafka', ip: '10.0.6.70', impact: '消息处理延迟，下游数据同步滞后，影响数据时效。' },
+  { id: 11, level: 'warning', title: '网络丢包率过高', resource: 'switch-01 (华北区域)', metric: '丢包率', currentValue: '2.1%', threshold: '> 1%', duration: '45分钟', displayDuration: '45分钟', durationMinutes: 45, triggerTime: '2026-06-17 06:30:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查网络链路质量\n2. 排查交换机端口错误\n3. 联系网络运维处理', sourceSystem: 'Zabbix', cloudService: '云服务器ECS', ip: '10.0.7.88', impact: '网络质量下降、重传增多，业务链路延迟增加。' },
+  { id: 12, level: 'info', title: 'NTP同步偏移过大', resource: 'ntp-server', metric: '时间偏移', currentValue: '850ms', threshold: '> 500ms', duration: '已恢复', displayDuration: '已恢复', durationMinutes: 0, triggerTime: '2026-06-16 23:00:00', recoveryTime: '2026-06-17 01:00:00', status: 'resolved', suggestion: '1. 检查NTP服务状态\n2. 确认时间源可达\n3. 手动同步时间', sourceSystem: 'Zabbix', cloudService: '云服务器ECS', ip: '10.0.7.89', impact: '时间不同步可能导致日志错乱、证书校验与认证失败。' },
 ])
 const historyData = ref([
   { id: 101, level: 'critical', title: '网络延迟过高', resource: 'lb-001', time: '2026-06-16 08:30', duration: '15分钟', status: 'resolved' },
@@ -492,6 +624,27 @@ const expData = ref([
   { id: 507, title: 'HTTP 5xx错误率飙升的应急回滚', category: '其他', author: '王工', time: '2026-06-09 15:40', helpful: 14, content: '1. 查看错误码分布(502/503/504)\n2. 检查后端服务health endpoint\n3. 立即回滚最近一次部署\n4. 启用降级开关关闭非核心功能\n5. 验证后逐步灰度发布' },
   { id: 508, title: 'MySQL慢查询优化实战', category: '数据库', author: '王工', time: '2026-06-08 10:20', helpful: 16, content: '1. 开启slow_query_log定位慢SQL\n2. 使用EXPLAIN分析执行计划\n3. 检查是否命中索引，添加合适索引\n4. 避免SELECT *，减少回表\n5. 大表分页使用游标代替LIMIT offset' },
 ])
+
+const relatedExperience = computed(function() {
+  if (!currentAlert.value) return []
+  var kw = String(currentAlert.value.metric || '').toLowerCase() + ' ' + String(currentAlert.value.title || '').toLowerCase()
+  var rules = [
+    { re: /cpu|处理器/, cat: 'CPU' },
+    { re: /内存|redis|连接数|堆/, cat: '内存' },
+    { re: /磁盘|inode/, cat: '磁盘' },
+    { re: /复制延迟|主从|mysql|db|查询/, cat: '数据库' },
+    { re: /丢包|网络|带宽/, cat: '网络' },
+    { re: /pod|k8s|容器|重启/, cat: '其他' },
+    { re: /5xx|响应/, cat: '其他' },
+    { re: /证书|过期/, cat: '其他' },
+  ]
+  var cat = null
+  for (var i = 0; i < rules.length; i++) {
+    if (rules[i].re.test(kw)) { cat = rules[i].cat; break }
+  }
+  if (!cat) return []
+  return expData.value.filter(function(e) { return e.category === cat }).slice(0, 3)
+})
 const loading = ref(false)
 
 onMounted(async () => {
@@ -517,6 +670,10 @@ onMounted(async () => {
           recoveryTime: item.recovery_time || item.recoveryTime || '-',
           status: item.status || 'firing',
           suggestion: item.suggestion || '',
+          sourceSystem: item.source_system || item.sourceSystem || '',
+          cloudService: item.cloud_service || item.cloudService || '',
+          ip: item.ip || item.ip_address || '',
+          impact: item.impact || '',
         }
       })
       historyData.value = json.data.filter(function(i) { return i.status === 'resolved' }).map(function(item) {
@@ -547,11 +704,22 @@ onMounted(async () => {
     console.error('加载告警数据失败:', e)
   } finally {
     loading.value = false
+    var qid = route.query.alertId
+    if (qid) {
+      var alert = realtimeAlerts.value.find(function(a) { return String(a.id) === String(qid) })
+      if (alert) openDetail(alert)
+    }
   }
   renderDonutChart()
   renderBarChart()
   renderDurationChart()
   renderTopnChart()
+})
+
+watch(function() { return route.query.alertId }, function(id) {
+  if (id == null) return
+  var alert = realtimeAlerts.value.find(function(a) { return String(a.id) === String(id) })
+  if (alert) openDetail(alert)
 })
 
 const columns = [
@@ -698,10 +866,191 @@ const handleAlert = function(id) {
   realtimeAlerts.value = realtimeAlerts.value.filter(function(a) { return a.id !== id })
 }
 
+const timelineSeq = { n: 1 }
+
+function nowStr() {
+  var d = new Date()
+  function pad(n) { return n < 10 ? '0' + n : '' + n }
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds())
+}
+
+function formatTime(str) {
+  if (!str || str === '-') return '-'
+  var d = new Date(String(str).replace(/-/g, '/'))
+  if (isNaN(d.getTime())) d = new Date(str)
+  if (isNaN(d.getTime())) return str
+  function pad(n) { return n < 10 ? '0' + n : '' + n }
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds())
+}
+
+function parseTime(str) {
+  if (!str) return new Date()
+  var d = new Date(String(str).replace(/-/g, '/'))
+  if (isNaN(d.getTime())) d = new Date(str)
+  return isNaN(d.getTime()) ? new Date() : d
+}
+
+const addTimeline = function(type, label, content, time) {
+  detailTimeline.value.push({
+    id: timelineSeq.n++,
+    type: type,
+    label: label,
+    content: content,
+    operator: '张工',
+    time: time || nowStr(),
+  })
+}
+
+const buildTimeline = function(alert) {
+  detailTimeline.value = []
+  addTimeline('trigger', '触发', alert.title + '（当前值 ' + (alert.currentValue || '-') + '，阈值 ' + (alert.threshold || '-') + '）', formatTime(alert.triggerTime))
+  if (alert.status === 'resolved') {
+    addTimeline('resolve', '恢复', '告警已恢复，指标回到安全区间', formatTime(alert.recoveryTime))
+  }
+  if (alert.status === 'suppressed' && alert.muteReason) {
+    addTimeline('ignore', '屏蔽', '屏蔽原因：' + alert.muteReason + (alert.mutedBy ? '（' + alert.mutedBy + '）' : ''), formatTime(alert.mutedAt))
+  }
+}
+
 const openDetail = function(alert) {
   currentAlert.value = alert
+  alertConfirmed.value = false
+  detailExpanded.value = true
   activeDetailTab.value = 'info'
   detailVisible.value = true
+  buildTimeline(alert)
+  router.replace({ query: { ...route.query, alertId: alert.id } })
+  nextTick(function() { renderTrendChart() })
+}
+
+const closeDetail = function() {
+  detailVisible.value = false
+  var q = { ...route.query }
+  delete q.alertId
+  router.replace({ query: q })
+}
+
+const onConfirmAlert = function() {
+  alertConfirmed.value = true
+  addTimeline('ack', '确认', '运维人员已确认收到该告警')
+}
+
+const onHandleAlert = function() {
+  addTimeline('handle', '处理', '已标记为处理中，进入处理流程')
+  closeDetail()
+}
+
+const onIgnoreAlert = function() {
+  addTimeline('ignore', '忽略', '人工忽略该告警，暂不处理')
+}
+
+const onAssign = function() {
+  if (!assignTarget.value) return
+  addTimeline('assign', '设置处理人', '指定处理人：' + assignTarget.value)
+  if (currentAlert.value) currentAlert.value.assignee = assignTarget.value
+  assignTarget.value = null
+  assignVisible.value = false
+}
+
+const onAddComment = function() {
+  var text = (commentText.value || '').trim()
+  if (!text) return
+  addTimeline('comment', '注释', text)
+  commentText.value = ''
+  commentVisible.value = false
+}
+
+const filterByResource = function(res) {
+  if (!res) return
+  searchText.value = res
+  closeDetail()
+}
+
+const copyText = function(text) {
+  if (!text || !navigator.clipboard) return
+  navigator.clipboard.writeText(text)
+}
+
+const jumpTo = function(target) {
+  var map = { dashboard: '/monitor/dashboard', logs: '/ops/logs/runtime/query', host: '/monitor/resource' }
+  var path = map[target]
+  if (!path) return
+  closeDetail()
+  router.push(path)
+}
+
+function renderTrendChart() {
+  if (trendChart) { trendChart.destroy(); trendChart = null }
+  if (!trendContainer.value || !currentAlert.value) return
+  var alert = currentAlert.value
+  var num = parseFloat(alert.currentValue) || 50
+  var thresholdMatch = String(alert.threshold).match(/[\d.]+/)
+  var threshold = thresholdMatch ? parseFloat(thresholdMatch[0]) : num * 0.8
+  var baseline = Math.round(threshold * 0.7 * 10) / 10
+  var isLess = String(alert.threshold).indexOf('<') >= 0
+
+  var trigger = parseTime(alert.triggerTime)
+  var recovered = alert.status === 'resolved' && alert.recoveryTime && alert.recoveryTime !== '-'
+  var recovery = recovered ? parseTime(alert.recoveryTime) : null
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n }
+  function fmt(t) { return pad(t.getMonth() + 1) + '-' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes()) }
+
+  var seed = (Number(alert.id) || 1) * 7 + 13
+  var rnd = (function() {
+    var s = seed
+    return function() { s = (s * 9301 + 49297) % 233280; return s / 233280 }
+  })()
+
+  var points = 12
+  var spanHours = recovered ? Math.min(Math.max((recovery.getTime() - trigger.getTime()) / 3600000, 4), 48) : 24
+  var data = []
+  var triggerLabel = ''
+  for (var i = 0; i < points; i++) {
+    var t = new Date(trigger.getTime() - (points - 1 - i) * spanHours / (points - 1) * 3600 * 1000)
+    var label = fmt(t)
+    if (i === points - 1) triggerLabel = label
+    var progress = i / (points - 1)
+    var value = isLess
+      ? threshold * 1.3 - (threshold * 1.3 - num) * progress
+      : threshold * (0.7 + (num / threshold - 0.7) * progress)
+    var jitter = (rnd() - 0.5) * threshold * 0.03
+    data.push({ time: label, type: '当前值', value: Math.max(Math.round((value + jitter) * 10) / 10, 0) })
+    data.push({ time: label, type: '阈值', value: threshold })
+    data.push({ time: label, type: '基线', value: baseline })
+  }
+
+  trendChart = new Chart({ container: trendContainer.value, autoFit: true, height: 180, padding: [10, 24, 26, 44] })
+  trendChart.data(data)
+  trendChart.line()
+    .encode('x', 'time')
+    .encode('y', 'value')
+    .encode('color', 'type')
+    .encode('shape', 'smooth')
+    .scale('color', { range: ['#007DFF', '#F5222D', '#BFBFBF'] })
+    .style('lineWidth', 2)
+    .style('lineDash', function(d) { return d.type === '当前值' ? null : [4, 4] })
+    .tooltip({ title: 'time', items: [{ channel: 'y', name: 'value' }] })
+  trendChart.axis('x', { title: null, labelFontSize: 10, labelAutoHide: true })
+  trendChart.axis('y', { title: null, labelFontSize: 10 })
+  trendChart.lineX()
+    .data([{ time: triggerLabel }])
+    .encode('x', 'time')
+    .style('stroke', '#F5222D')
+    .style('lineDash', [4, 4])
+    .style('lineWidth', 1)
+    .label({ text: '触发', position: 'top', style: { fill: '#F5222D', fontSize: 10, fontWeight: 600 } })
+  if (recovered) {
+    trendChart.lineX()
+      .data([{ time: fmt(recovery) }])
+      .encode('x', 'time')
+      .style('stroke', '#52C41A')
+      .style('lineDash', [4, 4])
+      .style('lineWidth', 1)
+      .label({ text: '恢复', position: 'top', style: { fill: '#52C41A', fontSize: 10, fontWeight: 600 } })
+  }
+  trendChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
+  trendChart.render()
 }
 
 const unmuteAlert = function(id) {
@@ -864,6 +1213,7 @@ onBeforeUnmount(function() {
   if (barChart) barChart.destroy()
   if (durationChart) durationChart.destroy()
   if (topnChart) topnChart.destroy()
+  if (trendChart) trendChart.destroy()
 })
 </script>
 
@@ -930,8 +1280,8 @@ onBeforeUnmount(function() {
 .detail-panel-content {
   position: absolute;
   top: 0;
-  right: -560px;
-  width: 560px;
+  right: -80vw;
+  width: 80vw;
   height: 100%;
   background: #fff;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
@@ -944,15 +1294,20 @@ onBeforeUnmount(function() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 14px 20px;
   border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
 }
-.detail-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.detail-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.detail-title h3 { margin: 0; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-level-tag { flex-shrink: 0; }
+.detail-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .close-btn { font-size: 16px; color: #8c8c8c; border: none; background: transparent; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
 .close-btn:hover { color: var(--brand); background: var(--bg-sec); }
-.detail-body { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
-.detail-body :deep(.ant-tabs > .ant-tabs-nav) { margin-bottom: 16px; }
+.detail-scroll { flex: 1; overflow-y: auto; padding: 16px 20px 20px; }
+.detail-scroll :deep(.ant-tabs > .ant-tabs-nav) { margin-bottom: 16px; }
+.detail-tabs-wrap { border-top: 1px solid #f0f0f0; padding-top: 8px; }
 .tab-panel { min-height: 200px; }
 .detail-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
 .kpi-item { padding: 12px; background: #fafafa; border-radius: 6px; }
@@ -968,6 +1323,144 @@ onBeforeUnmount(function() {
 .help-info { font-size: 13px; line-height: 1.8; }
 .help-info p { margin: 4px 0; }
 
+.trend-card { margin-bottom: 12px; }
+.trend-title { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.trend-legend { display: flex; gap: 12px; font-size: 12px; font-weight: 400; color: #595959; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-item b { font-weight: 600; color: #1a1a1a; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.current-dot { background: #007DFF; }
+.threshold-dot { background: #F5222D; }
+.baseline-dot { background: #BFBFBF; }
+.trend-chart { width: 100%; height: 170px; }
+
+.time-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.trigger-time-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  color: #d46b08;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.recovery-time-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #389e0d;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.info-card { background: #fafafa; border-radius: 6px; padding: 12px 14px; border: 1px solid #f0f0f0; }
+.info-card-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #1a1a1a; }
+.info-list { display: flex; flex-direction: column; gap: 8px; }
+.info-item { display: flex; }
+.info-label { width: 70px; flex-shrink: 0; color: #8c8c8c; font-size: 12px; }
+.info-value { flex: 1; font-size: 13px; color: #1a1a1a; word-break: break-all; }
+.info-value.clickable { color: var(--brand); cursor: pointer; }
+.info-value.clickable:hover { text-decoration: underline; }
+
+.impact-section { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.impact-block { padding: 12px 14px; border-radius: 6px; }
+.impact-red { background: #fff1f0; border-left: 3px solid #f5222d; }
+.impact-green { background: #f6ffed; border-left: 3px solid #52c41a; }
+.impact-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #1a1a1a; }
+.impact-title i { margin-right: 4px; }
+.impact-red .impact-title i { color: #f5222d; }
+.impact-green .impact-title i { color: #52c41a; }
+.impact-body { font-size: 12px; line-height: 1.8; color: #595959; white-space: pre-line; }
+
+.jump-links { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.jump-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--brand);
+  background: #e6f7ff;
+  border: 1px solid #91caff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+.jump-link:hover { background: #bae7ff; }
+
+.exp-list { display: flex; flex-direction: column; gap: 10px; }
+.exp-item { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 6px; padding: 10px 12px; }
+.exp-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+.exp-title i { color: var(--brand); margin-right: 4px; }
+.exp-meta { font-size: 12px; color: #8c8c8c; margin-bottom: 6px; }
+.exp-content { font-size: 12px; color: #595959; line-height: 1.8; white-space: pre-line; }
+
+.expand-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+  margin-bottom: 12px;
+  cursor: pointer;
+  color: var(--brand);
+  font-size: 13px;
+  user-select: none;
+}
+.expand-toggle:hover { color: #40a9ff; }
+.expand-toggle i { transition: transform 0.2s; }
+.expand-toggle i.is-rotated { transform: rotate(180deg); }
+
+.detail-footer { flex-shrink: 0; border-top: 1px solid #f0f0f0; padding: 12px 20px; background: #fafafa; }
+.timeline-title { font-size: 12px; font-weight: 600; color: #595959; margin-bottom: 8px; }
+.timeline-list { display: flex; flex-direction: column; gap: 10px; max-height: 108px; overflow-y: auto; margin-bottom: 10px; }
+.timeline-item { display: flex; gap: 10px; }
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+  border: 2px solid #bfbfbf;
+}
+.timeline-dot.tl-trigger { background: #f5222d; border-color: #ffa39e; }
+.timeline-dot.tl-resolve { background: #52c41a; border-color: #b7eb8f; }
+.timeline-dot.tl-ack { background: #007dff; border-color: #91caff; }
+.timeline-dot.tl-handle { background: #722ed1; border-color: #d3adf7; }
+.timeline-dot.tl-ignore { background: #fa8c16; border-color: #ffc069; }
+.timeline-dot.tl-comment { background: #8c8c8c; border-color: #d9d9d9; }
+.timeline-dot.tl-assign { background: #13c2c2; border-color: #87e8de; }
+.timeline-content { flex: 1; min-width: 0; }
+.timeline-head { display: flex; align-items: center; gap: 8px; }
+.tl-tag {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+.tl-tag-trigger { background: #f5222d; }
+.tl-tag-resolve { background: #52c41a; }
+.tl-tag-ack { background: #007dff; }
+.tl-tag-handle { background: #722ed1; }
+.tl-tag-ignore { background: #fa8c16; }
+.tl-tag-comment { background: #8c8c8c; }
+.tl-tag-assign { background: #13c2c2; }
+.tl-meta { font-size: 11px; color: #8c8c8c; flex-shrink: 0; }
+.tl-text { font-size: 12px; color: #595959; margin-top: 2px; line-height: 1.5; word-break: break-all; }
+.note-empty { color: #8c8c8c; font-size: 12px; text-align: center; padding: 8px 0; }
+.footer-actions { display: flex; gap: 8px; }
+.footer-row { display: flex; gap: 8px; margin-top: 8px; }
+.footer-row :deep(.ant-input) { flex: 1; }
+
 @media (max-width: 1200px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
 }
@@ -977,5 +1470,6 @@ onBeforeUnmount(function() {
   .detail-panel-content { width: 100%; right: -100%; }
   .detail-panel.open .detail-panel-content { right: 0; }
   .detail-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .info-cards, .impact-section { grid-template-columns: 1fr; }
 }
 </style>
