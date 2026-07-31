@@ -53,8 +53,7 @@ async function initGraph() {
 
   const nodes = props.data.nodes.map(n => ({
     id: n.id,
-    data: { label: n.label, ip: n.ip, status: n.status, metrics: n.metrics, type: n.type },
-    icon: ICON_MAP[n.type] || '\uf0ac',
+    data: { label: n.label, ip: n.ip, status: n.status, metrics: n.metrics, type: n.type, icon: ICON_MAP[n.type] || '\uf0ac' },
     style: {
       size: 48,
       fill: STATUS_COLORS[n.status] || '#d9d9d9',
@@ -73,7 +72,6 @@ async function initGraph() {
       labelPadding: [2, 6],
       iconFontFamily: 'Font Awesome 6 Free',
       iconFontWeight: 900,
-      iconText: (d) => d.icon || '',
       iconFill: '#fff',
       iconFontSize: 24,
       zIndex: 10,
@@ -108,6 +106,7 @@ async function initGraph() {
     node: {
       style: {
         labelText: (d) => d.data?.label || d.id,
+        iconText: (d) => d.data?.icon || '',
       },
       state: {
         hover: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 2, shadowColor: 'rgba(24,144,255,0.3)', shadowBlur: 8 },
