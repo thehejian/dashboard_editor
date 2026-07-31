@@ -33,7 +33,6 @@ const props = defineProps({
 const container = ref(null)
 let graph = null
 let resizeObserver = null
-let initTimer = null
 const zoomLevel = ref(1)
 
 const tooltip = reactive({ visible: false, label: '', ip: '', status: 'normal', metrics: '', x: 0, y: 0 })
@@ -155,11 +154,6 @@ function initGraph() {
   })
 }
 
-function delayedInit() {
-  if (initTimer) clearTimeout(initTimer)
-  initTimer = setTimeout(() => initGraph(), 350)
-}
-
 function zoomIn() { if (graph) { zoomLevel.value = Math.min(zoomLevel.value + 0.2, 3); graph.zoomTo(zoomLevel.value) } }
 function zoomOut() { if (graph) { zoomLevel.value = Math.max(zoomLevel.value - 0.2, 0.3); graph.zoomTo(zoomLevel.value) } }
 function fitView() { if (graph) { zoomLevel.value = 1; graph.fitView({ padding: 40 }) } }
@@ -170,7 +164,7 @@ function cancelHide() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = nu
 function hideTooltip() { tooltip.visible = false }
 
 onMounted(() => {
-  delayedInit()
+  nextTick(() => { setTimeout(() => initGraph(), 50) })
 
   resizeObserver = new ResizeObserver(() => {
     if (graph && container.value) {
@@ -186,14 +180,13 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (initTimer) clearTimeout(initTimer)
   if (resizeObserver) { resizeObserver.disconnect(); resizeObserver = null }
   if (graph) { graph.destroy(); graph = null }
   if (hideTimer) clearTimeout(hideTimer)
 })
 
 watch(() => props.data, () => {
-  delayedInit()
+  nextTick(() => { setTimeout(() => initGraph(), 50) })
 }, { deep: true })
 </script>
 

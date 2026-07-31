@@ -22,7 +22,7 @@
         </a-tab-pane>
         <a-tab-pane key="topology" tab="依赖关系">
           <div class="rdp-tab-content">
-            <MiniTopology v-if="state.open" :data="topoData" :currentId="'current'" />
+            <MiniTopology v-if="state.activeTab === 'topology'" :data="topoData" :currentId="'current'" />
           </div>
         </a-tab-pane>
         <a-tab-pane key="alarm" tab="告警">
@@ -32,7 +32,7 @@
         </a-tab-pane>
         <a-tab-pane key="trace" tab="调用链">
           <div class="rdp-tab-content">
-            <TraceWaterfall v-if="state.open" :data="traceData" />
+            <TraceWaterfall v-if="state.activeTab === 'trace'" :data="traceData" />
           </div>
         </a-tab-pane>
         <a-tab-pane key="log" tab="日志">
