@@ -61,6 +61,9 @@
               </template>
               <template v-if="column.key === 'action'">
                 <div class="action-btns">
+                  <a-tooltip title="AI 分析">
+                    <button class="icon-btn ai-btn" @click="openAnalysis(record)"><i class="fa-solid fa-robot"></i></button>
+                  </a-tooltip>
                   <a-tooltip title="查看详情">
                     <button class="icon-btn" @click="openDetail(record)"><i class="fa-solid fa-eye"></i></button>
                   </a-tooltip>
@@ -263,7 +266,7 @@
           </div>
         </div>
 
-        <div class="detail-scroll" v-if="currentAlert">
+        <div class="detail-scroll" v-if="currentAlert" ref="detailScrollRef">
           <div class="trend-card">
             <div class="trend-title">
               <span class="trend-name">指标趋势（{{ currentAlert.status === 'resolved' ? '触发至恢复' : '触发前24小时' }}）</span>
@@ -327,7 +330,7 @@
             <i class="fa-solid fa-chevron-down" :class="{ 'is-rotated': detailExpanded }"></i>
           </div>
 
-          <div v-show="detailExpanded" class="detail-tabs-wrap">
+          <div v-show="detailExpanded" class="detail-tabs-wrap" ref="detailTabsWrapRef">
             <a-tabs v-model:activeKey="activeDetailTab" class="detail-tabs-comp">
             <a-tab-pane key="info" tab="告警详情和处理建议">
               <div class="tab-panel">
@@ -368,6 +371,58 @@
                 <div class="section-block">
                   <div class="section-title">处理建议</div>
                   <div class="section-body suggestion">{{ currentAlert.suggestion }}</div>
+                </div>
+              </div>
+            </a-tab-pane>
+            <a-tab-pane key="analysis" tab="AI 分析">
+              <div class="tab-panel">
+                <div v-if="aiLoading" class="ai-analysis-loading">
+                  <div class="ai-thinking">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>AI 正在分析该告警</span>
+                    <span class="ai-dots"><i></i><i></i><i></i></span>
+                  </div>
+                  <div class="ai-loading-steps">
+                    <div><i class="fa-solid fa-list-check"></i> 正在汇总告警上下文</div>
+                    <div><i class="fa-solid fa-clock-rotate-left"></i> 正在关联历史告警与维护经验</div>
+                    <div><i class="fa-solid fa-lightbulb"></i> 正在生成根因推测与处置建议</div>
+                  </div>
+                </div>
+                <div v-else-if="aiResult" class="ai-analysis-result">
+                  <div class="ai-result-header">
+                    <i class="fa-solid fa-robot ai-result-icon"></i>
+                    <span class="ai-result-title">AI 分析结果</span>
+                    <a-tag color="blue" size="small">置信度 {{ aiResult.confidence }}%</a-tag>
+                  </div>
+                  <div class="ai-section">
+                    <div class="ai-section-title"><i class="fa-solid fa-magnifying-glass"></i> 根因推测</div>
+                    <div class="ai-section-body">{{ aiResult.rootCause }}</div>
+                  </div>
+                  <div class="ai-section">
+                    <div class="ai-section-title"><i class="fa-solid fa-bullseye"></i> 影响面评估</div>
+                    <div class="ai-section-body">{{ aiResult.impact }}</div>
+                  </div>
+                  <div class="ai-section">
+                    <div class="ai-section-title"><i class="fa-solid fa-list-check"></i> 处置建议</div>
+                    <ol class="ai-suggest-list">
+                      <li v-for="(s, index) in aiResult.suggestions" :key="index">{{ s }}</li>
+                    </ol>
+                  </div>
+                  <div v-if="aiResult.relatedAlerts.length" class="ai-section">
+                    <div class="ai-section-title"><i class="fa-solid fa-link"></i> 关联告警</div>
+                    <div class="ai-related-list">
+                      <div v-for="ra in aiResult.relatedAlerts" :key="ra.id" class="ai-related-item">
+                        <a-tag :color="getLevelColor(ra.level)" size="small">{{ getLevelText(ra.level) }}</a-tag>
+                        <span class="ai-related-title">{{ ra.title }}</span>
+                        <span class="ai-related-resource">{{ ra.resource }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ai-footer">
+                    <a-button size="small" type="primary" @click="continueInAssistant">
+                      <i class="fa-solid fa-comment-dots"></i> 在 AI 助手中继续分析
+                    </a-button>
+                  </div>
                 </div>
               </div>
             </a-tab-pane>
@@ -500,6 +555,14 @@ const commentVisible = ref(false)
 const commentText = ref('')
 const assignVisible = ref(false)
 const assignTarget = ref(null)
+
+const aiLoading = ref(false)
+const aiResult = ref(null)
+let aiAnalyzedAlertId = null
+let aiTimer = null
+
+const detailScrollRef = ref(null)
+const detailTabsWrapRef = ref(null)
 
 const trendContainer = ref(null)
 let trendChart = null
@@ -718,8 +781,16 @@ onMounted(async () => {
 
 watch(function() { return route.query.alertId }, function(id) {
   if (id == null) return
+  if (currentAlert.value && detailVisible.value && String(currentAlert.value.id) === String(id)) return
   var alert = realtimeAlerts.value.find(function(a) { return String(a.id) === String(id) })
   if (alert) openDetail(alert)
+})
+
+watch(activeDetailTab, function(tab) {
+  if (tab === 'analysis') {
+    runAiAnalysis()
+    setTimeout(scrollToAnalysis, 60)
+  }
 })
 
 const columns = [
@@ -919,8 +990,131 @@ const openDetail = function(alert) {
   activeDetailTab.value = 'info'
   detailVisible.value = true
   buildTimeline(alert)
+  if (aiTimer) { clearTimeout(aiTimer); aiTimer = null }
+  aiResult.value = null
+  aiAnalyzedAlertId = null
+  aiLoading.value = false
   router.replace({ query: { ...route.query, alertId: alert.id } })
   nextTick(function() { renderTrendChart() })
+}
+
+const openAnalysis = function(alert) {
+  openDetail(alert)
+  activeDetailTab.value = 'analysis'
+  runAiAnalysis()
+  setTimeout(scrollToAnalysis, 400)
+}
+
+const scrollToAnalysis = function() {
+  if (!detailExpanded.value) detailExpanded.value = true
+  nextTick(function() {
+    var wrap = detailTabsWrapRef.value
+    var scroll = detailScrollRef.value
+    if (!wrap || !scroll) return
+    var rect = wrap.getBoundingClientRect()
+    var srect = scroll.getBoundingClientRect()
+    var target = rect.top - srect.top + scroll.scrollTop
+    scroll.scrollTo({ top: Math.max(target, 0), behavior: 'smooth' })
+  })
+}
+
+const runAiAnalysis = function() {
+  var alert = currentAlert.value
+  if (!alert || activeDetailTab.value !== 'analysis') return
+  if (aiAnalyzedAlertId === alert.id && aiResult.value) return
+  if (aiTimer) { clearTimeout(aiTimer); aiTimer = null }
+  aiLoading.value = true
+  aiResult.value = null
+  aiTimer = setTimeout(function() {
+    aiResult.value = buildAiAnalysis(alert)
+    aiAnalyzedAlertId = alert.id
+    aiLoading.value = false
+    aiTimer = null
+    nextTick(scrollToAnalysis)
+  }, 1200)
+}
+
+function buildAiAnalysis(alert) {
+  var num = parseFloat(String(alert.currentValue).match(/[\d.]+/)) || 0
+  var thresholdMatch = String(alert.threshold).match(/[\d.]+/)
+  var threshold = thresholdMatch ? parseFloat(thresholdMatch[0]) : 0
+  var isLess = String(alert.threshold).indexOf('<') >= 0
+  var ratio = threshold ? Math.round((num / threshold) * 100) : 100
+  var kw = String(alert.metric || '').toLowerCase() + ' ' + String(alert.title || '').toLowerCase()
+
+  var category = '其他'
+  var rules = [
+    { re: /cpu|处理器/, cat: 'CPU' },
+    { re: /内存|redis|堆|连接数/, cat: '内存' },
+    { re: /磁盘|inode/, cat: '磁盘' },
+    { re: /复制延迟|主从|mysql|db|查询|sql/, cat: '数据库' },
+    { re: /丢包|网络|带宽|流量/, cat: '网络' },
+  ]
+  for (var i = 0; i < rules.length; i++) {
+    if (rules[i].re.test(kw)) { category = rules[i].cat; break }
+  }
+
+  var expList = expData.value.filter(function(e) { return e.category === category })
+  var expTitle = expList.length ? '《' + expList[0].title + '》' : '同类告警的维护经验'
+  var causeMap = {
+    CPU: '异常进程或集中任务抢占计算资源',
+    内存: '内存泄漏或缓存未及时释放',
+    磁盘: '日志与临时文件快速增长',
+    数据库: '复制链路异常或大事务阻塞',
+    网络: '链路抖动或出口带宽打满',
+    其他: '业务量增长或资源配置不足',
+  }
+
+  var rootCause = '检测到 ' + alert.resource + ' 的 ' + alert.metric + ' 达到 ' + alert.currentValue +
+    '，' + (isLess ? '低于阈值 ' : '超出阈值 ') + alert.threshold + '（约 ' + Math.min(ratio, 999) + '%）。' +
+    '从趋势看，该指标在触发前持续' + (isLess ? '下行' : '抬升') + '，结合「' + category + '」类历史案例 ' + expTitle +
+    '，初步推断为' + causeMap[category] + '，建议按上述经验逐项排查确认。'
+
+  var impact = '当前告警' + (alert.status === 'firing' ? '处于告警中状态' : '已恢复') + '，影响范围主要集中在该资源承载的业务链路；' +
+    (alert.level === 'critical' ? '级别为紧急，可能造成服务不可用或数据不一致，建议立即处理。' :
+      alert.level === 'warning' ? '级别为重要，存在服务质量下降风险，建议尽快处理。' :
+        '级别为提示，暂不影响核心功能，建议持续关注趋势变化。')
+
+  var suggestions = []
+  if (expList.length) {
+    expList[0].content.split('\n').slice(0, 3).forEach(function(s) { suggestions.push(s) })
+  }
+  suggestions.push(isLess ? '复核阈值配置是否合理，必要时调整监控基线' : '持续观察 ' + alert.metric + ' 曲线，确认恢复正常后关闭告警')
+  suggestions.push('将本次处理过程沉淀为维护经验，便于后续同类告警快速处置')
+
+  var relatedAlerts = realtimeAlerts.value.filter(function(a) {
+    return a.id !== alert.id && (a.resource === alert.resource || a.metric === alert.metric)
+  }).slice(0, 2).map(function(a) {
+    return { id: a.id, level: a.level, title: a.title, resource: a.resource }
+  })
+
+  var confidence = 55 + Math.min(Math.round((threshold ? Math.min(ratio, 200) : 100) / 10), 35) + (relatedAlerts.length ? 5 : 0)
+  if (confidence > 95) confidence = 95
+
+  return {
+    rootCause: rootCause,
+    impact: impact,
+    suggestions: suggestions,
+    relatedAlerts: relatedAlerts,
+    confidence: confidence,
+  }
+}
+
+const continueInAssistant = function() {
+  var alert = currentAlert.value
+  if (!alert) return
+  var text = '请帮我分析这条告警：\n' +
+    '- 告警名称：' + alert.title + '\n' +
+    '- 级别：' + getLevelText(alert.level) + '\n' +
+    '- 资源：' + alert.resource + '（IP ' + (alert.ip || '-') + '）\n' +
+    '- 指标：' + alert.metric + '\n' +
+    '- 当前值：' + alert.currentValue + '，阈值：' + alert.threshold + '\n' +
+    '- 触发时间：' + formatTime(alert.triggerTime) + '\n' +
+    '- 状态：' + (alert.status === 'firing' ? '告警中' : '已恢复') + '\n' +
+    '- 系统建议：' + (alert.suggestion || '-')
+  if (window.__openAIAssistant) {
+    window.__openAIAssistant(text)
+  }
 }
 
 const closeDetail = function() {
@@ -1209,6 +1403,7 @@ onMounted(function() {
 
 onBeforeUnmount(function() {
   window.removeEventListener('resize', updateScrollY)
+  if (aiTimer) clearTimeout(aiTimer)
   if (donutChart) donutChart.destroy()
   if (barChart) barChart.destroy()
   if (durationChart) durationChart.destroy()
@@ -1252,6 +1447,8 @@ onBeforeUnmount(function() {
 .action-btns { display: flex; gap: 4px; }
 .icon-btn { width: 28px; height: 28px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
 .icon-btn:hover { background: var(--bg-sec); color: var(--brand); }
+.icon-btn.ai-btn { color: #722ed1; }
+.icon-btn.ai-btn:hover { background: #f9f0ff; color: #531dab; }
 
 .history-alerts { display: flex; flex-direction: column; height: 100%; }
 .history-alerts .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
@@ -1401,6 +1598,39 @@ onBeforeUnmount(function() {
 .exp-title i { color: var(--brand); margin-right: 4px; }
 .exp-meta { font-size: 12px; color: #8c8c8c; margin-bottom: 6px; }
 .exp-content { font-size: 12px; color: #595959; line-height: 1.8; white-space: pre-line; }
+
+.ai-analysis-loading { display: flex; flex-direction: column; align-items: center; padding: 48px 20px; gap: 24px; }
+.ai-thinking { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #722ed1; }
+.ai-thinking > i { font-size: 28px; animation: ai-breathe 1.6s ease-in-out infinite; }
+@keyframes ai-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+}
+.ai-dots { display: inline-flex; gap: 3px; }
+.ai-dots i { width: 5px; height: 5px; border-radius: 50%; background: #722ed1; animation: ai-blink 1.2s infinite; }
+.ai-dots i:nth-child(2) { animation-delay: 0.2s; }
+.ai-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes ai-blink {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+.ai-loading-steps { display: flex; flex-direction: column; gap: 10px; color: #8c8c8c; font-size: 12px; }
+.ai-loading-steps i { margin-right: 6px; color: #722ed1; }
+
+.ai-analysis-result { display: flex; flex-direction: column; gap: 14px; }
+.ai-result-header { display: flex; align-items: center; gap: 8px; }
+.ai-result-icon { color: #722ed1; font-size: 16px; }
+.ai-result-title { font-size: 14px; font-weight: 600; color: #1a1a1a; flex: 1; }
+.ai-section { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 6px; padding: 10px 12px; }
+.ai-section-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+.ai-section-title i { color: #722ed1; margin-right: 4px; }
+.ai-section-body { font-size: 12px; line-height: 1.8; color: #595959; }
+.ai-suggest-list { margin: 0; padding-left: 18px; font-size: 12px; line-height: 2; color: #595959; }
+.ai-related-list { display: flex; flex-direction: column; gap: 6px; }
+.ai-related-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.ai-related-title { flex: 1; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-related-resource { color: #8c8c8c; flex-shrink: 0; }
+.ai-footer { border-top: 1px dashed #f0f0f0; padding-top: 12px; display: flex; justify-content: center; }
 
 .expand-toggle {
   display: flex;
