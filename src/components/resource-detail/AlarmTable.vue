@@ -30,7 +30,7 @@
       </template>
     </a-table>
 
-    <a-drawer :open="detailOpen" title="告警详情" :width="480" @close="detailOpen = false" placement="right">
+    <a-drawer :open="detailOpen" title="告警详情" :width="480" @close="detailOpen = false" placement="right" :get-container="() => document.body" :style="{ zIndex: 1100 }">
       <template v-if="selectedAlert">
         <div class="at-detail">
           <div class="at-detail-row"><span class="at-dl">告警名称</span><span class="at-dv">{{ selectedAlert.title }}</span></div>

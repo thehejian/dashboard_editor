@@ -42,7 +42,7 @@
       </div>
     </div>
 
-    <a-drawer :open="!!selectedSpan" :title="selectedSpan?.operation || 'Span 详情'" :width="440" @close="selectedSpan = null" placement="right">
+    <a-drawer :open="!!selectedSpan" :title="selectedSpan?.operation || 'Span 详情'" :width="440" @close="selectedSpan = null" placement="right" :get-container="() => document.body" :style="{ zIndex: 1100 }">
       <template v-if="selectedSpan">
         <div class="tw-detail">
           <div class="tw-d-row"><span class="tw-dl">Span ID</span><span class="tw-dv tw-mono">{{ selectedSpan.id }}</span></div>

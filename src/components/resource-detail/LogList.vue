@@ -20,7 +20,7 @@
       <a-empty v-if="!filteredData.length" description="暂无日志" style="margin: 40px 0" />
     </div>
 
-    <a-drawer :open="detailOpen" title="日志详情" :width="520" @close="detailOpen = false" placement="right">
+    <a-drawer :open="detailOpen" title="日志详情" :width="'80vw'" @close="detailOpen = false" placement="right" :get-container="() => document.body" :style="{ zIndex: 1100 }">
       <template v-if="selectedLog">
         <div class="ll-detail">
           <div class="ll-d-row"><span class="ll-dl">级别</span><a-tag :color="getLevelColor(selectedLog.level)" size="small">{{ selectedLog.level.toUpperCase() }}</a-tag></div>

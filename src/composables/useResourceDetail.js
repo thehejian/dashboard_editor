@@ -3,13 +3,13 @@ import { TOPO_MOCK, ALARM_MOCK, TRACE_MOCK, LOG_MOCK, OPERATIONS_MOCK } from '..
 
 const state = reactive({
   open: false,
-  activeTab: 'topology',
+  activeTab: 'overview',
   currentResource: null,
 })
 
 function openDetail(resource) {
   state.currentResource = resource
-  state.activeTab = 'topology'
+  state.activeTab = 'overview'
   state.open = true
 }
 

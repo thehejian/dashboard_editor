@@ -32,6 +32,8 @@ const props = defineProps({
 
 const container = ref(null)
 let graph = null
+let resizeObserver = null
+let initTimer = null
 const zoomLevel = ref(1)
 
 const tooltip = reactive({ visible: false, label: '', ip: '', status: 'normal', metrics: '', x: 0, y: 0 })
@@ -45,6 +47,9 @@ function initGraph() {
 
   const w = container.value.clientWidth
   const h = container.value.clientHeight
+  if (w === 0 || h === 0) return
+
+  if (graph) { graph.destroy(); graph = null }
 
   const nodes = props.data.nodes.map(n => ({
     id: n.id,
@@ -146,10 +151,13 @@ function initGraph() {
   })
 
   nextTick(() => {
-    if (graph) {
-      graph.fitView({ padding: 40 })
-    }
+    if (graph) graph.fitView({ padding: 40 })
   })
+}
+
+function delayedInit() {
+  if (initTimer) clearTimeout(initTimer)
+  initTimer = setTimeout(() => initGraph(), 350)
 }
 
 function zoomIn() { if (graph) { zoomLevel.value = Math.min(zoomLevel.value + 0.2, 3); graph.zoomTo(zoomLevel.value) } }
@@ -161,16 +169,31 @@ function scheduleHide() { hideTimer = setTimeout(() => { tooltip.visible = false
 function cancelHide() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = null } }
 function hideTooltip() { tooltip.visible = false }
 
-onMounted(() => { initGraph() })
+onMounted(() => {
+  delayedInit()
+
+  resizeObserver = new ResizeObserver(() => {
+    if (graph && container.value) {
+      const w = container.value.clientWidth
+      const h = container.value.clientHeight
+      if (w > 0 && h > 0) {
+        graph.setSize(w, h)
+        graph.fitView({ padding: 40 })
+      }
+    }
+  })
+  if (container.value) resizeObserver.observe(container.value)
+})
 
 onBeforeUnmount(() => {
+  if (initTimer) clearTimeout(initTimer)
+  if (resizeObserver) { resizeObserver.disconnect(); resizeObserver = null }
   if (graph) { graph.destroy(); graph = null }
-  if (hideTimer) { clearTimeout(hideTimer) }
+  if (hideTimer) clearTimeout(hideTimer)
 })
 
 watch(() => props.data, () => {
-  if (graph) { graph.destroy(); graph = null }
-  nextTick(() => initGraph())
+  delayedInit()
 }, { deep: true })
 </script>
 

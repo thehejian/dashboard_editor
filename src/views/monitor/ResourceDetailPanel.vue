@@ -15,6 +15,11 @@
       </div>
 
       <a-tabs v-model:activeKey="state.activeTab" class="rdp-tabs" @change="switchTab">
+        <a-tab-pane key="overview" tab="概览">
+          <div class="rdp-tab-content">
+            <OverviewPanel />
+          </div>
+        </a-tab-pane>
         <a-tab-pane key="topology" tab="依赖关系">
           <div class="rdp-tab-content">
             <MiniTopology v-if="state.open" :data="topoData" :currentId="'current'" />
@@ -59,6 +64,7 @@ import AlarmTable from '../../components/resource-detail/AlarmTable.vue'
 import TraceWaterfall from '../../components/resource-detail/TraceWaterfall.vue'
 import LogList from '../../components/resource-detail/LogList.vue'
 import OperationsPanel from '../../components/resource-detail/OperationsPanel.vue'
+import OverviewPanel from '../../components/resource-detail/OverviewPanel.vue'
 
 const { state, closeDetail, switchTab, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
 
