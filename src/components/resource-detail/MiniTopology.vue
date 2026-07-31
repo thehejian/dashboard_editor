@@ -78,11 +78,6 @@ async function initGraph() {
       iconFontSize: 24,
       zIndex: 10,
     },
-    states: {
-      hover: { fill: (d) => STATUS_COLORS[d.data?.status] || '#1890ff', stroke: '#1890ff', lineWidth: 2, shadowColor: 'rgba(24,144,255,0.3)', shadowBlur: 8 },
-      selected: { fill: (d) => STATUS_COLORS[d.data?.status] || '#1890ff', stroke: '#1890ff', lineWidth: 3, shadowColor: 'rgba(24,144,255,0.4)', shadowBlur: 12 },
-      dimmed: { opacity: 0.25, labelOpacity: 0.25, labelBackgroundOpacity: 0.1 },
-    },
   }))
 
   const edges = props.data.edges.map((e, i) => ({
@@ -114,11 +109,20 @@ async function initGraph() {
       style: {
         labelText: (d) => d.data?.label || d.id,
       },
+      state: {
+        hover: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 2, shadowColor: 'rgba(24,144,255,0.3)', shadowBlur: 8 },
+        selected: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 3, shadowColor: 'rgba(24,144,255,0.4)', shadowBlur: 12 },
+        dimmed: { opacity: 0.25, labelOpacity: 0.25, labelBackgroundOpacity: 0.1 },
+      },
     },
     edge: {
       type: 'cubic-vertical',
       style: {
         labelText: (d) => d.data?.label || '',
+      },
+      state: {
+        active: { stroke: '#1890ff', lineWidth: 2 },
+        dimmed: { opacity: 0.15 },
       },
     },
     layout: {
@@ -130,51 +134,48 @@ async function initGraph() {
     behaviors: [
       'drag-canvas',
       'zoom-canvas',
-      { type: 'drag-element', enable: (evt) => evt.targetType === 'node' },
-      {
-        type: 'hover-activate',
-        key: 'hover',
-        enter: (e) => {
-          const id = e.target?.id
-          if (!id || !graph) return
-          graph.setElementState(id, 'hover')
-          const neighbors = graph.getNeighborElementsData(id)
-          if (neighbors?.nodes) {
-            neighbors.nodes.forEach(n => {
-              if (n.id !== id) graph.setElementState(n.id, 'dimmed')
-            })
-          }
-          graph.getEdgeData().forEach(edge => {
-            const s = edge.source
-            const t = edge.target
-            if (s !== id && t !== id) graph.setElementState(edge.id, 'dimmed')
-          })
-          const node = props.data.nodes.find(n => n.id === id)
-          if (node) {
-            tooltip.label = node.label
-            tooltip.ip = node.ip || ''
-            tooltip.status = node.status
-            tooltip.metrics = node.metrics ? Object.entries(node.metrics).map(([k, v]) => k + ':' + v).join(' ') : ''
-            const canvasRect = container.value.getBoundingClientRect()
-            tooltip.x = canvasRect.left + (e.canvas?.x ?? 0) + 12
-            tooltip.y = canvasRect.top + (e.canvas?.y ?? 0) - 10
-            tooltip.visible = true
-            cancelHide()
-          }
-        },
-        leave: (e) => {
-          const id = e.target?.id
-          if (!id || !graph) return
-          graph.setElementState(id, [])
-          const neighbors = graph.getNeighborElementsData(id)
-          if (neighbors?.nodes) {
-            neighbors.nodes.forEach(n => graph.setElementState(n.id, []))
-          }
-          graph.getEdgeData().forEach(edge => graph.setElementState(edge.id, []))
-          scheduleHide()
-        },
-      },
+      'drag-element',
     ],
+  })
+
+  graph.on('node:pointerenter', (e) => {
+    const id = e.target?.id
+    if (!id || !graph) return
+    graph.setElementState(id, 'hover')
+    graph.getEdgeData().forEach(edge => {
+      if (edge.source === id || edge.target === id) {
+        graph.setElementState(edge.id, 'active')
+      } else {
+        graph.setElementState(edge.id, 'dimmed')
+      }
+    })
+    graph.getNodeData().forEach(n => {
+      if (n.id !== id) {
+        const connected = graph.getEdgeData().some(e => (e.source === id && e.target === n.id) || (e.target === id && e.source === n.id))
+        if (!connected) graph.setElementState(n.id, 'dimmed')
+      }
+    })
+    const node = props.data.nodes.find(n => n.id === id)
+    if (node) {
+      tooltip.label = node.label
+      tooltip.ip = node.ip || ''
+      tooltip.status = node.status
+      tooltip.metrics = node.metrics ? Object.entries(node.metrics).map(([k, v]) => k + ':' + v).join(' ') : ''
+      const canvasRect = container.value.getBoundingClientRect()
+      tooltip.x = canvasRect.left + (e.canvas?.x ?? 0) + 12
+      tooltip.y = canvasRect.top + (e.canvas?.y ?? 0) - 10
+      tooltip.visible = true
+      cancelHide()
+    }
+  })
+
+  graph.on('node:pointerleave', (e) => {
+    const id = e.target?.id
+    if (!id || !graph) return
+    graph.setElementState(id, [])
+    graph.getEdgeData().forEach(edge => graph.setElementState(edge.id, []))
+    graph.getNodeData().forEach(n => graph.setElementState(n.id, []))
+    scheduleHide()
   })
 
   graph.on('node:click', (e) => {
