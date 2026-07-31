@@ -74,19 +74,19 @@
           </div>
           <div class="card-grid" v-show="!groupCollapsed[group.key]">
             <div class="res-card" v-for="record in group.items" :key="record.id" @click="openDetail(record)">
-              <div class="res-top">
-                <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
-                  <i :class="group.icon"></i>
-                </div>
-                <div class="res-name">{{ record.name }}</div>
+              <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
+                <i :class="group.icon"></i>
               </div>
-              <div class="res-alert">
-                <template v-if="record.alertStatus === '紧急'">
-                  <span class="alert-count">紧急 {{ getEmergencyCount(record) }}</span>
-                </template>
-                <template v-else>
-                  <span class="alert-label">运行正常</span>
-                </template>
+              <div class="res-info">
+                <div class="res-name">{{ record.name }}</div>
+                <div class="res-alert">
+                  <template v-if="record.alertStatus === '紧急'">
+                    <span class="alert-count">紧急 {{ getEmergencyCount(record) }}</span>
+                  </template>
+                  <template v-else>
+                    <span class="alert-label">运行正常</span>
+                  </template>
+                </div>
               </div>
             </div>
           </div>
@@ -504,6 +504,9 @@ onMounted(async function() {
   gap: 12px;
 }
 .res-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: #fff;
   border: 1px solid #eef1f6;
   border-radius: 8px;
@@ -515,27 +518,28 @@ onMounted(async function() {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   border-color: #1890ff;
 }
-.res-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
 .res-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   background: rgba(24, 144, 255, 0.1);
   color: #1890ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 18px;
   flex-shrink: 0;
 }
 .res-icon.alert {
   background: rgba(245, 34, 45, 0.1);
   color: #f5222d;
+}
+.res-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .res-name {
   font-size: 14px;
@@ -545,11 +549,9 @@ onMounted(async function() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
 }
 .res-alert {
   font-size: 12px;
-  padding-left: 42px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
