@@ -23,7 +23,7 @@
           <a-tab-pane key="log" tab="日志" />
           <a-tab-pane key="ops" tab="运维操作" />
         </a-tabs>
-        <span ref="opsTriggerRef" class="ops-chevron" @click.stop="opsDropdownOpen = !opsDropdownOpen">
+        <span ref="opsTriggerRef" class="ops-chevron" :style="chevronStyle" @click.stop="toggleOpsDropdown">
           <i class="fa-solid fa-chevron-down"></i>
         </span>
         <teleport to="body">
@@ -74,11 +74,34 @@ const OPS_OPTIONS = [
 const opsDropdownOpen = ref(false)
 const opsTriggerRef = ref(null)
 const opsDropdownStyle = ref({})
+const chevronStyle = ref({})
+
+function positionChevron() {
+  const wrap = document.querySelector('.rdp-tabs-wrap')
+  if (!wrap) return
+  const nav = wrap.querySelector('.ant-tabs-nav')
+  if (!nav) return
+  const tabs = nav.querySelectorAll('.ant-tabs-tab')
+  const opsTab = tabs[tabs.length - 1]
+  if (!opsTab) return
+  const wrapRect = wrap.getBoundingClientRect()
+  const tabRect = opsTab.getBoundingClientRect()
+  chevronStyle.value = {
+    position: 'absolute',
+    left: (tabRect.right - wrapRect.left + 8) + 'px',
+    top: (tabRect.top - wrapRect.top + (tabRect.height - 18) / 2) + 'px',
+  }
+}
 
 function updateDropdownPos() {
   if (!opsTriggerRef.value) return
   const r = opsTriggerRef.value.getBoundingClientRect()
   opsDropdownStyle.value = { position: 'fixed', top: r.bottom + 4 + 'px', left: r.left + 'px', zIndex: 1100 }
+}
+
+function toggleOpsDropdown() {
+  opsDropdownOpen.value = !opsDropdownOpen.value
+  if (opsDropdownOpen.value) updateDropdownPos()
 }
 
 function onOpsSelect(key) {
@@ -87,13 +110,18 @@ function onOpsSelect(key) {
 }
 
 function onClickOutside(e) {
-  if (opsDropdownOpen.value && opsTriggerRef.value && !opsTriggerRef.value.contains(e.target)) {
-    opsDropdownOpen.value = false
-  }
+  if (!opsDropdownOpen.value) return
+  if (opsTriggerRef.value && opsTriggerRef.value.contains(e.target)) return
+  const dropdown = document.querySelector('.ops-dropdown')
+  if (dropdown && dropdown.contains(e.target)) return
+  opsDropdownOpen.value = false
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside, true))
-onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+  setTimeout(positionChevron, 200)
+})
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 
 const resourceTags = computed(() => {
   const r = state.currentResource
@@ -128,7 +156,7 @@ const resourceTags = computed(() => {
 :deep(.rdp-tabs .ant-tabs-content-holder) { display: none; }
 .rdp-tab-content { flex: 1; min-height: 0; overflow-y: auto; }
 
-.ops-chevron { position: absolute; right: 20px; bottom: 8px; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; cursor: pointer; font-size: 9px; color: #8c8c8c; transition: all 0.15s; z-index: 10; }
+.ops-chevron { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; cursor: pointer; font-size: 9px; color: #8c8c8c; transition: all 0.15s; z-index: 10; }
 .ops-chevron:hover { background: rgba(0,0,0,0.06); color: #1890ff; }
 
 .rdp-footer { display: flex; gap: 20px; padding: 10px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0; }
