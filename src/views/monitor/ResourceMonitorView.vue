@@ -165,18 +165,10 @@ watch(() => props.mode, syncFromRoute)
 syncFromRoute()
 
 const onTabClick = (key) => {
-  if (key === 'app') {
-    mainTab.value = 'app'
-    viewMode.value = 'list'
-    router.push('/monitor/resource/app')
-  } else if (key === 'all') {
-    mainTab.value = 'all'
-    viewMode.value = viewMode.value
+  mainTab.value = key
+  subActive.value = 0
+  if (key === 'all') {
     router.push('/monitor/resource/' + viewMode.value)
-  } else {
-    mainTab.value = key
-    subActive.value = 0
-    viewMode.value = 'list'
   }
 }
 
@@ -342,7 +334,11 @@ const cardGroups = [
 ]
 
 const cardGroupsComputed = computed(() => {
-  return cardGroups.map(g => {
+  let groups = cardGroups
+  if (mainTab.value !== 'all') {
+    groups = cardGroups.filter(g => g.key === mainTab.value)
+  }
+  return groups.map(g => {
     const items = g.items
       .filter(item =>
         !searchText.value || item.name.toLowerCase().includes(searchText.value.toLowerCase()) || (item.identifier || '').toLowerCase().includes(searchText.value.toLowerCase())
