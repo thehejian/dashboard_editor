@@ -1,20 +1,26 @@
 <template>
   <div class="resource-monitor">
-    <div class="page-header">
-      <h2>资源监控</h2>
-      <a-radio-group v-model:value="viewMode" size="small">
-        <a-radio-button value="list"><i class="fa-solid fa-list"></i> 列表</a-radio-button>
-        <a-radio-button value="card"><i class="fa-solid fa-table-cells-large"></i> 卡片</a-radio-button>
-      </a-radio-group>
+    <div class="monitor-header">
+      <a-tabs
+        :active-key="mainTab"
+        size="small"
+        class="category-tabs"
+        @change="onTabClick"
+      >
+        <a-tab-pane v-for="tab in mainTabs" :key="tab.key" :tab="tab.label" />
+      </a-tabs>
+      <div class="header-actions">
+        <a-button type="text" size="small" @click="statsCollapsed = !statsCollapsed">
+          <i class="fa-solid" :class="statsCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+          {{ statsCollapsed ? '展开' : '收起' }}
+        </a-button>
+        <a-radio-group v-model:value="viewMode" size="small" @change="onViewModeChange">
+          <a-radio-button value="list"><i class="fa-solid fa-list"></i> 列表</a-radio-button>
+          <a-radio-button value="card"><i class="fa-solid fa-table-cells-large"></i> 卡片</a-radio-button>
+        </a-radio-group>
+      </div>
     </div>
 
-    <div class="stats-header">
-      <span class="stats-title">统计概览</span>
-      <a-button type="text" size="small" @click="statsCollapsed = !statsCollapsed">
-        <i class="fa-solid" :class="statsCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
-        {{ statsCollapsed ? '展开' : '收起' }}
-      </a-button>
-    </div>
     <div class="alert-cards" v-show="!statsCollapsed">
       <div class="alert-card" v-for="item in alertCards" :key="item.label">
         <div class="card-body">
@@ -32,19 +38,7 @@
       </div>
     </div>
 
-    <div class="filter-section">
-      <div class="filter-row">
-        <span class="filter-label">资源类别</span>
-        <div class="tab-group">
-          <button
-            v-for="tab in mainTabs"
-            :key="tab.key"
-            class="tab-btn"
-            :class="{ active: mainTab === tab.key }"
-            @click="mainTab = tab.key; subActive = 0"
-          >{{ tab.label }}</button>
-        </div>
-      </div>
+    <div class="filter-section" v-if="mainTab !== 'all'">
       <div class="filter-row">
         <span class="filter-label">当前可选分类</span>
         <div class="sub-tab-group">
@@ -71,14 +65,27 @@
         />
       </div>
 
-      <div v-if="viewMode === 'card'" class="card-grid">
-        <div class="res-card" v-for="record in filteredData" :key="record.id" @click="openDetail(record)">
-          <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
-            <i :class="record.type === 'obs' ? 'fa-solid fa-cloud' : 'fa-solid fa-circle-nodes'"></i>
+      <div v-if="viewMode === 'card'" class="card-groups">
+        <div class="card-group" v-for="group in cardGroupsComputed" :key="group.key">
+          <div class="group-header" @click="toggleGroup(group.key)">
+            <i class="fa-solid group-arrow" :class="groupCollapsed[group.key] ? 'fa-chevron-right' : 'fa-chevron-down'"></i>
+            <i :class="group.icon" class="group-icon"></i>
+            <span class="group-title">{{ group.label }}</span>
+            <span class="group-badge" :class="{ alert: group.alertCount > 0 }">告警 {{ group.alertCount }}</span>
+            <span class="group-total">共 {{ group.items.length }} 个</span>
           </div>
-          <div class="res-name">{{ record.name }}</div>
-          <div class="res-alert" :class="{ alert: record.alertStatus === '紧急' }">
-            告警：{{ record.alertStatus === '紧急' ? '紧急 1' : '正常' }}
+          <div class="card-grid" v-show="!groupCollapsed[group.key]">
+            <div class="res-card" v-for="record in group.items" :key="record.id" @click="openDetail(record)">
+              <div class="res-top">
+                <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
+                  <i :class="group.icon"></i>
+                </div>
+                <div class="res-name">{{ record.name }}</div>
+              </div>
+              <div class="res-alert" :class="{ alert: record.alertStatus === '紧急' }">
+                {{ record.alertStatus === '紧急' ? '告警：紧急 1' : '运行正常' }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -117,17 +124,67 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useResourceDetail } from '../../composables/useResourceDetail'
 import ResourceDetailPanel from './ResourceDetailPanel.vue'
+
+const props = defineProps({
+  mode: { type: String, default: 'list' },
+})
+const router = useRouter()
 
 const { state: rdpState, openDetail: rdpOpen } = useResourceDetail()
 
 const searchText = ref('')
-const mainTab = ref('app')
+const mainTab = ref('all')
 const subActive = ref(0)
 const viewMode = ref('list')
 const statsCollapsed = ref(true)
+const groupCollapsed = reactive({})
+
+const syncFromRoute = () => {
+  const mode = props.mode || 'list'
+  if (mode === 'card') {
+    mainTab.value = 'all'
+    viewMode.value = 'card'
+  } else if (mode === 'app') {
+    mainTab.value = 'app'
+    viewMode.value = 'list'
+  } else {
+    mainTab.value = 'all'
+    viewMode.value = 'list'
+  }
+  subActive.value = 0
+}
+watch(() => props.mode, syncFromRoute)
+syncFromRoute()
+
+const onTabClick = (key) => {
+  if (key === 'app') {
+    mainTab.value = 'app'
+    viewMode.value = 'list'
+    router.push('/monitor/resource/app')
+  } else if (key === 'all') {
+    mainTab.value = 'all'
+    viewMode.value = viewMode.value
+    router.push('/monitor/resource/' + viewMode.value)
+  } else {
+    mainTab.value = key
+    subActive.value = 0
+    viewMode.value = 'list'
+  }
+}
+
+const onViewModeChange = () => {
+  if (mainTab.value === 'all') {
+    router.push('/monitor/resource/' + viewMode.value)
+  }
+}
+
+const toggleGroup = (key) => {
+  groupCollapsed[key] = !groupCollapsed[key]
+}
 
 const subTabMap = {
   all: [
@@ -221,11 +278,62 @@ const obsData = [
   { id: 104, name: 'OBS-媒体存储', alertStatus: '正常', identifier: 'obs-media-04', runStatus: '运行中', appLevel: '基础服务', storageSize: '3.78 TB', vdc: 'VDC-BJ-01', owner: '媒体团队', source: '云服务', type: 'obs', obs: { buckets: 4, objects: '345,678', usedStorage: '1.89 TB', availStorage: '28.56 TB', totalRequests: '2,345,678', readRequests: '1,567,890', writeRequests: '777,788', downTraffic: '3.2 GB/s', upTraffic: '890 KB/s', storageUtil: 45, topBuckets: [{ name: 'bucket-media-images', size: '0.89 TB', pct: 45 }, { name: 'bucket-media-videos', size: '0.67 TB', pct: 34 }, { name: 'bucket-media-audio', size: '0.33 TB', pct: 16 }] } },
 ]
 
+const cloudResData = [
+  { id: 201, name: '弹性云服务器-集群A', alertStatus: '正常', identifier: 'ecs-cluster-a', runStatus: '运行中', appLevel: '核心服务', storageSize: '--', vdc: 'VDC-BJ-01', owner: '云平台团队', source: '云资源', type: 'cloud-resource' },
+  { id: 202, name: '弹性云服务器-集群B', alertStatus: '紧急', identifier: 'ecs-cluster-b', runStatus: '运行中', appLevel: '核心服务', storageSize: '--', vdc: 'VDC-SH-02', owner: '云平台团队', source: '云资源', type: 'cloud-resource' },
+  { id: 203, name: '裸金属服务器-计算池', alertStatus: '正常', identifier: 'bm-compute-01', runStatus: '运行中', appLevel: '重要服务', storageSize: '--', vdc: 'VDC-GZ-03', owner: '--', source: '云资源', type: 'cloud-resource' },
+  { id: 204, name: 'GPU云服务器-训练节点', alertStatus: '正常', identifier: 'gpu-train-01', runStatus: '运行中', appLevel: '重要服务', storageSize: '--', vdc: 'VDC-BJ-01', owner: 'AI团队', source: '云资源', type: 'cloud-resource' },
+  { id: 205, name: '裸金属服务器-存储节点', alertStatus: '正常', identifier: 'bm-storage-02', runStatus: '运行中', appLevel: '基础服务', storageSize: '--', vdc: 'VDC-SH-02', owner: '--', source: '云资源', type: 'cloud-resource' },
+]
+
+const virtualData = [
+  { id: 301, name: 'Kubernetes集群-生产', alertStatus: '正常', identifier: 'k8s-prod-01', runStatus: '运行中', appLevel: '核心服务', storageSize: '--', vdc: 'VDC-BJ-01', owner: '容器团队', source: '虚拟资源池', type: 'virtual' },
+  { id: 302, name: 'Kubernetes集群-测试', alertStatus: '紧急', identifier: 'k8s-test-02', runStatus: '运行中', appLevel: '普通服务', storageSize: '--', vdc: 'VDC-SH-02', owner: '容器团队', source: '虚拟资源池', type: 'virtual' },
+  { id: 303, name: '容器实例池-边缘', alertStatus: '正常', identifier: 'ci-edge-01', runStatus: '运行中', appLevel: '普通服务', storageSize: '--', vdc: 'VDC-GZ-03', owner: '--', source: '虚拟资源池', type: 'virtual' },
+  { id: 304, name: 'Serverless函数-网关', alertStatus: '正常', identifier: 'faas-gw-01', runStatus: '运行中', appLevel: '普通服务', storageSize: '--', vdc: 'VDC-BJ-01', owner: '无服务器团队', source: '虚拟资源池', type: 'virtual' },
+]
+
+const physicalData = [
+  { id: 401, name: '物理服务器-机柜A-01', alertStatus: '正常', identifier: 'phy-rackA-01', runStatus: '运行中', appLevel: '核心服务', storageSize: '--', vdc: 'VDC-BJ-01', owner: '基础设施团队', source: '物理资源', type: 'physical' },
+  { id: 402, name: '物理服务器-机柜B-02', alertStatus: '紧急', identifier: 'phy-rackB-02', runStatus: '运行中', appLevel: '重要服务', storageSize: '--', vdc: 'VDC-SH-02', owner: '基础设施团队', source: '物理资源', type: 'physical' },
+  { id: 403, name: '核心交换机-S7600', alertStatus: '正常', identifier: 'sw-core-01', runStatus: '运行中', appLevel: '核心服务', storageSize: '--', vdc: 'VDC-GZ-03', owner: '网络团队', source: '物理资源', type: 'physical' },
+  { id: 404, name: '存储设备-SAN存储', alertStatus: '正常', identifier: 'san-store-01', runStatus: '运行中', appLevel: '核心服务', storageSize: '--', vdc: 'VDC-BJ-01', owner: '存储团队', source: '物理资源', type: 'physical' },
+  { id: 405, name: '物理服务器-机柜C-03', alertStatus: '正常', identifier: 'phy-rackC-03', runStatus: '运行中', appLevel: '基础服务', storageSize: '--', vdc: 'VDC-SH-02', owner: '--', source: '物理资源', type: 'physical' },
+  { id: 406, name: '出口路由器-ISP01', alertStatus: '紧急', identifier: 'rt-edge-01', runStatus: '运行中', appLevel: '核心服务', storageSize: '--', vdc: 'VDC-BJ-01', owner: '网络团队', source: '物理资源', type: 'physical' },
+]
+
 const filteredData = computed(() => {
-  if (mainTab.value === 'all') return [...appData, ...obsData]
-  if (mainTab.value === 'app') return appData
-  if (mainTab.value === 'cloud') return obsData
-  return appData
+  let base
+  if (mainTab.value === 'all') base = [...appData, ...obsData, ...cloudResData, ...virtualData, ...physicalData]
+  else if (mainTab.value === 'app') base = appData
+  else if (mainTab.value === 'cloud') base = obsData
+  else if (mainTab.value === 'cloud-resource') base = cloudResData
+  else if (mainTab.value === 'virtual') base = virtualData
+  else if (mainTab.value === 'physical') base = physicalData
+  else base = appData
+  if (!searchText.value) return base
+  const kw = searchText.value.toLowerCase()
+  return base.filter(item =>
+    item.name.toLowerCase().includes(kw) || (item.identifier || '').toLowerCase().includes(kw)
+  )
+})
+
+const cardGroups = [
+  { key: 'app', label: '业务应用', icon: 'fa-solid fa-circle-nodes', items: appData },
+  { key: 'cloud', label: '云服务', icon: 'fa-solid fa-cloud', items: obsData },
+  { key: 'cloud-resource', label: '云资源', icon: 'fa-solid fa-server', items: cloudResData },
+  { key: 'virtual', label: '虚拟资源池', icon: 'fa-solid fa-layer-group', items: virtualData },
+  { key: 'physical', label: '物理资源', icon: 'fa-solid fa-microchip', items: physicalData },
+]
+
+const cardGroupsComputed = computed(() => {
+  return cardGroups.map(g => {
+    const items = g.items.filter(item =>
+      !searchText.value || item.name.toLowerCase().includes(searchText.value.toLowerCase()) || (item.identifier || '').toLowerCase().includes(searchText.value.toLowerCase())
+    )
+    const alertCount = items.filter(item => item.alertStatus === '紧急').length
+    return { ...g, items, alertCount }
+  })
 })
 
 const loading = ref(false)
@@ -279,17 +387,24 @@ onMounted(async function() {
   background: #f5f7fa;
 }
 
-.page-header {
-  padding: 24px 0 20px;
+.monitor-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0 12px;
 }
-.page-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0;
+.monitor-header .category-tabs {
+  flex: 1;
+  min-width: 0;
+}
+.monitor-header :deep(.category-tabs .ant-tabs-nav) {
+  margin-bottom: 0;
+}
+.monitor-header :deep(.category-tabs .ant-tabs-nav::before) {
+  border-bottom: none;
+}
+.monitor-header :deep(.category-tabs .ant-tabs-tab) {
+  font-size: 14px;
 }
 
 .alert-cards {
@@ -310,53 +425,103 @@ onMounted(async function() {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.stats-header {
+.header-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
-.stats-title {
-  font-size: 14px;
+
+.card-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+.card-group {
+  background: #fff;
+  border: 1px solid #eef1f6;
+  border-radius: 12px;
+  padding: 16px;
+}
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 16px;
+}
+.group-arrow {
+  font-size: 12px;
+  color: #8c8c8c;
+  width: 12px;
+}
+.group-icon {
+  font-size: 16px;
+  color: #1890ff;
+  width: 20px;
+  text-align: center;
+}
+.group-title {
+  font-size: 15px;
   font-weight: 600;
   color: #1a1a1a;
+}
+.group-badge {
+  font-size: 12px;
+  color: #52c41a;
+  background: rgba(82, 196, 26, 0.1);
+  border-radius: 10px;
+  padding: 1px 10px;
+}
+.group-badge.alert {
+  color: #f5222d;
+  background: rgba(245, 34, 45, 0.1);
+}
+.group-total {
+  margin-left: auto;
+  font-size: 12px;
+  color: #8c8c8c;
 }
 
 .card-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 .res-card {
   background: #fff;
   border: 1px solid #eef1f6;
-  border-radius: 12px;
-  padding: 20px 14px;
+  border-radius: 8px;
+  padding: 12px 14px;
   cursor: pointer;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
 .res-card:hover {
-  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   border-color: #1890ff;
 }
+.res-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
 .res-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(24, 144, 255, 0.12);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(24, 144, 255, 0.1);
   color: #1890ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 15px;
+  flex-shrink: 0;
 }
 .res-icon.alert {
-  background: rgba(245, 34, 45, 0.12);
+  background: rgba(245, 34, 45, 0.1);
   color: #f5222d;
 }
 .res-name {
@@ -364,10 +529,18 @@ onMounted(async function() {
   font-weight: 500;
   color: #1a1a1a;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .res-alert {
   font-size: 12px;
-  color: #52c41a;
+  color: #1890ff;
+  padding-left: 42px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .res-alert.alert {
   color: #f5222d;
@@ -437,30 +610,6 @@ onMounted(async function() {
   white-space: nowrap;
   width: 96px;
   flex-shrink: 0;
-}
-
-.tab-group {
-  display: flex;
-  gap: 4px;
-}
-.tab-btn {
-  padding: 7px 18px;
-  border: 1px solid #e8e8e8;
-  background: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #595959;
-  transition: all 0.15s;
-}
-.tab-btn:hover {
-  border-color: #1890ff;
-  color: #1890ff;
-}
-.tab-btn.active {
-  background: #1890ff;
-  color: #fff;
-  border-color: #1890ff;
 }
 
 .sub-tab-group {
@@ -590,12 +739,12 @@ onMounted(async function() {
 
 @media (max-width: 768px) {
   .resource-monitor { padding: 0 16px; }
-  .page-header { padding: 16px 0; }
+  .monitor-header { padding: 12px 0; flex-wrap: wrap; }
+  .monitor-header .header-actions { width: 100%; }
   .alert-cards { flex-wrap: wrap; }
   .alert-card { min-width: calc(50% - 8px); flex: none; }
   .filter-row { flex-wrap: wrap; }
   .filter-label { width: auto; }
-  .tab-group { flex-wrap: wrap; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
 }
