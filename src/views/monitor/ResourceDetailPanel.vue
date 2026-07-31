@@ -14,7 +14,7 @@
         <button class="rdp-close" @click="closeDetail"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <a-tabs v-model:activeKey="state.activeTab" class="rdp-tabs" @change="switchTab">
+      <a-tabs v-model:activeKey="state.activeTab" class="rdp-tabs">
         <a-tab-pane key="overview" tab="概览">
           <div class="rdp-tab-content">
             <OverviewPanel />
@@ -40,23 +40,25 @@
             <LogList :data="logData" />
           </div>
         </a-tab-pane>
-        <a-tab-pane key="ops">
-          <template #tab>
-            <a-dropdown :trigger="['click']" :getPopupContainer="el => el.parentNode" @click.prevent>
-              <span class="ops-tab-trigger" @click.prevent>
-                运维操作 <i class="fa-solid fa-chevron-down ops-tab-arrow"></i>
-              </span>
-              <template #overlay>
-                <a-menu @click="onOpsMenuClick" :selectedKeys="[state.opsGroupKey]">
-                  <a-menu-item key="auto-job"><i class="fa-solid fa-robot ops-menu-icon"></i> 自动作业</a-menu-item>
-                  <a-menu-item key="net-probe"><i class="fa-solid fa-network-wired ops-menu-icon"></i> 网络探测</a-menu-item>
-                  <a-menu-item key="dial-test"><i class="fa-solid fa-tower-broadcast ops-menu-icon"></i> 拨测任务</a-menu-item>
-                  <a-menu-item key="host-locate"><i class="fa-solid fa-crosshairs ops-menu-icon"></i> 异常主机定位</a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-          </template>
+        <a-tab-pane key="ops" tab="运维操作">
           <div class="rdp-tab-content">
+            <div class="ops-select-bar">
+              <a-dropdown :trigger="['click']" :getPopupContainer="() => document.body">
+                <span class="ops-select-trigger">
+                  <i class="fa-solid fa-terminal ops-select-icon"></i>
+                  <span>{{ currentOpsLabel }}</span>
+                  <i class="fa-solid fa-chevron-down ops-select-arrow"></i>
+                </span>
+                <template #overlay>
+                  <a-menu @click="onOpsMenuClick" :selectedKeys="[state.opsGroupKey]">
+                    <a-menu-item key="auto-job"><i class="fa-solid fa-robot ops-menu-icon"></i> 自动作业</a-menu-item>
+                    <a-menu-item key="net-probe"><i class="fa-solid fa-network-wired ops-menu-icon"></i> 网络探测</a-menu-item>
+                    <a-menu-item key="dial-test"><i class="fa-solid fa-tower-broadcast ops-menu-icon"></i> 拨测任务</a-menu-item>
+                    <a-menu-item key="host-locate"><i class="fa-solid fa-crosshairs ops-menu-icon"></i> 异常主机定位</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
             <OperationsPanel :data="operationsData" :groupKey="state.opsGroupKey" />
           </div>
         </a-tab-pane>
@@ -81,7 +83,10 @@ import LogList from '../../components/resource-detail/LogList.vue'
 import OperationsPanel from '../../components/resource-detail/OperationsPanel.vue'
 import OverviewPanel from '../../components/resource-detail/OverviewPanel.vue'
 
-const { state, closeDetail, switchTab, setOpsGroup, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
+const { state, closeDetail, setOpsGroup, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
+
+const OPS_LABELS = { 'auto-job': '自动作业', 'net-probe': '网络探测', 'dial-test': '拨测任务', 'host-locate': '异常主机定位' }
+const currentOpsLabel = computed(() => OPS_LABELS[state.opsGroupKey] || '自动作业')
 
 function onOpsMenuClick({ key }) {
   setOpsGroup(key)
@@ -125,9 +130,11 @@ const resourceTags = computed(() => {
 .rdp-footer-link { font-size: 12px; color: #8c8c8c; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
 .rdp-footer-link:hover { color: #1890ff; }
 
-.ops-tab-trigger { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; padding: 4px 8px; border-radius: 4px; transition: background 0.15s; }
-.ops-tab-trigger:hover { background: rgba(0,0,0,0.04); }
-.ops-tab-arrow { font-size: 10px; transition: transform 0.2s; }
+.ops-select-bar { padding: 0 20px 12px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+.ops-select-trigger { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 6px; cursor: pointer; font-size: 13px; color: #1a1a1a; background: #fff; transition: all 0.15s; user-select: none; }
+.ops-select-trigger:hover { border-color: #1890ff; color: #1890ff; }
+.ops-select-icon { color: #1890ff; font-size: 12px; }
+.ops-select-arrow { font-size: 10px; color: #8c8c8c; margin-left: 4px; }
 .ops-menu-icon { margin-right: 6px; color: #1890ff; width: 16px; text-align: center; }
 
 @media (max-width: 768px) {

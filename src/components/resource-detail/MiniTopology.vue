@@ -55,7 +55,7 @@ async function initGraph() {
     id: n.id,
     data: { label: n.label, ip: n.ip, status: n.status, metrics: n.metrics, type: n.type, icon: ICON_MAP[n.type] || '\uf0ac' },
     style: {
-      size: 48,
+      size: [48, 48],
       fill: STATUS_COLORS[n.status] || '#d9d9d9',
       stroke: 'transparent',
       radius: 8,
@@ -109,7 +109,7 @@ async function initGraph() {
     edge: {
       type: 'cubic-vertical',
       style: {
-        labelText: (d) => d.data?.label || '',
+        labelText: '',
       },
       state: {
         active: { stroke: '#1890ff', lineWidth: 2 },
