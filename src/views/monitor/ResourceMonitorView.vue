@@ -452,8 +452,7 @@ onMounted(async function() {
   overflow-y: auto;
 }
 .card-group {
-  background: #fff;
-  border: 1px solid #eef1f6;
+  background: #f7f8fa;
   border-radius: 12px;
   padding: 16px;
 }
@@ -508,7 +507,7 @@ onMounted(async function() {
   align-items: center;
   gap: 12px;
   background: #fff;
-  border: 1px solid #eef1f6;
+  border: 1px solid rgba(0,0,0,0.04);
   border-radius: 8px;
   padding: 12px 14px;
   cursor: pointer;
