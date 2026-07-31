@@ -132,20 +132,6 @@ async function initGraph() {
   graph.on('node:pointerenter', (e) => {
     const id = e.target?.id
     if (!id || !graph) return
-    graph.setElementState(id, 'hover')
-    graph.getEdgeData().forEach(edge => {
-      if (edge.source === id || edge.target === id) {
-        graph.setElementState(edge.id, 'active')
-      } else {
-        graph.setElementState(edge.id, 'dimmed')
-      }
-    })
-    graph.getNodeData().forEach(n => {
-      if (n.id !== id) {
-        const connected = graph.getEdgeData().some(e => (e.source === id && e.target === n.id) || (e.target === id && e.source === n.id))
-        if (!connected) graph.setElementState(n.id, 'dimmed')
-      }
-    })
     const node = props.data.nodes.find(n => n.id === id)
     if (node) {
       tooltip.label = node.label
@@ -161,12 +147,6 @@ async function initGraph() {
   })
 
   graph.on('node:pointerleave', (e) => {
-    const id = e.target?.id
-    console.log('[MT-DEBUG] pointerleave id=', id, 'target=', e.target?.constructor?.name)
-    if (!id || !graph) return
-    graph.setElementState(id, [])
-    graph.getEdgeData().forEach(edge => graph.setElementState(edge.id, []))
-    graph.getNodeData().forEach(n => graph.setElementState(n.id, []))
     scheduleHide()
   })
 
@@ -181,7 +161,6 @@ async function initGraph() {
 
   await graph.render()
   graph.fitView({ padding: 40 })
-  window.__mtGraph = graph
 }
 
 function zoomIn() { if (graph) { zoomLevel.value = Math.min(zoomLevel.value + 0.2, 3); graph.zoomTo(zoomLevel.value) } }

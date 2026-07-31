@@ -539,7 +539,7 @@ onMounted(async function() {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 .res-name {
   font-size: 14px;
