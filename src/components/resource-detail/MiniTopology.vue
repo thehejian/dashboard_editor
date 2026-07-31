@@ -61,7 +61,7 @@ async function initGraph() {
       radius: 8,
       labelText: (d) => d.data?.label || d.id,
       labelPlacement: 'bottom',
-      labelOffsetY: 32,
+      labelOffsetY: 24,
       labelFontSize: 10,
       labelFill: '#333',
       labelFontWeight: '500',
@@ -153,8 +153,9 @@ async function initGraph() {
       tooltip.status = node.status
       tooltip.metrics = node.metrics ? Object.entries(node.metrics).map(([k, v]) => k + ':' + v).join(' ') : ''
       const canvasRect = container.value.getBoundingClientRect()
-      tooltip.x = canvasRect.left + (e.canvas?.x ?? 0) + 12
-      tooltip.y = canvasRect.top + (e.canvas?.y ?? 0) - 10
+      const clientPt = graph.getClientByCanvas([e.canvas?.x ?? 0, e.canvas?.y ?? 0])
+      tooltip.x = canvasRect.left + clientPt.x + 12
+      tooltip.y = canvasRect.top + clientPt.y - 10
       tooltip.visible = true
       cancelHide()
     }
