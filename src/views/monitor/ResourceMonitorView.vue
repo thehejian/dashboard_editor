@@ -88,145 +88,20 @@
       </a-table>
     </div>
 
-    <div class="detail-panel" :class="{ open: detailOpen }">
-      <div class="detail-mask" @click="closeDetail"></div>
-      <div class="detail-panel-content" v-if="currentApp">
-        <div class="detail-header">
-          <h3>{{ currentApp.name }} - {{ currentApp.type === 'obs' ? 'OBS 详情' : '详情' }}</h3>
-          <button class="detail-close" @click="closeDetail"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="detail-body">
-          <div class="detail-section">
-            <h4>基本信息</h4>
-            <div class="info-grid">
-              <div class="info-item"><span class="label">名称</span><span class="value">{{ currentApp.name }}</span></div>
-              <div class="info-item"><span class="label">标识</span><span class="value">{{ currentApp.identifier }}</span></div>
-              <div class="info-item"><span class="label">告警状态</span><span class="value"><span :class="currentApp.alertStatus === '紧急' ? 'text-danger' : 'text-success'">{{ currentApp.alertStatus }}</span></span></div>
-              <div class="info-item"><span class="label">运行状态</span><span class="value text-success">运行中</span></div>
-              <div class="info-item"><span class="label">应用级别</span><span class="value">{{ currentApp.appLevel }}</span></div>
-              <div class="info-item"><span class="label">所属VDC</span><span class="value">{{ currentApp.vdc }}</span></div>
-              <div class="info-item"><span class="label">负责人</span><span class="value">{{ currentApp.owner }}</span></div>
-              <div class="info-item"><span class="label">来源</span><span class="value">{{ currentApp.source }}</span></div>
-            </div>
-          </div>
-
-          <template v-if="currentApp.type === 'obs'">
-            <div class="detail-section">
-              <h4>存储概览</h4>
-              <div class="obs-summary-cards">
-                <div class="obs-summary-item">
-                  <div class="oss-label">存储桶</div>
-                  <div class="oss-value">{{ currentApp.obs?.buckets || 0 }}</div>
-                </div>
-                <div class="obs-summary-item">
-                  <div class="oss-label">对象总数</div>
-                  <div class="oss-value">{{ currentApp.obs?.objects || 0 }}</div>
-                </div>
-                <div class="obs-summary-item">
-                  <div class="oss-label">已用容量</div>
-                  <div class="oss-value">{{ currentApp.obs?.usedStorage || '--' }}</div>
-                </div>
-                <div class="obs-summary-item">
-                  <div class="oss-label">可用容量</div>
-                  <div class="oss-value">{{ currentApp.obs?.availStorage || '--' }}</div>
-                </div>
-              </div>
-            </div>
-            <div class="detail-section">
-              <h4>请求指标</h4>
-              <div class="metric-grid">
-                <div class="metric-card">
-                  <div class="metric-label">总请求次数</div>
-                  <div class="metric-value">{{ currentApp.obs?.totalRequests || 0 }}</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">读请求</div>
-                  <div class="metric-value">{{ currentApp.obs?.readRequests || 0 }}</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">写请求</div>
-                  <div class="metric-value">{{ currentApp.obs?.writeRequests || 0 }}</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">下行流量</div>
-                  <div class="metric-value">{{ currentApp.obs?.downTraffic || '--' }}</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">上行流量</div>
-                  <div class="metric-value">{{ currentApp.obs?.upTraffic || '--' }}</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">存储利用率</div>
-                  <div class="metric-value">{{ currentApp.obs?.storageUtil || '0' }}%</div>
-                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.obs?.storageUtil + '%', background: getMetricColor(currentApp.obs?.storageUtil) }"></div></div>
-                </div>
-              </div>
-            </div>
-            <div class="detail-section">
-              <h4>存储桶 Top 5</h4>
-              <div class="bucket-list">
-                <div v-for="(b, i) in currentApp.obs?.topBuckets || []" :key="i" class="bucket-item">
-                  <span class="bucket-name">{{ b.name }}</span>
-                  <div class="bucket-usage-bar-wrap">
-                    <div class="bucket-usage-fill" :style="{ width: b.pct + '%', background: getMetricColor(b.pct) }"></div>
-                  </div>
-                  <span class="bucket-size">{{ b.size }}</span>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="detail-section">
-              <h4>监控指标</h4>
-              <div class="metric-grid">
-                <div class="metric-card">
-                  <div class="metric-label">CPU 使用率</div>
-                  <div class="metric-value">{{ currentApp.metrics.cpu }}%</div>
-                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.cpu + '%', background: getMetricColor(currentApp.metrics.cpu) }"></div></div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">内存使用率</div>
-                  <div class="metric-value">{{ currentApp.metrics.memory }}%</div>
-                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.memory + '%', background: getMetricColor(currentApp.metrics.memory) }"></div></div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">请求速率</div>
-                  <div class="metric-value">{{ currentApp.metrics.requests }} req/s</div>
-                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.requests / 10 + '%', background: getMetricColor(currentApp.metrics.requests / 10) }"></div></div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">错误率</div>
-                  <div class="metric-value">{{ currentApp.metrics.errorRate }}%</div>
-                  <div class="metric-bar"><div class="metric-fill" :style="{ width: currentApp.metrics.errorRate * 10 + '%', background: getMetricColor(currentApp.metrics.errorRate * 10) }"></div></div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">响应时间</div>
-                  <div class="metric-value">{{ currentApp.metrics.responseTime }} ms</div>
-                  <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.responseTime / 5, 100) + '%', background: getMetricColor(currentApp.metrics.responseTime / 5) }"></div></div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">连接数</div>
-                  <div class="metric-value">{{ currentApp.metrics.connections }}</div>
-                  <div class="metric-bar"><div class="metric-fill" :style="{ width: Math.min(currentApp.metrics.connections / 2, 100) + '%', background: getMetricColor(currentApp.metrics.connections / 2) }"></div></div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
+    <ResourceDetailPanel />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useResourceDetail } from '../../composables/useResourceDetail'
+import ResourceDetailPanel from './ResourceDetailPanel.vue'
+
+const { state: rdpState, openDetail: rdpOpen } = useResourceDetail()
 
 const searchText = ref('')
 const mainTab = ref('app')
 const subActive = ref(0)
-const detailOpen = ref(false)
-const currentApp = ref(null)
 
 const subTabMap = {
   all: [
@@ -295,11 +170,7 @@ const columns = [
 ]
 
 const openDetail = (app) => {
-  currentApp.value = app
-  detailOpen.value = true
-}
-const closeDetail = () => {
-  detailOpen.value = false
+  rdpOpen(app)
 }
 const getMetricColor = (value) => {
   if (value >= 80) return '#f5222d'
@@ -591,120 +462,15 @@ onMounted(async function() {
   background: #52c41a;
 }
 
-.detail-panel {
-  position: fixed;
-  top: 48px; right: 0; bottom: 0; left: 0;
-  z-index: 1050;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.detail-panel.open {
-  pointer-events: auto;
-  opacity: 1;
-}
-.detail-mask {
-  position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
-  background: rgba(0, 0, 0, 0.3);
-}
-.detail-panel-content {
-  position: absolute;
-  top: 0;
-  right: -500px;
-  width: 500px;
-  height: 100%;
-  background: #fff;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  transition: right 0.3s;
-}
-.detail-panel.open .detail-panel-content {
-  right: 0;
-}
-.detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
-  flex-shrink: 0;
-}
-.detail-header h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-}
-.detail-close {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 18px;
-  color: #8c8c8c;
-  transition: all 0.15s;
-}
-.detail-close:hover {
-  background: #f0f0f0;
-  color: #1a1a1a;
-}
-.detail-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-.detail-section {
-  margin-bottom: 24px;
-}
-.detail-section h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
-}
-.info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.info-item {
-  display: flex;
-  align-items: center;
-}
-.info-item .label {
-  width: 80px;
-  font-size: 13px;
-  color: #8c8c8c;
-  flex-shrink: 0;
-}
-.info-item .value {
-  font-size: 13px;
-  color: #1a1a1a;
-}
-.text-danger {
-  color: #f5222d !important;
-}
-.text-success {
-  color: #52c41a !important;
-}
 .metric-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 .metric-card {
   background: #fafafa;
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px;
 }
 .metric-label {
   font-size: 12px;
@@ -729,69 +495,6 @@ onMounted(async function() {
   transition: width 0.3s;
 }
 
-.obs-summary-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.obs-summary-item {
-  background: #fafafa;
-  border-radius: 8px;
-  padding: 14px;
-  text-align: center;
-}
-.oss-label {
-  font-size: 11px;
-  color: #8c8c8c;
-  margin-bottom: 6px;
-}
-.oss-value {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-.bucket-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.bucket-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: #fafafa;
-  border-radius: 6px;
-}
-.bucket-name {
-  font-size: 12px;
-  color: #1a1a1a;
-  width: 140px;
-  flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bucket-usage-bar-wrap {
-  flex: 1;
-  height: 6px;
-  background: #e8e8e8;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.bucket-usage-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.3s;
-}
-.bucket-size {
-  font-size: 12px;
-  color: #8c8c8c;
-  white-space: nowrap;
-  width: 60px;
-  text-align: right;
-}
-
 @media (max-width: 768px) {
   .resource-monitor { padding: 0 16px; }
   .page-header { padding: 16px 0; }
@@ -801,7 +504,6 @@ onMounted(async function() {
   .filter-label { width: auto; }
   .tab-group { flex-wrap: wrap; }
   .table-section { padding: 12px; }
-  .detail-panel-content { width: 100%; right: -100%; }
   .metric-grid { grid-template-columns: 1fr; }
 }
 </style>
