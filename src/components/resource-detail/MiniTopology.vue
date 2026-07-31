@@ -32,23 +32,23 @@ const props = defineProps({
 
 const container = ref(null)
 let graph = null
-let resizeObserver = null
 const zoomLevel = ref(1)
 
 const tooltip = reactive({ visible: false, label: '', ip: '', status: 'normal', metrics: '', x: 0, y: 0 })
 let hideTimer = null
 
 const NODE_COLORS = { normal: '#52c41a', warning: '#fa8c16', error: '#f5222d' }
-const NODE_ICONS = { service: '\uf233', gateway: '\uf0e7', cache: '\uf0a0', database: '\uf1c0', mq: '\uf0e7', storage: '\uf1c0', infra: '\uf0ac' }
 
-function initGraph() {
+async function initGraph() {
   if (!container.value || !props.data.nodes?.length) return
-
-  const w = container.value.clientWidth
-  const h = container.value.clientHeight
-  if (w === 0 || h === 0) return
-
   if (graph) { graph.destroy(); graph = null }
+
+  await nextTick()
+
+  const rect = container.value.getBoundingClientRect()
+  const w = rect.width
+  const h = rect.height
+  if (w === 0 || h === 0) return
 
   const nodes = props.data.nodes.map(n => ({
     id: n.id,
@@ -58,12 +58,26 @@ function initGraph() {
       fill: NODE_COLORS[n.status] || '#d9d9d9',
       stroke: n.id === props.currentId ? '#1890ff' : 'transparent',
       lineWidth: n.id === props.currentId ? 3 : 0,
-      iconText: NODE_ICONS[n.type] || '\uf233',
+      iconFontFamily: 'Font Awesome 6 Free',
+      iconFontWeight: 900,
+      iconText: n.type === 'service' ? '\uf0e7'
+        : n.type === 'gateway' ? '\uf0e7'
+        : n.type === 'cache' ? '\uf538'
+        : n.type === 'database' ? '\uf1c0'
+        : n.type === 'mq' ? '\uf0e7'
+        : n.type === 'storage' ? '\uf1c0'
+        : '\uf0ac',
       iconFill: '#fff',
+      iconFontSize: n.id === props.currentId ? 20 : 16,
       labelFontSize: 11,
       labelFill: '#595959',
       labelPlacement: 'bottom',
       labelOffsetY: 4,
+      labelBackground: true,
+      labelBackgroundFill: '#fff',
+      labelBackgroundOpacity: 0.85,
+      labelBackgroundRadius: 3,
+      labelPadding: [1, 4],
       shadowColor: n.id === props.currentId ? 'rgba(24,144,255,0.3)' : 'transparent',
       shadowBlur: n.id === props.currentId ? 12 : 0,
     },
@@ -83,7 +97,9 @@ function initGraph() {
       labelFill: '#8c8c8c',
       labelBackground: true,
       labelBackgroundFill: '#fff',
-      labelBackgroundOpacity: 0.8,
+      labelBackgroundOpacity: 0.85,
+      labelBackgroundRadius: 3,
+      labelPadding: [1, 4],
     },
   }))
 
@@ -117,7 +133,7 @@ function initGraph() {
   })
 
   graph.on('node:pointerenter', (e) => {
-    const id = e.target?.id || e.target?.closest?.('[id]')?.id
+    const id = e.target?.id
     if (!id) return
     const node = props.data.nodes.find(n => n.id === id)
     if (!node) return
@@ -125,21 +141,22 @@ function initGraph() {
     tooltip.ip = node.ip || ''
     tooltip.status = node.status
     tooltip.metrics = node.metrics ? Object.entries(node.metrics).map(([k, v]) => k + ':' + v).join(' ') : ''
-    tooltip.x = (e.client?.x ?? e.canvas?.x ?? 0) + 12
-    tooltip.y = (e.client?.y ?? e.canvas?.y ?? 0) - 10
+    const canvasRect = container.value.getBoundingClientRect()
+    tooltip.x = canvasRect.left + (e.canvas?.x ?? e.client?.x ?? 0) + 12
+    tooltip.y = canvasRect.top + (e.canvas?.y ?? e.client?.y ?? 0) - 10
     tooltip.visible = true
     cancelHide()
     if (graph) graph.setItemState(id, 'active', true)
   })
 
   graph.on('node:pointerleave', (e) => {
-    const id = e.target?.id || e.target?.closest?.('[id]')?.id
+    const id = e.target?.id
     if (id && graph) graph.setItemState(id, 'active', false)
     scheduleHide()
   })
 
   graph.on('node:click', (e) => {
-    const id = e.target?.id || e.target?.closest?.('[id]')?.id
+    const id = e.target?.id
     if (!id) return
     tooltip.visible = false
     if (graph) {
@@ -149,9 +166,8 @@ function initGraph() {
     }
   })
 
-  nextTick(() => {
-    if (graph) graph.fitView({ padding: 40 })
-  })
+  await graph.render()
+  graph.fitView({ padding: 40 })
 }
 
 function zoomIn() { if (graph) { zoomLevel.value = Math.min(zoomLevel.value + 0.2, 3); graph.zoomTo(zoomLevel.value) } }
@@ -164,29 +180,16 @@ function cancelHide() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = nu
 function hideTooltip() { tooltip.visible = false }
 
 onMounted(() => {
-  nextTick(() => { setTimeout(() => initGraph(), 50) })
-
-  resizeObserver = new ResizeObserver(() => {
-    if (graph && container.value) {
-      const w = container.value.clientWidth
-      const h = container.value.clientHeight
-      if (w > 0 && h > 0) {
-        graph.setSize(w, h)
-        graph.fitView({ padding: 40 })
-      }
-    }
-  })
-  if (container.value) resizeObserver.observe(container.value)
+  setTimeout(() => initGraph(), 100)
 })
 
 onBeforeUnmount(() => {
-  if (resizeObserver) { resizeObserver.disconnect(); resizeObserver = null }
   if (graph) { graph.destroy(); graph = null }
   if (hideTimer) clearTimeout(hideTimer)
 })
 
 watch(() => props.data, () => {
-  nextTick(() => { setTimeout(() => initGraph(), 50) })
+  nextTick(() => { setTimeout(() => initGraph(), 100) })
 }, { deep: true })
 </script>
 
@@ -199,7 +202,7 @@ watch(() => props.data, () => {
 .mt-dot.dot-normal { background: #52c41a; }
 .mt-dot.dot-warning { background: #fa8c16; }
 .mt-dot.dot-error { background: #f5222d; }
-.mt-canvas { flex: 1; min-height: 300px; }
+.mt-canvas { flex: 1; min-height: 300px; height: calc(100vh - 200px); }
 .mt-tip { position: fixed; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 8px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 9999; pointer-events: auto; min-width: 140px; }
 .mt-tip-name { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
 .mt-tip-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 3px; }
