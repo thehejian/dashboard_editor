@@ -133,7 +133,7 @@ const resourceTags = computed(() => {
 .rdp-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 16px; color: #8c8c8c; flex-shrink: 0; transition: all 0.15s; }
 .rdp-close:hover { background: #f0f0f0; color: #1a1a1a; }
 
-.rdp-tabs { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.rdp-tabs { flex-shrink: 0; }
 :deep(.rdp-tabs .ant-tabs-nav) { margin: 0; padding: 0 20px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
 :deep(.rdp-tabs .ant-tabs-content-holder) { display: none; }
 .rdp-tab-content { flex: 1; min-height: 0; overflow-y: auto; }
