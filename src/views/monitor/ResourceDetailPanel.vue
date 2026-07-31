@@ -40,9 +40,24 @@
             <LogList :data="logData" />
           </div>
         </a-tab-pane>
-        <a-tab-pane key="ops" tab="运维操作">
+        <a-tab-pane key="ops">
+          <template #tab>
+            <a-dropdown :trigger="['click']" @click.prevent>
+              <span class="ops-tab-trigger">
+                运维操作 <i class="fa-solid fa-chevron-down ops-tab-arrow"></i>
+              </span>
+              <template #overlay>
+                <a-menu @click="onOpsMenuClick" :selectedKeys="[state.opsGroupKey]">
+                  <a-menu-item key="auto-job"><i class="fa-solid fa-robot ops-menu-icon"></i> 自动作业</a-menu-item>
+                  <a-menu-item key="net-probe"><i class="fa-solid fa-network-wired ops-menu-icon"></i> 网络探测</a-menu-item>
+                  <a-menu-item key="dial-test"><i class="fa-solid fa-tower-broadcast ops-menu-icon"></i> 拨测任务</a-menu-item>
+                  <a-menu-item key="host-locate"><i class="fa-solid fa-crosshairs ops-menu-icon"></i> 异常主机定位</a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </template>
           <div class="rdp-tab-content">
-            <OperationsPanel :data="operationsData" />
+            <OperationsPanel :data="operationsData" :groupKey="state.opsGroupKey" />
           </div>
         </a-tab-pane>
       </a-tabs>
@@ -66,7 +81,11 @@ import LogList from '../../components/resource-detail/LogList.vue'
 import OperationsPanel from '../../components/resource-detail/OperationsPanel.vue'
 import OverviewPanel from '../../components/resource-detail/OverviewPanel.vue'
 
-const { state, closeDetail, switchTab, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
+const { state, closeDetail, switchTab, setOpsGroup, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
+
+function onOpsMenuClick({ key }) {
+  setOpsGroup(key)
+}
 
 const resourceTags = computed(() => {
   const r = state.currentResource
@@ -105,6 +124,10 @@ const resourceTags = computed(() => {
 .rdp-footer { display: flex; gap: 20px; padding: 10px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0; }
 .rdp-footer-link { font-size: 12px; color: #8c8c8c; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
 .rdp-footer-link:hover { color: #1890ff; }
+
+.ops-tab-trigger { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+.ops-tab-arrow { font-size: 10px; transition: transform 0.2s; }
+.ops-menu-icon { margin-right: 6px; color: #1890ff; width: 16px; text-align: center; }
 
 @media (max-width: 768px) {
   .rdp { width: 100vw; right: -100vw; max-width: none; }

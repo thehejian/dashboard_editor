@@ -1,27 +1,23 @@
 <template>
   <div class="ops-wrap">
-    <a-collapse v-model:activeKey="activeKeys" ghost>
-      <a-collapse-panel v-for="group in data" :key="group.key" :class="'ops-' + group.key">
-        <template #header>
-          <div class="ops-group-header">
-            <i :class="group.icon" class="ops-group-icon"></i>
-            <span class="ops-group-title">{{ group.title }}</span>
-            <span class="ops-group-desc">{{ group.desc }}</span>
+    <div v-if="currentGroup" class="ops-content">
+      <div class="ops-content-header">
+        <i :class="currentGroup.icon" class="ops-content-icon"></i>
+        <span class="ops-content-title">{{ currentGroup.title }}</span>
+        <span class="ops-content-desc">{{ currentGroup.desc }}</span>
+      </div>
+      <div class="ops-items">
+        <div v-for="item in currentGroup.items" :key="item.action" class="ops-item" @click="runAction(item)">
+          <div class="ops-item-info">
+            <span class="ops-item-name">{{ item.name }}</span>
+            <span class="ops-item-desc">{{ item.desc }}</span>
           </div>
-        </template>
-        <div class="ops-items">
-          <div v-for="item in group.items" :key="item.action" class="ops-item" @click="runAction(item, group)">
-            <div class="ops-item-info">
-              <span class="ops-item-name">{{ item.name }}</span>
-              <span class="ops-item-desc">{{ item.desc }}</span>
-            </div>
-            <a-button size="small" type="primary" ghost class="ops-run-btn">
-              <i class="fa-solid fa-play"></i> 执行
-            </a-button>
-          </div>
+          <a-button size="small" type="primary" ghost class="ops-run-btn">
+            <i class="fa-solid fa-play"></i> 执行
+          </a-button>
         </div>
-      </a-collapse-panel>
-    </a-collapse>
+      </div>
+    </div>
 
     <a-modal v-model:open="modalVisible" :title="modalTitle" :footer="null" :width="480">
       <div class="ops-modal">
@@ -36,15 +32,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
-const props = defineProps({ data: { type: Array, default: () => [] } })
+const props = defineProps({
+  data: { type: Array, default: () => [] },
+  groupKey: { type: String, default: 'auto-job' },
+})
 
-const activeKeys = ref(['auto-job'])
 const modalVisible = ref(false)
 const modalTitle = ref('')
 const modalOutput = ref('')
 const running = ref(false)
+
+const currentGroup = computed(() => props.data.find(g => g.key === props.groupKey) || props.data[0])
 
 const outputMap = {
   restart: '$ systemctl restart order-service\n[OK] 服务重启成功，PID: 28451\n[INFO] 健康检查通过 (耗时 3.2s)',
@@ -60,8 +60,8 @@ const outputMap = {
   'disk-locate': '$ anomaly-scan --metric diskio --threshold 2sigma\n扫描中... (扫描 156 台主机)\n[ALERT] 10.0.2.31 (mysql-primary) IO wait 偏离度 +4.1σ\n--- 发现 1 台异常主机 ---',
 }
 
-function runAction(item, group) {
-  modalTitle.value = group.title + ' — ' + item.name
+function runAction(item) {
+  modalTitle.value = currentGroup.value.title + ' — ' + item.name
   modalOutput.value = ''
   running.value = true
   modalVisible.value = true
@@ -82,17 +82,15 @@ function runAction(item, group) {
 </script>
 
 <style scoped>
-.ops-wrap { padding: 12px 16px; }
-:deep(.ant-collapse-header) { padding: 10px 12px !important; }
-:deep(.ant-collapse-content-box) { padding: 0 12px 10px !important; }
-.ops-group-header { display: flex; align-items: center; gap: 8px; }
-.ops-group-icon { font-size: 14px; color: #1890ff; width: 20px; text-align: center; }
-.ops-group-title { font-size: 13px; font-weight: 600; color: #1a1a1a; }
-.ops-group-desc { font-size: 11px; color: #8c8c8c; margin-left: auto; }
-.ops-items { display: flex; flex-direction: column; gap: 6px; }
-.ops-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.12s; border: 1px solid #f0f0f0; }
-.ops-item:hover { background: #f5f7fa; border-color: #d9d9d9; }
-.ops-item-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ops-wrap { padding: 16px 20px; }
+.ops-content-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+.ops-content-icon { font-size: 16px; color: #1890ff; }
+.ops-content-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+.ops-content-desc { font-size: 12px; color: #8c8c8c; margin-left: auto; }
+.ops-items { display: flex; flex-direction: column; gap: 8px; }
+.ops-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s; border: 1px solid #f0f0f0; background: #fafafa; }
+.ops-item:hover { background: #f0f5ff; border-color: #91caff; }
+.ops-item-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .ops-item-name { font-size: 13px; color: #1a1a1a; font-weight: 500; }
 .ops-item-desc { font-size: 11px; color: #8c8c8c; }
 .ops-run-btn { flex-shrink: 0; }

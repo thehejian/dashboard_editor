@@ -61,7 +61,7 @@ async function initGraph() {
       radius: 8,
       labelText: (d) => d.data?.label || d.id,
       labelPlacement: 'bottom',
-      labelOffsetY: 14,
+      labelOffsetY: 22,
       labelFontSize: 10,
       labelFill: '#333',
       labelFontWeight: '500',
@@ -87,14 +87,6 @@ async function initGraph() {
       stroke: '#d9d9d9',
       lineWidth: 1.5,
       endArrow: false,
-      labelText: (d) => d.data?.label || '',
-      labelFontSize: 10,
-      labelFill: '#666',
-      labelBackground: true,
-      labelBackgroundFill: '#f9f9fa',
-      labelBackgroundOpacity: 0.9,
-      labelBackgroundRadius: 4,
-      labelPadding: [2, 6],
     },
   }))
 

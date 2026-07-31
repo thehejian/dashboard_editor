@@ -5,11 +5,13 @@ const state = reactive({
   open: false,
   activeTab: 'overview',
   currentResource: null,
+  opsGroupKey: 'auto-job',
 })
 
 function openDetail(resource) {
   state.currentResource = resource
   state.activeTab = 'overview'
+  state.opsGroupKey = 'auto-job'
   state.open = true
 }
 
@@ -20,6 +22,11 @@ function closeDetail() {
 
 function switchTab(tab) {
   state.activeTab = tab
+}
+
+function setOpsGroup(key) {
+  state.opsGroupKey = key
+  state.activeTab = 'ops'
 }
 
 const topoData = computed(() => TOPO_MOCK)
@@ -60,6 +67,7 @@ export function useResourceDetail() {
     openDetail,
     closeDetail,
     switchTab,
+    setOpsGroup,
     topoData,
     alarmData,
     traceData,
