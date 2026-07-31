@@ -2,9 +2,20 @@
   <div class="resource-monitor">
     <div class="page-header">
       <h2>资源监控</h2>
+      <a-radio-group v-model:value="viewMode" size="small">
+        <a-radio-button value="list"><i class="fa-solid fa-list"></i> 列表</a-radio-button>
+        <a-radio-button value="card"><i class="fa-solid fa-table-cells-large"></i> 卡片</a-radio-button>
+      </a-radio-group>
     </div>
 
-    <div class="alert-cards">
+    <div class="stats-header">
+      <span class="stats-title">统计概览</span>
+      <a-button type="text" size="small" @click="statsCollapsed = !statsCollapsed">
+        <i class="fa-solid" :class="statsCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+        {{ statsCollapsed ? '展开' : '收起' }}
+      </a-button>
+    </div>
+    <div class="alert-cards" v-show="!statsCollapsed">
       <div class="alert-card" v-for="item in alertCards" :key="item.label">
         <div class="card-body">
           <div class="card-info">
@@ -60,7 +71,20 @@
         />
       </div>
 
+      <div v-if="viewMode === 'card'" class="card-grid">
+        <div class="res-card" v-for="record in filteredData" :key="record.id" @click="openDetail(record)">
+          <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
+            <i :class="record.type === 'obs' ? 'fa-solid fa-cloud' : 'fa-solid fa-circle-nodes'"></i>
+          </div>
+          <div class="res-name">{{ record.name }}</div>
+          <div class="res-alert" :class="{ alert: record.alertStatus === '紧急' }">
+            告警：{{ record.alertStatus === '紧急' ? '紧急 1' : '正常' }}
+          </div>
+        </div>
+      </div>
+
       <a-table
+        v-else
         :columns="columns"
         :data-source="filteredData"
         :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: total => '共 ' + total + ' 条' }"
@@ -102,6 +126,8 @@ const { state: rdpState, openDetail: rdpOpen } = useResourceDetail()
 const searchText = ref('')
 const mainTab = ref('app')
 const subActive = ref(0)
+const viewMode = ref('list')
+const statsCollapsed = ref(true)
 
 const subTabMap = {
   all: [
@@ -255,6 +281,9 @@ onMounted(async function() {
 
 .page-header {
   padding: 24px 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .page-header h2 {
   font-size: 20px;
@@ -279,6 +308,70 @@ onMounted(async function() {
 }
 .alert-card:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.stats-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+.res-card {
+  background: #fff;
+  border: 1px solid #eef1f6;
+  border-radius: 12px;
+  padding: 20px 14px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.res-card:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  border-color: #1890ff;
+}
+.res-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(24, 144, 255, 0.12);
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.res-icon.alert {
+  background: rgba(245, 34, 45, 0.12);
+  color: #f5222d;
+}
+.res-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+.res-alert {
+  font-size: 12px;
+  color: #52c41a;
+}
+.res-alert.alert {
+  color: #f5222d;
+  font-weight: 500;
 }
 
 .card-body {
@@ -505,5 +598,12 @@ onMounted(async function() {
   .tab-group { flex-wrap: wrap; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1200px) {
+  .card-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 900px) {
+  .card-grid { grid-template-columns: repeat(3, 1fr); }
 }
 </style>

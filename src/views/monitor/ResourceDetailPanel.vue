@@ -14,27 +14,31 @@
         <button class="rdp-close" @click="closeDetail"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <div class="rdp-tabs-wrap">
-        <a-tabs v-model:activeKey="state.activeTab" class="rdp-tabs">
-          <a-tab-pane key="overview" tab="概览" />
-          <a-tab-pane key="topology" tab="依赖关系" />
-          <a-tab-pane key="alarm" tab="告警" />
-          <a-tab-pane key="trace" tab="调用链" />
-          <a-tab-pane key="log" tab="日志" />
-          <a-tab-pane key="ops" tab="运维操作" />
-        </a-tabs>
-        <span ref="opsTriggerRef" class="ops-chevron" :style="chevronStyle" @click.stop="toggleOpsDropdown">
-          <i class="fa-solid fa-chevron-down"></i>
-        </span>
-        <teleport to="body">
-          <div v-if="opsDropdownOpen" class="ops-dropdown" :style="opsDropdownStyle" @click.stop>
-            <div v-for="item in OPS_OPTIONS" :key="item.key" class="ops-dropdown-item" :class="{ active: state.opsGroupKey === item.key }" @click="onOpsSelect(item.key)">
-              <i :class="item.icon" class="ops-dropdown-icon"></i>
-              {{ item.label }}
-            </div>
+      <a-tabs v-model:activeKey="state.activeTab" class="rdp-tabs">
+        <a-tab-pane key="overview" tab="概览" />
+        <a-tab-pane key="topology" tab="依赖关系" />
+        <a-tab-pane key="alarm" tab="告警" />
+        <a-tab-pane key="trace" tab="调用链" />
+        <a-tab-pane key="log" tab="日志" />
+        <a-tab-pane key="ops">
+          <template #tab>
+            <span class="ops-tab-inner">
+              运维操作
+              <span ref="opsTriggerRef" class="ops-chevron" @click.stop="toggleOpsDropdown">
+                <i class="fa-solid fa-chevron-down"></i>
+              </span>
+            </span>
+          </template>
+        </a-tab-pane>
+      </a-tabs>
+      <teleport to="body">
+        <div v-if="opsDropdownOpen" class="ops-dropdown" :style="opsDropdownStyle" @click.stop>
+          <div v-for="item in OPS_OPTIONS" :key="item.key" class="ops-dropdown-item" :class="{ active: state.opsGroupKey === item.key }" @click="onOpsSelect(item.key)">
+            <i :class="item.icon" class="ops-dropdown-icon"></i>
+            {{ item.label }}
           </div>
-        </teleport>
-      </div>
+        </div>
+      </teleport>
 
       <div class="rdp-tab-content" v-show="state.activeTab === 'overview'"><OverviewPanel /></div>
       <div class="rdp-tab-content" v-show="state.activeTab === 'topology'"><MiniTopology v-if="state.activeTab === 'topology'" :data="topoData" :currentId="'current'" /></div>
@@ -74,24 +78,6 @@ const OPS_OPTIONS = [
 const opsDropdownOpen = ref(false)
 const opsTriggerRef = ref(null)
 const opsDropdownStyle = ref({})
-const chevronStyle = ref({})
-
-function positionChevron() {
-  const wrap = document.querySelector('.rdp-tabs-wrap')
-  if (!wrap) return
-  const nav = wrap.querySelector('.ant-tabs-nav')
-  if (!nav) return
-  const tabs = nav.querySelectorAll('.ant-tabs-tab')
-  const opsTab = tabs[tabs.length - 1]
-  if (!opsTab) return
-  const wrapRect = wrap.getBoundingClientRect()
-  const tabRect = opsTab.getBoundingClientRect()
-  chevronStyle.value = {
-    position: 'absolute',
-    left: (tabRect.right - wrapRect.left + 8) + 'px',
-    top: (tabRect.top - wrapRect.top + (tabRect.height - 18) / 2) + 'px',
-  }
-}
 
 function updateDropdownPos() {
   if (!opsTriggerRef.value) return
@@ -117,10 +103,7 @@ function onClickOutside(e) {
   opsDropdownOpen.value = false
 }
 
-onMounted(() => {
-  document.addEventListener('click', onClickOutside)
-  setTimeout(positionChevron, 200)
-})
+onMounted(() => document.addEventListener('click', onClickOutside))
 onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 
 const resourceTags = computed(() => {
@@ -150,13 +133,13 @@ const resourceTags = computed(() => {
 .rdp-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 16px; color: #8c8c8c; flex-shrink: 0; transition: all 0.15s; }
 .rdp-close:hover { background: #f0f0f0; color: #1a1a1a; }
 
-.rdp-tabs-wrap { position: relative; flex-shrink: 0; }
 .rdp-tabs { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 :deep(.rdp-tabs .ant-tabs-nav) { margin: 0; padding: 0 20px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
 :deep(.rdp-tabs .ant-tabs-content-holder) { display: none; }
 .rdp-tab-content { flex: 1; min-height: 0; overflow-y: auto; }
 
-.ops-chevron { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; cursor: pointer; font-size: 9px; color: #8c8c8c; transition: all 0.15s; z-index: 10; }
+.ops-tab-inner { display: inline-flex; align-items: center; gap: 4px; }
+.ops-chevron { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 3px; cursor: pointer; font-size: 8px; color: #8c8c8c; transition: all 0.15s; margin-left: 2px; }
 .ops-chevron:hover { background: rgba(0,0,0,0.06); color: #1890ff; }
 
 .rdp-footer { display: flex; gap: 20px; padding: 10px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0; }
