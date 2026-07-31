@@ -569,7 +569,7 @@ onMounted(async function() {
 .carousel-wrap {
   position: relative;
   overflow: hidden;
-  max-height: 152px;
+  max-height: 154px;
 }
 .carousel-wrap:hover .carousel-btn { opacity: 1; }
 .carousel-btn {
@@ -824,6 +824,6 @@ onMounted(async function() {
   .sub-tabs { overflow-x: auto; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
-  .carousel-wrap { max-height: 152px; }
+  .carousel-wrap { max-height: 154px; }
 }
 </style>
