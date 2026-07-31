@@ -42,8 +42,8 @@
         </a-tab-pane>
         <a-tab-pane key="ops">
           <template #tab>
-            <a-dropdown :trigger="['click']" @click.prevent>
-              <span class="ops-tab-trigger">
+            <a-dropdown :trigger="['click']" :getPopupContainer="el => el.parentNode" @click.prevent>
+              <span class="ops-tab-trigger" @click.prevent>
                 运维操作 <i class="fa-solid fa-chevron-down ops-tab-arrow"></i>
               </span>
               <template #overlay>
@@ -125,7 +125,8 @@ const resourceTags = computed(() => {
 .rdp-footer-link { font-size: 12px; color: #8c8c8c; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
 .rdp-footer-link:hover { color: #1890ff; }
 
-.ops-tab-trigger { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+.ops-tab-trigger { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; padding: 4px 8px; border-radius: 4px; transition: background 0.15s; }
+.ops-tab-trigger:hover { background: rgba(0,0,0,0.04); }
 .ops-tab-arrow { font-size: 10px; transition: transform 0.2s; }
 .ops-menu-icon { margin-right: 6px; color: #1890ff; width: 16px; text-align: center; }
 
