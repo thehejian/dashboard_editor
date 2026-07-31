@@ -38,22 +38,20 @@
       </div>
     </div>
 
-    <div class="filter-section" v-if="mainTab !== 'all'">
-      <div class="filter-row">
-        <span class="filter-label">当前可选分类</span>
-        <div class="sub-tab-group">
-          <span
-            v-for="(st, i) in subTabs"
-            :key="i"
-            class="pill-btn"
-            :class="{ active: subActive === i, 'pill-more': st.more }"
-            @click="subActive = i"
-          >
-            {{ st.label }}
+    <div class="sub-tabs" v-if="mainTab !== 'all'">
+      <a-tabs
+        :active-key="'sub-' + subActive"
+        size="small"
+        class="sub-category-tabs"
+        @change="onSubTabChange"
+      >
+        <a-tab-pane v-for="(st, i) in subTabs" :key="'sub-' + i">
+          <template #tab>
+            <span>{{ st.label }}</span>
             <i v-if="st.more" class="fa-solid fa-filter"></i>
-          </span>
-        </div>
-      </div>
+          </template>
+        </a-tab-pane>
+      </a-tabs>
     </div>
 
     <div class="table-section">
@@ -83,7 +81,7 @@
                 <div class="res-name">{{ record.name }}</div>
               </div>
               <div class="res-alert" :class="{ alert: record.alertStatus === '紧急' }">
-                {{ record.alertStatus === '紧急' ? '告警：紧急 1' : '运行正常' }}
+                {{ record.alertStatus === '紧急' ? '告警：紧急 ' + getEmergencyCount(record) : '运行正常' }}
               </div>
             </div>
           </div>
@@ -127,6 +125,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useResourceDetail } from '../../composables/useResourceDetail'
+import { ALARM_MOCK } from '../../mock/resourceDetailMock'
 import ResourceDetailPanel from './ResourceDetailPanel.vue'
 
 const props = defineProps({
@@ -139,7 +138,7 @@ const { state: rdpState, openDetail: rdpOpen } = useResourceDetail()
 const searchText = ref('')
 const mainTab = ref('all')
 const subActive = ref(0)
-const viewMode = ref('list')
+const viewMode = ref('card')
 const statsCollapsed = ref(true)
 const groupCollapsed = reactive({})
 
@@ -186,11 +185,17 @@ const toggleGroup = (key) => {
   groupCollapsed[key] = !groupCollapsed[key]
 }
 
+const onSubTabChange = (key) => {
+  const idx = Number(String(key).replace('sub-', ''))
+  subActive.value = isNaN(idx) ? 0 : idx
+}
+
 const subTabMap = {
   all: [
     { label: '全部' },
   ],
   app: [
+    { label: '全部' },
     { label: '应用' },
     { label: '应用服务' },
   ],
@@ -251,6 +256,11 @@ const columns = [
   { title: '负责人', dataIndex: 'owner', key: 'owner', width: 100, sorter: true },
   { title: '来源', dataIndex: 'source', key: 'source', width: 100, sorter: true },
 ]
+
+const getEmergencyCount = (record) => {
+  const count = ALARM_MOCK.filter(a => a.resource === record.name && a.level === 'critical').length
+  return count > 0 ? count : (record.alertStatus === '紧急' ? 1 : 0)
+}
 
 const openDetail = (app) => {
   rdpOpen(app)
@@ -328,9 +338,11 @@ const cardGroups = [
 
 const cardGroupsComputed = computed(() => {
   return cardGroups.map(g => {
-    const items = g.items.filter(item =>
-      !searchText.value || item.name.toLowerCase().includes(searchText.value.toLowerCase()) || (item.identifier || '').toLowerCase().includes(searchText.value.toLowerCase())
-    )
+    const items = g.items
+      .filter(item =>
+        !searchText.value || item.name.toLowerCase().includes(searchText.value.toLowerCase()) || (item.identifier || '').toLowerCase().includes(searchText.value.toLowerCase())
+      )
+      .sort((a, b) => (b.alertStatus === '紧急' ? 1 : 0) - (a.alertStatus === '紧急' ? 1 : 0))
     const alertCount = items.filter(item => item.alertStatus === '紧急').length
     return { ...g, items, alertCount }
   })
@@ -391,7 +403,7 @@ onMounted(async function() {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 0 12px;
+  padding: 16px 0 8px;
 }
 .monitor-header .category-tabs {
   flex: 1;
@@ -590,52 +602,27 @@ onMounted(async function() {
   color: #fff;
 }
 
-.filter-section {
+.sub-tabs {
   margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.sub-category-tabs :deep(.ant-tabs-nav) {
+  margin-bottom: 0;
 }
-
-.filter-label {
-  font-size: 14px;
-  color: #595959;
-  font-weight: 500;
-  white-space: nowrap;
-  width: 96px;
-  flex-shrink: 0;
+.sub-category-tabs :deep(.ant-tabs-nav::before) {
+  border-bottom: none;
 }
-
-.sub-tab-group {
-  display: flex;
-  gap: 8px;
-}
-.pill-btn {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 6px;
+.sub-category-tabs :deep(.ant-tabs-tab) {
   font-size: 13px;
-  cursor: pointer;
-  border: 1px solid #d9d9d9;
-  background: #fff;
-  color: #595959;
-  transition: all 0.15s;
+  color: #8c8c8c;
 }
-.pill-btn.active {
-  border-color: #1890ff;
-  background: #fff;
+.sub-category-tabs :deep(.ant-tabs-tab-active .ant-tabs-tab-btn) {
   color: #1890ff;
+  font-weight: 500;
 }
-.pill-btn:not(.active):hover {
-  border-color: #1890ff;
+.sub-category-tabs :deep(.ant-tabs-ink-bar) {
+  background: #1890ff;
 }
-.pill-more i {
+.sub-category-tabs i {
   margin-left: 4px;
   font-size: 11px;
 }
@@ -743,8 +730,7 @@ onMounted(async function() {
   .monitor-header .header-actions { width: 100%; }
   .alert-cards { flex-wrap: wrap; }
   .alert-card { min-width: calc(50% - 8px); flex: none; }
-  .filter-row { flex-wrap: wrap; }
-  .filter-label { width: auto; }
+  .sub-tabs { overflow-x: auto; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
 }

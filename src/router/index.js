@@ -29,7 +29,7 @@ const routes = [
   },
 
   { path: '/monitor/dashboard', name: 'monitor-dashboard', component: () => import('../views/MonitorView.vue') },
-  { path: '/monitor/resource', redirect: '/monitor/resource/list' },
+  { path: '/monitor/resource', redirect: '/monitor/resource/card' },
   { path: '/monitor/resource/:mode', name: 'monitor-resource', component: () => import('../views/monitor/ResourceMonitorView.vue'), props: true },
   { path: '/monitor/config', name: 'monitor-config', component: () => import('../views/monitor/MonitorConfigView.vue') },
   { path: '/monitor/topology', name: 'monitor-topology', component: () => import('../views/monitor/TopologyView.vue') },

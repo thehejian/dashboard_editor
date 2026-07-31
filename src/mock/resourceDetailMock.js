@@ -26,8 +26,8 @@ export const TOPO_MOCK = {
 
 export const ALARM_MOCK = [
   { id: 1, level: 'critical', title: 'CPU使用率超过90%', resource: '订单服务中心', metric: 'CPU使用率', currentValue: '95%', threshold: '> 90%', duration: '5分钟', triggerTime: '2026-07-31 10:32:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查异常进程\n2. 查看慢查询\n3. 重启服务' },
-  { id: 2, level: 'warning', title: '内存使用率偏高', resource: '订单服务中心', metric: '内存使用率', currentValue: '92%', threshold: '> 80%', duration: '20分钟', triggerTime: '2026-07-31 10:15:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查JVM堆内存\n2. 分析内存泄漏\n3. 调整限制' },
-  { id: 3, level: 'info', title: '响应时间接近阈值', resource: '订单服务中心', metric: '响应时间', currentValue: '180ms', threshold: '> 200ms', duration: '35分钟', triggerTime: '2026-07-31 09:57:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查下游服务延迟\n2. 分析慢请求链路' },
+  { id: 2, level: 'critical', title: '内存使用率超过90%', resource: '订单服务中心', metric: '内存使用率', currentValue: '92%', threshold: '> 90%', duration: '20分钟', triggerTime: '2026-07-31 10:15:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查JVM堆内存\n2. 分析内存泄漏\n3. 调整限制' },
+  { id: 3, level: 'critical', title: '响应时间严重超时', resource: '订单服务中心', metric: '响应时间', currentValue: '245ms', threshold: '> 200ms', duration: '35分钟', triggerTime: '2026-07-31 09:57:00', recoveryTime: '-', status: 'firing', suggestion: '1. 检查下游服务延迟\n2. 分析慢请求链路\n3. 扩容实例' },
 ]
 
 export const TRACE_MOCK = {
