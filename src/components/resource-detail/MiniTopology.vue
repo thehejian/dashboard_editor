@@ -37,7 +37,8 @@ const zoomLevel = ref(1)
 const tooltip = reactive({ visible: false, label: '', ip: '', status: 'normal', metrics: '', x: 0, y: 0 })
 let hideTimer = null
 
-const NODE_COLORS = { normal: '#52c41a', warning: '#fa8c16', error: '#f5222d' }
+const STATUS_COLORS = { normal: '#1890ff', warning: '#fa8c16', error: '#f5222d', critical: '#f5222d' }
+const ICON_MAP = { service: '\uf0e7', gateway: '\uf0e7', cache: '\uf538', database: '\uf1c0', mq: '\uf0e7', storage: '\uf1c0', infra: '\uf0ac' }
 
 async function initGraph() {
   if (!container.value || !props.data.nodes?.length) return
@@ -53,33 +54,34 @@ async function initGraph() {
   const nodes = props.data.nodes.map(n => ({
     id: n.id,
     data: { label: n.label, ip: n.ip, status: n.status, metrics: n.metrics, type: n.type },
+    icon: ICON_MAP[n.type] || '\uf0ac',
     style: {
-      size: n.id === props.currentId ? 48 : 36,
-      fill: NODE_COLORS[n.status] || '#d9d9d9',
-      stroke: n.id === props.currentId ? '#1890ff' : 'transparent',
-      lineWidth: n.id === props.currentId ? 3 : 0,
+      size: 48,
+      fill: STATUS_COLORS[n.status] || '#d9d9d9',
+      stroke: 'transparent',
+      radius: 8,
+      labelText: (d) => d.data?.label || d.id,
+      labelPlacement: 'bottom',
+      labelOffsetY: 14,
+      labelFontSize: 10,
+      labelFill: '#333',
+      labelFontWeight: '500',
+      labelBackground: true,
+      labelBackgroundFill: '#f9f9fa',
+      labelBackgroundOpacity: 0.9,
+      labelBackgroundRadius: 4,
+      labelPadding: [2, 6],
       iconFontFamily: 'Font Awesome 6 Free',
       iconFontWeight: 900,
-      iconText: n.type === 'service' ? '\uf0e7'
-        : n.type === 'gateway' ? '\uf0e7'
-        : n.type === 'cache' ? '\uf538'
-        : n.type === 'database' ? '\uf1c0'
-        : n.type === 'mq' ? '\uf0e7'
-        : n.type === 'storage' ? '\uf1c0'
-        : '\uf0ac',
+      iconText: (d) => d.icon || '',
       iconFill: '#fff',
-      iconFontSize: n.id === props.currentId ? 20 : 16,
-      labelFontSize: 11,
-      labelFill: '#595959',
-      labelPlacement: 'bottom',
-      labelOffsetY: 4,
-      labelBackground: true,
-      labelBackgroundFill: '#fff',
-      labelBackgroundOpacity: 0.85,
-      labelBackgroundRadius: 3,
-      labelPadding: [1, 4],
-      shadowColor: n.id === props.currentId ? 'rgba(24,144,255,0.3)' : 'transparent',
-      shadowBlur: n.id === props.currentId ? 12 : 0,
+      iconFontSize: 24,
+      zIndex: 10,
+    },
+    states: {
+      hover: { fill: (d) => STATUS_COLORS[d.data?.status] || '#1890ff', stroke: '#1890ff', lineWidth: 2, shadowColor: 'rgba(24,144,255,0.3)', shadowBlur: 8 },
+      selected: { fill: (d) => STATUS_COLORS[d.data?.status] || '#1890ff', stroke: '#1890ff', lineWidth: 3, shadowColor: 'rgba(24,144,255,0.4)', shadowBlur: 12 },
+      dimmed: { opacity: 0.25, labelOpacity: 0.25, labelBackgroundOpacity: 0.1 },
     },
   }))
 
@@ -90,16 +92,16 @@ async function initGraph() {
     data: { label: e.label },
     style: {
       stroke: '#d9d9d9',
-      lineWidth: 1,
-      endArrow: true,
-      endArrowSize: 6,
+      lineWidth: 1.5,
+      endArrow: false,
+      labelText: (d) => d.data?.label || '',
       labelFontSize: 10,
-      labelFill: '#8c8c8c',
+      labelFill: '#666',
       labelBackground: true,
-      labelBackgroundFill: '#fff',
-      labelBackgroundOpacity: 0.85,
-      labelBackgroundRadius: 3,
-      labelPadding: [1, 4],
+      labelBackgroundFill: '#f9f9fa',
+      labelBackgroundOpacity: 0.9,
+      labelBackgroundRadius: 4,
+      labelPadding: [2, 6],
     },
   }))
 
@@ -114,56 +116,74 @@ async function initGraph() {
       },
     },
     edge: {
+      type: 'cubic-vertical',
       style: {
         labelText: (d) => d.data?.label || '',
       },
     },
     layout: {
-      type: 'd3-force',
-      preventOverlap: true,
-      nodeSize: 50,
-      linkDistance: 120,
-      charge: -300,
+      type: 'dagre',
+      rankdir: 'TB',
+      nodesep: 30,
+      ranksep: 80,
     },
     behaviors: [
       'drag-canvas',
       'zoom-canvas',
-      'drag-element',
+      { type: 'drag-element', enable: (evt) => evt.targetType === 'node' },
+      {
+        type: 'hover-activate',
+        key: 'hover',
+        enter: (e) => {
+          const id = e.target?.id
+          if (!id || !graph) return
+          graph.setElementState(id, 'hover')
+          const neighbors = graph.getNeighborElementsData(id)
+          if (neighbors?.nodes) {
+            neighbors.nodes.forEach(n => {
+              if (n.id !== id) graph.setElementState(n.id, 'dimmed')
+            })
+          }
+          graph.getEdgeData().forEach(edge => {
+            const s = edge.source
+            const t = edge.target
+            if (s !== id && t !== id) graph.setElementState(edge.id, 'dimmed')
+          })
+          const node = props.data.nodes.find(n => n.id === id)
+          if (node) {
+            tooltip.label = node.label
+            tooltip.ip = node.ip || ''
+            tooltip.status = node.status
+            tooltip.metrics = node.metrics ? Object.entries(node.metrics).map(([k, v]) => k + ':' + v).join(' ') : ''
+            const canvasRect = container.value.getBoundingClientRect()
+            tooltip.x = canvasRect.left + (e.canvas?.x ?? 0) + 12
+            tooltip.y = canvasRect.top + (e.canvas?.y ?? 0) - 10
+            tooltip.visible = true
+            cancelHide()
+          }
+        },
+        leave: (e) => {
+          const id = e.target?.id
+          if (!id || !graph) return
+          graph.setElementState(id, [])
+          const neighbors = graph.getNeighborElementsData(id)
+          if (neighbors?.nodes) {
+            neighbors.nodes.forEach(n => graph.setElementState(n.id, []))
+          }
+          graph.getEdgeData().forEach(edge => graph.setElementState(edge.id, []))
+          scheduleHide()
+        },
+      },
     ],
-  })
-
-  graph.on('node:pointerenter', (e) => {
-    const id = e.target?.id
-    if (!id) return
-    const node = props.data.nodes.find(n => n.id === id)
-    if (!node) return
-    tooltip.label = node.label
-    tooltip.ip = node.ip || ''
-    tooltip.status = node.status
-    tooltip.metrics = node.metrics ? Object.entries(node.metrics).map(([k, v]) => k + ':' + v).join(' ') : ''
-    const canvasRect = container.value.getBoundingClientRect()
-    tooltip.x = canvasRect.left + (e.canvas?.x ?? e.client?.x ?? 0) + 12
-    tooltip.y = canvasRect.top + (e.canvas?.y ?? e.client?.y ?? 0) - 10
-    tooltip.visible = true
-    cancelHide()
-    if (graph) graph.setItemState(id, 'active', true)
-  })
-
-  graph.on('node:pointerleave', (e) => {
-    const id = e.target?.id
-    if (id && graph) graph.setItemState(id, 'active', false)
-    scheduleHide()
   })
 
   graph.on('node:click', (e) => {
     const id = e.target?.id
-    if (!id) return
+    if (!id || !graph) return
     tooltip.visible = false
-    if (graph) {
-      graph.getNodeData().forEach(n => graph.setItemState(n.id, 'selected', false))
-      graph.setItemState(id, 'selected', true)
-      graph.focusElement(id, { animation: { duration: 400 } })
-    }
+    graph.getNodeData().forEach(n => graph.setElementState(n.id, []))
+    graph.setElementState(id, 'selected')
+    graph.focusElement(id, { animation: { duration: 400 } })
   })
 
   await graph.render()
@@ -174,7 +194,7 @@ function zoomIn() { if (graph) { zoomLevel.value = Math.min(zoomLevel.value + 0.
 function zoomOut() { if (graph) { zoomLevel.value = Math.max(zoomLevel.value - 0.2, 0.3); graph.zoomTo(zoomLevel.value) } }
 function fitView() { if (graph) { zoomLevel.value = 1; graph.fitView({ padding: 40 }) } }
 
-function statusText(s) { return { normal: '正常', warning: '警告', error: '异常' }[s] || s }
+function statusText(s) { return { normal: '正常', warning: '警告', error: '异常', critical: '异常' }[s] || s }
 function scheduleHide() { hideTimer = setTimeout(() => { tooltip.visible = false }, 150) }
 function cancelHide() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = null } }
 function hideTooltip() { tooltip.visible = false }
@@ -199,7 +219,7 @@ watch(() => props.data, () => {
 .mt-legend { display: flex; gap: 12px; margin-left: auto; font-size: 11px; color: #8c8c8c; }
 .mt-legend-item { display: flex; align-items: center; gap: 4px; }
 .mt-dot { width: 6px; height: 6px; border-radius: 50%; }
-.mt-dot.dot-normal { background: #52c41a; }
+.mt-dot.dot-normal { background: #1890ff; }
 .mt-dot.dot-warning { background: #fa8c16; }
 .mt-dot.dot-error { background: #f5222d; }
 .mt-canvas { flex: 1; min-height: 300px; height: calc(100vh - 200px); }
@@ -208,7 +228,7 @@ watch(() => props.data, () => {
 .mt-tip-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 3px; }
 .mt-tip-label { color: #8c8c8c; min-width: 32px; }
 .mt-tip-value { color: #1a1a1a; }
-.mt-tip-normal { color: #52c41a; font-weight: 500; }
+.mt-tip-normal { color: #1890ff; font-weight: 500; }
 .mt-tip-warning { color: #fa8c16; font-weight: 500; }
 .mt-tip-error { color: #f5222d; font-weight: 500; }
 </style>
