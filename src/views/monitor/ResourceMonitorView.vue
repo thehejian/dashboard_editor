@@ -592,7 +592,9 @@ onMounted(async function() {
 
 .card-grid {
   display: grid;
+  grid-auto-flow: column;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-rows: repeat(2, 1fr);
   gap: 12px;
 }
 .carousel-wrap {
