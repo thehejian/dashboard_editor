@@ -26,18 +26,9 @@
             </template>
           </a-dropdown>
 
-          <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'resource'" @openChange="openNav('resource')">
-            <span class="nav-item" :class="{ active: $route.path.startsWith('/resource') }">
-              <i class="fa-solid fa-server"></i><span>资源</span> <i class="fa-solid fa-chevron-down"></i>
-            </span>
-            <template #overlay>
-              <a-menu @click="handleNavClick">
-                <a-menu-item key="/resource/list">资产列表</a-menu-item>
-                <a-menu-item key="/resource/topology">资产拓扑</a-menu-item>
-                <a-menu-item key="/resource/changes">变更记录</a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
+          <router-link to="/resource/list" class="nav-item" :class="{ active: $route.path.startsWith('/resource') }">
+            <i class="fa-solid fa-server"></i><span>资源</span>
+          </router-link>
 
           <a-dropdown :trigger="['click']" class="nav-dropdown" :open="activeNav === 'ops'" @openChange="openNav('ops')">
             <span class="nav-item" :class="{ active: $route.path.startsWith('/ops') }">

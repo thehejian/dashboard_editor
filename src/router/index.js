@@ -34,7 +34,18 @@ const routes = [
   { path: '/monitor/config', name: 'monitor-config', component: () => import('../views/monitor/MonitorConfigView.vue') },
   { path: '/monitor/topology', name: 'monitor-topology', component: () => import('../views/monitor/TopologyView.vue') },
 
-  { path: '/resource/list', name: 'resource-list', component: () => import('../views/resource/AssetListView.vue') },
+  {
+    path: '/resource/list',
+    component: () => import('../views/resource/ResourcePortalView.vue'),
+    children: [
+      { path: '', redirect: '/resource/list/overview' },
+      { path: 'overview', component: () => import('../views/resource/portal/OverviewView.vue') },
+      { path: 'discovery', component: () => import('../views/resource/portal/DiscoveryView.vue') },
+      { path: 'manage', component: () => import('../views/resource/portal/ManageView.vue') },
+      { path: 'audit', component: () => import('../views/resource/portal/AuditView.vue') },
+    ]
+  },
+  { path: '/resource/portal', redirect: '/resource/list' },
   { path: '/resource/topology', name: 'resource-topology', component: () => import('../views/resource/AssetTopologyView.vue') },
   { path: '/resource/changes', name: 'resource-changes', component: () => import('../views/resource/ChangesView.vue') },
 
