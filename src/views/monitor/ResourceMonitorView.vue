@@ -269,7 +269,7 @@ const filteredData = computed(() => {
   else if (mainTab.value === 'physical') base = physicalData
   else base = appData
   if (currentSubType.value) {
-    base = base.filter(item => item.subType === currentSubType.value)
+    base = base.filter(item => (item.subType || item.appLevel) === currentSubType.value)
   }
   if (!searchText.value) return base
   const kw = searchText.value.toLowerCase()
@@ -287,15 +287,21 @@ const cardGroups = [
 ]
 
 const cardGroupsComputed = computed(() => {
-  let groups = cardGroups
-  if (mainTab.value !== 'all') {
-    groups = cardGroups.filter(g => g.key === mainTab.value)
+  let groups
+  if (mainTab.value === 'all') {
+    groups = cardGroups.map(g => ({ ...g }))
+  } else {
+    const parent = cardGroups.find(g => g.key === mainTab.value)
+    const subs = (subTabMap[mainTab.value] || []).filter(s => s.subType)
+    groups = subs.map(s => ({
+      key: s.subType,
+      label: s.label,
+      icon: parent?.icon || 'fa-solid fa-cube',
+      items: parent.items.filter(item => (item.subType || item.appLevel) === s.subType),
+    }))
   }
   return groups.map(g => {
     let items = g.items
-    if (currentSubType.value) {
-      items = items.filter(item => item.subType === currentSubType.value)
-    }
     items = items
       .filter(item =>
         !searchText.value || item.name.toLowerCase().includes(searchText.value.toLowerCase()) || (item.identifier || '').toLowerCase().includes(searchText.value.toLowerCase())

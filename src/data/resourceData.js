@@ -163,7 +163,7 @@ export function buildCascaderTree(cardGroups) {
       value: sub.label,
       children: sub.subType
         ? group.items
-            .filter(item => item.subType === sub.subType)
+            .filter(item => (item.subType || item.appLevel) === sub.subType)
             .map(item => ({ label: item.name, value: item.id, ...item }))
         : group.items.map(item => ({ label: item.name, value: item.id, ...item }))
     }))

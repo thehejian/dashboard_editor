@@ -11,7 +11,7 @@
               <i class="fa-solid fa-chevron-down"></i>
             </button>
             <template #overlay>
-              <div class="rdp-switch-panel" @click.stop>
+              <div class="rdp-switch-panel" ref="switchPanelRef" @click.stop>
                 <a-input-search
                   v-model:value="switchSearch"
                   placeholder="搜索资源名称..."
@@ -22,6 +22,7 @@
                   v-model:value="switchValue"
                   :options="filteredSwitchOptions"
                   :fieldNames="{ label: 'label', value: 'value', children: 'children' }"
+                  :getPopupContainer="() => switchPanelRef || document.body"
                   placeholder="选择资源分类"
                   expandTrigger="hover"
                   class="rdp-switch-cascader"
@@ -64,7 +65,7 @@
         </div>
       </teleport>
 
-      <div class="rdp-tab-content" v-show="state.activeTab === 'overview'"><OverviewPanel /></div>
+      <div class="rdp-tab-content" v-show="state.activeTab === 'overview'"><OverviewPanel :resource="state.currentResource" /></div>
       <div class="rdp-tab-content" v-show="state.activeTab === 'topology'"><MiniTopology v-if="state.activeTab === 'topology'" :data="topoData" :currentId="'current'" /></div>
       <div class="rdp-tab-content" v-show="state.activeTab === 'alarm'"><AlarmTable :data="alarmData" /></div>
       <div class="rdp-tab-content" v-show="state.activeTab === 'trace'"><TraceWaterfall v-if="state.activeTab === 'trace'" :data="traceData" /></div>
@@ -143,17 +144,25 @@ const resourceTags = computed(() => {
 
 const switchDropdownOpen = ref(false)
 const switchSearch = ref('')
-const switchValue = ref([])
+const switchValue = ref(['all', '全部'])
+const switchPanelRef = ref(null)
 
 const cascaderTree = computed(() => {
-  const allItems = [
+  const merged = [
+    ...(state.allResources.appData || []),
+    ...(state.allResources.cloudServiceData || []),
+    ...(state.allResources.cloudResData || []),
+    ...(state.allResources.virtualData || []),
+    ...(state.allResources.physicalData || []),
+  ]
+  return [
+    ...buildCascaderTree([{ key: 'all', label: '全部', items: merged }]),
     ...buildCascaderTree([{ key: 'app', label: '业务应用', items: state.allResources.appData || [] }]),
     ...buildCascaderTree([{ key: 'cloud', label: '云服务', items: state.allResources.cloudServiceData || [] }]),
     ...buildCascaderTree([{ key: 'cloud-resource', label: '云资源', items: state.allResources.cloudResData || [] }]),
     ...buildCascaderTree([{ key: 'virtual', label: '虚拟资源池', items: state.allResources.virtualData || [] }]),
     ...buildCascaderTree([{ key: 'physical', label: '物理资源', items: state.allResources.physicalData || [] }]),
   ]
-  return allItems
 })
 
 const filteredSwitchOptions = computed(() => {
@@ -173,7 +182,7 @@ function onSwitchChange(val) {
   const id = val[2]
   switchResource(id)
   switchDropdownOpen.value = false
-  switchValue.value = []
+  switchValue.value = ['all', '全部']
   switchSearch.value = ''
 }
 </script>
@@ -217,6 +226,11 @@ function onSwitchChange(val) {
 </style>
 
 <style>
+.rdp-switch-panel { width: 340px; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; }
+.rdp-switch-search { margin-bottom: 10px; }
+.rdp-switch-cascader { width: 100%; }
+.rdp-switch-cascader .ant-cascader-menu { min-width: 150px; max-height: 300px; }
+
 .ops-dropdown { background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; padding: 4px; min-width: 160px; }
 .ops-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #1a1a1a; transition: background 0.12s; }
 .ops-dropdown-item:hover { background: #f0f5ff; }
