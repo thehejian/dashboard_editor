@@ -66,7 +66,7 @@ async function initGraph() {
       labelFill: '#333',
       labelFontWeight: '500',
       labelBackground: true,
-      labelBackgroundFill: '#f9f9fa',
+      labelBackgroundFill: '#ffffff',
       labelBackgroundOpacity: 0.9,
       labelBackgroundRadius: 4,
       labelPadding: [2, 6],

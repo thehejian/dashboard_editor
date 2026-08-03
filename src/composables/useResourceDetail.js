@@ -1,11 +1,15 @@
 import { reactive, computed } from 'vue'
 import { TOPO_MOCK, ALARM_MOCK, TRACE_MOCK, LOG_MOCK, OPERATIONS_MOCK } from '../mock/resourceDetailMock'
+import { buildCascaderTree, subTabMap, appData, cloudServiceData, cloudResData, virtualData, physicalData } from '../data/resourceData'
+
+const allResources = { appData, cloudServiceData, cloudResData, virtualData, physicalData }
 
 const state = reactive({
   open: false,
   activeTab: 'overview',
   currentResource: null,
   opsGroupKey: 'auto-job',
+  allResources,
 })
 
 function openDetail(resource) {
@@ -27,6 +31,17 @@ function switchTab(tab) {
 function setOpsGroup(key) {
   state.opsGroupKey = key
   state.activeTab = 'ops'
+}
+
+function switchResource(idOrResource) {
+  if (typeof idOrResource === 'object') {
+    state.currentResource = idOrResource
+    return
+  }
+  const id = Number(idOrResource)
+  const all = [...allResources.appData, ...allResources.cloudServiceData, ...allResources.cloudResData, ...allResources.virtualData, ...allResources.physicalData]
+  const found = all.find(r => r.id === id)
+  if (found) state.currentResource = found
 }
 
 const topoData = computed(() => TOPO_MOCK)
@@ -68,6 +83,9 @@ export function useResourceDetail() {
     closeDetail,
     switchTab,
     setOpsGroup,
+    switchResource,
+    buildCascaderTree,
+    subTabMap,
     topoData,
     alarmData,
     traceData,

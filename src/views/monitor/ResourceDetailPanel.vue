@@ -6,6 +6,30 @@
         <div class="rdp-header-left">
           <span class="rdp-status-dot" :class="'dot-' + (state.currentResource.alertStatus === '紧急' ? 'error' : 'normal')"></span>
           <h3>{{ state.currentResource.name }}</h3>
+          <a-dropdown :trigger="['click']" placement="bottomLeft" :visible="switchDropdownOpen" @visibleChange="v => switchDropdownOpen = v">
+            <button class="rdp-switch-btn" @click.prevent>
+              <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <template #overlay>
+              <div class="rdp-switch-panel" @click.stop>
+                <a-input-search
+                  v-model:value="switchSearch"
+                  placeholder="搜索资源名称..."
+                  class="rdp-switch-search"
+                  allowClear
+                />
+                <a-cascader
+                  v-model:value="switchValue"
+                  :options="filteredSwitchOptions"
+                  :fieldNames="{ label: 'label', value: 'value', children: 'children' }"
+                  placeholder="选择资源分类"
+                  expandTrigger="hover"
+                  class="rdp-switch-cascader"
+                  @change="onSwitchChange"
+                />
+              </div>
+            </template>
+          </a-dropdown>
           <a-tag :color="state.currentResource.alertStatus === '紧急' ? 'red' : 'green'" size="small">
             {{ state.currentResource.alertStatus }}
           </a-tag>
@@ -59,6 +83,7 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useResourceDetail } from '../../composables/useResourceDetail'
+import { buildCascaderTree } from '../../data/resourceData'
 import MiniTopology from '../../components/resource-detail/MiniTopology.vue'
 import AlarmTable from '../../components/resource-detail/AlarmTable.vue'
 import TraceWaterfall from '../../components/resource-detail/TraceWaterfall.vue'
@@ -66,7 +91,7 @@ import LogList from '../../components/resource-detail/LogList.vue'
 import OperationsPanel from '../../components/resource-detail/OperationsPanel.vue'
 import OverviewPanel from '../../components/resource-detail/OverviewPanel.vue'
 
-const { state, closeDetail, setOpsGroup, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
+const { state, closeDetail, setOpsGroup, switchResource, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
 
 const OPS_OPTIONS = [
   { key: 'auto-job', label: '自动作业', icon: 'fa-solid fa-robot' },
@@ -115,6 +140,42 @@ const resourceTags = computed(() => {
   if (r.owner && r.owner !== '--') tags.push(r.owner)
   return tags
 })
+
+const switchDropdownOpen = ref(false)
+const switchSearch = ref('')
+const switchValue = ref([])
+
+const cascaderTree = computed(() => {
+  const allItems = [
+    ...buildCascaderTree([{ key: 'app', label: '业务应用', items: state.allResources.appData || [] }]),
+    ...buildCascaderTree([{ key: 'cloud', label: '云服务', items: state.allResources.cloudServiceData || [] }]),
+    ...buildCascaderTree([{ key: 'cloud-resource', label: '云资源', items: state.allResources.cloudResData || [] }]),
+    ...buildCascaderTree([{ key: 'virtual', label: '虚拟资源池', items: state.allResources.virtualData || [] }]),
+    ...buildCascaderTree([{ key: 'physical', label: '物理资源', items: state.allResources.physicalData || [] }]),
+  ]
+  return allItems
+})
+
+const filteredSwitchOptions = computed(() => {
+  if (!switchSearch.value) return cascaderTree.value
+  const q = switchSearch.value.toLowerCase()
+  return cascaderTree.value.map(group => ({
+    ...group,
+    children: group.children.map(sub => ({
+      ...sub,
+      children: sub.children.filter(item => item.label.toLowerCase().includes(q))
+    })).filter(sub => sub.children.length > 0)
+  })).filter(group => group.children.length > 0)
+})
+
+function onSwitchChange(val) {
+  if (!val || val.length < 3) return
+  const id = val[2]
+  switchResource(id)
+  switchDropdownOpen.value = false
+  switchValue.value = []
+  switchSearch.value = ''
+}
 </script>
 
 <style scoped>
@@ -142,6 +203,9 @@ const resourceTags = computed(() => {
 .ops-chevron { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 3px; cursor: pointer; font-size: 8px; color: #8c8c8c; transition: all 0.15s; margin-left: 2px; }
 .ops-chevron:hover { background: rgba(0,0,0,0.06); color: #1890ff; }
 
+.rdp-switch-btn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: none; background: transparent; border-radius: 4px; cursor: pointer; font-size: 9px; color: #8c8c8c; transition: all 0.15s; flex-shrink: 0; }
+.rdp-switch-btn:hover { background: rgba(0,0,0,0.06); color: #1890ff; }
+
 .rdp-footer { display: flex; gap: 20px; padding: 10px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0; }
 .rdp-footer-link { font-size: 12px; color: #8c8c8c; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
 .rdp-footer-link:hover { color: #1890ff; }
@@ -158,4 +222,8 @@ const resourceTags = computed(() => {
 .ops-dropdown-item:hover { background: #f0f5ff; }
 .ops-dropdown-item.active { background: #e6f4ff; color: #1890ff; font-weight: 500; }
 .ops-dropdown-icon { width: 16px; text-align: center; color: #1890ff; font-size: 12px; }
+
+.rdp-switch-panel { background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; padding: 12px; min-width: 400px; }
+.rdp-switch-search { margin-bottom: 8px; }
+.rdp-switch-cascader { width: 100%; }
 </style>
