@@ -562,14 +562,14 @@ onMounted(async function() {
 .card-grid {
   display: grid;
   grid-auto-flow: column;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, 210px);
   grid-template-rows: repeat(2, 1fr);
   gap: 12px;
 }
 .carousel-wrap {
   position: relative;
   overflow: hidden;
-  max-height: 154px;
+  max-height: 128px;
 }
 .carousel-wrap:hover .carousel-btn { opacity: 1; }
 .carousel-btn {
@@ -597,11 +597,11 @@ onMounted(async function() {
 .res-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: #fff;
   border: 1px solid rgba(0,0,0,0.04);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 8px 12px;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
@@ -610,15 +610,15 @@ onMounted(async function() {
   border-color: #1890ff;
 }
 .res-icon {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   background: rgba(24, 144, 255, 0.1);
   color: #1890ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 .res-icon.alert {
