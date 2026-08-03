@@ -6,31 +6,19 @@
         <div class="rdp-header-left">
           <span class="rdp-status-dot" :class="'dot-' + (state.currentResource.alertStatus === '紧急' ? 'error' : 'normal')"></span>
           <h3>{{ state.currentResource.name }}</h3>
-          <a-dropdown :trigger="['click']" placement="bottomLeft" :visible="switchDropdownOpen" @visibleChange="v => switchDropdownOpen = v">
+          <a-cascader
+            v-model:value="switchValue"
+            :options="filteredSwitchOptions"
+            :fieldNames="{ label: 'label', value: 'value', children: 'children' }"
+            expandTrigger="hover"
+            :dropdownRender="renderSwitchDropdown"
+            @change="onSwitchChange"
+            @popup-visible-change="onSwitchPopupVisibleChange"
+          >
             <button class="rdp-switch-btn" @click.prevent>
               <i class="fa-solid fa-chevron-down"></i>
             </button>
-            <template #overlay>
-              <div class="rdp-switch-panel" ref="switchPanelRef" @click.stop>
-                <a-input-search
-                  v-model:value="switchSearch"
-                  placeholder="搜索资源名称..."
-                  class="rdp-switch-search"
-                  allowClear
-                />
-                <a-cascader
-                  v-model:value="switchValue"
-                  :options="filteredSwitchOptions"
-                  :fieldNames="{ label: 'label', value: 'value', children: 'children' }"
-                  :getPopupContainer="() => switchPanelRef || document.body"
-                  placeholder="选择资源分类"
-                  expandTrigger="hover"
-                  class="rdp-switch-cascader"
-                  @change="onSwitchChange"
-                />
-              </div>
-            </template>
-          </a-dropdown>
+          </a-cascader>
           <a-tag :color="state.currentResource.alertStatus === '紧急' ? 'red' : 'green'" size="small">
             {{ state.currentResource.alertStatus }}
           </a-tag>
@@ -82,9 +70,10 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, h, onMounted, onBeforeUnmount } from 'vue'
 import { useResourceDetail } from '../../composables/useResourceDetail'
 import { buildCascaderTree } from '../../data/resourceData'
+import { Input } from 'ant-design-vue'
 import MiniTopology from '../../components/resource-detail/MiniTopology.vue'
 import AlarmTable from '../../components/resource-detail/AlarmTable.vue'
 import TraceWaterfall from '../../components/resource-detail/TraceWaterfall.vue'
@@ -142,10 +131,28 @@ const resourceTags = computed(() => {
   return tags
 })
 
-const switchDropdownOpen = ref(false)
 const switchSearch = ref('')
-const switchValue = ref(['all', '全部'])
-const switchPanelRef = ref(null)
+const switchValue = ref([])
+
+watch(() => state.currentResource, r => {
+  switchValue.value = r ? [r.type, r.subType || r.appLevel, r.id] : []
+}, { immediate: true })
+
+const renderSwitchDropdown = ({ menuNode }) =>
+  h('div', { class: 'rdp-switch-panel', onClick: e => e.stopPropagation() }, [
+    h(Input.Search, {
+      value: switchSearch.value,
+      placeholder: '搜索资源名称...',
+      allowClear: true,
+      class: 'rdp-switch-search',
+      'onUpdate:value': v => { switchSearch.value = v },
+    }),
+    h('div', { class: 'rdp-switch-menus' }, [menuNode]),
+  ])
+
+function onSwitchPopupVisibleChange(open) {
+  if (!open) switchSearch.value = ''
+}
 
 const cascaderTree = computed(() => {
   const merged = [
@@ -156,7 +163,7 @@ const cascaderTree = computed(() => {
     ...(state.allResources.physicalData || []),
   ]
   return [
-    ...buildCascaderTree([{ key: 'all', label: '全部', items: merged }]),
+    { label: '全部', value: 'all', children: merged.map(item => ({ label: item.name, value: item.id, ...item })) },
     ...buildCascaderTree([{ key: 'app', label: '业务应用', items: state.allResources.appData || [] }]),
     ...buildCascaderTree([{ key: 'cloud', label: '云服务', items: state.allResources.cloudServiceData || [] }]),
     ...buildCascaderTree([{ key: 'cloud-resource', label: '云资源', items: state.allResources.cloudResData || [] }]),
@@ -168,21 +175,18 @@ const cascaderTree = computed(() => {
 const filteredSwitchOptions = computed(() => {
   if (!switchSearch.value) return cascaderTree.value
   const q = switchSearch.value.toLowerCase()
-  return cascaderTree.value.map(group => ({
-    ...group,
-    children: group.children.map(sub => ({
-      ...sub,
-      children: sub.children.filter(item => item.label.toLowerCase().includes(q))
-    })).filter(sub => sub.children.length > 0)
-  })).filter(group => group.children.length > 0)
+  const filterNode = node => {
+    if (!node.children) return node.label.toLowerCase().includes(q) ? node : null
+    const children = node.children.map(filterNode).filter(Boolean)
+    return (children.length || node.label.toLowerCase().includes(q)) ? { ...node, children } : null
+  }
+  return cascaderTree.value.map(filterNode).filter(Boolean)
 })
 
 function onSwitchChange(val) {
-  if (!val || val.length < 3) return
-  const id = val[2]
+  if (!val || val.length < 2) return
+  const id = val[0] === 'all' ? val[1] : val[2]
   switchResource(id)
-  switchDropdownOpen.value = false
-  switchValue.value = ['all', '全部']
   switchSearch.value = ''
 }
 </script>
@@ -226,18 +230,15 @@ function onSwitchChange(val) {
 </style>
 
 <style>
-.rdp-switch-panel { width: 340px; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; }
-.rdp-switch-search { margin-bottom: 10px; }
-.rdp-switch-cascader { width: 100%; }
-.rdp-switch-cascader .ant-cascader-menu { min-width: 150px; max-height: 300px; }
+.rdp-switch-panel { background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; padding: 12px; }
+.rdp-switch-search { margin-bottom: 8px; }
+.rdp-switch-menus .ant-cascader-menu { min-width: 150px; max-height: 300px; }
+.rdp-switch-menus .ant-cascader-menu:last-child .ant-cascader-menu-item { white-space: nowrap; }
+.ant-cascader-dropdown { z-index: 1100 !important; }
 
 .ops-dropdown { background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; padding: 4px; min-width: 160px; }
 .ops-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #1a1a1a; transition: background 0.12s; }
 .ops-dropdown-item:hover { background: #f0f5ff; }
 .ops-dropdown-item.active { background: #e6f4ff; color: #1890ff; font-weight: 500; }
 .ops-dropdown-icon { width: 16px; text-align: center; color: #1890ff; font-size: 12px; }
-
-.rdp-switch-panel { background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; padding: 12px; min-width: 400px; }
-.rdp-switch-search { margin-bottom: 8px; }
-.rdp-switch-cascader { width: 100%; }
 </style>
