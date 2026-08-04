@@ -34,7 +34,14 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
   expect(criticalRows).toBeLessThan(rows)
 
   const apps = await page.locator('.app-card').count()
-  expect(apps).toBe(24)
+  expect(apps).toBe(8)
+  await expect(page.locator('.ab-badge.ab-critical')).toHaveText('严重 1')
+  await expect(page.locator('.ab-badge.ab-warning')).toHaveText('警告 7')
+
+  await page.locator('.title-toggle .ant-radio-button-wrapper', { hasText: '全部' }).click()
+  await page.waitForTimeout(300)
+  expect(await page.locator('.app-card').count()).toBe(24)
+  await page.locator('.title-toggle .ant-radio-button-wrapper', { hasText: '仅异常' }).click()
 
   const overflow = await page.evaluate(() => {
     const el = document.querySelector('.aiops-smart')

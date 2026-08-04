@@ -166,9 +166,19 @@
       </div>
 
       <div class="aiops-heatmap" v-if="aiopsApps.length">
-        <div class="aiops-section-title"><i class="fa-solid fa-heart-pulse"></i> 应用 / 云服务健康度</div>
+        <div class="aiops-section-title">
+          <span class="title-text"><i class="fa-solid fa-heart-pulse"></i> 需关注的应用 / 云服务</span>
+          <span class="title-badges">
+            <span class="ab-badge ab-critical">严重 {{ abnormalAppCounts.critical }}</span>
+            <span class="ab-badge ab-warning">警告 {{ abnormalAppCounts.warning }}</span>
+          </span>
+          <a-radio-group v-model:value="appFilter" size="small" button-style="solid" class="title-toggle">
+            <a-radio-button value="abnormal">仅异常</a-radio-button>
+            <a-radio-button value="all">全部</a-radio-button>
+          </a-radio-group>
+        </div>
         <div class="app-grid">
-          <div v-for="app in aiopsApps" :key="app.name" class="app-card" :class="'app-' + app.status" @click="openAppDrawer(app)">
+          <div v-for="app in visibleApps" :key="app.name" class="app-card" :class="'app-' + app.status" @click="openAppDrawer(app)">
             <div class="app-card-head">
               <span class="app-card-name">{{ app.name }}</span>
               <span class="app-card-type">{{ app.type }}</span>
@@ -799,6 +809,17 @@ const aiopsServiceHealth = ref([])
 const aiopsApps = ref([])
 const activeApp = ref(null)
 const appDrawerOpen = ref(false)
+const appFilter = ref('abnormal')
+
+const visibleApps = computed(() => {
+  if (appFilter.value === 'all') return aiopsApps.value
+  return aiopsApps.value.filter(a => a.status !== 'normal')
+})
+const abnormalAppCounts = computed(() => {
+  const c = { critical: 0, warning: 0 }
+  aiopsApps.value.forEach(a => { if (c[a.status] != null) c[a.status]++ })
+  return c
+})
 const aiopsAnomalies = ref([])
 const aiopsRootCause = ref(null)
 const aiopsPropagationPath = ref([])
@@ -2172,7 +2193,13 @@ const refreshCard = (card) => {
 .kpi-ok { color: #07C160; }
 
 .aiops-heatmap { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-.aiops-section-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text, #182431); }
+.aiops-section-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text, #182431); display: flex; align-items: center; gap: 10px; }
+.title-text { display: inline-flex; align-items: center; gap: 6px; }
+.title-badges { display: inline-flex; gap: 6px; }
+.ab-badge { font-size: 11px; padding: 1px 8px; border-radius: 8px; font-weight: 500; }
+.ab-badge.ab-critical { color: #F5222D; background: #FFF1F0; }
+.ab-badge.ab-warning { color: #FF7D00; background: #FFF7E6; }
+.title-toggle { margin-left: auto; }
 .app-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
 .app-card {
   border: 1px solid #E8E8E8; border-radius: 8px; padding: 10px;
