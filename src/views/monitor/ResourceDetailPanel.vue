@@ -6,6 +6,14 @@
         <div class="rdp-header-left">
           <span class="rdp-status-dot" :class="'dot-' + (state.currentResource.alertStatus === '紧急' ? 'error' : 'normal')"></span>
           <h3>{{ state.currentResource.name }}</h3>
+          <button
+            class="rdp-focus-btn"
+            :class="{ active: isFocused(state.currentResource.id) }"
+            :title="isFocused(state.currentResource.id) ? '取消关注' : '关注'"
+            @click="toggleFocus(state.currentResource)"
+          >
+            <i class="fa-solid fa-star"></i>
+          </button>
           <a-cascader
             v-model:value="switchValue"
             :options="filteredSwitchOptions"
@@ -72,6 +80,7 @@
 <script setup>
 import { computed, ref, watch, h, onMounted, onBeforeUnmount } from 'vue'
 import { useResourceDetail } from '../../composables/useResourceDetail'
+import { useResourceFilters } from '../../composables/useResourceFilters'
 import { buildCascaderTree } from '../../data/resourceData'
 import { Input } from 'ant-design-vue'
 import MiniTopology from '../../components/resource-detail/MiniTopology.vue'
@@ -82,6 +91,7 @@ import OperationsPanel from '../../components/resource-detail/OperationsPanel.vu
 import OverviewPanel from '../../components/resource-detail/OverviewPanel.vue'
 
 const { state, closeDetail, setOpsGroup, switchResource, topoData, alarmData, traceData, logData, operationsData } = useResourceDetail()
+const { state: filterState, isFocused, toggleFocus, recordVisit } = useResourceFilters()
 
 const OPS_OPTIONS = [
   { key: 'auto-job', label: '自动作业', icon: 'fa-solid fa-robot' },
@@ -204,6 +214,9 @@ function onSwitchChange(val) {
 .rdp-status-dot.dot-normal { background: #52c41a; }
 .rdp-status-dot.dot-warning { background: #fa8c16; }
 .rdp-status-dot.dot-error { background: #f5222d; }
+.rdp-focus-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 13px; color: #d9d9d9; flex-shrink: 0; transition: all 0.15s; }
+.rdp-focus-btn:hover { background: #fff7e6; }
+.rdp-focus-btn.active { color: #faad14; }
 .rdp-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 16px; color: #8c8c8c; flex-shrink: 0; transition: all 0.15s; }
 .rdp-close:hover { background: #f0f0f0; color: #1a1a1a; }
 
