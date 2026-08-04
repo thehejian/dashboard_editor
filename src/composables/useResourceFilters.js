@@ -32,6 +32,18 @@ function snapshot(resource) {
   }
 }
 
+const groupIconMap = {
+  app: 'fa-solid fa-circle-nodes',
+  cloud: 'fa-solid fa-cloud',
+  'cloud-resource': 'fa-solid fa-server',
+  virtual: 'fa-solid fa-layer-group',
+  physical: 'fa-solid fa-microchip',
+}
+
+function getGroupIcon(groupKey) {
+  return groupIconMap[groupKey] || 'fa-solid fa-folder'
+}
+
 const state = reactive({
   panelCollapsed: false,
   scope: 'all',
@@ -40,7 +52,10 @@ const state = reactive({
   runs: [],
   focused: load(LS_FOCUSED, []),
   focusedGroups: load(LS_FOCUSED_GROUPS, []),
-  focusedSubs: load(LS_FOCUSED_SUBS, []),
+  focusedSubs: load(LS_FOCUSED_SUBS, []).map(s => ({
+    ...s,
+    icon: s.icon || getGroupIcon(s.groupKey),
+  })),
   recent: load(LS_RECENT, []),
 })
 
