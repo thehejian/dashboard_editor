@@ -73,7 +73,7 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
   await expect(drawer.locator('.app-summary')).toBeVisible()
   await expect(drawer.locator('.app-summary-trend')).toBeVisible()
   await expect(drawer.locator('.app-summary-badges')).toBeVisible()
-  await expect(drawer.locator('.app-meta-item')).toHaveCount(4)
+  await expect(drawer.locator('.app-meta-chip')).toHaveCount(4)
   await expect(drawer.locator('.app-summary-tip')).toBeVisible()
   await expect(drawer.locator('.fault-tabs')).toBeVisible()
 
