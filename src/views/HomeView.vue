@@ -656,15 +656,42 @@
 
         <div class="app-drawer-body">
           <div class="app-summary" v-if="activeApp">
-            <div class="app-summary-status" :class="'app-' + activeApp.status">
-              <span class="app-summary-score">{{ activeApp.score }}</span>
-              <span class="app-summary-status-text">{{ { critical: '严重异常', warning: '需要关注', normal: '运行正常' }[activeApp.status] }}</span>
+            <div class="app-summary-left">
+              <div class="app-summary-status" :class="'app-' + activeApp.status">
+                <span class="app-summary-score">{{ activeApp.score }}</span>
+                <span class="app-summary-status-text">{{ { critical: '严重异常', warning: '需要关注', normal: '运行正常' }[activeApp.status] }}</span>
+              </div>
+              <div class="app-summary-trend" v-if="activeAppTrend">
+                <svg class="kpi-sparkline" width="72" height="26" viewBox="0 0 72 26">
+                  <path :d="activeAppTrend.path" fill="none" :stroke="activeApp.status === 'critical' ? '#F5222D' : activeApp.status === 'warning' ? '#FF7D00' : '#07C160'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="app-summary-trend-text" :class="activeAppTrend.diff < 0 ? 'trend-down' : 'trend-up'">
+                  {{ activeAppTrend.diff < 0 ? '↓' : '↑' }} {{ Math.abs(activeAppTrend.diff) }} / 采样点
+                </span>
+              </div>
+              <div class="app-summary-badges">
+                <span class="ab-badge ab-critical" v-if="activeAppFaultCounts.critical">严重 {{ activeAppFaultCounts.critical }}</span>
+                <span class="ab-badge ab-warning" v-if="activeAppFaultCounts.warning">警告 {{ activeAppFaultCounts.warning }}</span>
+                <span class="ab-badge ab-normal" v-if="activeAppFaultCounts.normal">正常 {{ activeAppFaultCounts.normal }}</span>
+              </div>
             </div>
             <div class="app-summary-meta">
-              <div class="app-meta-item"><span class="am-label">类型</span><span class="am-value">{{ activeApp.type }}</span></div>
-              <div class="app-meta-item"><span class="am-label">故障节点</span><span class="am-value" :class="{ 'am-danger': activeAppFaultNodes.length }">{{ activeAppFaultNodes.length }} 个</span></div>
-              <div class="app-meta-item"><span class="am-label">健康分</span><span class="am-value">{{ activeApp.score }}</span></div>
+              <div class="app-meta-item">
+                <span class="am-label">根因</span>
+                <span class="am-value" v-if="activeAppIsRoot"><span class="root-badge">根因</span> {{ aiopsRootCause.metric }}</span>
+                <span class="am-value" v-else>非根因</span>
+              </div>
+              <div class="app-meta-item"><span class="am-label">异常数</span><span class="am-value" :class="{ 'am-danger': activeAppAnomalies.length }">{{ activeAppAnomalies.length }} 条</span></div>
+              <div class="app-meta-item" v-if="activeAppSevereAnomaly">
+                <span class="am-label">严重指标</span>
+                <span class="am-value">{{ activeAppSevereAnomaly.metric }} {{ activeAppSevereAnomaly.currentValue }}{{ activeAppSevereAnomaly.metric.includes('率') || activeAppSevereAnomaly.metric.includes('比') ? '%' : '' }}</span>
+              </div>
+              <div class="app-meta-item" v-if="activeAppDuration"><span class="am-label">影响时长</span><span class="am-value">{{ activeAppDuration }}</span></div>
             </div>
+          </div>
+          <div class="app-summary-tip" v-if="activeAppSummaryText">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color:#722ED1;margin-right:6px"></i>
+            {{ activeAppSummaryText }}
           </div>
 
           <template v-if="activeAppFaultNodes.length">
@@ -886,6 +913,48 @@ const faultNodes = computed(() => {
 const activeAppFaultNodes = computed(() => {
   if (!activeApp.value?.nodes?.length) return []
   return faultNodes.value.filter(n => activeApp.value.nodes.includes(n.nodeId))
+})
+
+const activeAppAnomalies = computed(() => {
+  const ids = new Set(activeAppFaultNodes.value.map(n => n.nodeId))
+  return aiopsAnomalies.value.filter(a => ids.has(a.nodeId))
+})
+const activeAppIsRoot = computed(() => {
+  const ids = new Set(activeAppFaultNodes.value.map(n => n.nodeId))
+  return aiopsRootCause.value && ids.has(aiopsRootCause.value.nodeId)
+})
+const activeAppFaultCounts = computed(() => {
+  const c = { critical: 0, warning: 0, normal: 0 }
+  activeAppAnomalies.value.forEach(a => { if (c[a.level] != null) c[a.level]++ })
+  return c
+})
+const activeAppSevereAnomaly = computed(() => {
+  return activeAppAnomalies.value.reduce((max, a) => a.score > max.score ? a : max, activeAppAnomalies.value[0] || null)
+})
+const activeAppDuration = computed(() => {
+  const times = activeAppAnomalies.value.map(a => a.time).filter(Boolean).sort()
+  if (!times.length) return null
+  const start = new Date(times[0].replace(' ', 'T')).getTime()
+  const now = Date.now()
+  const mins = Math.max(1, Math.round((now - start) / 60000))
+  if (mins >= 60) return `${Math.floor(mins / 60)}小时${mins % 60}分`
+  return `${mins}分钟`
+})
+const activeAppTrend = computed(() => {
+  const h = activeApp.value?.history || []
+  if (h.length < 2) return null
+  const prev = h[h.length - 2]
+  const cur = h[h.length - 1]
+  const diff = cur - prev
+  return { diff, path: calcSparklinePath(h) }
+})
+const activeAppSummaryText = computed(() => {
+  if (!activeAppIsRoot.value) return null
+  const root = aiopsRootCause.value
+  const rec = faultRecommendations.value[0]
+  let text = `${root.nodeLabel} ${root.metric} ${root.currentValue}，偏离基线 ${root.evidence?.deviation}%`
+  if (rec) text += `，建议：${rec.label}`
+  return text
 })
 
 const faultGoldenSignals = computed(() => aiopsGoldenSignalsByNode.value[activeFaultNode.value] || [])
@@ -2288,17 +2357,29 @@ const refreshCard = (card) => {
 .app-drawer .detail-panel-content { width: 80%; right: -80%; }
 .app-drawer-body { flex: 1; overflow-y: auto; padding: 4px 20px 20px; }
 .app-summary {
-  display: flex; align-items: center; gap: 20px; padding: 14px 16px;
+  display: flex; gap: 24px; padding: 14px 16px;
   background: #FAFAFA; border-radius: 10px; margin-bottom: 12px; border: 1px solid #F0F0F0;
 }
-.app-summary-status { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 84px; }
-.app-summary-score { font-size: 26px; font-weight: 700; }
+.app-summary-left { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 84px; }
+.app-summary-status { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.app-summary-score { font-size: 30px; font-weight: 700; line-height: 1; }
 .app-summary-status-text { font-size: 12px; }
-.app-summary-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.app-meta-item { display: flex; justify-content: space-between; font-size: 13px; }
+.app-summary-trend { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.app-summary-trend-text { font-size: 11px; }
+.app-summary-trend-text.trend-down { color: #F5222D; }
+.app-summary-trend-text.trend-up { color: #07C160; }
+.app-summary-badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.ab-badge.ab-normal { color: #07C160; background: #F6FFED; }
+.app-summary-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+.app-meta-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
 .am-label { color: #6B7280; }
 .am-value { font-weight: 600; color: #1A1A1A; }
 .am-danger { color: #F5222D; }
+.app-summary-tip {
+  display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: #6B7280; line-height: 1.6;
+  background: linear-gradient(90deg, rgba(114,46,209,0.06), rgba(0,125,255,0.06));
+  border: 1px solid #EDE4F7; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
+}
 .app-sub-title { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 10px; }
 .app-drawer-body .anomaly-timeline,
 .app-drawer-body .root-cause,

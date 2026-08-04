@@ -52,8 +52,8 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
 
   const apps = await page.locator('.app-card').count()
   expect(apps).toBe(8)
-  await expect(page.locator('.ab-badge.ab-critical')).toHaveText('严重 1')
-  await expect(page.locator('.ab-badge.ab-warning')).toHaveText('警告 7')
+  await expect(page.locator('.aiops-heatmap .ab-badge.ab-critical')).toHaveText('严重 1')
+  await expect(page.locator('.aiops-heatmap .ab-badge.ab-warning')).toHaveText('警告 7')
 
   await page.locator('.title-toggle .ant-radio-button-wrapper', { hasText: '全部' }).click()
   await page.waitForTimeout(300)
@@ -71,6 +71,10 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
   const drawer = page.locator('.app-drawer .detail-panel-content')
   await expect(drawer).toBeVisible()
   await expect(drawer.locator('.app-summary')).toBeVisible()
+  await expect(drawer.locator('.app-summary-trend')).toBeVisible()
+  await expect(drawer.locator('.app-summary-badges')).toBeVisible()
+  await expect(drawer.locator('.app-meta-item')).toHaveCount(4)
+  await expect(drawer.locator('.app-summary-tip')).toBeVisible()
   await expect(drawer.locator('.fault-tabs')).toBeVisible()
 
   await page.locator('.app-drawer .close-btn').click()
