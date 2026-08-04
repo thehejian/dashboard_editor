@@ -20,9 +20,23 @@
       </div>
     </div>
 
-    <div v-for="group in metricGroups" :key="group.key" class="ov-section">
-      <h4><i :class="group.icon" style="margin-right:6px;color:#1890ff"></i>{{ group.label }}</h4>
-      <div class="ov-metric-grid">
+    <div class="ov-section">
+      <div class="ov-metrics-header">
+        <h4>指标监控</h4>
+        <a-select v-model:value="metricFilter" size="small" style="width: 140px" placeholder="全部">
+          <a-select-option value="all">全部</a-select-option>
+          <a-select-option v-for="opt in metricFilterOptions" :key="opt.key" :value="opt.key">{{ opt.label }}</a-select-option>
+        </a-select>
+      </div>
+    </div>
+
+    <div v-for="group in filteredMetricGroups" :key="group.key" class="ov-section">
+      <h4 class="ov-group-toggle" @click="toggleMetricGroup(group.key)">
+        <i class="fa-solid group-chevron" :class="metricGroupCollapsed[group.key] ? 'fa-chevron-right' : 'fa-chevron-down'"></i>
+        <i :class="group.icon" style="margin-right:6px;color:#1890ff"></i>{{ group.label }}
+        <span class="ov-group-count">{{ group.items.length }} 项</span>
+      </h4>
+      <div v-show="!metricGroupCollapsed[group.key]" class="ov-metric-grid">
         <div v-for="m in group.items" :key="m.key" class="ov-metric-card">
           <div class="ov-mc-top">
             <span class="ov-mc-label">{{ m.label }}</span>
@@ -35,7 +49,7 @@
             {{ m.value }}<span class="ov-mc-unit">{{ m.unit || '' }}</span>
           </div>
           <div class="ov-mc-spark">
-            <canvas :ref="el => setCanvasRef(m.key, el)" width="160" height="36"></canvas>
+            <canvas :ref="el => setCanvasRef(m.key, el)"></canvas>
           </div>
           <div class="ov-mc-range">
             <span>24h最低 {{ m.min }}{{ m.unit || '' }}</span>
@@ -48,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 
 const props = defineProps({
   resource: { type: Object, default: () => ({
@@ -56,6 +70,21 @@ const props = defineProps({
     appLevel: '重要应用', vdc: 'VDC-BJ-01', owner: '张伟', source: '运营'
   })},
 })
+
+const metricFilter = ref('all')
+const metricFilterOptions = [
+  { key: 'compute', label: '计算资源' },
+  { key: 'network', label: '网络' },
+  { key: 'disk', label: '磁盘' },
+  { key: 'app', label: '应用性能' },
+  { key: 'system', label: '系统' },
+]
+
+const metricGroupCollapsed = reactive({})
+
+function toggleMetricGroup(key) {
+  metricGroupCollapsed[key] = !metricGroupCollapsed[key]
+}
 
 const canvasRefs = reactive({})
 function setCanvasRef(key, el) { if (el) canvasRefs[key] = el }
@@ -101,6 +130,11 @@ const metricGroups = reactive([
     { key: 'fd', label: '文件描述符', value: 890, unit: ' / 65535', trend: -4.6, threshold: 50000, min: 720, max: 1120, data: [] },
   ]},
 ])
+
+const filteredMetricGroups = computed(() => {
+  if (metricFilter.value === 'all') return metricGroups
+  return metricGroups.filter(g => g.key === metricFilter.value)
+})
 
 function getValueColor(m) {
   if (!m.threshold) return '#1a1a1a'
@@ -161,12 +195,7 @@ function drawSparkline(canvas, data, color) {
   ctx.fill()
 }
 
-onMounted(() => {
-  metricGroups.forEach(group => {
-    group.items.forEach(m => {
-      m.data = genTrend(m.value, m.value * 0.15)
-    })
-  })
+function drawAllSparklines() {
   nextTick(() => {
     metricGroups.forEach(group => {
       group.items.forEach(m => {
@@ -178,6 +207,15 @@ onMounted(() => {
       })
     })
   })
+}
+
+onMounted(() => {
+  metricGroups.forEach(group => {
+    group.items.forEach(m => {
+      m.data = genTrend(m.value, m.value * 0.15)
+    })
+  })
+  drawAllSparklines()
 })
 </script>
 
@@ -186,6 +224,14 @@ onMounted(() => {
 .ov-section { margin-bottom: 24px; }
 .ov-section h4 { font-size: 14px; font-weight: 600; color: #1a1a1a; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; }
 
+.ov-metrics-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; }
+.ov-metrics-header h4 { margin: 0; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+
+.ov-group-toggle { cursor: pointer; user-select: none; }
+.ov-group-toggle:hover { color: #1890ff; }
+.group-chevron { font-size: 11px; color: #8c8c8c; width: 14px; transition: transform 0.2s; }
+.ov-group-count { margin-left: auto; font-size: 12px; color: #8c8c8c; font-weight: 400; }
+
 .ov-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .ov-info-item { display: flex; align-items: center; padding: 8px 12px; background: #fafafa; border-radius: 6px; }
 .ov-label { font-size: 12px; color: #8c8c8c; min-width: 64px; flex-shrink: 0; }
@@ -193,7 +239,7 @@ onMounted(() => {
 .ov-mono { font-family: 'SF Mono', Monaco, monospace; font-size: 12px; }
 .ov-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #52c41a; display: inline-block; margin-right: 4px; }
 
-.ov-metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.ov-metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
 .ov-metric-card { background: #fafafa; border-radius: 8px; padding: 12px; }
 .ov-mc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .ov-mc-label { font-size: 12px; color: #8c8c8c; }
@@ -202,7 +248,7 @@ onMounted(() => {
 .trend-down { color: #52c41a; }
 .ov-mc-value { font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; line-height: 1; }
 .ov-mc-unit { font-size: 12px; font-weight: 400; color: #8c8c8c; }
-.ov-mc-spark { height: 36px; margin: 4px 0; }
+.ov-mc-spark { height: 52px; margin: 4px 0; }
 .ov-mc-spark canvas { width: 100%; height: 100%; display: block; }
 .ov-mc-range { display: flex; justify-content: space-between; font-size: 10px; color: #bfbfbf; }
 

@@ -15,12 +15,24 @@ test('全部卡片与跳转列表数据对应', async ({ page }) => {
   const group = page.locator('.card-group').filter({ hasText: '业务应用' })
   await expect(group).toBeVisible()
 
-  const card = group.locator('.sub-card').filter({ hasText: '核心服务' })
+  const subTotals = await group.locator('.sub-card-total').allInnerTexts()
+  const totalSum = subTotals.reduce((sum, t) => {
+    const m = t.match(/(\d+)\s*个/)
+    return sum + (m ? Number(m[1]) : 0)
+  }, 0)
+  const groupTotalMatch = (await group.locator('.group-total').innerText()).match(/共\s*(\d+)\s*个/)
+  const groupTotal = groupTotalMatch ? Number(groupTotalMatch[1]) : 0
+  expect(totalSum).toBe(groupTotal)
+
+  const card = group.locator('.sub-card').filter({ hasText: '重要应用' })
   await expect(card).toBeVisible()
 
-  const cardText = (await card.innerText()).replace(/\s+/g, ' ')
-  const cardTotalMatch = cardText.match(/共\s*(\d+)\s*个/)
-  const cardAlertMatch = cardText.match(/告警\s*(\d+)/)
+  await expect(card.locator('.sub-card-total')).toContainText('4 个', { timeout: 10000 })
+
+  const cardTotalText = (await card.locator('.sub-card-total').innerText()).replace(/\s+/g, ' ')
+  const cardTotalMatch = cardTotalText.match(/(\d+)\s*个/)
+  const cardAlertText = (await card.locator('.sub-card-alert').innerText()).replace(/\s+/g, ' ')
+  const cardAlertMatch = cardAlertText.match(/(\d+)/)
   const cardTotal = cardTotalMatch ? Number(cardTotalMatch[1]) : 0
   const cardAlert = cardAlertMatch ? Number(cardAlertMatch[1]) : 0
 
@@ -28,7 +40,7 @@ test('全部卡片与跳转列表数据对应', async ({ page }) => {
   await page.waitForTimeout(1500)
 
   await expect(page).toHaveURL(/\/monitor\/resource\/app\?sub=/)
-  await expect(page.locator('.ant-tabs-tab-active')).toContainText('核心服务')
+  await expect(page.locator('.sub-category-tabs .ant-tabs-tab-active')).toContainText('重要应用')
 
   const rows = page.locator('.ant-table-tbody tr.ant-table-row')
   const rowCount = await rows.count()

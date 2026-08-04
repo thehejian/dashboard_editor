@@ -173,22 +173,18 @@
               <span class="app-card-name">{{ app.name }}</span>
               <span class="app-card-type">{{ app.type }}</span>
             </div>
-            <div class="app-card-score">{{ app.score }}%</div>
-            <div class="app-card-status">
-              {{ { critical: '严重异常', warning: '需要关注', normal: '运行正常' }[app.status] }}
-              <span v-if="app.nodes.length" class="app-card-faults">{{ app.nodes.length }} 故障节点</span>
+            <div class="app-card-main">
+              <span class="app-card-score">{{ app.score }}</span>
+              <span class="app-card-status">
+                {{ { critical: '严重异常', warning: '需要关注', normal: '运行正常' }[app.status] }}
+              </span>
             </div>
-            <svg class="app-card-trend" width="100%" height="28" viewBox="0 0 120 28">
-              <rect v-for="(bar, i) in calcSparkbarRects(app.history, 28, 120)" :key="i" :x="bar.x" :y="bar.y" :width="bar.width" :height="bar.height" fill="currentColor" rx="1" />
-            </svg>
+            <div class="app-card-faults" v-if="getAppFaultLabels(app).length">
+              <span v-for="f in getAppFaultLabels(app)" :key="f.nodeId" class="app-fault-chip">{{ f.nodeLabel }}</span>
+            </div>
           </div>
         </div>
       </div>
-
-      <a-card class="aiops-card aiops-trend-card">
-        <template #title><i class="fa-solid fa-chart-line" style="color:#007DFF;margin-right:6px"></i> 24小时告警趋势 <span class="trend-legend">严重 · 警告 · 提示</span></template>
-        <div ref="aiopsTrendContainer" class="aiops-trend-chart"></div>
-      </a-card>
     </template>
     </template>
 
@@ -563,13 +559,13 @@
         <div class="app-drawer-body">
           <div class="app-summary" v-if="activeApp">
             <div class="app-summary-status" :class="'app-' + activeApp.status">
-              <span class="app-summary-score">{{ activeApp.score }}%</span>
+              <span class="app-summary-score">{{ activeApp.score }}</span>
               <span class="app-summary-status-text">{{ { critical: '严重异常', warning: '需要关注', normal: '运行正常' }[activeApp.status] }}</span>
             </div>
             <div class="app-summary-meta">
               <div class="app-meta-item"><span class="am-label">类型</span><span class="am-value">{{ activeApp.type }}</span></div>
               <div class="app-meta-item"><span class="am-label">故障节点</span><span class="am-value" :class="{ 'am-danger': activeAppFaultNodes.length }">{{ activeAppFaultNodes.length }} 个</span></div>
-              <div class="app-meta-item"><span class="am-label">健康分</span><span class="am-value">{{ activeApp.score }}%</span></div>
+              <div class="app-meta-item"><span class="am-label">健康分</span><span class="am-value">{{ activeApp.score }}</span></div>
             </div>
           </div>
 
@@ -605,81 +601,89 @@
               </div>
             </div>
 
-            <div class="anomaly-timeline">
-              <div class="app-sub-title"><i class="fa-solid fa-bolt" style="color:#F5222D;margin-right:6px"></i> 异常时间线</div>
-              <a-empty v-if="!faultAnomalies.length" description="当前无异常，系统运行正常" style="margin:24px 0" />
-              <div v-for="a in faultAnomalies" :key="a.id" class="ani-item" :class="'ani-' + a.level">
-                <div class="ani-axis">
-                  <span class="ani-dot"></span>
-                  <span class="ani-line"></span>
-                </div>
-                <div class="ani-body">
-                  <div class="ani-header">
-                    <span class="ani-time">{{ a.time ? a.time.split(' ')[1] : '' }}</span>
-                    <a-tag :color="a.level === 'critical' ? 'red' : a.level === 'warning' ? 'orange' : 'blue'" size="small">
-                      {{ { critical: '严重', warning: '警告', info: '提示' }[a.level] }}
-                    </a-tag>
-                  </div>
-                  <div class="ani-node">{{ a.nodeLabel }}</div>
-                  <div class="ani-detail">{{ a.metric }}: {{ a.currentValue }} (基线{{ a.baseline }}) {{ a.deviation > 0 ? '+' : '' }}{{ a.deviation }}%</div>
-                  <div class="ani-score-bar"><span class="ani-score-fill" :style="{ width: (a.score * 100) + '%' }"></span></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="root-cause" v-if="aiopsRootCause && aiopsRootCause.nodeId === activeFaultNode">
-              <div class="app-sub-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:#722ED1;margin-right:6px"></i> 根因分析</div>
-              <div class="rc-node">
-                <span class="rc-label">根因节点</span>
-                <span class="rc-value">{{ aiopsRootCause.nodeLabel }}</span>
-              </div>
-              <div class="rc-metric">
-                <span class="rc-label">异常指标</span>
-                <span class="rc-value">{{ aiopsRootCause.metric }} = {{ aiopsRootCause.currentValue }}</span>
-              </div>
-              <div class="rc-score">
-                <span class="rc-label">异常得分</span>
-                <a-progress :percent="Math.round(aiopsRootCause.score * 100)" :stroke-color="'#F5222D'" size="small" />
-              </div>
-              <div class="rc-path" v-if="aiopsPropagationPath.length">
-                <span class="rc-label">传播路径</span>
-                <div class="rc-path-flow">
-                  <div v-for="(n, i) in aiopsPropagationPath" :key="n" class="rc-flow-node" :class="getNodeStatus(n)">
-                    <span class="rc-flow-dot"></span>
-                    <span class="rc-flow-name">{{ getNodeLabel(n) }}</span>
-                    <i v-if="i < aiopsPropagationPath.length - 1" class="fa-solid fa-chevron-right rc-flow-arrow"></i>
+            <a-row :gutter="[16, 16]" class="aiops-body drawer-3col">
+              <a-col :xs="24" :md="12" :lg="8">
+                <div class="anomaly-timeline">
+                  <div class="app-sub-title"><i class="fa-solid fa-bolt" style="color:#F5222D;margin-right:6px"></i> 异常时间线</div>
+                  <a-empty v-if="!faultAnomalies.length" description="当前无异常" style="margin:16px 0" />
+                  <div v-for="a in faultAnomalies" :key="a.id" class="ani-item" :class="'ani-' + a.level">
+                    <div class="ani-axis">
+                      <span class="ani-dot"></span>
+                      <span class="ani-line"></span>
+                    </div>
+                    <div class="ani-body">
+                      <div class="ani-header">
+                        <span class="ani-time">{{ a.time ? a.time.split(' ')[1] : '' }}</span>
+                        <a-tag :color="a.level === 'critical' ? 'red' : a.level === 'warning' ? 'orange' : 'blue'" size="small">
+                          {{ { critical: '严重', warning: '警告', info: '提示' }[a.level] }}
+                        </a-tag>
+                      </div>
+                      <div class="ani-node">{{ a.nodeLabel }}</div>
+                      <div class="ani-detail">{{ a.metric }}: {{ a.currentValue }} (基线{{ a.baseline }}) {{ a.deviation > 0 ? '+' : '' }}{{ a.deviation }}%</div>
+                      <div class="ani-score-bar"><span class="ani-score-fill" :style="{ width: (a.score * 100) + '%' }"></span></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="rc-desc">{{ aiopsRootCause.detail }}</div>
-              <div class="rc-evidence" v-if="aiopsRootCause.evidence">
-                <div class="rc-evidence-toggle" @click="evidenceOpen = !evidenceOpen">
-                  <i class="fa-solid" :class="evidenceOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                  {{ evidenceOpen ? '收起证据详情' : '查看证据详情' }}
-                </div>
-                <div class="rc-evidence-body" v-if="evidenceOpen">
-                  <div class="ev-item"><span class="ev-label">Z-Score</span><span class="ev-value">{{ aiopsRootCause.evidence.zScore }}</span><span class="ev-note">> 2.0 异常</span></div>
-                  <div class="ev-item"><span class="ev-label">EWMA 斜率</span><span class="ev-value">{{ aiopsRootCause.evidence.ewmaSlope }}/min</span><span class="ev-note">{{ aiopsRootCause.evidence.ewmaSlope > 0 ? '正向趋势' : '负向趋势' }}</span></div>
-                  <div class="ev-item"><span class="ev-label">偏离度</span><span class="ev-value">{{ aiopsRootCause.evidence.deviation }}%</span><span class="ev-note">远超基线</span></div>
-                  <div class="ev-item"><span class="ev-label">历史相似</span><span class="ev-value">{{ Math.round(aiopsRootCause.evidence.historicalSimilarity * 100) }}%</span><span class="ev-note">7天前类似故障</span></div>
-                  <div class="ev-item"><span class="ev-label">置信度</span><span class="ev-value">{{ aiopsRootCause.evidence.confidence }}</span><span class="ev-note">依据量化分析</span></div>
-                </div>
-              </div>
-            </div>
+              </a-col>
 
-            <div class="rec-list">
-              <div class="app-sub-title"><i class="fa-solid fa-lightbulb" style="color:#FF7D00;margin-right:6px"></i> AI推荐操作</div>
-              <a-empty v-if="!faultRecommendations.length" description="暂无推荐操作" style="margin:24px 0" />
-              <div v-for="(rec, i) in faultRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
-                <div class="rec-icon"><i :class="rec.icon"></i></div>
-                <div class="rec-info">
-                  <div class="rec-label">{{ rec.label }}</div>
-                  <div class="rec-desc">{{ rec.desc }}</div>
+              <a-col :xs="24" :md="12" :lg="8">
+                <div class="root-cause" v-if="aiopsRootCause && aiopsRootCause.nodeId === activeFaultNode">
+                  <div class="app-sub-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:#722ED1;margin-right:6px"></i> 根因分析</div>
+                  <div class="rc-node">
+                    <span class="rc-label">根因节点</span>
+                    <span class="rc-value">{{ aiopsRootCause.nodeLabel }}</span>
+                  </div>
+                  <div class="rc-metric">
+                    <span class="rc-label">异常指标</span>
+                    <span class="rc-value">{{ aiopsRootCause.metric }} = {{ aiopsRootCause.currentValue }}</span>
+                  </div>
+                  <div class="rc-score">
+                    <span class="rc-label">异常得分</span>
+                    <a-progress :percent="Math.round(aiopsRootCause.score * 100)" :stroke-color="'#F5222D'" size="small" />
+                  </div>
+                  <div class="rc-path" v-if="aiopsPropagationPath.length">
+                    <span class="rc-label">传播路径</span>
+                    <div class="rc-path-flow">
+                      <div v-for="(n, i) in aiopsPropagationPath" :key="n" class="rc-flow-node" :class="getNodeStatus(n)">
+                        <span class="rc-flow-dot"></span>
+                        <span class="rc-flow-name">{{ getNodeLabel(n) }}</span>
+                        <i v-if="i < aiopsPropagationPath.length - 1" class="fa-solid fa-chevron-right rc-flow-arrow"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="rc-desc">{{ aiopsRootCause.detail }}</div>
+                  <div class="rc-evidence" v-if="aiopsRootCause.evidence">
+                    <div class="rc-evidence-toggle" @click="evidenceOpen = !evidenceOpen">
+                      <i class="fa-solid" :class="evidenceOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                      {{ evidenceOpen ? '收起证据详情' : '查看证据详情' }}
+                    </div>
+                    <div class="rc-evidence-body" v-if="evidenceOpen">
+                      <div class="ev-item"><span class="ev-label">Z-Score</span><span class="ev-value">{{ aiopsRootCause.evidence.zScore }}</span><span class="ev-note">> 2.0 异常</span></div>
+                      <div class="ev-item"><span class="ev-label">EWMA 斜率</span><span class="ev-value">{{ aiopsRootCause.evidence.ewmaSlope }}/min</span><span class="ev-note">{{ aiopsRootCause.evidence.ewmaSlope > 0 ? '正向趋势' : '负向趋势' }}</span></div>
+                      <div class="ev-item"><span class="ev-label">偏离度</span><span class="ev-value">{{ aiopsRootCause.evidence.deviation }}%</span><span class="ev-note">远超基线</span></div>
+                      <div class="ev-item"><span class="ev-label">历史相似</span><span class="ev-value">{{ Math.round(aiopsRootCause.evidence.historicalSimilarity * 100) }}%</span><span class="ev-note">7天前类似故障</span></div>
+                      <div class="ev-item"><span class="ev-label">置信度</span><span class="ev-value">{{ aiopsRootCause.evidence.confidence }}</span><span class="ev-note">依据量化分析</span></div>
+                    </div>
+                  </div>
                 </div>
-                <span class="rec-confidence">{{ rec.confidence }}%</span>
-                <a-button size="small" type="primary" :ghost="i >= 4" @click="executeRec(rec)">执行</a-button>
-              </div>
-            </div>
+              </a-col>
+
+              <a-col :xs="24" :md="24" :lg="8">
+                <div class="rec-list">
+                  <div class="app-sub-title"><i class="fa-solid fa-lightbulb" style="color:#FF7D00;margin-right:6px"></i> AI推荐操作</div>
+                  <a-empty v-if="!faultRecommendations.length" description="暂无推荐操作" style="margin:16px 0" />
+                  <div v-for="(rec, i) in faultRecommendations" :key="rec.id" class="rec-item" :class="'rec-' + rec.priority">
+                    <div class="rec-icon"><i :class="rec.icon"></i></div>
+                    <div class="rec-info">
+                      <div class="rec-label">{{ rec.label }}</div>
+                      <div class="rec-desc">{{ rec.desc }}</div>
+                    </div>
+                    <span class="rec-confidence">{{ rec.confidence }}%</span>
+                    <a-button size="small" type="primary" :ghost="i >= 4" @click="executeRec(rec)">执行</a-button>
+                  </div>
+                </div>
+              </a-col>
+            </a-row>
           </template>
 
           <a-empty v-else description="该应用/云服务当前无故障节点" style="margin:40px 0" />
@@ -719,8 +723,6 @@ const aiopsRecommendations = ref([])
 const aiopsGoldenSignals = ref([])
 const aiopsGoldenSignalsByNode = ref({})
 const activeFaultNode = ref('')
-const aiopsTrendContainer = ref(null)
-let aiopsTrendChart = null
 const evidenceOpen = ref(false)
 
 const faultNodes = computed(() => {
@@ -747,6 +749,13 @@ const faultGoldenSignals = computed(() => aiopsGoldenSignalsByNode.value[activeF
 const faultAnomalies = computed(() => aiopsAnomalies.value.filter(a => a.nodeId === activeFaultNode.value))
 const faultRecommendations = computed(() => aiopsRecommendations.value.filter(r => !r.targetNode || r.targetNode === activeFaultNode.value))
 
+function getAppFaultLabels(app) {
+  const nodes = app?.nodes || []
+  return nodes.map(id => {
+    const f = faultNodes.value.find(n => n.nodeId === id)
+    return { nodeId: id, nodeLabel: f?.nodeLabel || id }
+  })
+}
 function openAppDrawer(app) {
   activeApp.value = app
   const nodes = (app.nodes || [])
@@ -1416,15 +1425,13 @@ function analyzeAlert(record) {
 }
 
 async function fetchAiopsData() {
-  let trendData = [], predictedData = null, eventsData = null
   try {
     aiopsLoading.value = true
-    const [anomalyRes, healthRes, predRes, remedRes, trendRes, topoRes, recRes, goldenRes] = await Promise.all([
+    const [anomalyRes, healthRes, predRes, remedRes, topoRes, recRes, goldenRes] = await Promise.all([
       fetch('/api/intelligent/anomalies').then(r => r.json()),
       fetch('/api/intelligent/health').then(r => r.json()),
       fetch('/api/intelligent/predictions').then(r => r.json()),
       fetch('/api/intelligent/remediation').then(r => r.json()),
-      fetch('/api/intelligent/trend').then(r => r.json()),
       fetch('/api/mock/topology').then(r => r.json()),
       fetch('/api/intelligent/recommendations').then(r => r.json()),
       fetch('/api/intelligent/golden-signals').then(r => r.json()),
@@ -1434,13 +1441,9 @@ async function fetchAiopsData() {
     const health = healthRes.data || {}
     const pred = predRes.data || {}
     const remed = remedRes.data || {}
-    const trend = trendRes.data || []
     const topo = topoRes.data || {}
     const recData = recRes.data || []
     const goldenData = goldenRes.data || {}
-    trendData = trend
-    predictedData = trendRes.predicted
-    eventsData = trendRes.events
 
     if (goldenData.nodes) {
       const byNode = {}
@@ -1454,7 +1457,7 @@ async function fetchAiopsData() {
     const kpiHistory = health.kpiHistory || {}
     aiopsKpiCards.value = [
       { key: 'anomalyCount', label: '异常检测', value: summary.total || 0, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#FFF1F0', iconColor: '#F5222D', valClass: 'kpi-danger', trendText: '较昨日 +60%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.anomalyCount || []) },
-      { key: 'healthScore', label: '健康度', value: (health.score || 0) + '%', icon: 'fa-solid fa-heart-pulse', iconBg: '#F6FFED', iconColor: '#07C160', valClass: health.score < 90 ? 'kpi-warn' : 'kpi-ok', trendText: '较昨日 -5.4%', trendDir: 'down', sparklinePath: calcSparklinePath(kpiHistory.healthScore || []) },
+      { key: 'healthScore', label: '健康度', value: (health.score || 0), icon: 'fa-solid fa-heart-pulse', iconBg: '#F6FFED', iconColor: '#07C160', valClass: health.score < 90 ? 'kpi-warn' : 'kpi-ok', trendText: '较昨日 -5.4%', trendDir: 'down', sparklinePath: calcSparklinePath(kpiHistory.healthScore || []) },
       { key: 'predictedAlerts', label: '预测告警', value: pred.items?.length || 0, icon: 'fa-solid fa-clock-rotate-left', iconBg: '#FFF7E6', iconColor: '#FF7D00', valClass: 'kpi-warn', trendText: '较昨日 +50%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.predictedAlerts || []) },
       { key: 'autoRemediationRate', label: '自动修复率', value: (remed.rate || 0) + '%', icon: 'fa-solid fa-rotate-right', iconBg: '#F0F5FF', iconColor: '#007DFF', valClass: 'kpi-ok', trendText: '较昨日 +8.2%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.autoRemediationRate || []) },
     ]
@@ -1495,41 +1498,6 @@ async function fetchAiopsData() {
 
   } catch {}
   aiopsLoading.value = false
-  if (trendData.length) nextTick(() => renderAiopsTrend(trendData, predictedData, eventsData))
-}
-
-function renderAiopsTrend(data, predicted, events) {
-  if (!aiopsTrendContainer.value || !data?.length) return
-  if (aiopsTrendChart) { aiopsTrendChart.destroy(); aiopsTrendChart = null }
-
-  const longData = data.flatMap(d => [
-    { hour: d.hour, type: '严重', value: d.critical },
-    { hour: d.hour, type: '警告', value: d.warning },
-    { hour: d.hour, type: '提示', value: d.info },
-  ])
-
-  aiopsTrendChart = new Chart({ container: aiopsTrendContainer.value, autoFit: true, padding: [10, 10, 30, 40] })
-  aiopsTrendChart.interval()
-    .data(longData)
-    .encode('x', 'hour')
-    .encode('y', 'value')
-    .encode('color', 'type')
-    .scale('color', { range: ['#F5222D', '#FF7D00', '#007DFF'] })
-    .transform({ type: 'stackY' })
-    .style('radius', [2, 2, 0, 0])
-    .tooltip({ channel: 'y', valueFormatter: (v) => v + '条' })
-
-  if (predicted?.length) {
-    aiopsTrendChart.line().data(predicted).encode('x', 'hour').encode('y', 'value')
-      .style('stroke', '#722ED1').style('lineDash', [4, 4]).style('lineWidth', 2)
-  }
-
-  if (events?.length) {
-    aiopsTrendChart.point().data(events).encode('x', 'hour').encode('y', () => 0)
-      .style('fill', '#FF7D00').encode('size', 8)
-  }
-
-  aiopsTrendChart.render()
 }
 
 function sendAiopsIntent() {
@@ -1699,7 +1667,6 @@ onBeforeUnmount(() => {
   if (trendSingleChart) { trendSingleChart.destroy(); trendSingleChart = null }
   if (resourceTrendChart) { resourceTrendChart.destroy(); resourceTrendChart = null }
   if (mainDonutChart) { mainDonutChart.destroy(); mainDonutChart = null }
-  if (aiopsTrendChart) { aiopsTrendChart.destroy(); aiopsTrendChart = null }
 })
 
 const refreshCard = (card) => {
@@ -2087,20 +2054,21 @@ const refreshCard = (card) => {
 
 .aiops-heatmap { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .aiops-section-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text, #182431); }
-.app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.app-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
 .app-card {
-  border: 1px solid #E8E8E8; border-radius: 10px; padding: 16px;
-  cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid #E8E8E8; border-radius: 8px; padding: 10px;
+  cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 5px;
   background: #fff; position: relative; overflow: hidden;
 }
 .app-card:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); transform: translateY(-2px); }
 .app-card-head { display: flex; justify-content: space-between; align-items: center; }
-.app-card-name { font-size: 14px; font-weight: 600; color: #1A1A1A; }
-.app-card-type { font-size: 11px; color: #6B7280; background: #F5F5F5; padding: 1px 8px; border-radius: 8px; }
-.app-card-score { font-size: 24px; font-weight: 700; }
-.app-card-status { font-size: 12px; display: flex; align-items: center; gap: 8px; }
-.app-card-faults { font-size: 11px; color: #F5222D; background: #FFF1F0; padding: 1px 8px; border-radius: 8px; font-weight: 500; }
-.app-card-trend { color: currentColor; opacity: 0.75; }
+.app-card-name { font-size: 13px; font-weight: 600; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-card-type { font-size: 10px; color: #6B7280; background: #F5F5F5; padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
+.app-card-main { display: flex; align-items: baseline; gap: 8px; }
+.app-card-score { font-size: 22px; font-weight: 700; line-height: 1; }
+.app-card-status { font-size: 11px; }
+.app-card-faults { display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
+.app-fault-chip { font-size: 10px; color: #F5222D; background: #FFF1F0; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
 .app-normal .app-card-score { color: #07C160; }
 .app-normal .app-card-status { color: #07C160; }
 .app-warning .app-card-score { color: #FF7D00; }
@@ -2108,24 +2076,28 @@ const refreshCard = (card) => {
 .app-critical .app-card-score { color: #F5222D; }
 .app-critical .app-card-status { color: #F5222D; }
 
-.app-drawer .detail-panel-content { width: 640px; right: -640px; }
+.app-drawer .detail-panel-content { width: 80%; right: -80%; }
 .app-drawer-body { flex: 1; overflow-y: auto; padding: 4px 20px 20px; }
 .app-summary {
-  display: flex; align-items: center; gap: 20px; padding: 16px;
-  background: #FAFAFA; border-radius: 10px; margin-bottom: 16px; border: 1px solid #F0F0F0;
+  display: flex; align-items: center; gap: 20px; padding: 14px 16px;
+  background: #FAFAFA; border-radius: 10px; margin-bottom: 12px; border: 1px solid #F0F0F0;
 }
 .app-summary-status { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 84px; }
-.app-summary-score { font-size: 28px; font-weight: 700; }
+.app-summary-score { font-size: 26px; font-weight: 700; }
 .app-summary-status-text { font-size: 12px; }
 .app-summary-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .app-meta-item { display: flex; justify-content: space-between; font-size: 13px; }
 .am-label { color: #6B7280; }
 .am-value { font-weight: 600; color: #1A1A1A; }
 .am-danger { color: #F5222D; }
-.app-sub-title { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
-.app-drawer-body .anomaly-timeline { margin-top: 16px; }
-.app-drawer-body .root-cause { margin-top: 16px; }
-.app-drawer-body .rec-list { margin-top: 16px; }
+.app-sub-title { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 10px; }
+.app-drawer-body .anomaly-timeline,
+.app-drawer-body .root-cause,
+.app-drawer-body .rec-list { margin-top: 0; }
+.drawer-3col .anomaly-timeline,
+.drawer-3col .root-cause,
+.drawer-3col .rec-list { height: 100%; }
+.drawer-3col .rec-list { max-height: 340px; overflow-y: auto; }
 
 .aiops-fault-card { border: 1px solid #E8E8E8; }
 .aiops-fault-card :deep(.ant-card-head) { border-bottom: 1px solid #F0F0F0; margin-bottom: 0; }
@@ -2200,10 +2172,6 @@ const refreshCard = (card) => {
 .rec-desc { font-size: 11px; color: var(--text-sec, #6B7280); }
 .rec-confidence { font-size: 12px; font-weight: 600; font-family: monospace; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; background: var(--bg-sec, #F2F2F7); color: var(--text-sec, #6B7280); }
 
-.aiops-trend-card { margin-top: 16px; border-radius: 10px; }
-.aiops-trend-chart { height: 200px; }
-.trend-legend { font-size: 11px; font-weight: 400; color: var(--text-sec, #6B7280); margin-left: 8px; }
-
 .gs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
 .gs-card { padding: 16px; border-radius: 10px; background: #fff; border: 1px solid #E8E8E8; }
 .gs-body { display: flex; justify-content: space-between; align-items: center; }
@@ -2232,7 +2200,7 @@ const refreshCard = (card) => {
   .aiops-kpi-val { font-size: 18px; }
   .kpi-sparkline { display: none; }
   .heatmap-grid { flex-direction: column; }
-  .app-grid { grid-template-columns: repeat(2, 1fr); }
+  .app-grid { grid-template-columns: repeat(4, 1fr); }
   .gs-grid { grid-template-columns: repeat(2, 1fr); }
   .anomaly-timeline { max-height: 300px; }
   .rec-list { max-height: 300px; }

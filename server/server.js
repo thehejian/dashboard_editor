@@ -726,6 +726,22 @@ const MOCK_APP_HEALTH = [
   { name: 'Redis 集群', type: '云服务', status: 'warning', score: 68, nodes: ['redis-cache'], history: [94,93,90,86,80,74,70,69,68] },
   { name: 'API 网关', type: '云服务', status: 'warning', score: 62, nodes: ['lb-api'], history: [92,90,86,80,74,68,65,63,62] },
   { name: 'K8s Node-2', type: '云服务', status: 'warning', score: 61, nodes: ['k8s-node-2'], history: [90,88,86,82,76,70,66,63,61] },
+  { name: '商品服务', type: '应用', status: 'normal', score: 91, nodes: [], history: [90,91,91,92,92,91,91,91,91] },
+  { name: '搜索服务', type: '应用', status: 'normal', score: 90, nodes: [], history: [89,90,90,90,90,91,90,90,90] },
+  { name: '消息服务', type: '应用', status: 'normal', score: 88, nodes: [], history: [87,88,88,89,88,88,88,88,88] },
+  { name: '优惠券服务', type: '应用', status: 'normal', score: 94, nodes: [], history: [93,93,94,94,94,94,94,94,94] },
+  { name: '物流服务', type: '应用', status: 'normal', score: 92, nodes: [], history: [91,92,92,92,92,92,92,92,92] },
+  { name: '客服服务', type: '应用', status: 'normal', score: 96, nodes: [], history: [95,95,96,96,96,96,96,96,96] },
+  { name: '报表服务', type: '应用', status: 'warning', score: 72, nodes: [], history: [88,86,84,80,76,74,73,72,72] },
+  { name: '任务调度', type: '应用', status: 'normal', score: 89, nodes: [], history: [88,89,89,89,89,89,89,89,89] },
+  { name: 'PostgreSQL', type: '云服务', status: 'normal', score: 90, nodes: [], history: [90,90,90,90,90,90,90,90,90] },
+  { name: 'MongoDB', type: '云服务', status: 'normal', score: 92, nodes: [], history: [91,92,92,92,92,92,92,92,92] },
+  { name: 'Elasticsearch', type: '云服务', status: 'warning', score: 74, nodes: [], history: [88,86,84,80,78,76,75,74,74] },
+  { name: 'Kafka', type: '云服务', status: 'normal', score: 91, nodes: [], history: [90,90,91,91,91,91,91,91,91] },
+  { name: 'K8s Node-1', type: '云服务', status: 'normal', score: 93, nodes: [], history: [92,92,93,93,93,93,93,93,93] },
+  { name: 'K8s Node-3', type: '云服务', status: 'normal', score: 94, nodes: [], history: [93,93,94,94,94,94,94,94,94] },
+  { name: '对象存储', type: '云服务', status: 'normal', score: 97, nodes: [], history: [96,96,97,97,97,97,97,97,97] },
+  { name: 'CDN', type: '云服务', status: 'normal', score: 95, nodes: [], history: [94,94,95,95,95,95,95,95,95] },
 ]
 
 const MOCK_RECOMMENDATIONS = [
@@ -804,15 +820,19 @@ app.get('/api/intelligent/health', (req, res) => {
 // GET /api/intelligent/predictions
 app.get('/api/intelligent/predictions', (req, res) => {
   res.json({ success: true, data: { count: 3, items: [
-    { metric: 'prod-order-01 CPU', predicted: 99, confidence: 0.88, eta: '10分钟' },
-    { metric: 'redis-cache 命中率', predicted: 55, confidence: 0.75, eta: '25分钟' },
-    { metric: 'mysql-master IO', predicted: 80, confidence: 0.65, eta: '45分钟' },
+    { nodeId: 'prod-order-01', nodeLabel: '订单服务-01', metric: 'CPU使用率', predicted: 99, confidence: 0.88, eta: '10分钟', level: 'critical' },
+    { nodeId: 'redis-cache', nodeLabel: 'Redis Cluster', metric: '命中率', predicted: 55, confidence: 0.75, eta: '25分钟', level: 'warning' },
+    { nodeId: 'mysql-master', nodeLabel: 'MySQL主库', metric: 'IO等待', predicted: 80, confidence: 0.65, eta: '45分钟', level: 'warning' },
   ]}})
 })
 
 // GET /api/intelligent/remediation
 app.get('/api/intelligent/remediation', (req, res) => {
-  res.json({ success: true, data: { rate: 92, total: 8, success: 7 } })
+  res.json({ success: true, data: { rate: 92, total: 8, success: 7, records: [
+    { nodeId: 'prod-order-01', nodeLabel: '订单服务-01', action: '重启服务', time: '14:30', result: 'success', detail: 'CPU 97%→45%' },
+    { nodeId: 'redis-cache', nodeLabel: 'Redis Cluster', action: '清理缓存', time: '14:28', result: 'success', detail: '命中率 72%→95%' },
+    { nodeId: 'mysql-master', nodeLabel: 'MySQL主库', action: 'kill慢查询', time: '14:25', result: 'failed', detail: '需人工介入' },
+  ]}})
 })
 
 // GET /api/intelligent/baseline/:metric

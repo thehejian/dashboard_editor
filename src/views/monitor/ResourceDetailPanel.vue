@@ -192,7 +192,7 @@ function onSwitchChange(val) {
 </script>
 
 <style scoped>
-.rdp { position: fixed; top: 48px; right: -90vw; width: 90vw; max-width: 1600px; height: calc(100vh - 48px); z-index: 1060; pointer-events: none; opacity: 0; transition: right 0.3s var(--ease, cubic-bezier(0.16,1,0.3,1)), opacity 0.3s; display: flex; flex-direction: column; }
+.rdp { position: fixed; top: 48px; right: -95vw; width: 95vw; max-width: 1800px; height: calc(100vh - 48px); z-index: 1060; pointer-events: none; opacity: 0; transition: right 0.3s var(--ease, cubic-bezier(0.16,1,0.3,1)), opacity 0.3s; display: flex; flex-direction: column; }
 .rdp.open { pointer-events: auto; opacity: 1; right: 0; }
 .rdp-mask { position: fixed; inset: 0; top: 48px; background: rgba(0,0,0,0.3); z-index: -1; }
 .rdp-content { flex: 1; display: flex; flex-direction: column; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.1); min-height: 0; }
