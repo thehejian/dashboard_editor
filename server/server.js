@@ -1,8 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { Pool } from 'pg'
 import dotenv from 'dotenv'
-import { readFileSync } from 'fs'
 import { exec } from 'child_process'
 import cmdbRouter from './routes/cmdb.js'
 
@@ -15,22 +13,8 @@ const PORT = process.env.PORT || 3001
 app.use(cors())
 app.use(express.json())
 
-// Database connection
-const pool = new Pool({
-  host: process.env.DB_HOST || '192.168.0.105',
-  port: process.env.DB_PORT || 54321,
-  user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || '745544752',
-  database: process.env.DB_NAME || 'mydb'
-})
-
-// Test connection
-pool.query('SELECT NOW()')
-  .then(() => console.log('✅ 数据库连接成功'))
-  .catch(err => console.error('❌ 数据库连接失败:', err))
-
-// Share pool with route modules
-app.locals.pool = pool
+// NOTE: 数据全部使用 mock（内存），无 PostgreSQL 连接。
+// CMDB 数据见 server/db/mockData.js。
 
 // ==================== VM Sysinfo ====================
 
@@ -413,162 +397,6 @@ app.get('/api/portainer/containers', async (req, res) => {
   }
 })
 
-// Run CMDB migration on startup
-async function runMigrations() {
-  try {
-    const migrationResult = await pool.query(`
-      SELECT to_regclass('public.ci_types') IS NOT NULL as exists
-    `)
-    if (!migrationResult.rows[0].exists) {
-      console.log('📦 运行 CMDB 迁移...')
-      const migrationSql = readFileSync(new URL('./db/001_cmdb_schema.sql', import.meta.url), 'utf-8')
-      await pool.query(migrationSql)
-      console.log('✅ CMDB 表结构创建成功')
-    } else {
-      console.log('✅ CMDB 表结构已存在')
-    }
-  } catch (err) {
-    console.error('❌ CMDB 迁移失败:', err)
-  }
-}
-runMigrations()
-
-// ==================== API Routes ====================
-
-// 1. 代码片段搜索
-app.post('/api/code-search', async (req, res) => {
-  try {
-    const { query, limit = 5, threshold = 0.5 } = req.body
-
-    if (!query) {
-      return res.status(400).json({ error: '缺少查询内容' })
-    }
-
-    // 检查是否有数据
-    const countResult = await pool.query('SELECT COUNT(*) as count FROM code_snippets')
-    if (parseInt(countResult.rows[0].count) === 0) {
-      return res.json({
-        success: true,
-        data: [],
-        message: '暂无数据，请先添加代码片段',
-        count: 0
-      })
-    }
-
-    const embedding = await getEmbedding(query)
-
-    const result = await pool.query(`
-      SELECT id, title, description, code_content, language, metadata,
-             1 - (embedding <=> $1::vector) as similarity
-      FROM code_snippets
-      WHERE 1 - (embedding <=> $1::vector) > $2
-      ORDER BY embedding <=> $1::vector
-      LIMIT $3
-    `, [embedding, threshold, limit])
-
-    res.json({
-      success: true,
-      data: result.rows,
-      count: result.rows.length
-    })
-  } catch (err) {
-    console.error('代码搜索错误:', err)
-    res.status(500).json({ error: '搜索失败' })
-  }
-})
-
-// 添加测试数据
-app.post('/api/seed-data', async (req, res) => {
-  try {
-    // Check if CMDB data already exists
-    const ciCheck = await pool.query('SELECT COUNT(*) as count FROM ci_types')
-    if (parseInt(ciCheck.rows[0].count) > 0) {
-      return res.json({ success: true, message: 'CMDB 数据已存在，跳过 seed' })
-    }
-
-    // Seed CMDB data
-    const seedSql = readFileSync(new URL('./db/002_seed_data.sql', import.meta.url), 'utf-8')
-    await pool.query(seedSql)
-    console.log('✅ CMDB seed 完成')
-
-    res.json({ success: true, message: 'CMDB 数据初始化完成' })
-  } catch (err) {
-    console.error('Seed 错误:', err)
-    res.status(500).json({ error: err.message })
-  }
-})
-
-// 2. 代码模板推荐
-app.post('/api/code-recommend', async (req, res) => {
-  try {
-    const { input, limit = 3 } = req.body
-
-    if (!input) {
-      return res.status(400).json({ error: '缺少输入内容' })
-    }
-
-    const embedding = await getEmbedding(input)
-
-    const result = await pool.query(`
-      SELECT id, name, trigger_keyword, template_content, category, usage_count,
-             1 - (embedding <=> $1::vector) as similarity
-      FROM code_templates
-      ORDER BY embedding <=> $1::vector, usage_count DESC
-      LIMIT $2
-    `, [embedding, limit])
-
-    res.json({
-      success: true,
-      data: result.rows,
-      count: result.rows.length
-    })
-  } catch (err) {
-    console.error('模板推荐错误:', err)
-    res.status(500).json({ error: '推荐失败' })
-  }
-})
-
-// 3. 文档问答 (RAG)
-app.post('/api/doc-qa', async (req, res) => {
-  try {
-    const { question, limit = 3 } = req.body
-
-    if (!question) {
-      return res.status(400).json({ error: '缺少问题' })
-    }
-
-    const questionEmbedding = await getEmbedding(question)
-
-    // 检索相关文档
-    const docs = await pool.query(`
-      SELECT id, title, chunk_text, chunk_index,
-             1 - (embedding <=> $1::vector) as similarity
-      FROM docs
-      WHERE 1 - (embedding <=> $1::vector) > 0.7
-      ORDER BY embedding <=> $1::vector
-      LIMIT $2
-    `, [questionEmbedding, limit])
-
-    // 如果有 OpenAI API，可以调用 LLM 生成回答
-    // 这里先返回检索到的文档
-    res.json({
-      success: true,
-      question,
-      context: docs.rows.map(d => ({
-        title: d.title,
-        chunk_text: d.chunk_text,
-        similarity: d.similarity
-      })),
-      // 如果有 LLM 回答
-      // answer: await generateAnswer(question, docs.rows)
-      count: docs.rows.length
-    })
-  } catch (err) {
-    console.error('文档问答错误:', err)
-    res.status(500).json({ error: '问答失败' })
-  }
-})
-
 // ==================== Mock 故障模拟 ====================
 
 const MOCK_ALERTS = [
@@ -889,23 +717,15 @@ const MOCK_KPI_BASELINES = {
   autoRemediationRate: { value: 92, baseline: 85, trend: 8.2, trendText: '较昨日 +8.2%' },
 }
 
-const MOCK_SERVICE_HEALTH = [
-  { name: '订单服务', services: [
-    { name: 'order-01', status: 'critical', score: 15 },
-    { name: 'order-02', status: 'normal', score: 92 },
-    { name: 'order-03', status: 'normal', score: 94 },
-  ]},
-  { name: '支付服务', services: [
-    { name: 'pay-01', status: 'normal', score: 95 },
-    { name: 'pay-02', status: 'normal', score: 96 },
-  ]},
-  { name: '用户服务', services: [
-    { name: 'user-01', status: 'normal', score: 93 },
-    { name: 'user-02', status: 'normal', score: 94 },
-  ]},
-  { name: '库存服务', services: [
-    { name: 'inventory-01', status: 'warning', score: 68 },
-  ]},
+const MOCK_APP_HEALTH = [
+  { name: '订单服务', type: '应用', status: 'critical', score: 15, nodes: ['prod-order-01'], history: [88,85,82,78,75,60,40,22,15] },
+  { name: '支付服务', type: '应用', status: 'normal', score: 95, nodes: [], history: [94,94,95,95,95,95,95,95,95] },
+  { name: '用户服务', type: '应用', status: 'normal', score: 93, nodes: [], history: [93,93,94,93,93,93,93,93,93] },
+  { name: '库存服务', type: '应用', status: 'warning', score: 68, nodes: ['prod-inventory-01'], history: [90,88,85,80,76,72,70,68,68] },
+  { name: 'MySQL 主库', type: '云服务', status: 'warning', score: 55, nodes: ['mysql-master'], history: [90,88,85,80,72,65,60,57,55] },
+  { name: 'Redis 集群', type: '云服务', status: 'warning', score: 68, nodes: ['redis-cache'], history: [94,93,90,86,80,74,70,69,68] },
+  { name: 'API 网关', type: '云服务', status: 'warning', score: 62, nodes: ['lb-api'], history: [92,90,86,80,74,68,65,63,62] },
+  { name: 'K8s Node-2', type: '云服务', status: 'warning', score: 61, nodes: ['k8s-node-2'], history: [90,88,86,82,76,70,66,63,61] },
 ]
 
 const MOCK_RECOMMENDATIONS = [
@@ -971,7 +791,7 @@ app.get('/api/intelligent/anomalies', (req, res) => {
 // GET /api/intelligent/health
 app.get('/api/intelligent/health', (req, res) => {
   res.json({ success: true, data: {
-    score: 87, services: MOCK_SERVICE_HEALTH, trend: -5.4,
+    score: 87, apps: MOCK_APP_HEALTH, trend: -5.4,
     kpiHistory: {
       anomalyCount: [2,3,1,4,5,3,6,8,7,5,4,3,2,4,6,8,10,12,8,6,5,3,2,1],
       healthScore: [93,92,91,90,89,88,87,86,85,86,87,87,88,88,87,86,85,84,85,86,87,87,87,87],
@@ -1126,79 +946,52 @@ app.get('/api/intelligent/incident-timeline', (req, res) => {
   res.json({ success: true, data: MOCK_INCIDENT_TIMELINE })
 })
 
-// ==================== AI Chat ====================
-
-const AGNES_API_KEY = process.env.AI_CHAT_KEY || 'sk-YjJnlziWMJgYHmiJiX8peB5PtNx1hInu7SQnivjeavaN4Ect'
-const AGNES_BASE_URL = 'https://apihub.agnes-ai.com/v1'
-
-const ZHIPU_API_KEY = process.env.ZHIPU_TOKEN || '8329553cf0bd83a57bd45502d80688b7.MoH21npPA0tXNPfw'
-const ZHIPU_BASE_URL = process.env.ZHIPU_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4'
-const ZHIPU_MODEL = 'glm-4.7-flash'
-
-// ==================== AI Model Connection Test ====================
+// ==================== AI Model Connection Test (Mock) ====================
 
 const AI_MODEL_GROUPS = [
   {
     provider: 'Agnes',
     tokenLabel: 'thehejian',
-    apiKey: process.env.AGNES_TOKEN_THEHEJIAN,
-    baseUrl: process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
     models: ['agnes-2.0-flash', 'agnes-image-2.0-flash', 'agnes-image-2.1-flash', 'agnes-video-v2.0'],
   },
   {
     provider: 'Agnes',
     tokenLabel: 'Google',
-    apiKey: process.env.AGNES_TOKEN_GOOGLE,
-    baseUrl: process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
     models: ['agnes-2.0-flash', 'agnes-image-2.0-flash', 'agnes-image-2.1-flash', 'agnes-video-v2.0'],
   },
   {
     provider: 'Agnes',
     tokenLabel: 'github',
-    apiKey: process.env.AGNES_TOKEN_GITHUB,
-    baseUrl: process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1',
     models: ['agnes-2.0-flash', 'agnes-image-2.0-flash', 'agnes-image-2.1-flash', 'agnes-video-v2.0'],
   },
   {
     provider: 'SenseNova',
     tokenLabel: null,
-    apiKey: process.env.SENSENOVA_TOKEN,
-    baseUrl: process.env.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1',
     models: ['sensenova-6.7-flash-lite', 'sensenova-u1-fast', 'deepseek-v4-flash'],
   },
   {
     provider: 'Zhipu GLM',
     tokenLabel: null,
-    apiKey: process.env.ZHIPU_TOKEN,
-    baseUrl: process.env.ZHIPU_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4',
     models: ['glm-4.7-flash'],
   },
 ]
 
-async function testModelConnection(apiKey, baseUrl, model) {
-  const bodyObj = { model, messages: [{ role: 'user', content: 'hi' }], stream: false, max_tokens: 5 }
-  const bodyStr = JSON.stringify(bodyObj)
-  const curl = `curl -s --max-time 10 '${baseUrl}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${apiKey}' -d '${bodyStr.replace(/'/g, "'\\''")}'`
-  const start = Date.now()
-  try {
-    const stdout = await new Promise((resolve, reject) => {
-      exec(curl, { timeout: 12000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
-        if (err || !stdout.trim()) return reject(err || new Error('无响应'))
-        resolve(stdout)
-      })
-    })
-    const trimmed = stdout.trim()
-    if (trimmed.startsWith('<')) {
-      return { status: 'error', latencyMs: Date.now() - start, errorMessage: 'API returned HTML (model may not support chat completions)' }
-    }
-    const data = JSON.parse(trimmed)
-    if (data.error) {
-      return { status: 'error', latencyMs: Date.now() - start, errorMessage: data.error.message || JSON.stringify(data.error) }
-    }
-    return { status: 'success', latencyMs: Date.now() - start }
-  } catch (e) {
-    return { status: 'error', latencyMs: Date.now() - start, errorMessage: e.message?.slice(0, 200) || 'unknown' }
-  }
+const MOCK_MODEL_LATENCY = {
+  'agnes-2.0-flash': 320,
+  'agnes-image-2.0-flash': 680,
+  'agnes-image-2.1-flash': 720,
+  'agnes-video-v2.0': 950,
+  'sensenova-6.7-flash-lite': 410,
+  'sensenova-u1-fast': 260,
+  'deepseek-v4-flash': 380,
+  'glm-4.7-flash': 290,
+}
+
+// Mock: 模拟连接测试，返回随机时延，不调用真实模型 API
+function mockTestModel(model) {
+  const base = MOCK_MODEL_LATENCY[model] || 400
+  const latencyMs = Math.round(base + (Math.random() - 0.5) * base * 0.4)
+  return { status: 'success', latencyMs }
 }
 
 app.post('/api/ai/test-connection', async (_req, res) => {
@@ -1209,11 +1002,9 @@ app.post('/api/ai/test-connection', async (_req, res) => {
   })
   for (const group of AI_MODEL_GROUPS) {
     for (const model of group.models) {
-      const r = await testModelConnection(group.apiKey, group.baseUrl, model)
+      await new Promise(r => setTimeout(r, 60))
+      const r = mockTestModel(model)
       res.write(`data: ${JSON.stringify({ provider: group.provider, tokenLabel: group.tokenLabel, model, ...r })}\n\n`)
-      if (!res.writableEnded && r.status !== 'success') {
-        // continue even on error
-      }
     }
   }
   res.write('data: [DONE]\n\n')
@@ -1225,39 +1016,8 @@ app.post('/api/ai/test-single', async (req, res) => {
   if (!provider || !model) return res.status(400).json({ error: 'Missing provider or model' })
   const group = AI_MODEL_GROUPS.find(g => g.provider === provider && g.tokenLabel === tokenLabel)
   if (!group) return res.status(404).json({ error: 'Provider group not found' })
-  const r = await testModelConnection(group.apiKey, group.baseUrl, model)
-  res.json(r)
+  res.json(mockTestModel(model))
 })
-
-async function callProvider(apiKey, baseUrl, model, messages, extraParams) {
-  const bodyObj = { model, messages, stream: false, ...extraParams }
-  const bodyStr = JSON.stringify(bodyObj)
-  const curl = `curl -s --max-time 5 '${baseUrl}/chat/completions' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${apiKey}' -d '${bodyStr.replace(/'/g, "'\\''")}'`
-
-  for (let i = 0; i <= 1; i++) {
-    if (i > 0) {
-      console.log(`[AI Chat] ${model} 重试 #${i}`)
-      await new Promise(r => setTimeout(r, 500))
-    }
-    try {
-      const stdout = await new Promise((resolve, reject) => {
-        exec(curl, { timeout: 8000, maxBuffer: 1024 * 1024 }, (err, stdout) => {
-          if (err || !stdout.trim()) return reject(err || new Error('无响应'))
-          resolve(stdout)
-        })
-      })
-      const data = JSON.parse(stdout)
-      const raw = data.choices?.[0]?.message?.content
-      if (raw) {
-        return { raw, usage: data.usage }
-      }
-      console.error(`[AI Chat] ${model} 空回复 attempt=${i} usage=${JSON.stringify(data.usage)}`)
-    } catch (e) {
-      console.error(`[AI Chat] ${model} 异常 attempt=${i}:`, e.message)
-    }
-  }
-  return null
-}
 
 app.post('/api/ai/chat', async (req, res) => {
   const { messages, context } = req.body
@@ -1308,24 +1068,6 @@ app.post('/api/ai/chat', async (req, res) => {
   }
   return res.json({ reply: mockReply, actions: mockActions.length ? mockActions : undefined, usage: null })
 })
-
-// ==================== Helper Functions ====================
-
-// 获取 Embedding 向量
-async function getEmbedding(text) {
-  // 这里应该调用 OpenAI Embedding API
-  // const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  // const response = await openai.embeddings.create({
-  //   model: 'text-embedding-3-small',
-  //   input: text
-  // })
-  // return response.data[0].embedding
-
-  // 暂时返回模拟向量 (1536 维)
-  const dim = 1536
-  const vector = new Array(dim).fill(0).map(() => (Math.random() * 2 - 1) * 0.1)
-  return vector
-}
 
 // ==================== Start Server ====================
 

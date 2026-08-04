@@ -14,7 +14,7 @@
           <i class="fa-solid" :class="statsCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
           {{ statsCollapsed ? '展开' : '收起' }}
         </a-button>
-        <a-radio-group v-model:value="viewMode" size="small" @change="onViewModeChange">
+        <a-radio-group v-if="mainTab === 'all'" v-model:value="viewMode" size="small" @change="onViewModeChange">
           <a-radio-button value="list"><i class="fa-solid fa-list"></i> 列表</a-radio-button>
           <a-radio-button value="card"><i class="fa-solid fa-table-cells-large"></i> 卡片</a-radio-button>
         </a-radio-group>
@@ -55,7 +55,7 @@
     </div>
 
     <div class="table-section">
-      <div class="table-toolbar">
+      <div class="table-toolbar" v-if="viewMode === 'list'">
         <a-input
           v-model:value="searchText"
           placeholder="输入关键字搜索、过滤"
@@ -65,36 +65,30 @@
 
       <div v-if="viewMode === 'card'" class="card-groups">
         <div class="card-group" v-for="group in cardGroupsComputed" :key="group.key">
-          <div class="group-header" @click="toggleGroup(group.key)">
-            <i class="fa-solid group-arrow" :class="groupCollapsed[group.key] ? 'fa-chevron-right' : 'fa-chevron-down'"></i>
+          <div class="group-header">
             <i :class="group.icon" class="group-icon"></i>
             <span class="group-title">{{ group.label }}</span>
             <span class="group-badge" :class="{ alert: group.alertCount > 0 }">告警 {{ group.alertCount }}</span>
-            <span class="group-total">共 {{ group.items.length }} 个</span>
+            <span class="group-total">共 {{ group.total }} 个</span>
           </div>
-          <div class="carousel-wrap" v-show="!groupCollapsed[group.key]">
-            <div class="card-grid" :ref="el => carouselRef(group.key, el)" :style="{ transform: `translateX(${carouselOffset[group.key] || 0}px)` }">
-              <div class="res-card" v-for="record in group.items" :key="record.id" @click="openDetail(record)">
-                <div class="res-icon" :class="{ alert: record.alertStatus === '紧急' }">
-                  <i :class="group.icon"></i>
-                </div>
-                <div class="res-info">
-                  <div class="res-name">{{ record.name }}</div>
-                  <div class="res-alert">
-                    <template v-if="record.alertStatus === '紧急'">
-                      <span class="alert-count">紧急 {{ getEmergencyCount(record) }}</span>
-                    </template>
-                    <template v-else>
-                      <span class="alert-label">运行正常</span>
-                    </template>
-                  </div>
+          <div class="sub-card-grid">
+            <div class="sub-card" v-for="sub in group.subCards" :key="sub.subType" @click="gotoSubTab(group, sub)">
+              <div class="sub-card-icon" :class="{ alert: sub.alertCount > 0 }">
+                <i :class="group.icon"></i>
+              </div>
+              <div class="sub-card-info">
+                <div class="sub-card-name">{{ sub.label }}</div>
+                <div class="sub-card-alert">
+                  <template v-if="sub.alertCount > 0">
+                    <span class="alert-count">有告警 {{ sub.alertCount }}</span>
+                  </template>
+                  <template v-else>
+                    <span class="alert-label">运行正常</span>
+                  </template>
                 </div>
               </div>
+              <span class="sub-card-total">{{ sub.count }} 个</span>
             </div>
-            <template v-if="carouselNeeds[group.key]">
-              <button class="carousel-btn carousel-prev" @click.stop="moveCarousel(group.key, -1)"><i class="fa-solid fa-chevron-left"></i></button>
-              <button class="carousel-btn carousel-next" @click.stop="moveCarousel(group.key, 1)"><i class="fa-solid fa-chevron-right"></i></button>
-            </template>
           </div>
         </div>
       </div>
@@ -133,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useResourceDetail } from '../../composables/useResourceDetail'
 import { ALARM_MOCK } from '../../mock/resourceDetailMock'
@@ -152,53 +146,40 @@ const mainTab = ref('all')
 const subActive = ref(0)
 const viewMode = ref('card')
 const statsCollapsed = ref(true)
-const groupCollapsed = reactive({})
 
-const carouselOffset = reactive({})
-const carouselRefs = {}
-const carouselNeeds = reactive({})
-
-const carouselRef = (key, el) => {
-  if (el) {
-    carouselRefs[key] = el
-    nextTick(() => {
-      carouselNeeds[key] = el.scrollWidth > el.clientWidth + 2
-    })
-  }
-}
-
-const moveCarousel = (key, dir) => {
-  const el = carouselRefs[key]
-  if (!el) return
-  const step = el.clientWidth * 0.75
-  const maxOffset = el.scrollWidth - el.clientWidth
-  const cur = carouselOffset[key] || 0
-  const next = Math.max(-maxOffset, Math.min(0, cur - dir * step))
-  carouselOffset[key] = next
-}
+const mainTabKeys = ['all', 'app', 'cloud', 'cloud-resource', 'virtual', 'physical']
 
 const syncFromRoute = () => {
   const mode = props.mode || 'list'
-  if (mode === 'card') {
+  const querySub = router.currentRoute.value.query.sub
+  if (mode === 'card' || mode === 'list' || mode === 'all') {
     mainTab.value = 'all'
-    viewMode.value = 'card'
-  } else if (mode === 'app') {
-    mainTab.value = 'app'
+    viewMode.value = mode === 'card' ? 'card' : 'list'
+  } else if (mainTabKeys.includes(mode)) {
+    mainTab.value = mode
     viewMode.value = 'list'
   } else {
     mainTab.value = 'all'
     viewMode.value = 'list'
   }
   subActive.value = 0
+  if (mainTab.value !== 'all' && querySub) {
+    const tabs = subTabMap[mainTab.value] || []
+    const idx = tabs.findIndex(t => t.subType === querySub)
+    if (idx >= 0) subActive.value = idx
+  }
 }
 watch(() => props.mode, syncFromRoute)
+watch(() => router.currentRoute.value.query.sub, syncFromRoute)
 syncFromRoute()
 
 const onTabClick = (key) => {
   mainTab.value = key
   subActive.value = 0
   if (key === 'all') {
-    router.push('/monitor/resource/' + viewMode.value)
+    router.push('/monitor/resource/card')
+  } else {
+    router.push('/monitor/resource/' + key)
   }
 }
 
@@ -208,13 +189,24 @@ const onViewModeChange = () => {
   }
 }
 
-const toggleGroup = (key) => {
-  groupCollapsed[key] = !groupCollapsed[key]
+const gotoSubTab = (group, sub) => {
+  searchText.value = ''
+  router.push({
+    path: '/monitor/resource/' + group.key,
+    query: { sub: sub.subType },
+  })
 }
 
 const onSubTabChange = (key) => {
   const idx = Number(String(key).replace('sub-', ''))
   subActive.value = isNaN(idx) ? 0 : idx
+  if (mainTab.value !== 'all') {
+    const tab = subTabs.value[subActive.value]
+    router.push({
+      path: '/monitor/resource/' + mainTab.value,
+      query: tab?.subType ? { sub: tab.subType } : {},
+    })
+  }
 }
 
 const subTabs = computed(() => subTabMap[mainTab.value] || subTabMap.all)
@@ -259,15 +251,23 @@ const currentSubType = computed(() => {
   return tab?.subType || null
 })
 
+const dataSource = reactive({
+  app: appData,
+  cloud: cloudServiceData,
+  cloudRes: cloudResData,
+  virtual: virtualData,
+  physical: physicalData,
+})
+
 const filteredData = computed(() => {
   let base
-  if (mainTab.value === 'all') base = [...appData, ...cloudServiceData, ...cloudResData, ...virtualData, ...physicalData]
-  else if (mainTab.value === 'app') base = appData
-  else if (mainTab.value === 'cloud') base = cloudServiceData
-  else if (mainTab.value === 'cloud-resource') base = cloudResData
-  else if (mainTab.value === 'virtual') base = virtualData
-  else if (mainTab.value === 'physical') base = physicalData
-  else base = appData
+  if (mainTab.value === 'all') base = [...dataSource.app, ...dataSource.cloud, ...dataSource.cloudRes, ...dataSource.virtual, ...dataSource.physical]
+  else if (mainTab.value === 'app') base = dataSource.app
+  else if (mainTab.value === 'cloud') base = dataSource.cloud
+  else if (mainTab.value === 'cloud-resource') base = dataSource.cloudRes
+  else if (mainTab.value === 'virtual') base = dataSource.virtual
+  else if (mainTab.value === 'physical') base = dataSource.physical
+  else base = dataSource.app
   if (currentSubType.value) {
     base = base.filter(item => (item.subType || item.appLevel) === currentSubType.value)
   }
@@ -279,36 +279,26 @@ const filteredData = computed(() => {
 })
 
 const cardGroups = [
-  { key: 'app', label: '业务应用', icon: 'fa-solid fa-circle-nodes', items: appData },
-  { key: 'cloud', label: '云服务', icon: 'fa-solid fa-cloud', items: cloudServiceData },
-  { key: 'cloud-resource', label: '云资源', icon: 'fa-solid fa-server', items: cloudResData },
-  { key: 'virtual', label: '虚拟资源池', icon: 'fa-solid fa-layer-group', items: virtualData },
-  { key: 'physical', label: '物理资源', icon: 'fa-solid fa-microchip', items: physicalData },
+  { key: 'app', label: '业务应用', icon: 'fa-solid fa-circle-nodes', items: dataSource.app },
+  { key: 'cloud', label: '云服务', icon: 'fa-solid fa-cloud', items: dataSource.cloud },
+  { key: 'cloud-resource', label: '云资源', icon: 'fa-solid fa-server', items: dataSource.cloudRes },
+  { key: 'virtual', label: '虚拟资源池', icon: 'fa-solid fa-layer-group', items: dataSource.virtual },
+  { key: 'physical', label: '物理资源', icon: 'fa-solid fa-microchip', items: dataSource.physical },
 ]
 
+const matchesSubType = (item, subType) => (item.subType || item.appLevel) === subType
+
 const cardGroupsComputed = computed(() => {
-  let groups
-  if (mainTab.value === 'all') {
-    groups = cardGroups.map(g => ({ ...g }))
-  } else {
-    const parent = cardGroups.find(g => g.key === mainTab.value)
-    const subs = (subTabMap[mainTab.value] || []).filter(s => s.subType)
-    groups = subs.map(s => ({
-      key: s.subType,
-      label: s.label,
-      icon: parent?.icon || 'fa-solid fa-cube',
-      items: parent.items.filter(item => (item.subType || item.appLevel) === s.subType),
-    }))
-  }
-  return groups.map(g => {
-    let items = g.items
-    items = items
-      .filter(item =>
-        !searchText.value || item.name.toLowerCase().includes(searchText.value.toLowerCase()) || (item.identifier || '').toLowerCase().includes(searchText.value.toLowerCase())
-      )
-      .sort((a, b) => (b.alertStatus === '紧急' ? 1 : 0) - (a.alertStatus === '紧急' ? 1 : 0))
-    const alertCount = items.filter(item => item.alertStatus === '紧急').length
-    return { ...g, items, alertCount }
+  return cardGroups.map(g => {
+    const subs = (subTabMap[g.key] || []).filter(s => s.subType)
+    const subCards = subs.map(s => {
+      const items = g.items.filter(item => matchesSubType(item, s.subType))
+      const alertCount = items.filter(item => item.alertStatus === '紧急').length
+      return { ...s, count: items.length, alertCount }
+    })
+    const total = subCards.reduce((sum, sc) => sum + sc.count, 0)
+    const alertCount = subCards.reduce((sum, sc) => sum + sc.alertCount, 0)
+    return { ...g, subCards, total, alertCount }
   })
 })
 
@@ -343,8 +333,8 @@ onMounted(async function() {
           },
         }
       })
-      // merge API data into appData
-      appData.splice(0, appData.length, ...apiData)
+      // merge API data into reactive app data source
+      dataSource.app.splice(0, dataSource.app.length, ...apiData)
     }
   } catch (e) {
     console.error('加载资源监控数据失败:', e)
@@ -423,14 +413,7 @@ onMounted(async function() {
   display: flex;
   align-items: center;
   gap: 10px;
-  cursor: pointer;
-  user-select: none;
   margin-bottom: 16px;
-}
-.group-arrow {
-  font-size: 12px;
-  color: #8c8c8c;
-  width: 12px;
 }
 .group-icon {
   font-size: 16px;
@@ -460,57 +443,27 @@ onMounted(async function() {
   color: #8c8c8c;
 }
 
-.card-grid {
+.sub-card-grid {
   display: grid;
-  grid-auto-flow: column;
-  grid-template-columns: repeat(auto-fill, 210px);
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
-.carousel-wrap {
-  position: relative;
-  overflow: hidden;
-  max-height: 128px;
-}
-.carousel-wrap:hover .carousel-btn { opacity: 1; }
-.carousel-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid #e0e0e0;
-  background: rgba(255,255,255,0.92);
-  color: #666;
-  font-size: 11px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s, background 0.2s;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.carousel-btn:hover { background: #fff; color: #1890ff; border-color: #1890ff; }
-.carousel-prev { left: 6px; }
-.carousel-next { right: 6px; }
-.res-card {
+.sub-card {
   display: flex;
   align-items: center;
   gap: 10px;
   background: #fff;
   border: 1px solid rgba(0,0,0,0.04);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 12px 14px;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
-.res-card:hover {
+.sub-card:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   border-color: #1890ff;
 }
-.res-icon {
+.sub-card-icon {
   width: 38px;
   height: 38px;
   border-radius: 10px;
@@ -522,18 +475,18 @@ onMounted(async function() {
   font-size: 16px;
   flex-shrink: 0;
 }
-.res-icon.alert {
+.sub-card-icon.alert {
   background: rgba(245, 34, 45, 0.1);
   color: #f5222d;
 }
-.res-info {
+.sub-card-info {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.res-name {
+.sub-card-name {
   font-size: 14px;
   font-weight: 500;
   color: #1a1a1a;
@@ -542,11 +495,17 @@ onMounted(async function() {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.res-alert {
+.sub-card-alert {
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.sub-card-total {
+  font-size: 12px;
+  color: #8c8c8c;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .alert-label { color: #8c8c8c; }
 .alert-count { color: #f5222d; font-weight: 500; }
@@ -725,6 +684,5 @@ onMounted(async function() {
   .sub-tabs { overflow-x: auto; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
-  .carousel-wrap { max-height: 154px; }
 }
 </style>
