@@ -227,7 +227,6 @@
             <div class="focused-item" v-for="r in filterState.focused" :key="r.id" @click="openFocusedResource(r)">
               <i class="fa-solid fa-circle" :class="r.alertStatus === '紧急' ? 'focused-dot-alert' : 'focused-dot-ok'"></i>
               <span class="focused-item-name">{{ r.name }}</span>
-              <span class="focused-item-group">{{ r.groupKey }}</span>
               <i
                 class="fa-solid fa-star focused-item-star"
                 @click.stop="toggleFocusById(r)"
@@ -1269,22 +1268,24 @@ onMounted(async function() {
 }
 .focused-items-list {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
 .focused-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #fff;
+  gap: 6px;
+  padding: 5px 12px;
   border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  border-radius: 16px;
   cursor: pointer;
+  font-size: 12px;
+  color: #595959;
   transition: all 0.15s;
 }
 .focused-item:hover {
   border-color: #91caff;
+  color: #1890ff;
   background: #f0f7ff;
 }
 .focused-dot-alert {
@@ -1296,23 +1297,13 @@ onMounted(async function() {
   color: #52c41a;
 }
 .focused-item-name {
-  flex: 1;
-  font-size: 13px;
-  color: #1a1a1a;
+  font-size: 12px;
+  color: inherit;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.focused-item-group {
-  font-size: 11px;
-  color: #8c8c8c;
-  background: #f5f5f5;
-  padding: 2px 8px;
-  border-radius: 10px;
 }
 .focused-item-star {
   color: #faad14;
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
 }
 
