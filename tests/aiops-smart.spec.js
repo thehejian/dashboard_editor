@@ -32,7 +32,6 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
   const criticalRows = await section.locator('.smart-table .ant-table-row').count()
   expect(criticalRows).toBeGreaterThan(0)
   expect(criticalRows).toBeLessThan(rows)
-  await section.locator('.ant-radio-button-wrapper', { hasText: '全部' }).click()
 
   const apps = await page.locator('.app-card').count()
   expect(apps).toBe(24)
@@ -49,6 +48,12 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
   await expect(drawer).toBeVisible()
   await expect(drawer.locator('.app-summary')).toBeVisible()
   await expect(drawer.locator('.fault-tabs')).toBeVisible()
+
+  await page.locator('.app-drawer .close-btn').click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('.app-drawer.open')).toHaveCount(0)
+  const rowsAfterClose = await section.locator('.smart-table .ant-table-row').count()
+  expect(rowsAfterClose).toBe(criticalRows)
 
   expect(errors).toEqual([])
 })

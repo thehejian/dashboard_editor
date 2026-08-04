@@ -835,7 +835,11 @@ const anomalyCountByLevel = computed(() => {
 })
 function openAppFromNode(nodeId) {
   const app = aiopsApps.value.find(a => (a.nodes || []).includes(nodeId))
-  if (app) openAppDrawer(app)
+  if (app) {
+    activeApp.value = app
+    activeFaultNode.value = (app.nodes || []).includes(nodeId) ? nodeId : (app.nodes || [])[0] || ''
+    appDrawerOpen.value = true
+  }
 }
 
 const faultNodes = computed(() => {
