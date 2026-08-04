@@ -246,29 +246,17 @@
           <span class="recent-view-title">最近访问</span>
           <a class="recent-clear" href="javascript:;" @click="clearRecent">清空</a>
         </div>
-        <a-table
-          :columns="recentColumns"
-          :data-source="recentRows"
-          :pagination="false"
-          size="small"
-          row-key="id"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'name'">
-              <a class="app-link" href="javascript:;" @click="openRecent(record)">{{ record.name }}</a>
-            </template>
-            <template v-else-if="column.key === 'alertStatus'">
-              <span :class="record.alertStatus === '紧急' ? 'alert-count' : 'alert-label'">{{ record.alertStatus }}</span>
-            </template>
-            <template v-else-if="column.key === 'action'">
-              <i
-                class="fa-solid fa-star recent-star"
-                :class="{ active: isFocused(record.id) }"
-                @click.stop="toggleFocusById(record)"
-              ></i>
-            </template>
-          </template>
-        </a-table>
+        <div class="recent-list">
+          <div class="recent-item" v-for="r in filterState.recent" :key="r.id" @click="openRecent(r)">
+            <i class="fa-solid fa-circle" :class="r.alertStatus === '紧急' ? 'recent-dot-alert' : 'recent-dot-ok'"></i>
+            <span class="recent-name">{{ r.name }}</span>
+            <i
+              class="fa-solid fa-star recent-star"
+              :class="{ active: isFocused(r.id) }"
+              @click.stop="toggleFocusById(r)"
+            ></i>
+          </div>
+        </div>
         <div v-if="!filterState.recent.length" class="filter-empty">
           <i class="fa-solid fa-clock-rotate-left"></i>
           <p>暂无最近访问记录</p>
