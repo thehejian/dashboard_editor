@@ -2,6 +2,7 @@ import { reactive, computed } from 'vue'
 
 const LS_FOCUSED = 'rmon:focused'
 const LS_FOCUSED_GROUPS = 'rmon:focusedGroups'
+const LS_FOCUSED_SUBS = 'rmon:focusedSubs'
 const LS_RECENT = 'rmon:recent'
 const MAX_RECENT = 10
 
@@ -39,6 +40,7 @@ const state = reactive({
   runs: [],
   focused: load(LS_FOCUSED, []),
   focusedGroups: load(LS_FOCUSED_GROUPS, []),
+  focusedSubs: load(LS_FOCUSED_SUBS, []),
   recent: load(LS_RECENT, []),
 })
 
@@ -47,6 +49,7 @@ const hasActiveFilters = computed(() => state.modules.length > 0 || state.alerts
 function persist() {
   save(LS_FOCUSED, state.focused)
   save(LS_FOCUSED_GROUPS, state.focusedGroups)
+  save(LS_FOCUSED_SUBS, state.focusedSubs)
   save(LS_RECENT, state.recent)
 }
 
@@ -94,6 +97,17 @@ function toggleGroupFocus(group) {
   persist()
 }
 
+function isSubFocused(groupKey, subType) {
+  return state.focusedSubs.some(s => s.groupKey === groupKey && s.subType === subType)
+}
+
+function toggleSubFocus(groupKey, subType, label) {
+  const i = state.focusedSubs.findIndex(s => s.groupKey === groupKey && s.subType === subType)
+  if (i >= 0) state.focusedSubs.splice(i, 1)
+  else state.focusedSubs.unshift({ groupKey, subType, label })
+  persist()
+}
+
 function recordVisit(resource) {
   const entry = { ...snapshot(resource), time: Date.now() }
   state.recent = [entry, ...state.recent.filter(r => r.id !== resource.id)].slice(0, MAX_RECENT)
@@ -115,6 +129,7 @@ function resetFilters() {
 function clearAll() {
   state.focused = []
   state.focusedGroups = []
+  state.focusedSubs = []
   persist()
 }
 
@@ -130,6 +145,8 @@ export function useResourceFilters() {
     toggleFocus,
     isGroupFocused,
     toggleGroupFocus,
+    isSubFocused,
+    toggleSubFocus,
     recordVisit,
     clearRecent,
     resetFilters,

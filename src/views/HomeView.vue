@@ -2137,6 +2137,20 @@ const refreshCard = (card) => {
 .detail-panel.open .detail-panel-content {
   right: 0;
 }
+
+@media (max-width: 768px) {
+  .detail-panel-content {
+    width: 85%;
+    right: -85%;
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-panel-content {
+    width: 100%;
+    right: -100%;
+  }
+}
 .detail-header {
   display: flex;
   justify-content: space-between;
@@ -2525,7 +2539,9 @@ const refreshCard = (card) => {
   .aiops-kpi-val { font-size: 18px; }
   .kpi-sparkline { display: none; }
   .heatmap-grid { flex-direction: column; }
-  .app-grid { grid-template-columns: repeat(4, 1fr); }
+  .app-grid { grid-template-columns: repeat(3, 1fr); }
+  .aiops-section-title { flex-wrap: wrap; row-gap: 8px; }
+  .title-toggle { margin-left: 0; }
   .smart-grid { grid-template-columns: 1fr; }
   .smart-remed-row .smart-remed-list { grid-template-columns: 1fr; }
   .gs-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2533,5 +2549,9 @@ const refreshCard = (card) => {
   .rec-list { max-height: 300px; }
   .aiops-intent-wrapper { padding: 8px 10px 8px 12px; }
   .aiops-intent-input { font-size: 14px; }
+}
+
+@media (max-width: 576px) {
+  .app-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>

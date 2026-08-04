@@ -192,7 +192,55 @@
         </div>
       </div>
 
-      <div v-if="viewMode === 'card' && filterState.scope === 'recent'" class="recent-view">
+      <div v-if="viewMode === 'card' && filterState.scope === 'focused'" class="focused-view">
+        <div class="focused-view-head">
+          <span class="focused-view-title">关注资源</span>
+        </div>
+        
+        <div v-if="filterState.focusedSubs.length" class="focused-subs-section">
+          <div class="focused-section-title">收藏的子卡片</div>
+          <div class="focused-subs-grid">
+            <div class="focused-sub-card" v-for="sub in filterState.focusedSubs" :key="sub.groupKey + sub.subType">
+              <div class="focused-sub-icon">
+                <i class="fa-solid fa-folder-star"></i>
+              </div>
+              <div class="focused-sub-info">
+                <div class="focused-sub-name">{{ sub.label }}</div>
+                <div class="focused-sub-group">{{ sub.groupKey }}</div>
+              </div>
+              <button
+                class="focused-sub-focus-btn"
+                @click.stop="toggleSubFocus(sub.groupKey, sub.subType, sub.label)"
+                title="取消关注"
+              >
+                <i class="fa-solid fa-star active"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="filterState.focused.length" class="focused-items-section">
+          <div class="focused-section-title">收藏的资源</div>
+          <div class="focused-items-list">
+            <div class="focused-item" v-for="r in filterState.focused" :key="r.id" @click="openFocusedResource(r)">
+              <i class="fa-solid fa-circle" :class="r.alertStatus === '紧急' ? 'focused-dot-alert' : 'focused-dot-ok'"></i>
+              <span class="focused-item-name">{{ r.name }}</span>
+              <span class="focused-item-group">{{ r.groupKey }}</span>
+              <i
+                class="fa-solid fa-star focused-item-star"
+                @click.stop="toggleFocusById(r)"
+              ></i>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="!filterState.focusedSubs.length && !filterState.focused.length" class="filter-empty">
+          <i class="fa-solid fa-star"></i>
+          <p>暂无收藏的资源或子卡片</p>
+        </div>
+      </div>
+
+      <div v-else-if="filterState.scope === 'recent'" class="recent-view">
         <div class="recent-view-head">
           <span class="recent-view-title">最近访问</span>
           <a class="recent-clear" href="javascript:;" @click="clearRecent">清空</a>
@@ -259,6 +307,14 @@
                 </div>
               </div>
               <span class="sub-card-total">{{ sub.count }} 个</span>
+              <button
+                class="sub-card-focus-btn"
+                :class="{ active: isSubFocused(group.key, sub.subType) }"
+                @click.stop="toggleSubFocus(group.key, sub.subType, sub.label)"
+                title="关注"
+              >
+                <i class="fa-solid fa-star"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -331,6 +387,8 @@ const {
   toggleFocus,
   isGroupFocused,
   toggleGroupFocus,
+  isSubFocused,
+  toggleSubFocus,
   recordVisit,
   clearRecent,
   resetFilters,
@@ -366,6 +424,11 @@ const syncFromRoute = () => {
 }
 watch(() => props.mode, syncFromRoute)
 watch(() => router.currentRoute.value.query.sub, syncFromRoute)
+watch(() => filterState.scope, (newScope) => {
+  if (newScope === 'recent') {
+    viewMode.value = 'list'
+  }
+})
 syncFromRoute()
 
 const onTabClick = (key) => {
@@ -437,7 +500,17 @@ const openDetail = (app) => {
 }
 
 const openRecent = (r) => {
-  const found = allResourceItems.find(item => item.id === r.id)
+  const found = allResourceItems.value.find(item => item.id === r.id)
+  if (found) {
+    recordVisit(found)
+    rdpOpen(found)
+  } else {
+    rdpOpen(r)
+  }
+}
+
+const openFocusedResource = (r) => {
+  const found = allResourceItems.value.find(item => item.id === r.id)
   if (found) {
     recordVisit(found)
     rdpOpen(found)
@@ -447,7 +520,7 @@ const openRecent = (r) => {
 }
 
 const toggleFocusById = (r) => {
-  const found = allResourceItems.find(item => item.id === r.id)
+  const found = allResourceItems.value.find(item => item.id === r.id)
   toggleFocus(found || r)
 }
 
@@ -799,6 +872,33 @@ onMounted(async function() {
   white-space: nowrap;
   flex-shrink: 0;
 }
+.sub-card-focus-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #bfbfbf;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.sub-card:hover .sub-card-focus-btn {
+  opacity: 1;
+}
+.sub-card-focus-btn:hover {
+  color: #f5a623;
+  background: rgba(245, 166, 35, 0.1);
+}
+.sub-card-focus-btn.active {
+  opacity: 1;
+  color: #f5a623;
+}
 .alert-label { color: #8c8c8c; }
 .alert-count { color: #f5222d; font-weight: 500; }
 
@@ -1140,6 +1240,139 @@ onMounted(async function() {
   color: #1a1a1a;
 }
 
+.focused-view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.focused-view-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.focused-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #595959;
+  margin-bottom: 12px;
+}
+.focused-subs-section {
+  margin-bottom: 20px;
+}
+.focused-subs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.focused-sub-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: all 0.2s;
+}
+.focused-sub-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.focused-sub-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #faad14, #ffc53d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.focused-sub-info {
+  flex: 1;
+  min-width: 0;
+}
+.focused-sub-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.focused-sub-group {
+  font-size: 11px;
+  color: #8c8c8c;
+}
+.focused-sub-focus-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #faad14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.focused-items-section {
+  margin-bottom: 20px;
+}
+.focused-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.focused-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.focused-item:hover {
+  border-color: #91caff;
+  background: #f0f7ff;
+}
+.focused-dot-alert {
+  font-size: 8px;
+  color: #f5222d;
+}
+.focused-dot-ok {
+  font-size: 8px;
+  color: #52c41a;
+}
+.focused-item-name {
+  flex: 1;
+  font-size: 13px;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.focused-item-group {
+  font-size: 11px;
+  color: #8c8c8c;
+  background: #f5f5f5;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.focused-item-star {
+  color: #faad14;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .filter-empty {
   padding: 60px 0;
   text-align: center;
@@ -1268,13 +1501,80 @@ onMounted(async function() {
 }
 
 @media (max-width: 768px) {
-  .resource-monitor { padding: 0 16px; }
-  .monitor-header { padding: 12px 0; flex-wrap: wrap; }
-  .monitor-header .header-actions { width: 100%; }
+  .resource-monitor { padding: 0 12px; }
+  .monitor-header { padding: 10px 0 6px; flex-wrap: wrap; }
+  .monitor-header .category-tabs { width: 100%; flex: 0 0 100%; overflow-x: auto; }
+  .monitor-header .header-actions { width: 100%; justify-content: flex-end; padding-bottom: 2px; }
   .alert-cards { flex-wrap: wrap; }
   .alert-card { min-width: calc(50% - 8px); flex: none; }
   .sub-tabs { overflow-x: auto; }
+  .sub-tabs :deep(.ant-tabs-nav) { margin-bottom: 0; }
   .table-section { padding: 12px; }
   .metric-grid { grid-template-columns: 1fr; }
+  .monitor-body { flex-direction: column; gap: 10px; }
+  .filter-panel {
+    width: 100%;
+    max-height: none;
+    flex-shrink: 1;
+    overflow: visible;
+    border-radius: 10px;
+  }
+  .filter-panel.collapsed {
+    width: 100%;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+  .filter-panel.collapsed .filter-expand-btn {
+    position: static;
+    margin: 0;
+    width: 100%;
+    height: 34px;
+    background: #fff;
+    border: 1px dashed #d9d9d9;
+    border-radius: 8px;
+    color: #1890ff;
+    font-size: 12px;
+  }
+  .filter-panel.collapsed .filter-expand-btn i { margin-right: 4px; }
+  .filter-panel-inner { padding: 12px; }
+  .filter-panel-head { margin-bottom: 4px; }
+  .filter-scope-list,
+  .filter-check-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-scope-item {
+    flex: 1 1 30%;
+    min-width: 0;
+    padding: 6px 8px;
+  }
+  .filter-scope-item span:not(.filter-scope-count) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .filter-check-item {
+    flex: 1 1 45%;
+    min-width: 0;
+    padding: 6px 8px;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .filter-check-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sub-card-grid { grid-template-columns: 1fr; }
+  .group-header { flex-wrap: wrap; gap: 8px; }
+  .group-badge { margin-left: 0; }
+  .group-focus-btn { opacity: 1; }
+  .recent-list { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .recent-item { flex-shrink: 0; }
+  .card-groups { gap: 12px; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; }
+  :deep(.ant-table) { min-width: 620px; }
 }
 </style>
