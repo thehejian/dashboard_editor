@@ -118,8 +118,11 @@
             <a-button type="link">查看全部</a-button>
           </template>
           <a-table :columns="alertColumns" :dataSource="alertEvents" :pagination="false" size="small" rowKey="id" :scroll="{ x: 700 }">
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'level'">
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'node'">
+                  <span class="smart-node-link">{{ record.nodeLabel }}</span>
+                </template>
+                <template v-else-if="column.key === 'level'">
                 <a-tag :color="record.level === '严重' ? 'pink' : 'orange'">{{ record.level }}</a-tag>
               </template>
               <template v-else-if="column.key === 'status'">
@@ -2238,6 +2241,7 @@ const refreshCard = (card) => {
 .smart-table :deep(.ant-table-thead > tr > th) { background: #FAFAFA; font-size: 12px; color: #6B7280; font-weight: 600; padding: 8px 12px; }
 .smart-table :deep(.ant-table-tbody > tr > td) { padding: 8px 12px; font-size: 12px; color: #1A1A1A; }
 .smart-table :deep(.ant-table-tbody > tr:hover > td) { background: #F0F7FF !important; }
+.smart-node-link { color: #007DFF; font-weight: 600; }
 .smart-table-row { cursor: pointer; }
 .smart-level-tag { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: 500; }
 .smart-level-tag.lv-critical { color: #F5222D; background: #FFF1F0; }
@@ -2258,7 +2262,7 @@ const refreshCard = (card) => {
 .smart-pred-list { display: flex; flex-direction: column; gap: 12px; }
 .smart-pred-item { background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
 .smart-pred-item:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); }
-.smart-pred-node { font-size: 12px; font-weight: 600; color: #1A1A1A; }
+.smart-pred-node { font-size: 12px; font-weight: 600; color: #007DFF; }
 .smart-pred-metric { font-size: 12px; color: #6B7280; margin-top: 4px; }
 .smart-pred-metric b { color: #FF7D00; }
 .smart-pred-bar { height: 5px; background: #F0F0F0; border-radius: 3px; margin-top: 6px; overflow: hidden; }
@@ -2276,7 +2280,7 @@ const refreshCard = (card) => {
 .smart-remed-result.res-failed { color: #F5222D; }
 .smart-remed-body { flex: 1; min-width: 0; }
 .smart-remed-line1 { display: flex; align-items: center; gap: 8px; }
-.smart-remed-node { font-size: 12px; font-weight: 600; color: #1A1A1A; }
+.smart-remed-node { font-size: 12px; font-weight: 600; color: #007DFF; }
 .smart-remed-action { font-size: 11px; color: #007DFF; background: #F0F5FF; padding: 1px 6px; border-radius: 8px; }
 .smart-remed-time { font-size: 11px; color: #BFBFBF; margin-left: auto; }
 .smart-remed-line2 { font-size: 11px; color: #6B7280; margin-top: 3px; }
