@@ -202,7 +202,7 @@
           <div class="sub-card-grid">
             <div class="sub-card" v-for="sub in filterState.focusedSubs" :key="sub.groupKey + sub.subType" @click="gotoSubTab(sub)">
               <div class="sub-card-icon">
-                <i class="fa-solid fa-folder-star"></i>
+                <i :class="sub.icon"></i>
               </div>
               <div class="sub-card-info">
                 <div class="sub-card-name">{{ sub.label }}</div>
@@ -212,7 +212,7 @@
               </div>
               <button
                 class="sub-card-focus-btn active"
-                @click.stop="toggleSubFocus(sub.groupKey, sub.subType, sub.label)"
+                @click.stop="toggleSubFocus(sub.groupKey, sub.subType, sub.label, sub.icon)"
                 title="取消关注"
               >
                 <i class="fa-solid fa-star"></i>
@@ -312,7 +312,7 @@
               <button
                 class="sub-card-focus-btn"
                 :class="{ active: isSubFocused(group.key, sub.subType) }"
-                @click.stop="toggleSubFocus(group.key, sub.subType, sub.label)"
+                @click.stop="toggleSubFocus(group.key, sub.subType, sub.label, group.icon)"
                 title="关注"
               >
                 <i class="fa-solid fa-star"></i>

@@ -101,10 +101,10 @@ function isSubFocused(groupKey, subType) {
   return state.focusedSubs.some(s => s.groupKey === groupKey && s.subType === subType)
 }
 
-function toggleSubFocus(groupKey, subType, label) {
+function toggleSubFocus(groupKey, subType, label, icon) {
   const i = state.focusedSubs.findIndex(s => s.groupKey === groupKey && s.subType === subType)
   if (i >= 0) state.focusedSubs.splice(i, 1)
-  else state.focusedSubs.unshift({ groupKey, subType, label })
+  else state.focusedSubs.unshift({ groupKey, subType, label, icon })
   persist()
 }
 
