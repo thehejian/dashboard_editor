@@ -185,6 +185,72 @@
           </div>
         </div>
       </div>
+
+      <div class="aiops-smart" v-if="aiopsAnomalies.length">
+        <div class="aiops-section-title"><i class="fa-solid fa-microchip"></i> 智能诊断与自动修复</div>
+        <div class="smart-grid">
+          <div class="smart-left">
+            <div class="smart-card-head">
+              <span class="smart-title">当前异常</span>
+              <a-radio-group v-model:value="anomalyFilter" size="small" button-style="solid">
+                <a-radio-button value="all">全部 {{ aiopsAnomalies.length }}</a-radio-button>
+                <a-radio-button value="critical">严重 {{ anomalyCountByLevel.critical }}</a-radio-button>
+                <a-radio-button value="warning">警告 {{ anomalyCountByLevel.warning }}</a-radio-button>
+              </a-radio-group>
+            </div>
+            <div class="smart-list">
+              <div v-for="a in filteredAnomalies" :key="a.id" class="smart-item" @click="openAppFromNode(a.nodeId)">
+                <span class="smart-item-level" :class="'lv-' + a.level">
+                  <i class="fa-solid" :class="a.level === 'critical' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation'"></i>
+                </span>
+                <div class="smart-item-body">
+                  <div class="smart-item-line1">
+                    <span class="smart-item-node">{{ a.nodeLabel }}</span>
+                    <span class="smart-item-metric">{{ a.metric }}</span>
+                    <span class="smart-item-value">{{ a.currentValue }}{{ a.metric.includes('率') || a.metric.includes('比') ? '%' : '' }}</span>
+                  </div>
+                  <div class="smart-item-line2">{{ a.detail }}</div>
+                </div>
+                <span class="smart-item-arrow"><i class="fa-solid fa-angle-right"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="smart-right">
+            <div class="smart-panel">
+              <div class="smart-card-head"><span class="smart-title"><i class="fa-solid fa-clock-rotate-left" style="color: #FF7D00"></i> 未来30分钟预测</span></div>
+              <div class="smart-pred-list">
+                <div v-for="(p, i) in aiopsPredictions" :key="i" class="smart-pred-item">
+                  <span class="smart-pred-node">{{ p.nodeLabel }}</span>
+                  <div class="smart-pred-metric">{{ p.metric }} → <b>{{ p.predicted }}%</b></div>
+                  <div class="smart-pred-bar"><i :style="{ width: p.predicted + '%' }" :class="'bar-' + p.level"></i></div>
+                  <div class="smart-pred-meta">
+                    <span class="smart-pred-eta"><i class="fa-solid fa-hourglass-half"></i> {{ p.eta }}</span>
+                    <span class="smart-pred-conf">{{ Math.round(p.confidence * 100) }}% 置信度</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="smart-panel">
+              <div class="smart-card-head"><span class="smart-title"><i class="fa-solid fa-rotate-right" style="color: #007DFF"></i> 自动修复记录</span></div>
+              <div class="smart-remed-list">
+                <div v-for="(r, i) in aiopsRemediationRecords" :key="i" class="smart-remed-item">
+                  <span class="smart-remed-result" :class="'res-' + r.result">
+                    <i class="fa-solid" :class="r.result === 'success' ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
+                  </span>
+                  <div class="smart-remed-body">
+                    <div class="smart-remed-line1">
+                      <span class="smart-remed-node">{{ r.nodeLabel }}</span>
+                      <span class="smart-remed-action">{{ r.action }}</span>
+                      <span class="smart-remed-time">{{ r.time }}</span>
+                    </div>
+                    <div class="smart-remed-line2">{{ r.detail }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </template>
     </template>
 
@@ -724,6 +790,23 @@ const aiopsGoldenSignals = ref([])
 const aiopsGoldenSignalsByNode = ref({})
 const activeFaultNode = ref('')
 const evidenceOpen = ref(false)
+const aiopsPredictions = ref([])
+const aiopsRemediationRecords = ref([])
+const anomalyFilter = ref('all')
+
+const filteredAnomalies = computed(() => {
+  if (anomalyFilter.value === 'all') return aiopsAnomalies.value
+  return aiopsAnomalies.value.filter(a => a.level === anomalyFilter.value)
+})
+const anomalyCountByLevel = computed(() => {
+  const c = { critical: 0, warning: 0 }
+  aiopsAnomalies.value.forEach(a => { if (c[a.level] != null) c[a.level]++ })
+  return c
+})
+function openAppFromNode(nodeId) {
+  const app = aiopsApps.value.find(a => (a.nodes || []).includes(nodeId))
+  if (app) openAppDrawer(app)
+}
 
 const faultNodes = computed(() => {
   const nodes = new Map()
@@ -1465,6 +1548,8 @@ async function fetchAiopsData() {
     aiopsApps.value = health.apps || []
     aiopsServiceHealth.value = health.services || []
     aiopsAnomalies.value = anomalies
+    aiopsPredictions.value = pred.items || []
+    aiopsRemediationRecords.value = remed.records || []
 
     if (anomalies.length) {
       const root = anomalies.reduce((max, a) => a.score > max.score ? a : max, anomalies[0])
@@ -2076,6 +2161,56 @@ const refreshCard = (card) => {
 .app-critical .app-card-score { color: #F5222D; }
 .app-critical .app-card-status { color: #F5222D; }
 
+.aiops-smart { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.smart-grid { display: grid; grid-template-columns: 7fr 3fr; gap: 16px; }
+.smart-left, .smart-right { min-width: 0; }
+.smart-right { display: flex; flex-direction: column; gap: 12px; }
+.smart-panel { background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: 8px; padding: 12px; flex: 1; }
+.smart-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.smart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; display: inline-flex; align-items: center; gap: 6px; }
+.smart-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.smart-item {
+  display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
+  border: 1px solid #F0F0F0; border-radius: 8px; background: #fff; cursor: pointer; transition: all 0.2s;
+}
+.smart-item:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); }
+.smart-item-level { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; margin-top: 2px; flex-shrink: 0; }
+.smart-item-level.lv-critical { color: #F5222D; background: #FFF1F0; }
+.smart-item-level.lv-warning { color: #FF7D00; background: #FFF7E6; }
+.smart-item-level.lv-info { color: #007DFF; background: #F0F5FF; }
+.smart-item-body { flex: 1; min-width: 0; }
+.smart-item-line1 { display: flex; align-items: center; gap: 8px; }
+.smart-item-node { font-size: 13px; font-weight: 600; color: #1A1A1A; }
+.smart-item-metric { font-size: 11px; color: #6B7280; background: #F5F5F5; padding: 1px 6px; border-radius: 8px; }
+.smart-item-value { font-size: 13px; font-weight: 700; color: #F5222D; }
+.smart-item-line2 { font-size: 12px; color: #6B7280; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.smart-item-arrow { color: #D9D9D9; margin-top: 4px; font-size: 12px; flex-shrink: 0; }
+.smart-item:hover .smart-item-arrow { color: #007DFF; }
+
+.smart-pred-list { display: flex; flex-direction: column; gap: 12px; }
+.smart-pred-item { background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 10px 12px; }
+.smart-pred-node { font-size: 12px; font-weight: 600; color: #1A1A1A; }
+.smart-pred-metric { font-size: 12px; color: #6B7280; margin-top: 4px; }
+.smart-pred-metric b { color: #FF7D00; }
+.smart-pred-bar { height: 5px; background: #F0F0F0; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+.smart-pred-bar i { display: block; height: 100%; border-radius: 3px; }
+.smart-pred-bar .bar-critical { background: #F5222D; }
+.smart-pred-bar .bar-warning { background: #FF7D00; }
+.smart-pred-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 11px; color: #6B7280; }
+.smart-pred-eta i { margin-right: 3px; }
+
+.smart-remed-list { display: flex; flex-direction: column; gap: 8px; }
+.smart-remed-item { display: flex; gap: 8px; align-items: flex-start; background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 8px 12px; }
+.smart-remed-result { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+.smart-remed-result.res-success { color: #07C160; }
+.smart-remed-result.res-failed { color: #F5222D; }
+.smart-remed-body { flex: 1; min-width: 0; }
+.smart-remed-line1 { display: flex; align-items: center; gap: 8px; }
+.smart-remed-node { font-size: 12px; font-weight: 600; color: #1A1A1A; }
+.smart-remed-action { font-size: 11px; color: #007DFF; background: #F0F5FF; padding: 1px 6px; border-radius: 8px; }
+.smart-remed-time { font-size: 11px; color: #BFBFBF; margin-left: auto; }
+.smart-remed-line2 { font-size: 11px; color: #6B7280; margin-top: 3px; }
+
 .app-drawer .detail-panel-content { width: 80%; right: -80%; }
 .app-drawer-body { flex: 1; overflow-y: auto; padding: 4px 20px 20px; }
 .app-summary {
@@ -2201,6 +2336,7 @@ const refreshCard = (card) => {
   .kpi-sparkline { display: none; }
   .heatmap-grid { flex-direction: column; }
   .app-grid { grid-template-columns: repeat(4, 1fr); }
+  .smart-grid { grid-template-columns: 1fr; }
   .gs-grid { grid-template-columns: repeat(2, 1fr); }
   .anomaly-timeline { max-height: 300px; }
   .rec-list { max-height: 300px; }

@@ -235,6 +235,7 @@ function onSwitchChange(val) {
 .rdp-switch-menus .ant-cascader-menu { min-width: 150px; max-height: 300px; }
 .rdp-switch-menus .ant-cascader-menu:last-child .ant-cascader-menu-item { white-space: nowrap; }
 .ant-cascader-dropdown { z-index: 1100 !important; }
+.ant-select-dropdown { z-index: 1100 !important; }
 
 .ops-dropdown { background: #fff; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); border: 1px solid #f0f0f0; padding: 4px; min-width: 160px; }
 .ops-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #1a1a1a; transition: background 0.12s; }

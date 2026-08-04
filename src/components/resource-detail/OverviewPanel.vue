@@ -33,7 +33,7 @@
     <div v-for="group in filteredMetricGroups" :key="group.key" class="ov-section">
       <h4 class="ov-group-toggle" @click="toggleMetricGroup(group.key)">
         <i class="fa-solid group-chevron" :class="metricGroupCollapsed[group.key] ? 'fa-chevron-right' : 'fa-chevron-down'"></i>
-        <i :class="group.icon" style="margin-right:6px;color:#1890ff"></i>{{ group.label }}
+        <i :class="group.icon" class="ov-group-icon"></i>{{ group.label }}
         <span class="ov-group-count">{{ group.items.length }} 项</span>
       </h4>
       <div v-show="!metricGroupCollapsed[group.key]" class="ov-metric-grid">
@@ -230,6 +230,7 @@ onMounted(() => {
 .ov-group-toggle { cursor: pointer; user-select: none; }
 .ov-group-toggle:hover { color: #1890ff; }
 .group-chevron { font-size: 11px; color: #8c8c8c; width: 14px; transition: transform 0.2s; }
+.ov-group-icon { margin-right: 4px; color: #1890ff; }
 .ov-group-count { margin-left: auto; font-size: 12px; color: #8c8c8c; font-weight: 400; }
 
 .ov-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
