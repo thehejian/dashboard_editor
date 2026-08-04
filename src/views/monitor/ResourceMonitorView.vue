@@ -426,11 +426,6 @@ const syncFromRoute = () => {
 }
 watch(() => props.mode, syncFromRoute)
 watch(() => router.currentRoute.value.query.sub, syncFromRoute)
-watch(() => filterState.scope, (newScope) => {
-  if (newScope === 'recent') {
-    viewMode.value = 'list'
-  }
-})
 syncFromRoute()
 
 const onTabClick = (key) => {
