@@ -21,7 +21,24 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
   await expect(section.locator('.smart-table th', { hasText: '级别' })).toBeVisible()
 
   await expect(section.locator('.smart-pred-item').first()).toBeVisible()
+  await expect(section.locator('.smart-remed-row')).toBeVisible()
   await expect(section.locator('.smart-remed-item').first()).toBeVisible()
+
+  const predItem = section.locator('.smart-pred-item').first()
+  await predItem.click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('.app-drawer.open')).toHaveCount(1)
+  await page.locator('.app-drawer .close-btn').click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('.app-drawer.open')).toHaveCount(0)
+
+  const remedItem = section.locator('.smart-remed-item').first()
+  await remedItem.click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('.app-drawer.open')).toHaveCount(1)
+  await page.locator('.app-drawer .close-btn').click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('.app-drawer.open')).toHaveCount(0)
 
   const predTimes = await section.locator('.smart-pred-item .smart-pred-eta').allTextContents()
   const rawTimes = predTimes.map(t => t.match(/(\d+)分钟/)?.[1] || '0')

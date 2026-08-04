@@ -246,7 +246,7 @@
             <div class="smart-panel">
               <div class="smart-card-head"><span class="smart-title"><i class="fa-solid fa-clock-rotate-left" style="color: #FF7D00"></i> 未来30分钟预测</span></div>
               <div class="smart-pred-list">
-                <div v-for="(p, i) in sortedPredictions" :key="i" class="smart-pred-item">
+                <div v-for="(p, i) in sortedPredictions" :key="i" class="smart-pred-item" @click="openAppFromNode(p.nodeId)">
                   <span class="smart-pred-node">{{ p.nodeLabel }}</span>
                   <div class="smart-pred-metric">{{ p.metric }} → <b>{{ p.predicted }}%</b></div>
                   <div class="smart-pred-bar"><i :style="{ width: p.predicted + '%' }" :class="'bar-' + p.level"></i></div>
@@ -257,23 +257,25 @@
                 </div>
               </div>
             </div>
-            <div class="smart-panel">
-              <div class="smart-card-head"><span class="smart-title"><i class="fa-solid fa-rotate-right" style="color: #007DFF"></i> 自动修复记录</span></div>
-              <div class="smart-remed-list">
-                <div v-for="(r, i) in aiopsRemediationRecords" :key="i" class="smart-remed-item">
-                  <span class="smart-remed-result" :class="'res-' + r.result">
-                    <i class="fa-solid" :class="r.result === 'success' ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
-                  </span>
-                  <div class="smart-remed-body">
-                    <div class="smart-remed-line1">
-                      <span class="smart-remed-node">{{ r.nodeLabel }}</span>
-                      <span class="smart-remed-action">{{ r.action }}</span>
-                      <span class="smart-remed-time">{{ r.time }}</span>
-                    </div>
-                    <div class="smart-remed-line2">{{ r.detail }}</div>
-                  </div>
+          </div>
+        </div>
+
+        <div class="smart-remed-row" v-if="aiopsRemediationRecords.length">
+          <div class="smart-card-head"><span class="smart-title"><i class="fa-solid fa-rotate-right" style="color: #007DFF"></i> 自动修复记录</span></div>
+          <div class="smart-remed-list">
+            <div v-for="(r, i) in aiopsRemediationRecords" :key="i" class="smart-remed-item" @click="openAppFromNode(r.nodeId)">
+              <span class="smart-remed-result" :class="'res-' + r.result">
+                <i class="fa-solid" :class="r.result === 'success' ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
+              </span>
+              <div class="smart-remed-body">
+                <div class="smart-remed-line1">
+                  <span class="smart-remed-node">{{ r.nodeLabel }}</span>
+                  <span class="smart-remed-action">{{ r.action }}</span>
+                  <span class="smart-remed-time">{{ r.time }}</span>
                 </div>
+                <div class="smart-remed-line2">{{ r.detail }}</div>
               </div>
+              <span class="smart-item-arrow"><i class="fa-solid fa-angle-right"></i></span>
             </div>
           </div>
         </div>
@@ -2226,6 +2228,9 @@ const refreshCard = (card) => {
 .smart-grid { display: grid; grid-template-columns: 7fr 3fr; gap: 16px; }
 .smart-left, .smart-right { min-width: 0; }
 .smart-right { display: flex; flex-direction: column; gap: 12px; }
+.smart-remed-row { margin-top: 16px; background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: 8px; padding: 12px; }
+.smart-remed-row .smart-remed-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.smart-remed-row .smart-card-head { margin-bottom: 10px; }
 .smart-panel { background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: 8px; padding: 12px; flex: 1; }
 .smart-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .smart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; display: inline-flex; align-items: center; gap: 6px; }
@@ -2251,7 +2256,8 @@ const refreshCard = (card) => {
 .smart-time { color: #6B7280; }
 
 .smart-pred-list { display: flex; flex-direction: column; gap: 12px; }
-.smart-pred-item { background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 10px 12px; }
+.smart-pred-item { background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
+.smart-pred-item:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); }
 .smart-pred-node { font-size: 12px; font-weight: 600; color: #1A1A1A; }
 .smart-pred-metric { font-size: 12px; color: #6B7280; margin-top: 4px; }
 .smart-pred-metric b { color: #FF7D00; }
@@ -2263,7 +2269,8 @@ const refreshCard = (card) => {
 .smart-pred-eta i { margin-right: 3px; }
 
 .smart-remed-list { display: flex; flex-direction: column; gap: 8px; }
-.smart-remed-item { display: flex; gap: 8px; align-items: flex-start; background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 8px 12px; }
+.smart-remed-item { display: flex; gap: 8px; align-items: flex-start; background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.2s; }
+.smart-remed-item:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); }
 .smart-remed-result { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
 .smart-remed-result.res-success { color: #07C160; }
 .smart-remed-result.res-failed { color: #F5222D; }
@@ -2400,6 +2407,7 @@ const refreshCard = (card) => {
   .heatmap-grid { flex-direction: column; }
   .app-grid { grid-template-columns: repeat(4, 1fr); }
   .smart-grid { grid-template-columns: 1fr; }
+  .smart-remed-row .smart-remed-list { grid-template-columns: 1fr; }
   .gs-grid { grid-template-columns: repeat(2, 1fr); }
   .anomaly-timeline { max-height: 300px; }
   .rec-list { max-height: 300px; }
