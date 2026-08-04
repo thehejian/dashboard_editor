@@ -199,21 +199,23 @@
         
         <div v-if="filterState.focusedSubs.length" class="focused-subs-section">
           <div class="focused-section-title">收藏的子卡片</div>
-          <div class="focused-subs-grid">
-            <div class="focused-sub-card" v-for="sub in filterState.focusedSubs" :key="sub.groupKey + sub.subType">
-              <div class="focused-sub-icon">
+          <div class="sub-card-grid">
+            <div class="sub-card" v-for="sub in filterState.focusedSubs" :key="sub.groupKey + sub.subType" @click="gotoSubTab(sub)">
+              <div class="sub-card-icon">
                 <i class="fa-solid fa-folder-star"></i>
               </div>
-              <div class="focused-sub-info">
-                <div class="focused-sub-name">{{ sub.label }}</div>
-                <div class="focused-sub-group">{{ sub.groupKey }}</div>
+              <div class="sub-card-info">
+                <div class="sub-card-name">{{ sub.label }}</div>
+                <div class="sub-card-alert">
+                  <span class="alert-label">{{ sub.groupKey }}</span>
+                </div>
               </div>
               <button
-                class="focused-sub-focus-btn"
+                class="sub-card-focus-btn active"
                 @click.stop="toggleSubFocus(sub.groupKey, sub.subType, sub.label)"
                 title="取消关注"
               >
-                <i class="fa-solid fa-star active"></i>
+                <i class="fa-solid fa-star"></i>
               </button>
             </div>
           </div>
@@ -449,10 +451,17 @@ const onViewModeChange = () => {
 
 const gotoSubTab = (group, sub) => {
   searchText.value = ''
-  router.push({
-    path: '/monitor/resource/' + group.key,
-    query: { sub: sub.subType },
-  })
+  if (sub && group.groupKey) {
+    router.push({
+      path: '/monitor/resource/' + group.groupKey,
+      query: { sub: group.subType },
+    })
+  } else if (group && sub) {
+    router.push({
+      path: '/monitor/resource/' + group.key,
+      query: { sub: sub.subType },
+    })
+  }
 }
 
 const onSubTabChange = (key) => {
@@ -1259,67 +1268,6 @@ onMounted(async function() {
 }
 .focused-subs-section {
   margin-bottom: 20px;
-}
-.focused-subs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-.focused-sub-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.04);
-  border-radius: 8px;
-  padding: 12px 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  transition: all 0.2s;
-}
-.focused-sub-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-.focused-sub-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #faad14, #ffc53d);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.focused-sub-info {
-  flex: 1;
-  min-width: 0;
-}
-.focused-sub-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.focused-sub-group {
-  font-size: 11px;
-  color: #8c8c8c;
-}
-.focused-sub-focus-btn {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #faad14;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 13px;
 }
 .focused-items-section {
   margin-bottom: 20px;
