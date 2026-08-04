@@ -10,13 +10,29 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
 
   const section = page.locator('.aiops-smart')
   await expect(section).toBeVisible()
-  await expect(section.locator('.smart-item').first()).toBeVisible()
+  await expect(section.locator('.smart-table')).toBeVisible()
+  await expect(section.locator('.smart-table .ant-table-row').first()).toBeVisible()
 
-  const count = await section.locator('.smart-item').count()
-  expect(count).toBeGreaterThan(0)
+  const rows = await section.locator('.smart-table .ant-table-row').count()
+  expect(rows).toBeGreaterThan(0)
+
+  await expect(section.locator('.smart-table th', { hasText: '得分' })).toBeVisible()
+  await expect(section.locator('.smart-table th', { hasText: '时间' })).toBeVisible()
+  await expect(section.locator('.smart-table th', { hasText: '级别' })).toBeVisible()
 
   await expect(section.locator('.smart-pred-item').first()).toBeVisible()
   await expect(section.locator('.smart-remed-item').first()).toBeVisible()
+
+  const predTimes = await section.locator('.smart-pred-item .smart-pred-eta').allTextContents()
+  const rawTimes = predTimes.map(t => t.match(/(\d+)分钟/)?.[1] || '0')
+  expect(rawTimes.map(Number)).toEqual([...rawTimes.map(Number)].sort((a, b) => b - a))
+
+  await section.locator('.ant-radio-button-wrapper', { hasText: '严重' }).click()
+  await page.waitForTimeout(300)
+  const criticalRows = await section.locator('.smart-table .ant-table-row').count()
+  expect(criticalRows).toBeGreaterThan(0)
+  expect(criticalRows).toBeLessThan(rows)
+  await section.locator('.ant-radio-button-wrapper', { hasText: '全部' }).click()
 
   const apps = await page.locator('.app-card').count()
   expect(apps).toBe(24)
@@ -27,7 +43,7 @@ test('aiops smart section renders and drawer opens from anomaly', async ({ page 
   })
   expect(overflow.sw).toBeLessThanOrEqual(overflow.cw + 2)
 
-  await section.locator('.smart-item').first().click()
+  await section.locator('.smart-table .ant-table-row').first().click()
   await page.waitForTimeout(400)
   const drawer = page.locator('.app-drawer .detail-panel-content')
   await expect(drawer).toBeVisible()

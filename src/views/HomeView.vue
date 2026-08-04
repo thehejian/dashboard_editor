@@ -186,7 +186,7 @@
         </div>
       </div>
 
-      <div class="aiops-smart" v-if="aiopsAnomalies.length">
+      <div class="aiops-smart" v-if="aiopsAnomalies.length || aiopsPredictions.length || aiopsRemediationRecords.length">
         <div class="aiops-section-title"><i class="fa-solid fa-microchip"></i> 智能诊断与自动修复</div>
         <div class="smart-grid">
           <div class="smart-left">
@@ -198,28 +198,45 @@
                 <a-radio-button value="warning">警告 {{ anomalyCountByLevel.warning }}</a-radio-button>
               </a-radio-group>
             </div>
-            <div class="smart-list">
-              <div v-for="a in filteredAnomalies" :key="a.id" class="smart-item" @click="openAppFromNode(a.nodeId)">
-                <span class="smart-item-level" :class="'lv-' + a.level">
-                  <i class="fa-solid" :class="a.level === 'critical' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation'"></i>
-                </span>
-                <div class="smart-item-body">
-                  <div class="smart-item-line1">
-                    <span class="smart-item-node">{{ a.nodeLabel }}</span>
-                    <span class="smart-item-metric">{{ a.metric }}</span>
-                    <span class="smart-item-value">{{ a.currentValue }}{{ a.metric.includes('率') || a.metric.includes('比') ? '%' : '' }}</span>
+            <a-table
+              class="smart-table"
+              :data-source="filteredAnomalies"
+              :columns="anomalyColumns"
+              :pagination="false"
+              size="small"
+              row-key="id"
+              :scroll="{ y: 360 }"
+              :custom-row="record => ({ onClick: () => openAppFromNode(record.nodeId) })"
+              :row-class-name="() => 'smart-table-row'"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'level'">
+                  <span class="smart-level-tag" :class="'lv-' + record.level">
+                    {{ { critical: '严重', warning: '警告', info: '提示' }[record.level] }}
+                  </span>
+                </template>
+                <template v-else-if="column.key === 'score'">
+                  <div class="smart-score">
+                    <div class="smart-score-bar">
+                      <i :style="{ width: Math.round(record.score * 100) + '%' }" :class="'bar-' + record.level"></i>
+                    </div>
+                    <span class="smart-score-num">{{ Math.round(record.score * 100) }}</span>
                   </div>
-                  <div class="smart-item-line2">{{ a.detail }}</div>
-                </div>
-                <span class="smart-item-arrow"><i class="fa-solid fa-angle-right"></i></span>
-              </div>
-            </div>
+                </template>
+                <template v-else-if="column.key === 'value'">
+                  <span class="smart-value" :class="'lv-' + record.level">{{ record.currentValue }}{{ record.metric.includes('率') || record.metric.includes('比') ? '%' : '' }}</span>
+                </template>
+                <template v-else-if="column.key === 'time'">
+                  <span class="smart-time">{{ (record.time || '').slice(11) }}</span>
+                </template>
+              </template>
+            </a-table>
           </div>
           <div class="smart-right">
             <div class="smart-panel">
               <div class="smart-card-head"><span class="smart-title"><i class="fa-solid fa-clock-rotate-left" style="color: #FF7D00"></i> 未来30分钟预测</span></div>
               <div class="smart-pred-list">
-                <div v-for="(p, i) in aiopsPredictions" :key="i" class="smart-pred-item">
+                <div v-for="(p, i) in sortedPredictions" :key="i" class="smart-pred-item">
                   <span class="smart-pred-node">{{ p.nodeLabel }}</span>
                   <div class="smart-pred-metric">{{ p.metric }} → <b>{{ p.predicted }}%</b></div>
                   <div class="smart-pred-bar"><i :style="{ width: p.predicted + '%' }" :class="'bar-' + p.level"></i></div>
@@ -793,6 +810,19 @@ const evidenceOpen = ref(false)
 const aiopsPredictions = ref([])
 const aiopsRemediationRecords = ref([])
 const anomalyFilter = ref('all')
+
+const anomalyColumns = [
+  { title: '异常指标', dataIndex: 'metric', key: 'metric', width: 90 },
+  { title: '节点', dataIndex: 'nodeLabel', key: 'node', width: 110, ellipsis: true },
+  { title: '级别', key: 'level', width: 68 },
+  { title: '当前值', key: 'value', width: 74 },
+  { title: '得分', key: 'score', width: 110 },
+  { title: '时间', key: 'time', width: 78 },
+]
+
+const sortedPredictions = computed(() =>
+  [...aiopsPredictions.value].sort((a, b) => (b.time || '').localeCompare(a.time || ''))
+)
 
 const filteredAnomalies = computed(() => {
   if (anomalyFilter.value === 'all') return aiopsAnomalies.value
@@ -2168,24 +2198,26 @@ const refreshCard = (card) => {
 .smart-panel { background: #FAFAFA; border: 1px solid #F0F0F0; border-radius: 8px; padding: 12px; flex: 1; }
 .smart-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .smart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; display: inline-flex; align-items: center; gap: 6px; }
-.smart-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
-.smart-item {
-  display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
-  border: 1px solid #F0F0F0; border-radius: 8px; background: #fff; cursor: pointer; transition: all 0.2s;
-}
-.smart-item:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); }
-.smart-item-level { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; margin-top: 2px; flex-shrink: 0; }
-.smart-item-level.lv-critical { color: #F5222D; background: #FFF1F0; }
-.smart-item-level.lv-warning { color: #FF7D00; background: #FFF7E6; }
-.smart-item-level.lv-info { color: #007DFF; background: #F0F5FF; }
-.smart-item-body { flex: 1; min-width: 0; }
-.smart-item-line1 { display: flex; align-items: center; gap: 8px; }
-.smart-item-node { font-size: 13px; font-weight: 600; color: #1A1A1A; }
-.smart-item-metric { font-size: 11px; color: #6B7280; background: #F5F5F5; padding: 1px 6px; border-radius: 8px; }
-.smart-item-value { font-size: 13px; font-weight: 700; color: #F5222D; }
-.smart-item-line2 { font-size: 12px; color: #6B7280; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.smart-item-arrow { color: #D9D9D9; margin-top: 4px; font-size: 12px; flex-shrink: 0; }
-.smart-item:hover .smart-item-arrow { color: #007DFF; }
+.smart-table :deep(.ant-table) { background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; overflow: hidden; }
+.smart-table :deep(.ant-table-thead > tr > th) { background: #FAFAFA; font-size: 12px; color: #6B7280; font-weight: 600; padding: 8px 12px; }
+.smart-table :deep(.ant-table-tbody > tr > td) { padding: 8px 12px; font-size: 12px; color: #1A1A1A; }
+.smart-table :deep(.ant-table-tbody > tr:hover > td) { background: #F0F7FF !important; }
+.smart-table-row { cursor: pointer; }
+.smart-level-tag { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: 500; }
+.smart-level-tag.lv-critical { color: #F5222D; background: #FFF1F0; }
+.smart-level-tag.lv-warning { color: #FF7D00; background: #FFF7E6; }
+.smart-level-tag.lv-info { color: #007DFF; background: #F0F5FF; }
+.smart-score { display: flex; align-items: center; gap: 6px; }
+.smart-score-bar { flex: 1; height: 5px; background: #F0F0F0; border-radius: 3px; overflow: hidden; min-width: 40px; }
+.smart-score-bar i { display: block; height: 100%; border-radius: 3px; }
+.smart-score-bar .bar-critical { background: #F5222D; }
+.smart-score-bar .bar-warning { background: #FF7D00; }
+.smart-score-num { font-size: 11px; font-weight: 700; color: #1A1A1A; width: 24px; text-align: right; }
+.smart-value { font-weight: 700; }
+.smart-value.lv-critical { color: #F5222D; }
+.smart-value.lv-warning { color: #FF7D00; }
+.smart-value.lv-info { color: #007DFF; }
+.smart-time { color: #6B7280; }
 
 .smart-pred-list { display: flex; flex-direction: column; gap: 12px; }
 .smart-pred-item { background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 10px 12px; }

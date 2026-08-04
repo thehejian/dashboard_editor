@@ -820,9 +820,9 @@ app.get('/api/intelligent/health', (req, res) => {
 // GET /api/intelligent/predictions
 app.get('/api/intelligent/predictions', (req, res) => {
   res.json({ success: true, data: { count: 3, items: [
-    { nodeId: 'prod-order-01', nodeLabel: '订单服务-01', metric: 'CPU使用率', predicted: 99, confidence: 0.88, eta: '10分钟', level: 'critical' },
-    { nodeId: 'redis-cache', nodeLabel: 'Redis Cluster', metric: '命中率', predicted: 55, confidence: 0.75, eta: '25分钟', level: 'warning' },
-    { nodeId: 'mysql-master', nodeLabel: 'MySQL主库', metric: 'IO等待', predicted: 80, confidence: 0.65, eta: '45分钟', level: 'warning' },
+    { nodeId: 'prod-order-01', nodeLabel: '订单服务-01', metric: 'CPU使用率', predicted: 99, confidence: 0.88, eta: '10分钟', level: 'critical', time: '14:22:00' },
+    { nodeId: 'redis-cache', nodeLabel: 'Redis Cluster', metric: '命中率', predicted: 55, confidence: 0.75, eta: '25分钟', level: 'warning', time: '14:25:30' },
+    { nodeId: 'mysql-master', nodeLabel: 'MySQL主库', metric: 'IO等待', predicted: 80, confidence: 0.65, eta: '45分钟', level: 'warning', time: '14:28:15' },
   ]}})
 })
 
