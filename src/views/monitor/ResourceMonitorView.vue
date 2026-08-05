@@ -333,7 +333,7 @@
               @mouseleave="hideHoneycombTooltip"
             >
               <div class="honeycomb-cell-inner">
-                <i :class="getGroupIcon(group.key)"></i>
+                <i :class="group.icon"></i>
               </div>
             </div>
           </div>
@@ -439,9 +439,9 @@ const mainTabKeys = ['all', 'app', 'cloud', 'cloud-resource', 'virtual', 'physic
 const syncFromRoute = () => {
   const mode = props.mode || 'list'
   const querySub = router.currentRoute.value.query.sub
-  if (mode === 'card' || mode === 'list' || mode === 'all') {
+  if (mode === 'card' || mode === 'list' || mode === 'all' || mode === 'honeycomb') {
     mainTab.value = 'all'
-    viewMode.value = mode === 'card' ? 'card' : 'list'
+    viewMode.value = mode === 'card' ? 'card' : mode === 'honeycomb' ? 'honeycomb' : 'list'
   } else if (mainTabKeys.includes(mode)) {
     mainTab.value = mode
     viewMode.value = 'list'
