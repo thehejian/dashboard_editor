@@ -17,7 +17,6 @@
         <a-radio-group v-if="mainTab === 'all'" v-model:value="viewMode" size="small" @change="onViewModeChange">
           <a-radio-button value="list"><i class="fa-solid fa-list"></i> 列表</a-radio-button>
           <a-radio-button value="card"><i class="fa-solid fa-table-cells-large"></i> 卡片</a-radio-button>
-          <a-radio-button value="honeycomb"><i class="fa-solid fa-hexagon-check"></i> 蜂巢图</a-radio-button>
         </a-radio-group>
       </div>
     </div>
