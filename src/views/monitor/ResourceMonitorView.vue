@@ -207,7 +207,7 @@
               <div class="sub-card-info">
                 <div class="sub-card-name">{{ sub.label }}</div>
                 <div class="sub-card-alert">
-                  <span class="alert-label">{{ sub.groupKey }}</span>
+                  <span class="alert-label">{{ groupNameMap[sub.groupKey] || sub.groupKey }}</span>
                 </div>
               </div>
               <button
@@ -541,6 +541,14 @@ const dataSource = reactive({
   virtual: virtualData,
   physical: physicalData,
 })
+
+const groupNameMap = {
+  app: '业务应用',
+  cloud: '云服务',
+  'cloud-resource': '云资源',
+  virtual: '虚拟资源池',
+  physical: '物理资源',
+}
 
 const cardGroups = [
   { key: 'app', label: '业务应用', icon: 'fa-solid fa-circle-nodes', items: dataSource.app },
