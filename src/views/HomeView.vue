@@ -773,42 +773,42 @@
               </a-col>
 
               <a-col :xs="24" :md="12" :lg="8">
-                <div class="root-cause" v-if="aiopsRootCause && aiopsRootCause.nodeId === activeFaultNode">
-                  <div class="app-sub-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:#722ED1;margin-right:6px"></i> 根因分析</div>
+                <div class="root-cause" v-if="faultNodeAnalysis">
+                  <div class="app-sub-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:#722ED1;margin-right:6px"></i> {{ faultNodeAnalysis.isRoot ? '根因分析' : '节点分析' }}</div>
                   <div class="rc-node">
-                    <span class="rc-label">根因节点</span>
-                    <span class="rc-value">{{ aiopsRootCause.nodeLabel }}</span>
+                    <span class="rc-label">{{ faultNodeAnalysis.isRoot ? '根因节点' : '故障节点' }}</span>
+                    <span class="rc-value">{{ faultNodeAnalysis.nodeLabel }}</span>
                   </div>
                   <div class="rc-metric">
                     <span class="rc-label">异常指标</span>
-                    <span class="rc-value">{{ aiopsRootCause.metric }} = {{ aiopsRootCause.currentValue }}</span>
+                    <span class="rc-value">{{ faultNodeAnalysis.metric }} = {{ faultNodeAnalysis.currentValue }}</span>
                   </div>
                   <div class="rc-score">
                     <span class="rc-label">异常得分</span>
-                    <a-progress :percent="Math.round(aiopsRootCause.score * 100)" :stroke-color="'#F5222D'" size="small" />
+                    <a-progress :percent="Math.round(faultNodeAnalysis.score * 100)" :stroke-color="faultNodeAnalysis.isRoot ? '#F5222D' : '#FF7D00'" size="small" />
                   </div>
-                  <div class="rc-path" v-if="aiopsPropagationPath.length">
+                  <div class="rc-path" v-if="faultNodeAnalysis.path.length">
                     <span class="rc-label">传播路径</span>
                     <div class="rc-path-flow">
-                      <div v-for="(n, i) in aiopsPropagationPath" :key="n" class="rc-flow-node" :class="getNodeStatus(n)">
+                      <div v-for="(n, i) in faultNodeAnalysis.path" :key="n" class="rc-flow-node" :class="getNodeStatus(n)">
                         <span class="rc-flow-dot"></span>
                         <span class="rc-flow-name">{{ getNodeLabel(n) }}</span>
-                        <i v-if="i < aiopsPropagationPath.length - 1" class="fa-solid fa-chevron-right rc-flow-arrow"></i>
+                        <i v-if="i < faultNodeAnalysis.path.length - 1" class="fa-solid fa-chevron-right rc-flow-arrow"></i>
                       </div>
                     </div>
                   </div>
-                  <div class="rc-desc">{{ aiopsRootCause.detail }}</div>
-                  <div class="rc-evidence" v-if="aiopsRootCause.evidence">
+                  <div class="rc-desc">{{ faultNodeAnalysis.detail }}</div>
+                  <div class="rc-evidence" v-if="faultNodeAnalysis.evidence">
                     <div class="rc-evidence-toggle" @click="evidenceOpen = !evidenceOpen">
                       <i class="fa-solid" :class="evidenceOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                       {{ evidenceOpen ? '收起证据详情' : '查看证据详情' }}
                     </div>
                     <div class="rc-evidence-body" v-if="evidenceOpen">
-                      <div class="ev-item"><span class="ev-label">Z-Score</span><span class="ev-value">{{ aiopsRootCause.evidence.zScore }}</span><span class="ev-note">> 2.0 异常</span></div>
-                      <div class="ev-item"><span class="ev-label">EWMA 斜率</span><span class="ev-value">{{ aiopsRootCause.evidence.ewmaSlope }}/min</span><span class="ev-note">{{ aiopsRootCause.evidence.ewmaSlope > 0 ? '正向趋势' : '负向趋势' }}</span></div>
-                      <div class="ev-item"><span class="ev-label">偏离度</span><span class="ev-value">{{ aiopsRootCause.evidence.deviation }}%</span><span class="ev-note">远超基线</span></div>
-                      <div class="ev-item"><span class="ev-label">历史相似</span><span class="ev-value">{{ Math.round(aiopsRootCause.evidence.historicalSimilarity * 100) }}%</span><span class="ev-note">7天前类似故障</span></div>
-                      <div class="ev-item"><span class="ev-label">置信度</span><span class="ev-value">{{ aiopsRootCause.evidence.confidence }}</span><span class="ev-note">依据量化分析</span></div>
+                      <div class="ev-item"><span class="ev-label">Z-Score</span><span class="ev-value">{{ faultNodeAnalysis.evidence.zScore }}</span><span class="ev-note">> 2.0 异常</span></div>
+                      <div class="ev-item"><span class="ev-label">EWMA 斜率</span><span class="ev-value">{{ faultNodeAnalysis.evidence.ewmaSlope }}/min</span><span class="ev-note">{{ faultNodeAnalysis.evidence.ewmaSlope > 0 ? '正向趋势' : '负向趋势' }}</span></div>
+                      <div class="ev-item"><span class="ev-label">偏离度</span><span class="ev-value">{{ faultNodeAnalysis.evidence.deviation }}%</span><span class="ev-note">远超基线</span></div>
+                      <div class="ev-item"><span class="ev-label">历史相似</span><span class="ev-value">{{ Math.round(faultNodeAnalysis.evidence.historicalSimilarity * 100) }}%</span><span class="ev-note">7天前类似故障</span></div>
+                      <div class="ev-item"><span class="ev-label">置信度</span><span class="ev-value">{{ faultNodeAnalysis.evidence.confidence }}</span><span class="ev-note">依据量化分析</span></div>
                     </div>
                   </div>
                 </div>
@@ -981,6 +981,18 @@ const activeAppSummaryText = computed(() => {
 const faultGoldenSignals = computed(() => aiopsGoldenSignalsByNode.value[activeFaultNode.value] || [])
 const faultAnomalies = computed(() => aiopsAnomalies.value.filter(a => a.nodeId === activeFaultNode.value))
 const faultRecommendations = computed(() => aiopsRecommendations.value.filter(r => !r.targetNode || r.targetNode === activeFaultNode.value))
+
+const faultNodeAnalysis = computed(() => {
+  if (!activeFaultNode.value) return null
+  const isRoot = aiopsRootCause.value && aiopsRootCause.value.nodeId === activeFaultNode.value
+  const topAnomaly = faultAnomalies.value.reduce((max, a) => a.score > max.score ? a : max, faultAnomalies.value[0] || null)
+  const nodeLabel = faultNodes.value.find(n => n.nodeId === activeFaultNode.value)?.nodeLabel || activeFaultNode.value
+  if (isRoot) {
+    return { isRoot, nodeLabel, metric: aiopsRootCause.value.metric, currentValue: aiopsRootCause.value.currentValue, score: aiopsRootCause.value.score, detail: aiopsRootCause.value.detail, evidence: aiopsRootCause.value.evidence, path: aiopsPropagationPath.value, topAnomaly }
+  }
+  if (!topAnomaly) return null
+  return { isRoot: false, nodeLabel, metric: topAnomaly.metric, currentValue: topAnomaly.currentValue, score: topAnomaly.score, detail: topAnomaly.detail, evidence: topAnomaly.evidence, path: [], topAnomaly }
+})
 
 function getAppFaultLabels(app) {
   const nodes = app?.nodes || []
