@@ -316,29 +316,58 @@
       </div>
 
       <div v-else-if="viewMode === 'honeycomb'" class="honeycomb-view">
-        <div class="honeycomb-group" v-for="group in cardGroupsComputed" :key="group.key" v-show="group.total > 0">
-          <div class="honeycomb-group-header">
-            <i :class="group.icon" class="group-icon"></i>
-            <span class="group-title">{{ group.label }}</span>
-            <span class="group-total">共 {{ group.total }} 个</span>
+        <div class="honeycomb-toolbar">
+          <a-input 
+            v-model:value="honeycombSearch" 
+            placeholder="搜索资源..." 
+            allow-clear 
+            class="honeycomb-search"
+          >
+            <template #prefix><i class="fa-solid fa-search"></i></template>
+          </a-input>
+          <div class="honeycomb-stats">
+            <span>共 <b>{{ honeycombTotalCount }}</b> 个</span>
+            <span class="honeycomb-alert-total">告警 <b>{{ honeycombAlertCount }}</b></span>
           </div>
-          <div class="honeycomb-grid">
-            <div 
-              class="honeycomb-cell" 
-              v-for="item in getGroupItemsSorted(group.key)" 
-              :key="item.id"
-              :class="{ alert: item.alertStatus === '紧急' }"
-              @click="openHoneycombItem(item)"
-              @mouseenter="showHoneycombTooltip($event, item)"
-              @mouseleave="hideHoneycombTooltip"
-            >
-              <div class="honeycomb-cell-inner">
-                <i :class="group.icon"></i>
+        </div>
+        <div class="honeycomb-panels">
+          <div 
+            class="honeycomb-panel" 
+            v-for="group in honeycombGroupsSorted" 
+            :key="group.key"
+            v-show="group.total > 0"
+          >
+            <div class="honeycomb-panel-header" @click="toggleHoneycombPanel(group.key)">
+              <i class="fa-solid fa-chevron-right honeycomb-arrow" :class="{ open: honeycombExpanded[group.key] }"></i>
+              <i :class="group.icon" class="group-icon"></i>
+              <span class="group-title">{{ group.label }}</span>
+              <span class="group-total">{{ group.total }}个</span>
+              <span class="group-alert" v-if="group.alertCount > 0">告警 {{ group.alertCount }}</span>
+              <span class="honeycomb-dot" :class="group.alertCount > 0 ? 'alert' : 'ok'"></span>
+            </div>
+            <div class="honeycomb-panel-body" v-if="honeycombExpanded[group.key]">
+              <div class="honeycomb-grid">
+                <div 
+                  class="honeycomb-cell" 
+                  v-for="item in getGroupItemsSorted(group.key).slice(0, honeycombVisibleCount)" 
+                  :key="item.id"
+                  :class="{ alert: item.alertStatus === '紧急' }"
+                  @click="openHoneycombItem(item)"
+                  @mouseenter="showHoneycombTooltip($event, item)"
+                  @mouseleave="hideHoneycombTooltip"
+                >
+                  <div class="honeycomb-cell-inner">
+                    <i :class="group.icon"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="honeycomb-more" v-if="group.total > honeycombVisibleCount">
+                共 {{ group.total }} 个，显示前 {{ honeycombVisibleCount }} 个
               </div>
             </div>
           </div>
         </div>
-        <div v-if="!cardGroupsComputed.some(g => g.total > 0)" class="filter-empty">
+        <div v-if="!honeycombGroupsSorted.some(g => g.total > 0)" class="filter-empty">
           <i class="fa-solid fa-filter-circle-xmark"></i>
           <p>没有符合条件的资源</p>
           <a-button size="small" @click="resetFilters">重置过滤器</a-button>
@@ -610,13 +639,45 @@ const allResourceItems = computed(() => [
 const getGroupItemsSorted = (groupKey) => {
   const group = cardGroups.find(g => g.key === groupKey)
   if (!group) return []
-  const items = group.items.filter(matchesFilter)
+  let items = group.items.filter(matchesFilter)
+  if (honeycombSearch.value) {
+    const kw = honeycombSearch.value.toLowerCase()
+    items = items.filter(item => item.name.toLowerCase().includes(kw))
+  }
   return items.sort((a, b) => {
     if (a.alertStatus === '紧急' && b.alertStatus !== '紧急') return -1
     if (a.alertStatus !== '紧急' && b.alertStatus === '紧急') return 1
     return 0
   })
 }
+
+const honeycombSearch = ref('')
+const honeycombVisibleCount = 425
+const honeycombExpanded = reactive({})
+
+const initHoneycombExpanded = () => {
+  cardGroups.forEach(g => {
+    const alertCount = g.items.filter(i => i.alertStatus === '紧急').length
+    honeycombExpanded[g.key] = alertCount > 0
+  })
+}
+initHoneycombExpanded()
+
+const toggleHoneycombPanel = (key) => {
+  honeycombExpanded[key] = !honeycombExpanded[key]
+}
+
+const honeycombGroupsSorted = computed(() => {
+  return [...cardGroupsComputed.value].sort((a, b) => b.alertCount - a.alertCount)
+})
+
+const honeycombTotalCount = computed(() => {
+  return cardGroupsComputed.value.reduce((sum, g) => sum + g.total, 0)
+})
+
+const honeycombAlertCount = computed(() => {
+  return cardGroupsComputed.value.reduce((sum, g) => sum + g.alertCount, 0)
+})
 
 const honeycombTooltip = ref({ visible: false, x: 0, y: 0, item: null, groupKey: '' })
 
@@ -1392,42 +1453,106 @@ onMounted(async function() {
 .honeycomb-view {
   padding: 20px;
 }
-.honeycomb-group {
-  margin-bottom: 24px;
-}
-.honeycomb-group-header {
+.honeycomb-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.honeycomb-search {
+  width: 240px;
+}
+.honeycomb-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #595959;
+}
+.honeycomb-alert-total {
+  color: #f5222d;
+}
+.honeycomb-alert-total b {
+  color: #f5222d;
+}
+.honeycomb-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.honeycomb-panel {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.honeycomb-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.honeycomb-panel-header:hover {
+  background: #fafafa;
+}
+.honeycomb-arrow {
+  font-size: 10px;
+  color: #8c8c8c;
+  transition: transform 0.2s;
+}
+.honeycomb-arrow.open {
+  transform: rotate(90deg);
+}
+.honeycomb-panel-header .group-icon {
+  font-size: 14px;
+  color: #007DFF;
+}
+.honeycomb-panel-header .group-title {
   font-size: 14px;
   font-weight: 600;
   color: #1a1a1a;
 }
-.honeycomb-group-header .group-icon {
-  font-size: 16px;
-  color: #007DFF;
-}
-.honeycomb-group-header .group-total {
+.honeycomb-panel-header .group-total {
   font-size: 12px;
-  font-weight: 400;
   color: #8c8c8c;
+}
+.honeycomb-panel-header .group-alert {
+  font-size: 12px;
+  color: #f5222d;
+  font-weight: 500;
+}
+.honeycomb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   margin-left: auto;
+}
+.honeycomb-dot.alert {
+  background: #f5222d;
+}
+.honeycomb-dot.ok {
+  background: #52c41a;
+}
+.honeycomb-panel-body {
+  padding: 0 16px 16px;
 }
 .honeycomb-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 4px;
 }
 .honeycomb-cell {
-  width: 60px;
-  height: 52px;
+  width: 16px;
+  height: 14px;
   position: relative;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.15s;
 }
 .honeycomb-cell:hover {
-  transform: scale(1.1);
+  transform: scale(1.5);
+  z-index: 10;
 }
 .honeycomb-cell-inner {
   width: 100%;
@@ -1438,14 +1563,20 @@ onMounted(async function() {
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 18px;
-  transition: all 0.2s;
+  font-size: 6px;
+  transition: all 0.15s;
 }
 .honeycomb-cell.alert .honeycomb-cell-inner {
   background: #f5222d;
 }
 .honeycomb-cell:hover .honeycomb-cell-inner {
   filter: brightness(1.1);
+}
+.honeycomb-more {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8c8c8c;
+  text-align: center;
 }
 
 .honeycomb-tooltip {
