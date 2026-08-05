@@ -996,10 +996,12 @@ const faultNodeAnalysis = computed(() => {
 
 function getAppFaultLabels(app) {
   const nodes = app?.nodes || []
-  return nodes.map(id => {
-    const f = faultNodes.value.find(n => n.nodeId === id)
-    return { nodeId: id, nodeLabel: f?.nodeLabel || id }
-  })
+  const rootId = aiopsRootCause.value?.nodeId
+  if (rootId && nodes.includes(rootId)) {
+    const f = faultNodes.value.find(n => n.nodeId === rootId)
+    return [{ nodeId: rootId, nodeLabel: f?.nodeLabel || rootId }]
+  }
+  return []
 }
 function openAppDrawer(app) {
   activeApp.value = app
