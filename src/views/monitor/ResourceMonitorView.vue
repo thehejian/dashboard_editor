@@ -86,7 +86,7 @@
               >
                 <i class="fa-solid fa-star"></i>
                 <span>关注资源</span>
-                <span class="filter-scope-count">{{ filterState.focused.length }}</span>
+                <span class="filter-scope-count">{{ focusedCount }}</span>
               </div>
               <div
                 class="filter-scope-item"
@@ -95,7 +95,7 @@
               >
                 <i class="fa-solid fa-clock-rotate-left"></i>
                 <span>最近访问</span>
-                <span class="filter-scope-count">{{ filterState.recent.length }}</span>
+                <span class="filter-scope-count">{{ recentCount }}</span>
               </div>
             </div>
           </div>
@@ -173,7 +173,7 @@
         />
       </div>
 
-      <div class="recent-bar" v-if="mainTab === 'all' && viewMode === 'card' && filterState.scope === 'all' && filterState.recent.length">
+      <div class="recent-bar" v-if="mainTab === 'all' && viewMode === 'card' && filterState.scope === 'all' && recentCount">
         <div class="recent-bar-head">
           <span class="recent-bar-title"><i class="fa-solid fa-clock-rotate-left"></i> 最近访问</span>
           <a class="recent-clear" href="javascript:;" @click="clearRecent">清空</a>
@@ -221,7 +221,7 @@
           </div>
         </div>
 
-        <div v-if="filterState.focused.length" class="focused-items-section">
+        <div v-if="focusedCount" class="focused-items-section">
           <div class="focused-section-title">收藏的资源</div>
           <div class="focused-items-list">
             <div class="focused-item" v-for="r in filterState.focused" :key="r.id" @click="openFocusedResource(r)">
@@ -235,7 +235,7 @@
           </div>
         </div>
 
-        <div v-if="!filterState.focusedSubs.length && !filterState.focused.length" class="filter-empty">
+        <div v-if="!filterState.focusedSubs.length && !focusedCount" class="filter-empty">
           <i class="fa-solid fa-star"></i>
           <p>暂无收藏的资源或子卡片</p>
         </div>
@@ -257,7 +257,7 @@
             ></i>
           </div>
         </div>
-        <div v-if="!filterState.recent.length" class="filter-empty">
+        <div v-if="!recentCount" class="filter-empty">
           <i class="fa-solid fa-clock-rotate-left"></i>
           <p>暂无最近访问记录</p>
         </div>
@@ -600,6 +600,8 @@ const cardGroupsComputed = computed(() => {
 })
 
 const totalResourceCount = computed(() => allResourceItems.value.length)
+const focusedCount = computed(() => filterState.focused.length)
+const recentCount = computed(() => filterState.recent.length)
 
 const groupCount = (key) => {
   const g = cardGroups.find(x => x.key === key)
