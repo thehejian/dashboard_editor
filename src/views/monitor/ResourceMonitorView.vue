@@ -17,6 +17,7 @@
         <a-radio-group v-if="mainTab === 'all'" v-model:value="viewMode" size="small" @change="onViewModeChange">
           <a-radio-button value="list"><i class="fa-solid fa-list"></i> 列表</a-radio-button>
           <a-radio-button value="card"><i class="fa-solid fa-table-cells-large"></i> 卡片</a-radio-button>
+          <a-radio-button value="honeycomb"><i class="fa-solid fa-hexagon-check"></i> 蜂巢图</a-radio-button>
         </a-radio-group>
       </div>
     </div>
@@ -314,6 +315,36 @@
         </div>
       </div>
 
+      <div v-else-if="viewMode === 'honeycomb'" class="honeycomb-view">
+        <div class="honeycomb-group" v-for="group in cardGroupsComputed" :key="group.key" v-show="group.total > 0">
+          <div class="honeycomb-group-header">
+            <i :class="group.icon" class="group-icon"></i>
+            <span class="group-title">{{ group.label }}</span>
+            <span class="group-total">共 {{ group.total }} 个</span>
+          </div>
+          <div class="honeycomb-grid">
+            <div 
+              class="honeycomb-cell" 
+              v-for="item in getGroupItemsSorted(group.key)" 
+              :key="item.id"
+              :class="{ alert: item.alertStatus === '紧急' }"
+              @click="openHoneycombItem(item)"
+              @mouseenter="showHoneycombTooltip($event, item)"
+              @mouseleave="hideHoneycombTooltip"
+            >
+              <div class="honeycomb-cell-inner">
+                <i :class="getGroupIcon(group.key)"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="!cardGroupsComputed.some(g => g.total > 0)" class="filter-empty">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          <p>没有符合条件的资源</p>
+          <a-button size="small" @click="resetFilters">重置过滤器</a-button>
+        </div>
+      </div>
+
       <a-table
         v-else
         :columns="columns"
@@ -345,6 +376,20 @@
         </template>
       </a-table>
       </div>
+    </div>
+
+    <div 
+      class="honeycomb-tooltip" 
+      v-if="honeycombTooltip.visible" 
+      :style="{ left: honeycombTooltip.x + 'px', top: honeycombTooltip.y + 'px' }"
+    >
+      <div class="honeycomb-tooltip-name">{{ honeycombTooltip.item?.name }}</div>
+      <div class="honeycomb-tooltip-type">{{ honeycombTooltip.item?.type }} · {{ honeycombTooltip.groupKey }}</div>
+      <div class="honeycomb-tooltip-status">
+        <span>告警: <span :class="honeycombTooltip.item?.alertStatus === '紧急' ? 'status-alert' : 'status-ok'">{{ honeycombTooltip.item?.alertStatus }}</span></span>
+        <span>运行: {{ honeycombTooltip.item?.runStatus }}</span>
+      </div>
+      <button class="honeycomb-tooltip-btn" @click="openHoneycombItem(honeycombTooltip.item)">查看详情</button>
     </div>
 
     <ResourceDetailPanel />
@@ -561,6 +606,39 @@ const cardGroups = [
 const allResourceItems = computed(() => [
   ...dataSource.app, ...dataSource.cloud, ...dataSource.cloudRes, ...dataSource.virtual, ...dataSource.physical,
 ])
+
+const getGroupItemsSorted = (groupKey) => {
+  const group = cardGroups.find(g => g.key === groupKey)
+  if (!group) return []
+  const items = group.items.filter(matchesFilter)
+  return items.sort((a, b) => {
+    if (a.alertStatus === '紧急' && b.alertStatus !== '紧急') return -1
+    if (a.alertStatus !== '紧急' && b.alertStatus === '紧急') return 1
+    return 0
+  })
+}
+
+const honeycombTooltip = ref({ visible: false, x: 0, y: 0, item: null, groupKey: '' })
+
+const showHoneycombTooltip = (e, item) => {
+  const group = cardGroups.find(g => g.items.some(i => i.id === item.id))
+  honeycombTooltip.value = {
+    visible: true,
+    x: e.clientX,
+    y: e.clientY,
+    item,
+    groupKey: group?.label || '',
+  }
+}
+
+const hideHoneycombTooltip = () => {
+  honeycombTooltip.value.visible = false
+}
+
+const openHoneycombItem = (item) => {
+  recordVisit(item)
+  rdpOpen(item)
+}
 
 const matchesFilter = (item) => {
   if (filterState.modules.length && !filterState.modules.includes(item.type)) return false
@@ -1309,6 +1387,117 @@ onMounted(async function() {
   color: #faad14;
   font-size: 11px;
   cursor: pointer;
+}
+
+.honeycomb-view {
+  padding: 20px;
+}
+.honeycomb-group {
+  margin-bottom: 24px;
+}
+.honeycomb-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.honeycomb-group-header .group-icon {
+  font-size: 16px;
+  color: #007DFF;
+}
+.honeycomb-group-header .group-total {
+  font-size: 12px;
+  font-weight: 400;
+  color: #8c8c8c;
+  margin-left: auto;
+}
+.honeycomb-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.honeycomb-cell {
+  width: 60px;
+  height: 52px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.honeycomb-cell:hover {
+  transform: scale(1.1);
+}
+.honeycomb-cell-inner {
+  width: 100%;
+  height: 100%;
+  background: #52c41a;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+.honeycomb-cell.alert .honeycomb-cell-inner {
+  background: #f5222d;
+}
+.honeycomb-cell:hover .honeycomb-cell-inner {
+  filter: brightness(1.1);
+}
+
+.honeycomb-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  pointer-events: auto;
+  min-width: 180px;
+  transform: translate(10px, -50%);
+}
+.honeycomb-tooltip-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+.honeycomb-tooltip-type {
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-bottom: 8px;
+}
+.honeycomb-tooltip-status {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #595959;
+  margin-bottom: 12px;
+}
+.status-alert {
+  color: #f5222d;
+  font-weight: 600;
+}
+.status-ok {
+  color: #52c41a;
+}
+.honeycomb-tooltip-btn {
+  width: 100%;
+  padding: 6px 12px;
+  background: #007DFF;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.honeycomb-tooltip-btn:hover {
+  background: #0066cc;
 }
 
 .filter-empty {
