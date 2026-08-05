@@ -718,10 +718,10 @@ const MOCK_KPI_BASELINES = {
 }
 
 const MOCK_APP_HEALTH = [
-  { name: '订单服务', type: '应用', status: 'critical', score: 15, nodes: ['prod-order-01'], history: [88,85,82,78,75,60,40,22,15] },
+  { name: '订单服务', type: '应用', status: 'critical', score: 15, nodes: ['prod-order-01', 'lb-api', 'redis-cache'], history: [88,85,82,78,75,60,40,22,15] },
   { name: '支付服务', type: '应用', status: 'normal', score: 95, nodes: [], history: [94,94,95,95,95,95,95,95,95] },
   { name: '用户服务', type: '应用', status: 'normal', score: 93, nodes: [], history: [93,93,94,93,93,93,93,93,93] },
-  { name: '库存服务', type: '应用', status: 'warning', score: 68, nodes: ['prod-inventory-01'], history: [90,88,85,80,76,72,70,68,68] },
+  { name: '库存服务', type: '应用', status: 'warning', score: 68, nodes: ['prod-inventory-01', 'mysql-master'], history: [90,88,85,80,76,72,70,68,68] },
   { name: 'MySQL 主库', type: '云服务', status: 'warning', score: 55, nodes: ['mysql-master'], history: [90,88,85,80,72,65,60,57,55] },
   { name: 'Redis 集群', type: '云服务', status: 'warning', score: 68, nodes: ['redis-cache'], history: [94,93,90,86,80,74,70,69,68] },
   { name: 'API 网关', type: '云服务', status: 'warning', score: 62, nodes: ['lb-api'], history: [92,90,86,80,74,68,65,63,62] },
