@@ -223,7 +223,10 @@
               :row-class-name="() => 'smart-table-row'"
             >
               <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'level'">
+                <template v-if="column.key === 'node'">
+                  <span class="smart-node-link">{{ record.nodeLabel }}</span>
+                </template>
+                <template v-else-if="column.key === 'level'">
                   <span class="smart-level-tag" :class="'lv-' + record.level">
                     {{ { critical: '严重', warning: '警告', info: '提示' }[record.level] }}
                   </span>
@@ -2342,7 +2345,8 @@ const refreshCard = (card) => {
 .smart-table :deep(.ant-table-thead > tr > th) { background: #FAFAFA; font-size: 12px; color: #6B7280; font-weight: 600; padding: 8px 12px; }
 .smart-table :deep(.ant-table-tbody > tr > td) { padding: 8px 12px; font-size: 12px; color: #1A1A1A; }
 .smart-table :deep(.ant-table-tbody > tr:hover > td) { background: #F0F7FF !important; }
-.smart-node-link { color: #007DFF; font-weight: 600; }
+.smart-node-link { color: #007DFF; font-weight: 600; cursor: pointer; transition: color 0.2s; }
+.smart-node-link:hover { color: #005EB8; }
 .smart-table-row { cursor: pointer; }
 .smart-level-tag { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: 500; }
 .smart-level-tag.lv-critical { color: #F5222D; background: #FFF1F0; }

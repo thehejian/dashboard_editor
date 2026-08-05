@@ -600,8 +600,14 @@ const cardGroupsComputed = computed(() => {
 })
 
 const totalResourceCount = computed(() => allResourceItems.value.length)
-const focusedCount = computed(() => filterState.focused.length)
-const recentCount = computed(() => filterState.recent.length)
+const focusedCount = computed(() => {
+  const _ = filterState.focused.length
+  return filterState.focused.length
+})
+const recentCount = computed(() => {
+  const _ = filterState.recent.length
+  return filterState.recent.length
+})
 
 const groupCount = (key) => {
   const g = cardGroups.find(x => x.key === key)
