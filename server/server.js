@@ -1089,6 +1089,426 @@ app.post('/api/ai/chat', async (req, res) => {
   return res.json({ reply: mockReply, actions: mockActions.length ? mockActions : undefined, usage: null })
 })
 
+// ==================== SRE 自愈系统 Mock 数据 ====================
+
+const MOCK_INCIDENTS = [
+  {
+    id: 'INC-2026-0720',
+    title: '购物车核心交易链路数据库连接耗尽',
+    description: '受大促极速加购业务流冲击，微服务实例瞬间耗尽其数据库连接资源，引发全链级联雪崩。',
+    status: 'healing',
+    severity: 'P1',
+    appName: '订单服务',
+    service: 'cart-service',
+    startTime: '2026-07-20 08:58:00',
+    endTime: null,
+    duration: '12min',
+    metrics: {
+      p99: { current: 3500, baseline: 20, unit: 'ms', multiplier: '175x 突增' },
+      failureRate: { current: 85.4, unit: '%', label: '大量 HTTP 504 熔断' },
+    },
+    healingProgress: 15,
+    topologyNodeIds: ['lb-api', 'prod-order-01', 'redis-cache', 'mysql-master', 'mysql-slave'],
+  },
+  {
+    id: 'INC-2026-0718',
+    title: '用户服务登录鉴权超时',
+    description: '用户服务因 Redis 缓存击穿导致大量请求穿透至数据库，登录接口超时率飙升。',
+    status: 'resolved',
+    severity: 'P2',
+    appName: '用户服务',
+    service: 'user-service',
+    startTime: '2026-07-18 10:15:00',
+    endTime: '2026-07-18 10:28:00',
+    duration: '13min',
+    metrics: {
+      p99: { current: 2800, baseline: 40, unit: 'ms', multiplier: '70x 突增' },
+      failureRate: { current: 62.1, unit: '%', label: '大量 HTTP 503 超时' },
+    },
+    healingProgress: 100,
+    topologyNodeIds: ['lb-api', 'prod-user-01', 'redis-cache', 'mysql-master'],
+  },
+  {
+    id: 'INC-2026-0715',
+    title: '支付回调链路 MQ 消息堆积',
+    description: '支付回调消息消费线程池耗尽，导致 MQ 队列堆积，回调延迟增大。',
+    status: 'resolved',
+    severity: 'P2',
+    appName: '支付服务',
+    service: 'pay-service',
+    startTime: '2026-07-15 14:30:00',
+    endTime: '2026-07-15 14:45:00',
+    duration: '15min',
+    metrics: {
+      p99: { current: 5200, baseline: 100, unit: 'ms', multiplier: '52x 突增' },
+      failureRate: { current: 45.3, unit: '%', label: '回调超时' },
+    },
+    healingProgress: 100,
+    topologyNodeIds: ['lb-api', 'prod-pay-01', 'mq-order', 'redis-cache'],
+  },
+]
+
+const MOCK_HEALING_PLAYBOOK = {
+  'INC-2026-0720': {
+    agentStatus: 'executing',
+    steps: [
+      {
+        id: 1,
+        name: '故障节点网络隔离',
+        nameEn: 'Traffic Isolation',
+        config: 'Dynamic Router Update',
+        description: '隔离故障的 cart-service-v1 灰度实例，将流量切至稳定容器组',
+        mode: 'auto',
+        status: 'running',
+        progress: 25,
+        logs: [
+          { time: '18:02:24', message: '执行进度: 25%' },
+          { time: '18:02:24', message: '注入脚本中...' },
+        ],
+      },
+      {
+        id: 2,
+        name: '连接池容量扩容',
+        nameEn: 'Pool Resize',
+        config: 'HikariCP Config Map',
+        description: '动态修改配置中心，将 user-db 的 HikariCP MaxActive 提升至 250',
+        mode: 'manual',
+        status: 'pending',
+        progress: 0,
+        logs: [],
+      },
+      {
+        id: 3,
+        name: 'MySQL 连接刷新与备库倒换',
+        nameEn: 'DB Engine Control',
+        config: 'DB Engine Control',
+        description: '执行僵死连接清理 (FLUSH HOSTS)，必要时进行数据库主备自动倒换',
+        mode: 'manual',
+        status: 'pending',
+        progress: 0,
+        logs: [],
+      },
+      {
+        id: 4,
+        name: '全链路监控与业务健康拨测',
+        nameEn: 'Health Probe',
+        config: 'Synthetics Canary',
+        description: '发起端到端模拟结账压力测试，验证耗时和连接池水位',
+        mode: 'manual',
+        status: 'pending',
+        progress: 0,
+        logs: [],
+      },
+    ],
+    validation: {
+      totalSteps: 4,
+      completedSteps: 0,
+      http200Status: '暂未恢复',
+    },
+  },
+  'INC-2026-0718': {
+    agentStatus: 'completed',
+    steps: [
+      { id: 1, name: 'Redis 缓存预热', nameEn: 'Cache Warmup', config: 'Redis Pipeline', description: '批量加载热点用户数据到 Redis', mode: 'auto', status: 'success', progress: 100, logs: [{ time: '10:18:00', message: '缓存预热完成，命中率恢复至 98%' }] },
+      { id: 2, name: '数据库连接释放', nameEn: 'Connection Reset', config: 'HikariCP Admin', description: '清理僵死连接，释放连接池', mode: 'auto', status: 'success', progress: 100, logs: [{ time: '10:20:00', message: '连接池恢复正常水位' }] },
+    ],
+    validation: { totalSteps: 2, completedSteps: 2, http200Status: '已恢复' },
+  },
+}
+
+const MOCK_POSTMORTEM_REPORTS = {
+  'INC-2026-0720': {
+    title: '复盘沉淀：高并发事务连接池被打满事件',
+    markdown: `## 故障全景概要 (Executive Summary)
+
+**故障名称**：购物车微服务数据库连接池满载引发的级联高延迟事故
+**发生时间**：2026-07-20 08:58:00 (北京时间)
+**故障分级**：P1 (核心业务中断)
+**故障服务**：\`cart-service\` (购物车微服务)
+**业务影响面**：
+* **核心影响**：购物车结账（Checkout）接口 P99 响应时延从正常水位的 20ms 飙升至 **3500ms**。
+* **受损情况**：接口失败率高达 **85%**，导致早间业务高峰期大量用户无法完成支付转化，业务链路近乎停滞。
+**恢复历时**：约 5 分钟（自愈编排链介入至指标恢复）。
+**当前状态**：已恢复正常水位（P99: 20ms）。
+
+---
+
+## 核心技术根因探析 (Root Cause Analysis)
+
+### 1. 连接池配额与突增流量的不匹配
+
+\`cart-service\` 默认配置的 HikariCP \`MaxActive\` 为 50。在早间 08:58 的业务波峰期间，QPS 瞬时增长 4 倍。根据 **Little's Law (利特尔法则)**，系统所需的连接数 = 吞吐量 x 平均响应时间。当数据库底层出现轻微波动导致响应时间增加时，所需的连接数迅速穿透了 50 的阈值，导致后续请求进入 \`Connection Wait\` 状态。
+
+### 2. 数据库层面的隐性锁等待
+
+通过对 \`user-db\` 的状态分析，发现存在针对用户购物车表的并发写竞争。高频次的行级锁争用导致事务提交变慢，进而反向延长了数据库连接的持有时间。这种"慢查询 -> 连接持有延长 -> 线程池枯竭 -> 排队超时"的**正反馈效应**是引发 P99 飙升至 3500ms 的关键原因。
+
+### 3. 拓扑节点的反向压力
+
+由于 \`api-gateway\` 未能及时对 \`cart-service\` 进行有效的熔断隔离，导致上游请求源源不断地涌入已饱和的微服务，进一步压垮了数据库的监听队列（Backlog），引发了典型的微服务级联故障。
+
+---
+
+## 自愈编排时序线记录
+
+| 时间点 | 编排动作 | 执行操作描述 | 生效校验指标 |
+| :--- | :--- | :--- | :--- |
+| **08:58:15** | **流量隔离** | 识别到灰度环境实例错误率更高，立即下线灰度节点，将 100% 流量切入经过压测验证的主集群容器组。 | 灰度节点流量清零，全局错误率下降 10%。 |
+| **08:59:05** | **动态扩容连接池** | 通过配置中心下发热更新指令，将 \`cart-service\` 的 HikariCP \`maximum-pool-size\` 由 50 实时调整至 250。 | 线程等待指标由 3000ms 降至 200ms。 |
+| **09:00:20** | **主备倒换与清理** | 诊断发现大量 \`Sleep\` 状态的僵死连接，执行 \`FLUSH HOSTS\` 并触发主备平滑倒换，利用只读副本分担查询压力。 | 数据库 CPU 负载由 95% 降至 40%，死锁告警消除。 |
+| **09:01:45** | **健康拨测验证** | 启动四层与七层协议深度拨测，模拟结账全链路业务逻辑，验证返回码及耗时。 | **P99 响应时间恢复至 20ms**，失败率清零。 |
+
+---
+
+## 防线治理与长期改进项
+
+### 1. 架构级防御优化
+* **引入数据库 Proxy 层**：在应用与数据库之间部署 RDS Proxy 或中间件，实现连接多路复用与请求排队削峰。
+* **读写彻底分离**：重构购物车查询逻辑，强制所有非事务性查询走只读副本，缓解主库锁竞争。
+
+### 2. 智能限流与熔断策略
+* **自适应重试**：配置 Service Mesh 层的退避重试策略 (Exponential Backoff)，防止瞬时故障引发的重试风暴。
+* **并发控制**：在 API 网关层针对 \`cart-service/checkout\` 接口设置基于并发数的信号量限流。
+
+### 3. 动态容量预计算模型
+* **动态阈值**：废弃固定连接池配额，建立基于监控指标的动态调节模型。
+* **容量警戒线**：设置连接池使用率 80% 为紧急预警阈值，触发自动扩容或流量降级。
+
+### 4. 监控与可观测性增强
+* **连接泄露检测**：开启 HikariCP 的 \`leak-detection-threshold\`，监控生命周期异常的长连接。
+* **SQL 性能画像**：接入全链路追踪，实时捕获并告警导致连接占用的慢 SQL 语句。
+
+---
+
+**报告编制**：SRE 自动化运维组
+**审核状态**：已归档至知识库 (Postmortem-20260720-001)`,
+    createdAt: '2026-07-20 10:30:00',
+    author: 'SRE 自动化运维组',
+    status: '已归档至知识库 (Postmortem-20260720-001)',
+  },
+  'INC-2026-0718': {
+    title: '复盘沉淀：Redis 缓存击穿引发登录超时事件',
+    markdown: `## 故障概要
+
+**故障名称**：用户服务登录鉴权超时
+**发生时间**：2026-07-18 10:15:00
+**故障分级**：P2
+**恢复历时**：约 13 分钟
+
+## 根因分析
+
+Redis 热点 key 过期后，大量并发请求同时穿透至数据库，导致数据库连接池耗尽。
+
+## 改进措施
+
+1. 增加互斥锁防止缓存击穿
+2. 热点数据永不过期 + 异步刷新
+3. 数据库连接池扩容至 200`,
+    createdAt: '2026-07-18 11:00:00',
+    author: 'SRE 自动化运维组',
+    status: '已归档',
+  },
+}
+
+const MOCK_ERROR_RATE_TREND = {
+  'INC-2026-0720': [
+    { time: '08:50', latency: 12, errorRate: 2, label: '秒杀启动' },
+    { time: '08:52', latency: 15, errorRate: 3 },
+    { time: '08:54', latency: 14, errorRate: 1 },
+    { time: '08:56', latency: 1450, errorRate: 45 },
+    { time: '08:58', latency: 3240, errorRate: 88 },
+    { time: '09:00', latency: 3500, errorRate: 92, label: '错误率峰值: 92%' },
+  ],
+  'INC-2026-0718': [
+    { time: '10:15', latency: 40, errorRate: 1 },
+    { time: '10:18', latency: 2800, errorRate: 62, label: '缓存击穿' },
+    { time: '10:22', latency: 1200, errorRate: 30 },
+    { time: '10:28', latency: 45, errorRate: 2, label: '恢复正常' },
+  ],
+}
+
+const MOCK_INCIDENT_LOGS = [
+  { id: 'log-001', time: '2026-07-20 08:58:01', level: 'error', service: 'cart-service', nodeId: 'prod-order-01', host: '10.0.2.10', message: 'HikariCP Connection is not available, request timed out after 30000ms', traceId: 'trace-abc-001', extra: { pool: 'user-db', active: 50, idle: 0, waiting: 127 } },
+  { id: 'log-002', time: '2026-07-20 08:58:02', level: 'error', service: 'cart-service', nodeId: 'prod-order-01', host: '10.0.2.10', message: 'Connection acquire timeout! pool: user-db, state: [active=50, idle=0, waiting=234]', traceId: 'trace-abc-002', extra: {} },
+  { id: 'log-003', time: '2026-07-20 08:58:03', level: 'warn', service: 'api-gateway', nodeId: 'lb-api', host: '10.0.1.10', message: 'Upstream response time exceeded threshold: cart-service latency 3200ms', traceId: 'trace-abc-003', extra: { upstream: 'cart-service', threshold: 500 } },
+  { id: 'log-004', time: '2026-07-20 08:58:05', level: 'error', service: 'cart-service', nodeId: 'prod-order-01', host: '10.0.2.10', message: 'Checkout API returned 504 Gateway Timeout, affected 156 requests in last 10s', traceId: 'trace-abc-004', extra: {} },
+  { id: 'log-005', time: '2026-07-20 08:58:10', level: 'error', service: 'mysql-master', nodeId: 'mysql-master', host: '10.0.5.10', message: 'Too many connections (1024 max), connection refused for new client', traceId: null, extra: { maxConnections: 1024, current: 1024 } },
+  { id: 'log-006', time: '2026-07-20 08:58:15', level: 'info', service: 'cart-service', nodeId: 'prod-order-01', host: '10.0.2.10', message: '[Self-Healing] Traffic isolation started, redirecting canary traffic to stable group', traceId: null, extra: {} },
+  { id: 'log-007', time: '2026-07-20 08:59:05', level: 'info', service: 'cart-service', nodeId: 'prod-order-01', host: '10.0.2.10', message: '[Self-Healing] HikariCP config updated: maximum-pool-size 50 -> 250', traceId: null, extra: { oldValue: 50, newValue: 250 } },
+  { id: 'log-008', time: '2026-07-20 08:59:10', level: 'info', service: 'mysql-master', nodeId: 'mysql-master', host: '10.0.5.10', message: 'FLUSH HOSTS executed, cleared 342 stale connections', traceId: null, extra: {} },
+  { id: 'log-009', time: '2026-07-20 09:00:20', level: 'info', service: 'cart-service', nodeId: 'prod-order-01', host: '10.0.2.10', message: 'Connection pool healthy: active=45, idle=205, waiting=0', traceId: null, extra: {} },
+  { id: 'log-010', time: '2026-07-20 09:01:45', level: 'info', service: 'cart-service', nodeId: 'prod-order-01', host: '10.0.2.10', message: '[Self-Healing] Health probe passed: checkout API P99=22ms, errorRate=0%', traceId: null, extra: {} },
+  { id: 'log-011', time: '2026-07-20 08:57:50', level: 'info', service: 'cart-service', nodeId: 'redis-cache', host: '10.0.6.10', message: 'Redis cache hit rate dropped to 45% (baseline: 95%)', traceId: null, extra: {} },
+  { id: 'log-012', time: '2026-07-20 08:57:55', level: 'warn', service: 'cart-service', nodeId: 'redis-cache', host: '10.0.6.10', message: 'Cache miss storm detected, request穿透至 database', traceId: null, extra: {} },
+]
+
+const MOCK_INCIDENT_TRACES = [
+  {
+    traceId: 'trace-abc-001',
+    spanCount: 6,
+    duration: '3520ms',
+    startTime: '2026-07-20 08:58:01.100',
+    rootOperation: 'POST /api/cart/checkout',
+    status: 'error',
+    spans: [
+      { id: 's1', operation: 'POST /api/cart/checkout', service: 'api-gateway', startTime: 0, duration: 3520, depth: 0, status: 'error', color: '#FF7D00' },
+      { id: 's2', operation: 'CheckoutHandler.Handle', service: 'cart-service', startTime: 10, duration: 3500, depth: 1, status: 'error', color: '#F5222D' },
+      { id: 's3', operation: 'DB.GetConnection', service: 'cart-service', startTime: 20, duration: 30000, depth: 2, status: 'error', color: '#F5222D' },
+      { id: 's4', operation: 'Redis.Get', service: 'redis-cache', startTime: 15, duration: 5, depth: 2, status: 'ok', color: '#1890FF' },
+      { id: 's5', operation: 'MySQL.Query', service: 'mysql-master', startTime: 25, duration: 3400, depth: 3, status: 'error', color: '#F5222D' },
+      { id: 's6', operation: 'MySQL.Execute', service: 'mysql-master', startTime: 3430, duration: 80, depth: 3, status: 'error', color: '#F5222D' },
+    ],
+  },
+  {
+    traceId: 'trace-abc-003',
+    spanCount: 4,
+    duration: '3205ms',
+    startTime: '2026-07-20 08:58:03.200',
+    rootOperation: 'POST /api/cart/checkout',
+    status: 'error',
+    spans: [
+      { id: 's1', operation: 'POST /api/cart/checkout', service: 'api-gateway', startTime: 0, duration: 3205, depth: 0, status: 'error', color: '#FF7D00' },
+      { id: 's2', operation: 'CheckoutHandler.Handle', service: 'cart-service', startTime: 5, duration: 3200, depth: 1, status: 'error', color: '#F5222D' },
+      { id: 's3', operation: 'DB.GetConnection', service: 'cart-service', startTime: 10, duration: 3190, depth: 2, status: 'error', color: '#F5222D' },
+      { id: 's4', operation: 'MySQL.Query', service: 'mysql-master', startTime: 15, duration: 3180, depth: 3, status: 'error', color: '#F5222D' },
+    ],
+  },
+]
+
+const MOCK_CALL_TRACE = {
+  'INC-2026-0720': [
+    { id: 'ct-1', name: 'POST /api/cart/checkout', service: 'api-gateway', status: 'error', duration: 3520, timestamp: '08:58:01', spans: [
+      { service: 'api-gateway', operation: 'HTTP POST /api/cart/checkout', duration: 3520, status: 'error' },
+      { service: 'cart-service', operation: 'CheckoutHandler.Handle', duration: 3500, status: 'error' },
+      { service: 'cart-service', operation: 'DB.GetConnection', duration: 30000, status: 'error' },
+      { service: 'redis-cache', operation: 'Redis.Get(cart:session:*)', duration: 5, status: 'ok' },
+      { service: 'mysql-master', operation: 'MySQL.Query(SELECT * FROM orders)', duration: 3400, status: 'error' },
+    ]},
+    { id: 'ct-2', name: 'POST /api/cart/checkout', service: 'api-gateway', status: 'error', duration: 3205, timestamp: '08:58:03', spans: [
+      { service: 'api-gateway', operation: 'HTTP POST /api/cart/checkout', duration: 3205, status: 'error' },
+      { service: 'cart-service', operation: 'CheckoutHandler.Handle', duration: 3200, status: 'error' },
+      { service: 'cart-service', operation: 'DB.GetConnection', duration: 3190, status: 'error' },
+      { service: 'mysql-master', operation: 'MySQL.Query(SELECT * FROM orders)', duration: 3180, status: 'error' },
+    ]},
+    { id: 'ct-3', name: 'GET /api/cart/items', service: 'api-gateway', status: 'ok', duration: 45, timestamp: '08:57:50', spans: [
+      { service: 'api-gateway', operation: 'HTTP GET /api/cart/items', duration: 45, status: 'ok' },
+      { service: 'cart-service', operation: 'CartHandler.List', duration: 40, status: 'ok' },
+      { service: 'redis-cache', operation: 'Redis.Get(cart:items:*)', duration: 3, status: 'ok' },
+    ]},
+  ],
+  'INC-2026-0718': [
+    { id: 'ct-4', name: 'POST /api/order/create', service: 'api-gateway', status: 'error', duration: 2800, timestamp: '10:18:00', spans: [
+      { service: 'api-gateway', operation: 'HTTP POST /api/order/create', duration: 2800, status: 'error' },
+      { service: 'order-service', operation: 'OrderHandler.Create', duration: 2790, status: 'error' },
+      { service: 'mysql-slave', operation: 'MySQL.Query(SELECT * FROM inventory)', duration: 2780, status: 'error' },
+    ]},
+  ],
+}
+
+const MOCK_LINKED_LOGS = {
+  'INC-2026-0720': [
+    { id: 'll-1', time: '08:58:01', level: 'error', service: 'cart-service', source: 'stdout', message: 'HikariCP Connection is not available, request timed out after 30000ms', traceId: 'trace-abc-001' },
+    { id: 'll-2', time: '08:58:02', level: 'error', service: 'cart-service', source: 'stdout', message: 'Connection acquire timeout! pool: user-db, state: [active=50, idle=0, waiting=234]', traceId: 'trace-abc-002' },
+    { id: 'll-3', time: '08:58:03', level: 'warn', service: 'api-gateway', source: 'access.log', message: 'Upstream response time exceeded threshold: cart-service latency 3200ms', traceId: 'trace-abc-003' },
+    { id: 'll-4', time: '08:58:05', level: 'error', service: 'cart-service', source: 'stdout', message: 'Checkout API returned 504 Gateway Timeout, affected 156 requests in last 10s', traceId: 'trace-abc-004' },
+    { id: 'll-5', time: '08:58:10', level: 'error', service: 'mysql-master', source: 'error.log', message: 'Too many connections (1024 max), connection refused for new client', traceId: null },
+    { id: 'll-6', time: '08:58:15', level: 'info', service: 'cart-service', source: 'stdout', message: '[Self-Healing] Traffic isolation started, redirecting canary traffic to stable group', traceId: null },
+    { id: 'll-7', time: '08:57:50', level: 'info', service: 'redis-cache', source: 'slow.log', message: 'Redis cache hit rate dropped to 45% (baseline: 95%)', traceId: null },
+    { id: 'll-8', time: '08:57:55', level: 'warn', service: 'redis-cache', source: 'stdout', message: 'Cache miss storm detected, request穿透至 database', traceId: null },
+    { id: 'll-9', time: '08:59:05', level: 'info', service: 'cart-service', source: 'stdout', message: '[Self-Healing] HikariCP config updated: maximum-pool-size 50 -> 250', traceId: null },
+    { id: 'll-10', time: '08:59:10', level: 'info', service: 'mysql-master', source: 'general.log', message: 'FLUSH HOSTS executed, cleared 342 stale connections', traceId: null },
+  ],
+  'INC-2026-0718': [
+    { id: 'll-11', time: '10:18:00', level: 'error', service: 'order-service', source: 'stdout', message: 'Inventory query timeout after 2780ms', traceId: 'trace-def-001' },
+    { id: 'll-12', time: '10:18:05', level: 'error', service: 'mysql-slave', source: 'error.log', message: 'Replication lag detected: 2800ms behind master', traceId: null },
+  ],
+}
+
+// GET /api/sre/incidents
+app.get('/api/sre/incidents', (req, res) => {
+  const { appName } = req.query
+  let incidents = MOCK_INCIDENTS
+  if (appName) incidents = incidents.filter(i => i.appName === appName)
+  res.json({ success: true, data: incidents })
+})
+
+// GET /api/sre/incidents/:id
+app.get('/api/sre/incidents/:id', (req, res) => {
+  const incident = MOCK_INCIDENTS.find(i => i.id === req.params.id)
+  if (!incident) return res.status(404).json({ success: false, message: 'Incident not found' })
+  const topoNodes = MOCK_TOPO_NODES.filter(n => incident.topologyNodeIds.includes(n.id))
+  const topoEdges = MOCK_TOPO_EDGES.filter(e => incident.topologyNodeIds.includes(e.source) && incident.topologyNodeIds.includes(e.target))
+  res.json({
+    success: true,
+    data: {
+      incident,
+      topology: { nodes: topoNodes, edges: topoEdges },
+      playbook: MOCK_HEALING_PLAYBOOK[incident.id] || null,
+      postmortem: MOCK_POSTMORTEM_REPORTS[incident.id] || null,
+      errorRateTrend: MOCK_ERROR_RATE_TREND[incident.id] || [],
+    },
+  })
+})
+
+// GET /api/sre/incidents/:id/logs
+app.get('/api/sre/incidents/:id/logs', (req, res) => {
+  const { nodeId } = req.query
+  let logs = MOCK_INCIDENT_LOGS
+  if (nodeId) logs = logs.filter(l => l.nodeId === nodeId)
+  res.json({ success: true, data: logs })
+})
+
+// GET /api/sre/incidents/:id/traces
+app.get('/api/sre/incidents/:id/traces', (req, res) => {
+  res.json({ success: true, data: MOCK_INCIDENT_TRACES })
+})
+
+// GET /api/sre/incidents/:id/call-trace
+app.get('/api/sre/incidents/:id/call-trace', (req, res) => {
+  res.json({ success: true, data: MOCK_CALL_TRACE[req.params.id] || [] })
+})
+
+// GET /api/sre/incidents/:id/linked-logs
+app.get('/api/sre/incidents/:id/linked-logs', (req, res) => {
+  res.json({ success: true, data: MOCK_LINKED_LOGS[req.params.id] || [] })
+})
+
+// POST /api/sre/incidents/:id/heal/:stepIndex
+app.post('/api/sre/incidents/:id/heal/:stepIndex', (req, res) => {
+  const playbook = MOCK_HEALING_PLAYBOOK[req.params.id]
+  if (!playbook) return res.status(404).json({ success: false, message: 'Playbook not found' })
+  const step = playbook.steps[parseInt(req.params.stepIndex)]
+  if (!step) return res.status(404).json({ success: false, message: 'Step not found' })
+  step.status = 'running'
+  step.progress = 25
+  step.logs.push({ time: new Date().toTimeString().slice(0, 8), message: '执行进度: 25%' })
+  setTimeout(() => { step.progress = 50; step.logs.push({ time: new Date().toTimeString().slice(0, 8), message: '执行进度: 50%' }) }, 1000)
+  setTimeout(() => { step.progress = 100; step.status = 'success'; step.logs.push({ time: new Date().toTimeString().slice(0, 8), message: '执行完成' }) }, 2000)
+  res.json({ success: true, data: step })
+})
+
+// POST /api/sre/reset — reset playbook to initial state (for testing)
+app.post('/api/sre/reset', (req, res) => {
+  const playbook = MOCK_HEALING_PLAYBOOK['INC-2026-0720']
+  if (playbook) {
+    playbook.agentStatus = 'executing'
+    playbook.steps[0].status = 'running'
+    playbook.steps[0].progress = 25
+    playbook.steps[0].logs = [
+      { time: '18:02:24', message: '执行进度: 25%' },
+      { time: '18:02:24', message: '注入脚本中...' },
+    ]
+    for (let i = 1; i < playbook.steps.length; i++) {
+      playbook.steps[i].status = 'pending'
+      playbook.steps[i].progress = 0
+      playbook.steps[i].logs = []
+    }
+    playbook.validation.completedSteps = 0
+    playbook.validation.http200Status = '暂未恢复'
+  }
+  res.json({ success: true })
+})
+
 // ==================== Start Server ====================
 
 app.listen(PORT, () => {

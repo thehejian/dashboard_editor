@@ -95,6 +95,7 @@ const routes = [
     ],
   },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
+  { path: '/ops/incident/:id', name: 'ops-incident', component: () => import('../views/sre/SRECopilotView.vue'), props: true },
   {
     path: '/ops/settings',
     component: () => import('../views/ops/settings/SettingsView.vue'),

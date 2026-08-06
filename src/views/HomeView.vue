@@ -658,6 +658,17 @@
         </div>
 
         <div class="app-drawer-body">
+          <div class="app-drawer-tabs">
+            <button class="app-drawer-tab" :class="{ active: appDrawerTab === 'fault-detail' }" @click="appDrawerTab = 'fault-detail'">
+              <i class="fa-solid fa-magnifying-glass-chart"></i> 故障详情
+            </button>
+            <button class="app-drawer-tab" :class="{ active: appDrawerTab === 'fault-list' }" @click="appDrawerTab = 'fault-list'">
+              <i class="fa-solid fa-list"></i> 故障列表
+              <span v-if="appIncidents.length" class="app-drawer-tab-badge">{{ appIncidents.length }}</span>
+            </button>
+          </div>
+
+          <template v-if="appDrawerTab === 'fault-detail'">
           <div class="app-summary" v-if="activeApp" :class="'app-' + activeApp.status">
             <div class="app-summary-score-block">
               <span class="app-summary-score">{{ activeApp.score }}</span>
@@ -833,6 +844,32 @@
           </template>
 
           <a-empty v-else description="该应用/云服务当前无故障节点" style="margin:40px 0" />
+          </template>
+
+          <template v-if="appDrawerTab === 'fault-list'">
+            <div class="fault-list-tab">
+              <div class="fault-list-header">
+                <span class="fault-list-title"><i class="fa-solid fa-triangle-exclamation" style="color:#FF7D00;margin-right:6px"></i> 关联故障记录</span>
+                <span class="fault-list-count">共 {{ appIncidents.length }} 条</span>
+              </div>
+              <a-empty v-if="!appIncidents.length" description="该应用暂无故障记录" style="margin:40px 0" />
+              <div v-else class="fault-list-items">
+                <div v-for="inc in appIncidents" :key="inc.id" class="fault-list-item" :class="'fli-' + inc.status" @click="router.push('/ops/incident/' + inc.id)">
+                  <div class="fli-head">
+                    <span class="fli-severity" :class="'sev-' + inc.severity">{{ inc.severity }}</span>
+                    <span class="fli-id">{{ inc.id }}</span>
+                    <a-tag :color="getIncidentStatusTag(inc.status).color" size="small" class="fli-status-tag">{{ getIncidentStatusTag(inc.status).text }}</a-tag>
+                  </div>
+                  <div class="fli-title">{{ inc.title }}</div>
+                  <div class="fli-meta">
+                    <span><i class="fa-solid fa-clock"></i> {{ inc.duration }}</span>
+                    <span><i class="fa-solid fa-chart-line"></i> P99: {{ inc.metrics.p99.current }}ms</span>
+                    <span><i class="fa-solid fa-bolt"></i> 失败率: {{ inc.metrics.failureRate.current }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -862,7 +899,9 @@ const aiopsServiceHealth = ref([])
 const aiopsApps = ref([])
 const activeApp = ref(null)
 const appDrawerOpen = ref(false)
+const appDrawerTab = ref('fault-detail')
 const appFilter = ref('abnormal')
+const allIncidents = ref([])
 
 const visibleApps = computed(() => {
   if (appFilter.value === 'all') return aiopsApps.value
@@ -1005,6 +1044,7 @@ function getAppFaultLabels(app) {
 }
 function openAppDrawer(app) {
   activeApp.value = app
+  appDrawerTab.value = 'fault-detail'
   const nodes = (app.nodes || [])
   if (nodes.length) {
     const root = faultNodes.value.find(n => n.nodeId === aiopsRootCause.value?.nodeId)
@@ -1013,6 +1053,15 @@ function openAppDrawer(app) {
     activeFaultNode.value = ''
   }
   appDrawerOpen.value = true
+}
+
+const appIncidents = computed(() => {
+  if (!activeApp.value) return []
+  return allIncidents.value.filter(i => i.appName === activeApp.value.name)
+})
+
+function getIncidentStatusTag(status) {
+  return { healing: { color: 'processing', text: '自愈中' }, resolved: { color: 'success', text: '已恢复' }, investigating: { color: 'warning', text: '排查中' } }[status] || { color: 'default', text: status }
 }
 function closeAppDrawer() {
   appDrawerOpen.value = false
@@ -1671,10 +1720,18 @@ function analyzeAlert(record) {
   }
 }
 
+const win = window
+win.__openDrawerFromIncident = () => {
+  if (activeApp.value) {
+    appDrawerOpen.value = true
+    appDrawerTab.value = 'fault-list'
+  }
+}
+
 async function fetchAiopsData() {
   try {
     aiopsLoading.value = true
-    const [anomalyRes, healthRes, predRes, remedRes, topoRes, recRes, goldenRes] = await Promise.all([
+    const [anomalyRes, healthRes, predRes, remedRes, topoRes, recRes, goldenRes, incidentsRes] = await Promise.all([
       fetch('/api/intelligent/anomalies').then(r => r.json()),
       fetch('/api/intelligent/health').then(r => r.json()),
       fetch('/api/intelligent/predictions').then(r => r.json()),
@@ -1682,6 +1739,7 @@ async function fetchAiopsData() {
       fetch('/api/mock/topology').then(r => r.json()),
       fetch('/api/intelligent/recommendations').then(r => r.json()),
       fetch('/api/intelligent/golden-signals').then(r => r.json()),
+      fetch('/api/sre/incidents').then(r => r.json()),
     ])
     const anomalies = anomalyRes.data || []
     const summary = anomalyRes.summary || {}
@@ -1714,6 +1772,7 @@ async function fetchAiopsData() {
     aiopsAnomalies.value = anomalies
     aiopsPredictions.value = pred.items || []
     aiopsRemediationRecords.value = remed.records || []
+    allIncidents.value = incidentsRes.data || []
 
     if (anomalies.length) {
       const root = anomalies.reduce((max, a) => a.score > max.score ? a : max, anomalies[0])
@@ -2455,6 +2514,97 @@ const refreshCard = (card) => {
 .drawer-3col .root-cause,
 .drawer-3col .rec-list { height: 100%; }
 .drawer-3col .rec-list { max-height: 340px; overflow-y: auto; }
+
+.app-drawer-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 12px;
+}
+.app-drawer-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.app-drawer-tab:hover { color: #1a1a1a; }
+.app-drawer-tab.active {
+  color: #007DFF;
+  border-bottom-color: #007DFF;
+  font-weight: 600;
+}
+.app-drawer-tab i { font-size: 12px; }
+.app-drawer-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #F5222D;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.fault-list-tab { padding: 0; }
+.fault-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.fault-list-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.fault-list-count { font-size: 12px; color: #8c8c8c; }
+.fault-list-items { display: flex; flex-direction: column; gap: 8px; }
+.fault-list-item {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fault-list-item:hover {
+  border-color: #007DFF;
+  box-shadow: 0 2px 8px rgba(0,125,255,0.1);
+}
+.fault-list-item.fli-healing { border-left: 3px solid #722ED1; }
+.fault-list-item.fli-resolved { border-left: 3px solid #52c41a; }
+.fault-list-item.fli-investigating { border-left: 3px solid #FF7D00; }
+.fli-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.fli-severity {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+}
+.sev-P1 { background: #F5222D; }
+.sev-P2 { background: #FF7D00; }
+.fli-id { font-size: 11px; color: #8c8c8c; font-family: monospace; }
+.fli-status-tag { margin-left: auto; }
+.fli-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+.fli-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: #8c8c8c;
+}
+.fli-meta i { margin-right: 3px; }
 
 .aiops-fault-card { border: 1px solid #E8E8E8; }
 .aiops-fault-card :deep(.ant-card-head) { border-bottom: 1px solid #F0F0F0; margin-bottom: 0; }

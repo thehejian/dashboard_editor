@@ -58,6 +58,10 @@ export default defineConfig({
       '/api/intelligent': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/api/sre': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },
