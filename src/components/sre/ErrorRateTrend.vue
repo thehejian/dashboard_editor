@@ -4,7 +4,26 @@
       <span class="ert-title"><i class="fa-solid fa-chart-line"></i> 故障时间段错误率趋势</span>
       <span class="ert-sub">分钟采样</span>
     </div>
-    <div ref="chartContainer" class="ert-chart"></div>
+    <div class="ert-legend">
+      <span class="ert-legend-item"><i class="ert-dot" style="background:#1890FF"></i>延时(ms)</span>
+      <span class="ert-legend-item"><i class="ert-dot" style="background:#FF7D00"></i>错误率(%)</span>
+    </div>
+    <div ref="chartWrapper" class="ert-chart-wrapper" @mousemove="onMouseMove" @mouseleave="hideTooltip">
+      <div ref="chartContainer" class="ert-chart"></div>
+      <div v-if="tooltipData" class="ert-tooltip" :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }">
+        <div class="ert-tooltip-title">{{ tooltipData.time }}</div>
+        <div class="ert-tooltip-item">
+          <span class="ert-tooltip-dot" style="background:#1890FF"></span>
+          <span class="ert-tooltip-label">延时</span>
+          <span class="ert-tooltip-value">{{ tooltipData.latency }}ms</span>
+        </div>
+        <div class="ert-tooltip-item">
+          <span class="ert-tooltip-dot" style="background:#FF7D00"></span>
+          <span class="ert-tooltip-label">错误率</span>
+          <span class="ert-tooltip-value">{{ tooltipData.errorRate }}%</span>
+        </div>
+      </div>
+    </div>
     <div class="ert-annotations">
       <div v-for="(point, i) in annotatedPoints" :key="i" class="ert-annotation">
         <span class="ert-a-time">{{ point.time }}</span>
@@ -23,10 +42,34 @@ const props = defineProps({
   data: { type: Array, default: () => [] },
 })
 
+const chartWrapper = ref(null)
 const chartContainer = ref(null)
+const tooltipData = ref(null)
+const tooltipX = ref(0)
+const tooltipY = ref(0)
 let chart = null
 
 const annotatedPoints = computed(() => props.data.filter(d => d.label || d === props.data[0] || d === props.data[props.data.length - 1]))
+
+function hideTooltip() {
+  tooltipData.value = null
+}
+
+function onMouseMove(e) {
+  if (!props.data.length || !chartContainer.value) return
+  const rect = chartContainer.value.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const chartWidth = rect.width
+  const padding = { left: 10, right: 10 }
+  const plotWidth = chartWidth - padding.left - padding.right
+  const ratio = (x - padding.left) / plotWidth
+  const idx = Math.round(ratio * (props.data.length - 1))
+  if (idx >= 0 && idx < props.data.length) {
+    tooltipData.value = props.data[idx]
+    tooltipX.value = e.clientX - chartWrapper.value.getBoundingClientRect().left + 12
+    tooltipY.value = e.clientY - chartWrapper.value.getBoundingClientRect().top - 50
+  }
+}
 
 function renderChart() {
   if (chart) { chart.destroy(); chart = null }
@@ -36,21 +79,24 @@ function renderChart() {
     container: chartContainer.value,
     autoFit: true,
     height: 140,
-    padding: [10, 40, 20, 50],
+    padding: [10, 10, 24, 40],
   })
 
-  const chartData = props.data.flatMap(d => [
-    { time: d.time, type: '延时(ms)', value: d.latency },
-    { time: d.time, type: '错误率(%)', value: d.errorRate },
-  ])
+  const combinedData = []
+  props.data.forEach(d => {
+    combinedData.push({ time: d.time, value: d.latency, type: '延时(ms)' })
+    combinedData.push({ time: d.time, value: d.errorRate, type: '错误率(%)' })
+  })
 
-  chart.data(chartData)
+  chart.data(combinedData)
 
   chart.line()
     .encode('x', 'time')
     .encode('y', 'value')
     .encode('color', 'type')
+    .scale('color', { range: ['#1890FF', '#FF7D00'] })
     .style('lineWidth', 2)
+    .tooltip(false)
 
   chart.point()
     .encode('x', 'time')
@@ -59,10 +105,12 @@ function renderChart() {
     .style('fill', '#fff')
     .style('lineWidth', 1.5)
     .style('size', 4)
+    .tooltip(false)
 
-  chart.legend('color', { position: 'top', layout: { justifyContent: 'center' }, itemSpacing: 16 })
+  chart.axis('x', false)
+  chart.axis('y', false)
+  chart.scale('y', { type: 'linear', nice: true })
 
-  chart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
   chart.render()
 }
 
@@ -77,6 +125,9 @@ watch(() => props.data, () => { nextTick(() => setTimeout(renderChart, 100)) }, 
   border: 1px solid #f0f0f0;
   border-radius: 8px;
   padding: 8px 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 .ert-header {
   display: flex;
@@ -87,7 +138,27 @@ watch(() => props.data, () => { nextTick(() => setTimeout(renderChart, 100)) }, 
 .ert-title { font-size: 13px; font-weight: 600; color: #1a1a1a; }
 .ert-title i { color: #FF7D00; margin-right: 4px; }
 .ert-sub { font-size: 11px; color: #8c8c8c; }
-.ert-chart { width: 100%; }
+.ert-legend { display: flex; gap: 16px; justify-content: center; margin-bottom: 2px; }
+.ert-legend-item { font-size: 11px; color: #666; display: flex; align-items: center; gap: 4px; }
+.ert-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.ert-chart-wrapper { position: relative; flex: 1; min-height: 0; }
+.ert-chart { width: 100%; height: 100%; }
+.ert-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+}
+.ert-tooltip-title { font-weight: 600; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 4px; }
+.ert-tooltip-item { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.ert-tooltip-dot { width: 8px; height: 8px; border-radius: 50%; }
+.ert-tooltip-label { color: rgba(255,255,255,0.7); }
+.ert-tooltip-value { font-weight: 500; }
 .ert-annotations {
   display: flex;
   gap: 12px;
