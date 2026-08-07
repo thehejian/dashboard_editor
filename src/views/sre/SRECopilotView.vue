@@ -6,12 +6,14 @@
         <i class="fa-solid fa-shield-halved sre-logo"></i>
         <div class="sre-header-text">
           <h1 class="sre-title">智能故障自愈终端</h1>
-          <p class="sre-subtitle">实时生产环境全链路自动感知、排查与自愈一体化终端</p>
-          <button v-if="incident?.appName" class="sre-app-badge" @click="goBack" title="返回应用详情">
-            <i class="fa-solid fa-cube"></i>
-            {{ incident.appName }}
-            <span v-if="incident.service" class="sre-app-service">{{ incident.service }}</span>
-          </button>
+          <div class="sre-subtitle-row">
+            <p class="sre-subtitle">实时生产环境全链路自动感知、排查与自愈一体化终端</p>
+            <button v-if="incident?.appName" class="sre-app-badge" @click="goBack" title="返回应用详情">
+              <i class="fa-solid fa-cube"></i>
+              {{ incident.appName }}
+              <span v-if="incident.service" class="sre-app-service">{{ incident.service }}</span>
+            </button>
+          </div>
         </div>
       </div>
       <div class="sre-header-right">
@@ -269,6 +271,12 @@ watch(() => route.params.id, fetchData)
   font-size: 11px;
   color: #8c8c8c;
   margin: 1px 0 0;
+  line-height: 1.4;
+}
+.sre-subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .sre-status-badge {
   display: flex;
@@ -284,7 +292,6 @@ watch(() => route.params.id, fetchData)
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  margin-top: 4px;
   border: 1px solid #1890ff;
   border-radius: 4px;
   background: #e6f7ff;
@@ -294,6 +301,7 @@ watch(() => route.params.id, fetchData)
   cursor: pointer;
   transition: all 0.2s;
   line-height: 1.4;
+  flex-shrink: 0;
 }
 .sre-app-badge:hover { background: #bae7ff; }
 .sre-app-badge i { font-size: 10px; }
