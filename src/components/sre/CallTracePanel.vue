@@ -56,7 +56,7 @@ defineProps({
 .ctp-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
 .ctp-title i { color: #722ED1; margin-right: 6px; }
 .ctp-count { font-size: 12px; color: #8c8c8c; }
-.ctp-list { flex: 1; overflow-y: auto; }
+.ctp-list { flex: 1; overflow-y: auto; overflow-x: hidden; }
 .ctp-trace {
   border: 1px solid #f0f0f0;
   border-radius: 6px;
@@ -78,7 +78,7 @@ defineProps({
 .ts-ok { color: #52c41a; }
 .ctp-trace-duration { font-size: 12px; font-weight: 600; color: #FF7D00; margin-left: auto; }
 .ctp-trace-time { font-size: 11px; color: #8c8c8c; }
-.ctp-spans { margin-top: 8px; }
+.ctp-spans { margin-top: 8px; overflow: hidden; }
 .ctp-span {
   display: flex;
   align-items: center;
@@ -92,6 +92,7 @@ defineProps({
   border-radius: 3px;
   flex-shrink: 0;
   min-width: 8px;
+  max-width: 120px;
 }
 .span-error { background: #F5222D; }
 .span-ok { background: #52c41a; }
