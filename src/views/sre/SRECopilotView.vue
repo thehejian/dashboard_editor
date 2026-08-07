@@ -10,6 +10,11 @@
         </div>
       </div>
       <div class="sre-header-right">
+        <button v-if="incident?.appName" class="sre-app-badge" @click="goBack" title="返回应用详情">
+          <i class="fa-solid fa-cube"></i>
+          {{ incident.appName }}
+          <span v-if="incident.service" class="sre-app-service">{{ incident.service }}</span>
+        </button>
         <span class="sre-status-badge" :class="'status-' + (incident?.status || 'loading')">
           <i class="fa-solid fa-circle"></i>
           {{ statusText }}
@@ -42,17 +47,17 @@
               <FaultSummaryCard :incident="incident" />
             </div>
             <div class="sre-cell sre-cell-right">
-              <TopologyPanel :data="topology" :selected-node-id="selectedNodeId" @node-click="onNodeClick" />
+              <TopologyPanel :data="topology" :selected-node-id="selectedNodeId" :highlight-app-node-id="appNodeId" @node-click="onNodeClick" />
             </div>
           </div>
           <div class="sre-row sre-row-2">
             <div class="sre-cell sre-cell-full">
-              <CallTracePanel :traces="callTrace" />
+              <CallTracePanel :traces="callTrace" :app-name="incident?.service" />
             </div>
           </div>
           <div class="sre-row sre-row-3">
             <div class="sre-cell sre-cell-left">
-              <ErrorRateTrend :data="errorRateTrend" />
+              <ErrorRateTrend :data="errorRateTrend" :app-name="incident?.appName" />
             </div>
             <div class="sre-cell sre-cell-right">
               <LinkedLogsPanel :logs="linkedLogs" />
@@ -61,7 +66,7 @@
         </div>
 
         <div class="sre-main-right">
-          <HealingPlaybook v-if="playbook" :playbook="playbook" @execute-step="executeStep" @ai-auto-execute="aiAutoExecute" />
+          <HealingPlaybook v-if="playbook" :playbook="playbook" :app-name="incident?.appName" @execute-step="executeStep" @ai-auto-execute="aiAutoExecute" />
         </div>
       </div>
 
@@ -117,6 +122,8 @@ const statusText = computed(() => {
   if (!incident.value) return ''
   return { healing: '自愈中', resolved: '已恢复', investigating: '排查中', loading: '加载中...' }[incident.value.status] || incident.value.status
 })
+
+const appNodeId = computed(() => incident.value?.appNodeId || '')
 
 async function fetchData() {
   loading.value = true
@@ -272,6 +279,24 @@ watch(() => route.params.id, fetchData)
   font-size: 12px;
   font-weight: 500;
 }
+.sre-app-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid #1890ff;
+  border-radius: 6px;
+  background: #e6f7ff;
+  color: #1890ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+.sre-app-badge:hover { background: #bae7ff; }
+.sre-app-badge i { font-size: 11px; }
+.sre-app-service { font-size: 10px; font-weight: 400; color: #69c0ff; margin-left: 2px; }
 .status-healing { background: #f9f0ff; color: #722ED1; }
 .status-resolved { background: #f6ffed; color: #52c41a; }
 .status-investigating { background: #fff7e6; color: #FF7D00; }

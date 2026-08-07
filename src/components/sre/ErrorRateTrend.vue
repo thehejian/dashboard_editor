@@ -1,7 +1,7 @@
 <template>
   <div class="error-rate-trend">
     <div class="ert-header">
-      <span class="ert-title"><i class="fa-solid fa-chart-line"></i> 故障时间段错误率趋势</span>
+      <span class="ert-title"><i class="fa-solid fa-chart-line"></i> {{ appName ? appName + ' - ' : '' }}故障时间段错误率趋势</span>
       <span class="ert-sub">分钟采样</span>
     </div>
     <div class="ert-legend">
@@ -40,6 +40,7 @@ import { Chart } from '@antv/g2'
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
+  appName: { type: String, default: '' },
 })
 
 const chartWrapper = ref(null)

@@ -5,18 +5,18 @@
       <span class="ctp-count">{{ traces.length }} 条链路</span>
     </div>
     <div class="ctp-list">
-      <div v-for="trace in traces" :key="trace.id" class="ctp-trace" :class="'trace-' + trace.status">
-        <div class="ctp-trace-header">
-          <span class="ctp-trace-name">{{ trace.name }}</span>
-          <span class="ctp-trace-service">{{ trace.service }}</span>
-          <span class="ctp-trace-status" :class="'ts-' + trace.status">
-            {{ trace.status === 'error' ? '异常' : '正常' }}
-          </span>
-          <span class="ctp-trace-duration">{{ trace.duration }}ms</span>
-          <span class="ctp-trace-time">{{ trace.timestamp }}</span>
-        </div>
-        <div class="ctp-spans">
-          <div v-for="(span, si) in trace.spans" :key="si" class="ctp-span">
+      <div v-for="trace in traces" :key="trace.id" class="ctp-trace" :class="{'trace-error': trace.status === 'error', 'trace-app': trace.spans?.some(s => s.service === appName)}">
+          <div class="ctp-trace-header">
+            <span class="ctp-trace-name">{{ trace.name }}</span>
+            <span class="ctp-trace-service">{{ trace.service }}</span>
+            <span class="ctp-trace-status" :class="'ts-' + trace.status">
+              {{ trace.status === 'error' ? '异常' : '正常' }}
+            </span>
+            <span class="ctp-trace-duration">{{ trace.duration }}ms</span>
+            <span class="ctp-trace-time">{{ trace.timestamp }}</span>
+          </div>
+          <div class="ctp-spans">
+            <div v-for="(span, si) in trace.spans" :key="si" class="ctp-span" :class="{ 'span-app': span.service === appName }">
             <span class="ctp-span-indent" :style="{ width: span.service === trace.service ? '0px' : (si * 12) + 'px' }"></span>
             <span class="ctp-span-bar" :style="{ width: Math.max(8, (span.duration / trace.duration) * 100) + '%' }" :class="'span-' + span.status"></span>
             <span class="ctp-span-label">{{ span.service }} → {{ span.operation }}</span>
@@ -30,9 +30,21 @@
 </template>
 
 <script setup>
-defineProps({
+import { toRefs } from 'vue'
+const props = defineProps({
   traces: { type: Array, default: () => [] },
+  appName: { type: String, default: '' },
 })
+const { appName } = toRefs(props)
+
+function isAppTrace(trace) {
+  if (!appName.value) return false
+  return trace.spans?.some(s => s.service === appName.value) || trace.service === appName.value
+}
+
+function isAppSpan(span) {
+  return span.service === appName.value
+}
 </script>
 
 <style scoped>
@@ -65,6 +77,7 @@ defineProps({
 }
 .ctp-trace.trace-error { border-left: 3px solid #F5222D; }
 .ctp-trace.trace-ok { border-left: 3px solid #52c41a; }
+.ctp-trace.trace-app { border-left: 3px solid #1890ff; background: #e6f7ff; }
 .ctp-trace-header {
   display: flex;
   align-items: center;
@@ -97,6 +110,8 @@ defineProps({
 .span-error { background: #F5222D; }
 .span-ok { background: #52c41a; }
 .ctp-span-label { color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ctp-span.span-app { color: #1890ff; font-weight: 600; }
+.ctp-span.span-app .ctp-span-bar { background: #1890ff !important; }
 .ctp-span-dur { font-size: 10px; color: #8c8c8c; flex-shrink: 0; font-family: monospace; }
 
 @media (max-width: 768px) {

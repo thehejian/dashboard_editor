@@ -1156,6 +1156,7 @@ function initNetworkGraph() {
     container: networkContainer.value,
     width: rect.width,
     height: rect.height,
+    autoResize: true,
     data: createNetworkTopoData(),
     node: {
       type: 'rect',
@@ -1825,7 +1826,7 @@ onBeforeUnmount(() => {
 
 /* ── network topology ── */
 .network-topology {
-  display: flex; height: 100%; gap: 0; position: relative;
+  display: flex; height: 100%; gap: 0; position: relative; flex: 1; min-width: 0;
 }
 .network-canvas {
   flex: 1; height: 100%; min-width: 0; min-height: 320px; background: #fafafa;

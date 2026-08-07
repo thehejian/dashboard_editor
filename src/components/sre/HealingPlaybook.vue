@@ -22,7 +22,7 @@
           <span class="hp-step-num">{{ i + 1 }}</span>
           <div class="hp-step-info">
             <div class="hp-step-name">
-              <span class="hp-step-name-cn">{{ step.name }}</span>
+              <span class="hp-step-name-cn"><span v-if="appName" class="hp-step-app">[{{ appName }}]</span>{{ step.name }}</span>
               <span class="hp-step-name-en">({{ step.nameEn }})</span>
             </div>
             <div class="hp-step-config">{{ step.config }}</div>
@@ -63,6 +63,7 @@
 <script setup>
 defineProps({
   playbook: { type: Object, required: true },
+  appName: { type: String, default: '' },
 })
 
 defineEmits(['execute-step', 'ai-auto-execute'])
@@ -148,6 +149,7 @@ defineEmits(['execute-step', 'ai-auto-execute'])
 .step-success .hp-step-num { background: #52c41a; color: #fff; }
 .hp-step-info { flex: 1; min-width: 0; }
 .hp-step-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+.hp-step-app { font-size: 11px; color: #1890ff; font-weight: 500; margin-right: 4px; }
 .hp-step-name-en { font-size: 11px; color: #8c8c8c; font-weight: 400; margin-left: 3px; }
 .hp-step-config { font-size: 11px; color: #8c8c8c; margin-top: 1px; }
 .hp-step-status { flex-shrink: 0; font-size: 11px; }

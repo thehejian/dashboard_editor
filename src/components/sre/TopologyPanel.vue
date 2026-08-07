@@ -36,6 +36,7 @@ import { Graph } from '@antv/g6'
 const props = defineProps({
   data: { type: Object, default: () => ({ nodes: [], edges: [] }) },
   selectedNodeId: { type: String, default: '' },
+  highlightAppNodeId: { type: String, default: '' },
 })
 
 const emit = defineEmits(['node-click'])
@@ -114,6 +115,7 @@ async function initGraph() {
       state: {
         hover: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 2 },
         selected: { fill: '#722ED1', stroke: '#722ED1', lineWidth: 3, shadowColor: 'rgba(114,46,209,0.4)', shadowBlur: 12 },
+        app: { stroke: '#1890ff', lineWidth: 3, shadowColor: 'rgba(24,144,255,0.5)', shadowBlur: 12 },
         dimmed: { opacity: 0.25, labelOpacity: 0.25, labelBackgroundOpacity: 0.1 },
       },
     },
@@ -165,6 +167,9 @@ async function initGraph() {
 
   await graph.render()
   graph.fitView({ padding: 40 })
+  if (props.highlightAppNodeId && graph.getElementType(props.highlightAppNodeId) === 'node') {
+    graph.setElementState(props.highlightAppNodeId, ['app'])
+  }
 }
 
 function statusText(s) { return { normal: '正常', warning: '警告', error: '异常', critical: '异常' }[s] || s }
@@ -237,6 +242,7 @@ async function initFullscreenGraph() {
       state: {
         hover: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 2 },
         selected: { fill: '#722ED1', stroke: '#722ED1', lineWidth: 3, shadowColor: 'rgba(114,46,209,0.4)', shadowBlur: 12 },
+        app: { stroke: '#1890ff', lineWidth: 3, shadowColor: 'rgba(24,144,255,0.5)', shadowBlur: 12 },
       },
     },
     edge: {
@@ -252,6 +258,9 @@ async function initFullscreenGraph() {
 
   await fullscreenGraph.render()
   fullscreenGraph.fitView({ padding: 60 })
+  if (props.highlightAppNodeId && fullscreenGraph.getElementType(props.highlightAppNodeId) === 'node') {
+    fullscreenGraph.setElementState(props.highlightAppNodeId, ['app'])
+  }
 }
 
 onMounted(() => { setTimeout(() => initGraph(), 100) })

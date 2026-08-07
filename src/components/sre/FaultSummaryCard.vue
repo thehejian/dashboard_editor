@@ -20,6 +20,7 @@
     </div>
     <div class="fsc-extra">
       <div class="fsc-extra-row">
+        <span class="fsc-extra-item" v-if="incident.appName"><i class="fa-solid fa-cube"></i> {{ incident.appName }}<span class="fsc-app-service"> / {{ incident.service }}</span></span>
         <span class="fsc-extra-item"><i class="fa-solid fa-bolt"></i> 熔断</span>
         <span class="fsc-extra-item"><i class="fa-solid fa-fire"></i> 大量 HTTP 504</span>
       </div>
@@ -130,6 +131,7 @@ defineProps({
   border-radius: 4px;
 }
 .fsc-extra-item i { margin-right: 3px; color: #FF7D00; }
+.fsc-app-service { font-size: 10px; color: #8c8c8c; }
 .fsc-footer {
   display: flex;
   gap: 10px;

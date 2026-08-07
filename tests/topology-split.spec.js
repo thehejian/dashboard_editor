@@ -104,4 +104,12 @@ test.describe('Topology 时间轴模式左右分栏', () => {
     const left = await page.locator('.topo-split-left').boundingBox()
     expect(left.width).toBeGreaterThan(split.width * 0.95)
   })
+
+  test('网络拓扑(network)画布铺满可用宽度', async ({ page }) => {
+    await page.goto('/monitor/topology?tab=network&appTab=all')
+    await page.waitForSelector('.network-canvas canvas', { timeout: 15000 })
+    const left = await page.locator('.topo-split-left').boundingBox()
+    const canvas = await page.locator('.network-canvas').boundingBox()
+    expect(canvas.width).toBeGreaterThan(left.width * 0.95)
+  })
 })
