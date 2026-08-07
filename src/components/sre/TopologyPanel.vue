@@ -361,8 +361,8 @@ watch(() => props.selectedNodeId, () => { nextTick(() => { setTimeout(() => init
 .dot-normal { background: #1890ff; }
 .dot-critical { background: #f5222d; }
 .tp-canvas { flex: 1; min-height: 0; }
-.tp-tip-text { padding: 6px 16px 0; font-size: 11px; color: #8c8c8c; text-align: center; }
-.tp-impact { padding: 6px 16px 10px; font-size: 11px; color: #FF7D00; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.tp-tip-text { padding: 4px 16px; font-size: 11px; color: #8c8c8c; border-top: 1px solid #f0f0f0; }
+.tp-impact { padding: 4px 16px; font-size: 11px; color: #FF7D00; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; border-top: 1px solid #f0f0f0; }
 .tp-impact i { color: #FF7D00; }
 .tp-impact-nodes { color: #666; }
 .tp-tooltip {

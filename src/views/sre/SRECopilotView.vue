@@ -369,13 +369,13 @@ watch(() => route.params.id, fetchData)
   flex-shrink: 0;
 }
 .sre-cell { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.sre-cell-full { max-height: 210px; overflow-y: auto; }
 .sre-cell-left { flex: 1; }
-.sre-cell-right { flex: 1; }
+.sre-cell-right { flex: 1; overflow-y: auto; }
 .sre-cell-left .fault-summary-card,
 .sre-cell-left .error-rate-trend,
 .sre-cell-right .topology-panel,
 .sre-cell-right .linked-logs-panel { flex: 1; }
-.sre-cell-full { flex: 1; }
 .sre-main-right {
   flex: 0 0 380px;
   border-left: 1px solid #f0f0f0;

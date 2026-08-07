@@ -103,7 +103,7 @@ function renderChart() {
     container: chartContainer.value,
     autoFit: true,
     height: 140,
-    padding: [10, 10, 24, 40],
+    padding: [10, 10, 4, 40],
   })
 
   const combinedData = []
