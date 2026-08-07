@@ -29,6 +29,12 @@
           </div>
           <span class="hp-step-status" :class="'status-' + step.status">
             <template v-if="step.status === 'running'"><i class="fa-solid fa-spinner fa-spin"></i> Agent 执行中</template>
+            <template v-else-if="step.status === 'success'"><i class="fa-solid fa-circle-check"></i> 已完成</template>
+            <template v-else-if="step.mode === 'confirm'">
+              <span class="hp-confirm-hint"><i class="fa-solid fa-shield-halved"></i> 需确认</span>
+              <button class="hp-run-btn hp-confirm-btn" @click="$emit('execute-step', i)"><i class="fa-solid fa-check"></i> 确认执行</button>
+              <button v-if="step.skippable" class="hp-skip-btn" @click="skipStep(i)"><i class="fa-solid fa-forward"></i> 跳过</button>
+            </template>
             <template v-else>
               <button class="hp-run-btn" @click="$emit('execute-step', i)"><i class="fa-solid fa-play"></i> 执行</button>
             </template>
@@ -47,6 +53,13 @@
         <div v-if="step.status === 'running' && step.progress > 0" class="hp-step-progress">
           <a-progress :percent="step.progress" size="small" :stroke-color="'#722ED1'" />
         </div>
+        <div v-if="step.result" class="hp-step-result">
+          <span class="hp-result-label">效果: {{ step.result.metric }}</span>
+          <span class="hp-result-before">{{ step.result.before }}</span>
+          <span class="hp-result-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+          <span class="hp-result-after">{{ step.result.after }}</span>
+          <span class="hp-result-status" :class="'hp-rs-' + step.result.status">{{ step.result.status === 'improving' ? '改善中' : '已恢复' }}</span>
+        </div>
       </div>
     </div>
 
@@ -61,12 +74,18 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   playbook: { type: Object, required: true },
   appName: { type: String, default: '' },
 })
 
 defineEmits(['execute-step', 'ai-auto-execute'])
+
+function skipStep(i) {
+  const step = props.playbook.steps[i]
+  step.status = 'skipped'
+  step.logs.push({ time: new Date().toTimeString().slice(0, 8), message: '已跳过' })
+}
 </script>
 
 <style scoped>
@@ -127,6 +146,7 @@ defineEmits(['execute-step', 'ai-auto-execute'])
 }
 .hp-step.step-running { border-color: #722ED1; background: #faf5ff; }
 .hp-step.step-success { border-color: #52c41a; }
+.hp-step.step-skipped { border-color: #d9d9d9; background: #fafafa; opacity: 0.6; }
 .hp-step-header {
   display: flex;
   align-items: flex-start;
@@ -173,6 +193,20 @@ defineEmits(['execute-step', 'ai-auto-execute'])
 }
 .hp-run-btn:hover { background: #f9f0ff; }
 .hp-run-btn i { font-size: 9px; }
+.hp-confirm-hint { display: block; font-size: 10px; color: #FF7D00; margin-bottom: 2px; }
+.hp-confirm-btn { border-color: #52c41a; color: #52c41a; }
+.hp-confirm-btn:hover { background: #f6ffed; }
+.hp-skip-btn { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 3px; border: 1px solid #d9d9d9; background: #fff; color: #8c8c8c; font-size: 11px; cursor: pointer; margin-left: 4px; line-height: 1.4; }
+.hp-skip-btn:hover { background: #f5f5f5; }
+.hp-skip-btn i { font-size: 9px; }
+.hp-step-result { margin: 4px 0 0 30px; padding: 4px 8px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px; display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.hp-result-label { color: #1a1a1a; font-weight: 500; }
+.hp-result-before { color: #F5222D; }
+.hp-result-arrow { color: #8c8c8c; font-size: 10px; }
+.hp-result-after { color: #52c41a; font-weight: 600; }
+.hp-result-status { font-size: 10px; font-weight: 500; }
+.hp-rs-improving { color: #FF7D00; }
+.hp-rs-recovered { color: #52c41a; }
 .hp-step-desc { font-size: 12px; color: #666; margin: 3px 0 0 30px; line-height: 1.4; }
 .hp-step-logs {
   margin: 4px 0 0 30px;

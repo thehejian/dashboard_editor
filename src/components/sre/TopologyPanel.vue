@@ -14,7 +14,12 @@
       </span>
     </div>
     <div ref="container" class="tp-canvas"></div>
-    <div class="tp-tip-text">提示: 点击上图任意圆圈，可快速锁定故障链路。</div>
+    <div class="tp-tip-text">提示: 点击上图任意圆圈，可查看下游影响范围。</div>
+
+    <div v-if="impact.visible" class="tp-impact">
+      <i class="fa-solid fa-sitemap"></i> 影响 <strong>{{ impact.count }}</strong> 个下游节点:
+      <span class="tp-impact-nodes">{{ impact.nodes.join(', ') }}</span>
+    </div>
 
     <div v-if="tooltip.visible" class="tp-tooltip" :style="{ top: tooltip.y + 'px', left: tooltip.x + 'px' }">
       <div class="tp-tip-name">{{ tooltip.label }}</div>
@@ -47,6 +52,7 @@ const fullscreenVisible = ref(false)
 let graph = null
 let fullscreenGraph = null
 const tooltip = reactive({ visible: false, label: '', ip: '', status: 'normal', metrics: '', x: 0, y: 0 })
+const impact = reactive({ visible: false, count: 0, nodes: [] })
 let hideTimer = null
 
 const STATUS_COLORS = { normal: '#1890ff', warning: '#fa8c16', error: '#f5222d', critical: '#f5222d' }
@@ -116,6 +122,7 @@ async function initGraph() {
         hover: { fill: '#1890ff', stroke: '#1890ff', lineWidth: 2 },
         selected: { fill: '#722ED1', stroke: '#722ED1', lineWidth: 3, shadowColor: 'rgba(114,46,209,0.4)', shadowBlur: 12 },
         app: { stroke: '#1890ff', lineWidth: 3, shadowColor: 'rgba(24,144,255,0.5)', shadowBlur: 12 },
+        downstream: { stroke: '#FF7D00', lineWidth: 2, shadowColor: 'rgba(255,125,0,0.3)', shadowBlur: 8, opacity: 0.85 },
         dimmed: { opacity: 0.25, labelOpacity: 0.25, labelBackgroundOpacity: 0.1 },
       },
     },
@@ -163,6 +170,21 @@ async function initGraph() {
     graph.setElementState(id, 'selected')
     graph.focusElement(id, { animation: { duration: 400 } })
     emit('node-click', id)
+
+    // Calculate downstream impact
+    const downstreamIds = getDownstream(id, props.data.edges)
+    if (downstreamIds.length) {
+      downstreamIds.forEach(did => {
+        if (graph.getElementType(did) === 'node') graph.setElementState(did, ['downstream'])
+      })
+      impact.visible = true
+      impact.count = downstreamIds.length
+      impact.nodes = downstreamIds.map(did => {
+        const n = props.data.nodes.find(n => n.id === did)
+        return n ? n.label : did
+      })
+      setTimeout(() => { impact.visible = false }, 8000)
+    }
   })
 
   await graph.render()
@@ -173,6 +195,20 @@ async function initGraph() {
 }
 
 function statusText(s) { return { normal: '正常', warning: '警告', error: '异常', critical: '异常' }[s] || s }
+function getDownstream(nodeId, edges) {
+  const visited = new Set()
+  const queue = [nodeId]
+  while (queue.length) {
+    const current = queue.shift()
+    edges.forEach(e => {
+      if (e.source === current && !visited.has(e.target)) {
+        visited.add(e.target)
+        queue.push(e.target)
+      }
+    })
+  }
+  return [...visited]
+}
 function scheduleHide() { hideTimer = setTimeout(() => { tooltip.visible = false }, 150) }
 function cancelHide() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = null } }
 
@@ -325,7 +361,10 @@ watch(() => props.selectedNodeId, () => { nextTick(() => { setTimeout(() => init
 .dot-normal { background: #1890ff; }
 .dot-critical { background: #f5222d; }
 .tp-canvas { flex: 1; min-height: 240px; }
-.tp-tip-text { padding: 6px 16px 10px; font-size: 11px; color: #8c8c8c; text-align: center; }
+.tp-tip-text { padding: 6px 16px 0; font-size: 11px; color: #8c8c8c; text-align: center; }
+.tp-impact { padding: 6px 16px 10px; font-size: 11px; color: #FF7D00; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.tp-impact i { color: #FF7D00; }
+.tp-impact-nodes { color: #666; }
 .tp-tooltip {
   position: fixed;
   background: #fff;

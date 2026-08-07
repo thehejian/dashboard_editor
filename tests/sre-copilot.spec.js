@@ -88,11 +88,8 @@ test.describe('SRE 故障自愈终端', () => {
     // 报告标题
     await expect(page.locator('.pmr-subtitle')).toContainText('复盘沉淀')
 
-    // 复制按钮存在
-    await expect(page.locator('button', { hasText: '复制 MD 文本' })).toBeVisible()
-
-    // 返回按钮存在
-    await expect(page.locator('button', { hasText: '返回故障终端' })).toBeVisible()
+    // 下载按钮存在
+    await expect(page.locator('button', { hasText: '下载分析报告' })).toBeVisible()
   })
 
   test('底部复盘按钮可点击', async ({ page }) => {

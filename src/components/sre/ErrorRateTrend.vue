@@ -31,6 +31,25 @@
         <span v-if="point.label" class="ert-a-event">{{ point.label }}</span>
       </div>
     </div>
+    <div v-if="annotations.length" class="ert-timeline-bar">
+      <div v-for="(a, i) in annotations" :key="i" class="ert-tl-item" :class="'ert-tl-' + a.type">
+        <span class="ert-tl-dot"></span>
+        <span class="ert-tl-time">{{ a.time }}</span>
+        <span class="ert-tl-label">{{ a.label }}</span>
+      </div>
+    </div>
+    <div v-if="executionResults.length" class="ert-exec-results">
+      <div class="ert-er-title"><i class="fa-solid fa-chart-simple"></i> 执行效果对比</div>
+      <div class="ert-er-row" v-for="(r, i) in executionResults" :key="i">
+        <span class="ert-er-step">{{ r.step }}</span>
+        <span class="ert-er-before">{{ r.before }}<span class="ert-er-unit">{{ r.unit }}</span></span>
+        <span class="ert-er-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        <span class="ert-er-after">{{ r.after }}<span class="ert-er-unit">{{ r.unit }}</span></span>
+        <span class="ert-er-status" :class="r.after === 0 ? 'er-ok' : 'er-improving'">
+          {{ r.after === 0 ? '已恢复' : (r.after < r.before ? '改善中' : '') }}
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -39,7 +58,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { Chart } from '@antv/g2'
 
 const props = defineProps({
-  data: { type: Array, default: () => [] },
+  data: { type: [Array, Object], default: () => [] },
   appName: { type: String, default: '' },
 })
 
@@ -50,23 +69,27 @@ const tooltipX = ref(0)
 const tooltipY = ref(0)
 let chart = null
 
-const annotatedPoints = computed(() => props.data.filter(d => d.label || d === props.data[0] || d === props.data[props.data.length - 1]))
+const trendData = computed(() => Array.isArray(props.data) ? props.data : (props.data?.data || []))
+const annotations = computed(() => Array.isArray(props.data) ? [] : (props.data?.annotations || []))
+const executionResults = computed(() => Array.isArray(props.data) ? [] : (props.data?.executionResults || []))
+
+const annotatedPoints = computed(() => trendData.value.filter(d => d.label || d === trendData.value[0] || d === trendData.value[trendData.value.length - 1]))
 
 function hideTooltip() {
   tooltipData.value = null
 }
 
 function onMouseMove(e) {
-  if (!props.data.length || !chartContainer.value) return
+  if (!trendData.value.length || !chartContainer.value) return
   const rect = chartContainer.value.getBoundingClientRect()
   const x = e.clientX - rect.left
   const chartWidth = rect.width
   const padding = { left: 10, right: 10 }
   const plotWidth = chartWidth - padding.left - padding.right
   const ratio = (x - padding.left) / plotWidth
-  const idx = Math.round(ratio * (props.data.length - 1))
-  if (idx >= 0 && idx < props.data.length) {
-    tooltipData.value = props.data[idx]
+  const idx = Math.round(ratio * (trendData.value.length - 1))
+  if (idx >= 0 && idx < trendData.value.length) {
+    tooltipData.value = trendData.value[idx]
     tooltipX.value = e.clientX - chartWrapper.value.getBoundingClientRect().left + 12
     tooltipY.value = e.clientY - chartWrapper.value.getBoundingClientRect().top - 50
   }
@@ -74,7 +97,7 @@ function onMouseMove(e) {
 
 function renderChart() {
   if (chart) { chart.destroy(); chart = null }
-  if (!chartContainer.value || !props.data.length) return
+  if (!chartContainer.value || !trendData.value.length) return
 
   chart = new Chart({
     container: chartContainer.value,
@@ -84,7 +107,7 @@ function renderChart() {
   })
 
   const combinedData = []
-  props.data.forEach(d => {
+  trendData.value.forEach(d => {
     combinedData.push({ time: d.time, value: d.latency, type: '延时(ms)' })
     combinedData.push({ time: d.time, value: d.errorRate, type: '错误率(%)' })
   })
@@ -174,6 +197,27 @@ watch(() => props.data, () => { nextTick(() => setTimeout(renderChart, 100)) }, 
 }
 .ert-a-time { font-weight: 600; color: #1a1a1a; margin-right: 4px; }
 .ert-a-event { color: #FF7D00; font-weight: 500; margin-left: 4px; }
+.ert-timeline-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; padding: 4px 8px; background: #fafafa; border-radius: 4px; }
+.ert-tl-item { display: flex; align-items: center; gap: 4px; font-size: 10px; }
+.ert-tl-dot { width: 6px; height: 6px; border-radius: 50%; }
+.ert-tl-alert .ert-tl-dot { background: #F5222D; }
+.ert-tl-action .ert-tl-dot { background: #1890ff; }
+.ert-tl-recovery .ert-tl-dot { background: #52c41a; }
+.ert-tl-detection .ert-tl-dot { background: #722ED1; }
+.ert-tl-time { font-family: monospace; color: #8c8c8c; }
+.ert-tl-label { color: #666; font-weight: 500; }
+.ert-exec-results { margin-top: 4px; padding: 6px 8px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 6px; }
+.ert-er-title { font-size: 11px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+.ert-er-title i { color: #52c41a; margin-right: 4px; }
+.ert-er-row { display: flex; align-items: center; gap: 6px; font-size: 11px; line-height: 1.8; }
+.ert-er-step { font-weight: 500; color: #1a1a1a; min-width: 60px; }
+.ert-er-before { color: #F5222D; }
+.ert-er-after { color: #52c41a; font-weight: 600; }
+.ert-er-unit { font-size: 10px; color: #8c8c8c; margin-left: 1px; }
+.ert-er-arrow { color: #8c8c8c; font-size: 10px; }
+.ert-er-status { font-size: 10px; font-weight: 500; }
+.er-ok { color: #52c41a; }
+.er-improving { color: #FF7D00; }
 
 @media (max-width: 768px) {
   .error-rate-trend { padding: 6px 8px; border-radius: 0; border-left: none; border-right: none; }

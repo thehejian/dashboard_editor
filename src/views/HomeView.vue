@@ -844,6 +844,11 @@
           </template>
 
           <a-empty v-else description="该应用/云服务当前无故障节点" style="margin:40px 0" />
+          <div class="app-drawer-footer">
+            <a-button type="primary" block @click="goToIncidentCenter" :disabled="!appIncidents.length">
+              <i class="fa-solid fa-magnifying-glass-chart"></i> 进入故障中心分析
+            </a-button>
+          </div>
           </template>
 
           <template v-if="appDrawerTab === 'fault-list'">
@@ -1065,6 +1070,14 @@ function getIncidentStatusTag(status) {
 }
 function closeAppDrawer() {
   appDrawerOpen.value = false
+}
+
+function goToIncidentCenter() {
+  const inc = appIncidents.value[0]
+  if (inc) {
+    appDrawerOpen.value = false
+    router.push('/ops/incident/' + inc.id)
+  }
 }
 
 const detailPanelOpen = ref(false)
@@ -2565,6 +2578,7 @@ const refreshCard = (card) => {
 .fault-list-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
 .fault-list-count { font-size: 12px; color: #8c8c8c; }
 .fault-list-items { display: flex; flex-direction: column; gap: 8px; }
+.app-drawer-footer { padding: 12px 0; }
 .fault-list-item {
   border: 1px solid #f0f0f0;
   border-radius: 8px;

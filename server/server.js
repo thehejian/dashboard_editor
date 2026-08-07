@@ -1110,6 +1110,14 @@ const MOCK_INCIDENTS = [
     },
     healingProgress: 15,
     topologyNodeIds: ['lb-api', 'prod-order-01', 'redis-cache', 'mysql-master', 'mysql-slave'],
+    impactScope: '影响 2 个下游服务: redis-cache(缓存命中率↓45%), mysql-master(连接数↑120%)',
+    timeline: [
+      { time: '08:58', event: '告警触发', type: 'alert', detail: 'P99 响应时间 3500ms 触发阈值告警' },
+      { time: '09:00', event: 'AI 检测', type: 'detection', detail: '根因定位: 数据库连接池耗尽' },
+      { time: '09:02', event: '流量隔离', type: 'action', detail: 'cart-service-v1 切至稳定容器组' },
+      { time: '09:05', event: '扩容连接池', type: 'action', detail: 'HikariCP 50 → 250' },
+      { time: '09:15', event: '指标恢复', type: 'recovery', detail: '错误率 0%, P99 22ms' },
+    ],
   },
   {
     id: 'INC-2026-0718',
@@ -1168,6 +1176,8 @@ const MOCK_HEALING_PLAYBOOK = {
           { time: '18:02:24', message: '执行进度: 25%' },
           { time: '18:02:24', message: '注入脚本中...' },
         ],
+        result: { before: '85%', after: '60%', metric: '错误率', status: 'improving' },
+        skippable: false,
       },
       {
         id: 2,
@@ -1175,10 +1185,12 @@ const MOCK_HEALING_PLAYBOOK = {
         nameEn: 'Pool Resize',
         config: 'HikariCP Config Map',
         description: '动态修改配置中心，将 user-db 的 HikariCP MaxActive 提升至 250',
-        mode: 'manual',
+        mode: 'confirm',
         status: 'pending',
         progress: 0,
         logs: [],
+        result: null,
+        skippable: true,
       },
       {
         id: 3,
@@ -1190,6 +1202,8 @@ const MOCK_HEALING_PLAYBOOK = {
         status: 'pending',
         progress: 0,
         logs: [],
+        result: null,
+        skippable: false,
       },
       {
         id: 4,
@@ -1201,6 +1215,8 @@ const MOCK_HEALING_PLAYBOOK = {
         status: 'pending',
         progress: 0,
         logs: [],
+        result: null,
+        skippable: false,
       },
     ],
     validation: {
@@ -1314,20 +1330,45 @@ Redis 热点 key 过期后，大量并发请求同时穿透至数据库，导致
 }
 
 const MOCK_ERROR_RATE_TREND = {
-  'INC-2026-0720': [
-    { time: '08:50', latency: 12, errorRate: 2, label: '秒杀启动' },
-    { time: '08:52', latency: 15, errorRate: 3 },
-    { time: '08:54', latency: 14, errorRate: 1 },
-    { time: '08:56', latency: 1450, errorRate: 45 },
-    { time: '08:58', latency: 3240, errorRate: 88 },
-    { time: '09:00', latency: 3500, errorRate: 92, label: '错误率峰值: 92%' },
-  ],
-  'INC-2026-0718': [
-    { time: '10:15', latency: 40, errorRate: 1 },
-    { time: '10:18', latency: 2800, errorRate: 62, label: '缓存击穿' },
-    { time: '10:22', latency: 1200, errorRate: 30 },
-    { time: '10:28', latency: 45, errorRate: 2, label: '恢复正常' },
-  ],
+  'INC-2026-0720': {
+    data: [
+      { time: '08:50', latency: 12, errorRate: 2, label: '秒杀启动' },
+      { time: '08:52', latency: 15, errorRate: 3 },
+      { time: '08:54', latency: 14, errorRate: 1 },
+      { time: '08:56', latency: 1450, errorRate: 45 },
+      { time: '08:58', latency: 3240, errorRate: 88 },
+      { time: '09:00', latency: 3500, errorRate: 92, label: '错误率峰值: 92%' },
+      { time: '09:02', latency: 2100, errorRate: 60 },
+      { time: '09:05', latency: 800, errorRate: 15 },
+      { time: '09:10', latency: 45, errorRate: 3 },
+      { time: '09:15', latency: 22, errorRate: 0 },
+      { time: '09:20', latency: 18, errorRate: 0 },
+    ],
+    annotations: [
+      { time: '08:58', label: '告警触发', type: 'alert' },
+      { time: '09:02', label: '流量隔离', type: 'action' },
+      { time: '09:05', label: '扩容连接池', type: 'action' },
+      { time: '09:15', label: '恢复', type: 'recovery' },
+    ],
+    executionResults: [
+      { step: '流量隔离', before: 85, after: 60, unit: '%' },
+      { step: '扩容连接池', before: 60, after: 15, unit: '%' },
+      { step: '恢复稳定', before: 15, after: 0, unit: '%' },
+    ],
+  },
+  'INC-2026-0718': {
+    data: [
+      { time: '10:15', latency: 40, errorRate: 1 },
+      { time: '10:18', latency: 2800, errorRate: 62, label: '缓存击穿' },
+      { time: '10:22', latency: 1200, errorRate: 30 },
+      { time: '10:28', latency: 45, errorRate: 2, label: '恢复正常' },
+    ],
+    annotations: [
+      { time: '10:18', label: '缓存击穿', type: 'alert' },
+      { time: '10:28', label: '恢复', type: 'recovery' },
+    ],
+    executionResults: [],
+  },
 }
 
 const MOCK_INCIDENT_LOGS = [
@@ -1448,7 +1489,7 @@ app.get('/api/sre/incidents/:id', (req, res) => {
       topology: { nodes: topoNodes, edges: topoEdges },
       playbook: MOCK_HEALING_PLAYBOOK[incident.id] || null,
       postmortem: MOCK_POSTMORTEM_REPORTS[incident.id] || null,
-      errorRateTrend: MOCK_ERROR_RATE_TREND[incident.id] || [],
+      errorRateTrend: MOCK_ERROR_RATE_TREND[incident.id] || { data: [], annotations: [], executionResults: [] },
     },
   })
 })
