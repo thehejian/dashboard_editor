@@ -360,7 +360,7 @@ watch(() => props.selectedNodeId, () => { nextTick(() => { setTimeout(() => init
 .tp-dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot-normal { background: #1890ff; }
 .dot-critical { background: #f5222d; }
-.tp-canvas { flex: 1; min-height: 240px; }
+.tp-canvas { flex: 1; min-height: 0; }
 .tp-tip-text { padding: 6px 16px 0; font-size: 11px; color: #8c8c8c; text-align: center; }
 .tp-impact { padding: 6px 16px 10px; font-size: 11px; color: #FF7D00; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .tp-impact i { color: #FF7D00; }

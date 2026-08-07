@@ -350,7 +350,8 @@ watch(() => route.params.id, fetchData)
 .sre-content {
   display: flex;
   overflow: hidden;
-  height: calc(100vh - 180px);
+  flex: 1;
+  min-height: 0;
 }
 .sre-main-left {
   flex: 1;
@@ -366,10 +367,10 @@ watch(() => route.params.id, fetchData)
   gap: 16px;
   min-height: 0;
 }
-.sre-row-1 { flex: 1; }
-.sre-row-2 { flex: 1; }
-.sre-row-3 { flex: 1; }
-.sre-cell { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.sre-row-1 { flex: 1.2; }
+.sre-row-2 { flex: 1.5; }
+.sre-row-3 { flex: 1.3; }
+.sre-cell { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; }
 .sre-cell-left { flex: 1; }
 .sre-cell-right { flex: 1; }
 .sre-cell-left .fault-summary-card,
