@@ -4,7 +4,7 @@
       <h2 class="pmr-title">POSTMORTEM REPORT</h2>
       <h3 class="pmr-subtitle">{{ report.title }}</h3>
       <div class="pmr-actions">
-        <a-button size="small" @click="copyMarkdown"><i class="fa-solid fa-copy"></i> 复制 MD 文本</a-button>
+        <a-button size="small" @click="copyMarkdown"><i class="fa-solid fa-download"></i> 下载分析报告</a-button>
         <a-button size="small" @click="$emit('back')"><i class="fa-solid fa-arrow-left"></i> 返回故障终端</a-button>
       </div>
     </div>

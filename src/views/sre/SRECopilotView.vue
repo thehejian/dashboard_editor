@@ -20,7 +20,7 @@
     <div class="sre-tabs-bar">
       <button class="sre-tab" :class="{ active: activeTab === 'analysis' }" @click="activeTab = 'analysis'">
         <i class="fa-solid fa-magnifying-glass-chart"></i>
-        故障分析：{{ incident?.title || '加载中...' }}
+        故障分析
       </button>
       <button class="sre-tab" :class="{ active: activeTab === 'postmortem' }" @click="activeTab = 'postmortem'">
         <i class="fa-solid fa-file-lines"></i>
@@ -78,7 +78,7 @@
         </div>
         <a-button type="primary" size="large" class="sre-postmortem-btn" @click="activeTab = 'postmortem'">
           <i class="fa-solid fa-lightbulb"></i>
-          一键智能分析：经验总结及复盘沉淀
+          一键智能分析
         </a-button>
       </div>
     </template>
@@ -377,7 +377,7 @@ watch(() => route.params.id, fetchData)
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  height: 36px;
+  height: 32px;
   padding: 0 20px;
   flex-shrink: 0;
 }
