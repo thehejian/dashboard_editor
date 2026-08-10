@@ -17,6 +17,10 @@
         </div>
       </div>
       <div class="sre-header-right">
+        <a-button type="primary" size="large" class="sre-postmortem-btn" @click="activeTab = 'postmortem'" v-if="incident">
+          <i class="fa-solid fa-lightbulb"></i>
+          一键智能分析
+        </a-button>
         <span class="sre-status-badge" :class="'status-' + (incident?.status || 'loading')">
           <i class="fa-solid fa-circle"></i>
           {{ statusText }}
@@ -76,17 +80,6 @@
       <div v-if="activeTab === 'postmortem'" class="sre-content sre-postmortem-view">
         <PostmortemReport v-if="postmortem" :report="postmortem" @back="activeTab = 'analysis'" />
         <a-empty v-else description="暂无复盘报告" style="margin: 60px 0" />
-      </div>
-
-      <!-- 底部栏 -->
-      <div v-if="activeTab === 'analysis'" class="sre-bottom-bar">
-        <div class="sre-bottom-text">
-          在系统彻底恢复前，自愈Agent会持续收集故障快照。可一键生成复盘报告、沉淀到运维经验数据库。
-        </div>
-        <a-button type="primary" size="large" class="sre-postmortem-btn" @click="activeTab = 'postmortem'">
-          <i class="fa-solid fa-lightbulb"></i>
-          一键智能分析
-        </a-button>
       </div>
     </template>
   </div>
@@ -393,32 +386,20 @@ watch(() => route.params.id, fetchData)
   border-radius: 0;
 }
 
-.sre-bottom-bar {
-  flex-shrink: 0;
-  padding: 6px 24px;
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.sre-bottom-text {
-  font-size: 11px;
-  color: #8c8c8c;
-}
 .sre-postmortem-btn {
   background: linear-gradient(135deg, #722ED1, #9254de);
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 600;
-  height: 32px;
-  padding: 0 20px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 .sre-postmortem-btn:hover {
   background: linear-gradient(135deg, #9254de, #b37feb);
 }
-.sre-postmortem-btn i { margin-right: 6px; }
+.sre-postmortem-btn i { margin-right: 4px; font-size: 11px; }
 
 /* ===== Mobile ===== */
 @media (max-width: 768px) {
@@ -463,15 +444,7 @@ watch(() => route.params.id, fetchData)
 
   .sre-loading { height: 50vh; }
 
-  .sre-bottom-bar {
-    flex-direction: column;
-    gap: 6px;
-    padding: 8px 12px;
-    align-items: stretch;
-    text-align: center;
-  }
-  .sre-bottom-text { font-size: 10px; }
-  .sre-postmortem-btn { height: 34px; font-size: 12px; }
+  .sre-postmortem-btn { height: 28px; font-size: 12px; }
 
   .sre-postmortem-view { padding: 0; }
   .sre-postmortem-view .pmr-header { padding: 12px 12px 10px; }
