@@ -104,3 +104,20 @@ Dashboard 特殊：`/dashboard/:slug` → `EmptyRoute.vue`，由 `App.vue` `v-if
 3. **Docker 非标准路径**：`/share/CACHEDEV2_DATA/.qpkg/container-station/usr/bin/.libs/docker`
 4. **BusyBox**：`top -b -n 1 -m` 按内存排序，无 systemd 用 `/etc/init.d/`
 5. **内存 97%**：QEMU 虚拟机占 2.6GB + Apache 代理 ~3GB，Swap 异常
+
+## SRE 故障中心 (SRECopilotView)
+
+### 布局要点
+- 父容器 `height: 100vh; flex-direction: column`，`sre-content` 用 `flex: 1; min-height: 0` 撑满剩余空间（比 `calc(100vh - Npx)` 更灵活，不会溢出）
+- 行按内容自然高度撑开（`flex-shrink: 0`），左边区域整体 `overflow-y: auto`，每个 cell 不独立滚动
+- 右侧 Playbook 固定 380px，`overflow-y: auto` 独立滚动
+
+### 组件经验
+- **Vue 3 `<script setup>` props**：`defineProps` 返回的 props 在模板中可直接访问，但在 `<script>` 函数中需用 `const props = defineProps(...)` + `props.xxx`，或 `toRefs` 解构
+- **G2 v5 tooltip**：`chart.interaction('tooltip', ...)` 启用，但自定义 tooltip 用 Vue `@mousemove` 事件追赶数据点比 G2 的 `render` 回调更可控
+- **G2 双轴图**：双 View 共享 x 轴在小容器中容易重叠，单 View + `encode('color', 'type')` 合并数据更简洁
+- **G6 v5 节点高亮**：用 `setElementState(id, stateName)` + 在 node 配置 `state: { stateName: { style } }`，而非手动修改 style
+- **G6 下游节点 BFS**：`getDownstream(nodeId, edges)` 用队列遍历 edges，`visited` Set 去重，不包含自身
+
+### markdown 表格转换
+- `simpleMarkdownToHtml` 中 `\n{2,} → </p><p>` 必须在表格正则转换之后执行。否则 `\n\n` 被替换后表格正则 `(?=\n\n|$)` 永远找不到分隔符，吞并后续所有内容
