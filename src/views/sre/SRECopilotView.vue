@@ -271,6 +271,12 @@ watch(() => route.params.id, fetchData)
   align-items: center;
   gap: 8px;
 }
+.sre-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .sre-status-badge {
   display: flex;
   align-items: center;
