@@ -44,9 +44,8 @@ function simpleMarkdownToHtml(md) {
     .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
     .replace(/<\/ul>\s*<ul>/g, '')
     .replace(/^---$/gm, '<hr/>')
-    .replace(/\n{2,}/g, '</p><p>')
 
-  // Convert tables
+  // Convert tables — must run before \n\n replacement
   html = html.replace(/\|(.+?)\|[\s\S]*?(?=\n\n|$)/g, (tableBlock) => {
     const rows = tableBlock.trim().split('\n').filter(r => r.trim())
     if (rows.length < 2) return tableBlock
@@ -67,6 +66,7 @@ function simpleMarkdownToHtml(md) {
     return '<table>' + thead + tbody + '</table>'
   })
 
+  html = html.replace(/\n{2,}/g, '</p><p>')
   return '<p>' + html + '</p>'
 }
 
