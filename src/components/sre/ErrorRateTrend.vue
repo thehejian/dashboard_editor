@@ -165,8 +165,8 @@ watch(() => props.data, () => { nextTick(() => setTimeout(renderChart, 100)) }, 
 .ert-legend { display: flex; gap: 16px; justify-content: center; margin-bottom: 2px; }
 .ert-legend-item { font-size: 11px; color: #666; display: flex; align-items: center; gap: 4px; }
 .ert-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.ert-chart-wrapper { position: relative; height: 140px; flex-shrink: 0; }
-.ert-chart { width: 100%; height: 140px; }
+.ert-chart-wrapper { position: relative; flex: 1; min-height: 0; }
+.ert-chart { width: 100%; height: 100%; }
 .ert-tooltip {
   position: absolute;
   background: rgba(0, 0, 0, 0.75);

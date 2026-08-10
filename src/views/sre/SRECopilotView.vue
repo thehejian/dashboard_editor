@@ -368,6 +368,7 @@ watch(() => route.params.id, fetchData)
   min-height: 0;
   flex-shrink: 0;
 }
+.sre-row-3 { height: 410px; }
 .sre-cell { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .sre-cell-full { flex: 1; max-height: 210px; overflow-y: auto; }
 .sre-cell-left { flex: 1; }
