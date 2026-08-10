@@ -45,6 +45,28 @@ function simpleMarkdownToHtml(md) {
     .replace(/<\/ul>\s*<ul>/g, '')
     .replace(/^---$/gm, '<hr/>')
     .replace(/\n{2,}/g, '</p><p>')
+
+  // Convert tables
+  html = html.replace(/\|(.+?)\|[\s\S]*?(?=\n\n|$)/g, (tableBlock) => {
+    const rows = tableBlock.trim().split('\n').filter(r => r.trim())
+    if (rows.length < 2) return tableBlock
+    const isSep = rows[1] && /^\|[\s:-]+\|/.test(rows[1])
+    const dataRows = isSep ? rows.slice(2) : rows.slice(1)
+    const headerRow = rows[0]
+    const cells = headerRow.split('|').filter(c => c.trim()).map(c => c.trim())
+    let thead = '<thead><tr>' + cells.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>'
+    let tbody = '<tbody>'
+    dataRows.forEach(row => {
+      if (!row.trim()) return
+      const cols = row.split('|').filter(c => c.trim()).map(c => c.trim())
+      if (cols.length >= cells.length) {
+        tbody += '<tr>' + cols.map(c => '<td>' + c + '</td>').join('') + '</tr>'
+      }
+    })
+    tbody += '</tbody>'
+    return '<table>' + thead + tbody + '</table>'
+  })
+
   return '<p>' + html + '</p>'
 }
 
@@ -127,7 +149,10 @@ function copyMarkdown() {
   padding: 8px 12px;
   text-align: left;
 }
-.pmr-content :deep(th) { background: #fafafa; font-weight: 600; }
+.pmr-content :deep(th) { background: #fafafa; font-weight: 600; white-space: nowrap; }
+.pmr-content :deep(td) { vertical-align: top; }
+.pmr-content :deep(td:first-child) { white-space: nowrap; font-family: monospace; font-weight: 600; color: #722ED1; }
+.pmr-content :deep(td:nth-child(2)) { white-space: nowrap; font-weight: 600; }
 .pmr-footer {
   display: flex;
   justify-content: space-between;
