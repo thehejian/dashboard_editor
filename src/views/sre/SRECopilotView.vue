@@ -369,7 +369,7 @@ watch(() => route.params.id, fetchData)
   flex-shrink: 0;
 }
 .sre-cell { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.sre-cell-full { max-height: 210px; overflow-y: auto; }
+.sre-cell-full { flex: 1; max-height: 210px; overflow-y: auto; }
 .sre-cell-left { flex: 1; }
 .sre-cell-right { flex: 1; overflow-y: auto; }
 .sre-cell-left .fault-summary-card,
