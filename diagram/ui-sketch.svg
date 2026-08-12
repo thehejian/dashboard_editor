@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+    text { font-family: 'JetBrains Mono', 'Noto Sans SC', 'PingFang SC', sans-serif; }
+  </style>
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#0f172a"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+
+  <!-- Title -->
+  <text x="30" y="35" fill="#f1f5f9" font-size="18" font-weight="700">UI 改造草图</text>
+
+  <!-- ============================================ -->
+  <!-- LEFT: 首页 AI运维 — active-faults 卡片化 -->
+  <!-- ============================================ -->
+  <rect x="30" y="60" width="560" height="400" rx="12" fill="none" stroke="#22d3ee" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="45" y="82" fill="#22d3ee" font-size="11" font-weight="600">A. 首页 AI运维 — 活动故障卡片化</text>
+
+  <!-- 当前状态 -->
+  <text x="45" y="108" fill="#94a3b8" font-size="10">当前↓</text>
+
+  <rect x="45" y="120" width="520" height="40" rx="6" fill="rgba(30,41,59,0.5)" stroke="#475569" stroke-width="1"/>
+  <text x="65" y="145" fill="#fbbf24" font-size="11">⚠ 当前活动故障</text>
+  <text x="400" y="145" fill="#60a5fa" font-size="9" text-anchor="end">前往故障中心 →</text>
+
+  <rect x="45" y="168" width="520" height="32" rx="4" fill="rgba(30,41,59,0.3)" stroke="#334155" stroke-width="0.5"/>
+  <text x="65" y="189" fill="#e2e8f0" font-size="10">[P1] 购物车核心交易链路数据库连接耗尽</text>
+
+  <rect x="45" y="204" width="520" height="32" rx="4" fill="rgba(30,41,59,0.3)" stroke="#334155" stroke-width="0.5"/>
+  <text x="65" y="225" fill="#e2e8f0" font-size="10">[P2] 库存服务扣减接口超时告警</text>
+
+  <rect x="45" y="240" width="520" height="32" rx="4" fill="rgba(30,41,59,0.3)" stroke="#334155" stroke-width="0.5"/>
+  <text x="65" y="261" fill="#e2e8f0" font-size="10">[P3] 推荐服务模型推理延迟升高</text>
+
+  <!-- 箭头 -->
+  <line x1="305" y1="280" x2="305" y2="300" stroke="#22d3ee" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 改造后状态 -->
+  <text x="45" y="320" fill="#22d3ee" font-size="10">改造后↓</text>
+
+  <rect x="45" y="330" width="520" height="110" rx="10" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="65" y="355" fill="#fbbf24" font-size="11">⚠ 当前活动故障</text>
+  <text x="400" y="355" fill="#60a5fa" font-size="9" text-anchor="end">前往故障中心 →</text>
+  <line x1="45" y1="370" x2="565" y2="370" stroke="#1e293b" stroke-width="1"/>
+
+  <rect x="65" y="380" width="480" height="24" rx="4" fill="rgba(30,41,59,0.3)" stroke="#334155" stroke-width="0.5"/>
+  <text x="85" y="397" fill="#e2e8f0" font-size="10">[P1] 购物车核心交易链路数据库连接耗尽</text>
+
+  <rect x="65" y="408" width="480" height="24" rx="4" fill="rgba(30,41,59,0.3)" stroke="#334155" stroke-width="0.5"/>
+  <text x="85" y="425" fill="#e2e8f0" font-size="10">[P2] 库存服务扣减接口超时告警</text>
+
+  <!-- ============================================ -->
+  <!-- RIGHT: 故障中心 /ops/incidents -->
+  <!-- ============================================ -->
+  <rect x="610" y="60" width="560" height="820" rx="12" fill="none" stroke="#60a5fa" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="625" y="82" fill="#60a5fa" font-size="11" font-weight="600">B. 故障中心 /ops/incidents</text>
+
+  <!-- Tab 区 -->
+  <rect x="625" y="98" width="530" height="36" rx="4" fill="rgba(30,41,59,0.5)"/>
+  <rect x="625" y="98" width="120" height="36" rx="4" fill="rgba(59,130,246,0.3)" stroke="#60a5fa" stroke-width="1"/>
+  <text x="685" y="120" fill="#60a5fa" font-size="12" font-weight="600" text-anchor="middle">故障列表</text>
+  <text x="745" y="120" fill="#94a3b8" font-size="12" text-anchor="middle">复盘记录</text>
+
+  <!-- 故障列表 tab 统计栏 -->
+  <text x="625" y="155" fill="#94a3b8" font-size="10">① 统计栏（新增）</text>
+
+  <rect x="625" y="165" width="530" height="56" rx="8" fill="rgba(76,29,149,0.2)" stroke="#a78bfa" stroke-width="1"/>
+  <text x="645" y="188" fill="#a78bfa" font-size="9">级别分布</text>
+  <text x="655" y="206" fill="#f1f5f9" font-size="13" font-weight="700">P1</text>
+  <text x="665" y="216" fill="#94a3b8" font-size="8">1</text>
+  <text x="695" y="206" fill="#f1f5f9" font-size="13" font-weight="700">P2</text>
+  <text x="705" y="216" fill="#94a3b8" font-size="8">3</text>
+  <text x="735" y="206" fill="#f1f5f9" font-size="13" font-weight="700">P3</text>
+  <text x="745" y="216" fill="#94a3b8" font-size="8">1</text>
+
+  <text x="810" y="188" fill="#a78bfa" font-size="9">状态分布</text>
+  <text x="820" y="206" fill="#f1f5f9" font-size="13" font-weight="700">自愈中</text>
+  <text x="845" y="216" fill="#94a3b8" font-size="8">1</text>
+  <text x="890" y="206" fill="#f1f5f9" font-size="13" font-weight="700">排查中</text>
+  <text x="915" y="216" fill="#94a3b8" font-size="8">4</text>
+
+  <text x="1000" y="188" fill="#a78bfa" font-size="9">今日新增</text>
+  <text x="1010" y="206" fill="#f1f5f9" font-size="13" font-weight="700">2</text>
+
+  <text x="625" y="250" fill="#94a3b8" font-size="10">② 搜索栏（搜索框拉宽，右侧与表格对齐）</text>
+
+  <rect x="625" y="260" width="530" height="36" rx="6" fill="rgba(30,41,59,0.5)"/>
+  <rect x="635" y="268" width="380" height="20" rx="10" fill="rgba(30,41,59,0.8)" stroke="#475569" stroke-width="1"/>
+  <text x="650" y="282" fill="#64748b" font-size="9">🔍 搜索故障名称或ID...</text>
+  <rect x="1030" y="268" width="110" height="20" rx="4" fill="rgba(30,41,59,0.8)" stroke="#475569" stroke-width="1"/>
+  <text x="1085" y="282" fill="#94a3b8" font-size="9" text-anchor="middle">状态筛选 ▼</text>
+
+  <text x="625" y="320" fill="#94a3b8" font-size="10">③ 表格（标题列蓝色，列名“故障名称”）</text>
+
+  <!-- 表头 -->
+  <rect x="625" y="330" width="530" height="28" rx="4" fill="rgba(30,41,59,0.6)"/>
+  <text x="645" y="348" fill="#60a5fa" font-size="10" font-weight="600">级别</text>
+  <text x="700" y="348" fill="#60a5fa" font-size="10" font-weight="600">故障ID</text>
+  <text x="800" y="348" fill="#60a5fa" font-size="10" font-weight="600">故障名称</text>
+  <text x="970" y="348" fill="#60a5fa" font-size="10" font-weight="600">状态</text>
+  <text x="1060" y="348" fill="#60a5fa" font-size="10" font-weight="600">P99</text>
+
+  <!-- 行1 -->
+  <rect x="625" y="362" width="530" height="28" rx="2" fill="rgba(30,41,59,0.3)"/>
+  <text x="645" y="380" fill="#fb7185" font-size="11" font-weight="600">P1</text>
+  <text x="700" y="380" fill="#94a3b8" font-size="10">INC-2026-0720</text>
+  <text x="800" y="380" fill="#60a5fa" font-size="10" text-decoration="underline">购物车核心交易链路数据库连接耗尽</text>
+  <text x="970" y="380" fill="#22d3ee" font-size="10">自愈中</text>
+  <text x="1060" y="380" fill="#e2e8f0" font-size="10">3500ms</text>
+
+  <!-- 行2 -->
+  <rect x="625" y="394" width="530" height="28" rx="2" fill="rgba(30,41,59,0.15)"/>
+  <text x="645" y="412" fill="#fbbf24" font-size="11" font-weight="600">P2</text>
+  <text x="700" y="412" fill="#94a3b8" font-size="10">INC-2026-0722</text>
+  <text x="800" y="412" fill="#60a5fa" font-size="10" text-decoration="underline">库存服务扣减接口超时告警</text>
+  <text x="970" y="412" fill="#fbbf24" font-size="10">排查中</text>
+  <text x="1060" y="412" fill="#e2e8f0" font-size="10">1800ms</text>
+
+  <!-- 行3 -->
+  <rect x="625" y="426" width="530" height="28" rx="2" fill="rgba(30,41,59,0.3)"/>
+  <text x="645" y="444" fill="#fbbf24" font-size="11" font-weight="600">P2</text>
+  <text x="700" y="444" fill="#94a3b8" font-size="10">INC-2026-0719</text>
+  <text x="800" y="444" fill="#60a5fa" font-size="10" text-decoration="underline">消息网关 WebSocket 连接数异常飙升</text>
+  <text x="970" y="444" fill="#fbbf24" font-size="10">排查中</text>
+  <text x="1060" y="444" fill="#e2e8f0" font-size="10">1200ms</text>
+
+  <!-- 分隔线 -->
+  <line x1="610" y1="470" x2="610" y2="490" stroke="#60a5fa" stroke-width="1.5"/>
+
+  <!-- 复盘记录 tab -->
+  <text x="625" y="510" fill="#94a3b8" font-size="10">点击“复盘记录” tab 后 ↓</text>
+
+  <rect x="625" y="520" width="530" height="36" rx="4" fill="rgba(30,41,59,0.5)"/>
+  <rect x="625" y="520" width="120" height="36" rx="4" fill="rgba(30,41,59,0.3)"/>
+  <text x="685" y="542" fill="#94a3b8" font-size="12" text-anchor="middle">故障列表</text>
+  <rect x="745" y="520" width="140" height="36" rx="4" fill="rgba(59,130,246,0.3)" stroke="#60a5fa" stroke-width="1"/>
+  <text x="815" y="542" fill="#60a5fa" font-size="12" font-weight="600" text-anchor="middle">复盘记录</text>
+
+  <text x="625" y="575" fill="#94a3b8" font-size="10">④ 统计栏（新增）</text>
+
+  <rect x="625" y="585" width="530" height="56" rx="8" fill="rgba(76,29,149,0.2)" stroke="#a78bfa" stroke-width="1"/>
+  <text x="645" y="608" fill="#a78bfa" font-size="9">复盘报告</text>
+  <text x="655" y="626" fill="#f1f5f9" font-size="13" font-weight="700">已归档</text>
+  <text x="700" y="626" fill="#94a3b8" font-size="8">2</text>
+
+  <text x="760" y="608" fill="#a78bfa" font-size="9">关联故障</text>
+  <text x="770" y="626" fill="#f1f5f9" font-size="13" font-weight="700">P1</text>
+  <text x="795" y="626" fill="#94a3b8" font-size="8">1</text>
+  <text x="820" y="626" fill="#f1f5f9" font-size="13" font-weight="700">P2</text>
+  <text x="845" y="626" fill="#94a3b8" font-size="8">1</text>
+
+  <text x="625" y="670" fill="#94a3b8" font-size="10">⑤ 搜索栏（搜索框与表格等宽）</text>
+
+  <rect x="625" y="680" width="530" height="36" rx="6" fill="rgba(30,41,59,0.5)"/>
+  <rect x="635" y="688" width="510" height="20" rx="10" fill="rgba(30,41,59,0.8)" stroke="#475569" stroke-width="1"/>
+  <text x="650" y="702" fill="#64748b" font-size="9">🔍 搜索报告标题...</text>
+
+  <text x="625" y="735" fill="#94a3b8" font-size="10">⑥ 表格（标题列蓝色）</text>
+
+  <rect x="625" y="745" width="530" height="28" rx="4" fill="rgba(30,41,59,0.6)"/>
+  <text x="645" y="763" fill="#60a5fa" font-size="10" font-weight="600">报告标题</text>
+  <text x="820" y="763" fill="#60a5fa" font-size="10" font-weight="600">关联故障</text>
+  <text x="930" y="763" fill="#60a5fa" font-size="10" font-weight="600">创建时间</text>
+  <text x="1060" y="763" fill="#60a5fa" font-size="10" font-weight="600">作者</text>
+
+  <rect x="625" y="777" width="530" height="28" rx="2" fill="rgba(30,41,59,0.3)"/>
+  <text x="645" y="795" fill="#60a5fa" font-size="10" text-decoration="underline">复盘沉淀：高并发事务连接池被打满事件</text>
+  <text x="820" y="795" fill="#94a3b8" font-size="10">INC-2026-0720</text>
+  <text x="930" y="795" fill="#94a3b8" font-size="10">2026-07-20 10:30</text>
+  <text x="1060" y="795" fill="#94a3b8" font-size="10">SRE 自动化运维组</text>
+
+  <!-- 图例 -->
+  <text x="30" y="500" fill="#94a3b8" font-size="10" font-weight="600">图例</text>
+  <rect x="30" y="510" width="14" height="14" rx="2" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1"/>
+  <text x="50" y="522" fill="#94a3b8" font-size="9">卡片容器（白色圆角卡片）</text>
+  <rect x="30" y="530" width="14" height="14" rx="2" fill="rgba(30,41,59,0.3)"/>
+  <text x="50" y="542" fill="#94a3b8" font-size="9">现有元素</text>
+  <rect x="30" y="550" width="14" height="14" rx="2" fill="rgba(76,29,149,0.2)" stroke="#a78bfa" stroke-width="1"/>
+  <text x="50" y="562" fill="#94a3b8" font-size="9">新增统计栏</text>
+  <text x="30" y="582" fill="#60a5fa" font-size="9" text-decoration="underline">蓝色文字</text>
+  <text x="110" y="582" fill="#94a3b8" font-size="9">= 可点击指示</text>
+
+  <text x="30" y="610" fill="#64748b" font-size="9">搜索框宽度 = 表格宽度（右侧对齐）</text>
+</svg>

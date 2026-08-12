@@ -1636,6 +1636,7 @@ app.get('/api/sre/postmortems', (req, res) => {
     author: report.author || 'SRE 自动化运维组',
     status: report.status || '已归档',
     createdAt: report.createdAt || '2026-07-20',
+    severity: MOCK_INCIDENTS.find(i => i.id === incidentId)?.severity || '',
   }))
   res.json({ success: true, data: list })
 })
