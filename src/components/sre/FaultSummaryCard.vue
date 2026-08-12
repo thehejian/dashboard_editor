@@ -17,6 +17,16 @@
         <span class="fsc-metric-value">{{ incident.metrics.failureRate.current }}<span class="fsc-metric-unit">{{ incident.metrics.failureRate.unit }}</span></span>
         <span class="fsc-metric-change">{{ incident.metrics.failureRate.label }}</span>
       </div>
+      <div class="fsc-metric" v-if="incident.metrics.affectedUsers">
+        <span class="fsc-metric-label">受影响用户</span>
+        <span class="fsc-metric-value">{{ incident.metrics.affectedUsers.current.toLocaleString() }}</span>
+        <span class="fsc-metric-change">{{ incident.metrics.affectedUsers.label }}</span>
+      </div>
+      <div class="fsc-metric" v-if="incident.metrics.affectedSessions">
+        <span class="fsc-metric-label">受影响会话</span>
+        <span class="fsc-metric-value">{{ incident.metrics.affectedSessions.current.toLocaleString() }}</span>
+        <span class="fsc-metric-change">{{ incident.metrics.affectedSessions.label }}</span>
+      </div>
     </div>
     <div class="fsc-extra">
       <div class="fsc-extra-row">
@@ -94,7 +104,7 @@ defineProps({
 }
 .fsc-metrics {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 6px;
   margin-top: 20px;
 }
@@ -102,7 +112,7 @@ defineProps({
   flex: 1;
   background: #fafafa;
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 4px 6px;
   text-align: center;
 }
 .fsc-metric-label {
@@ -113,7 +123,7 @@ defineProps({
 }
 .fsc-metric-value {
   display: block;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #F5222D;
   line-height: 1.2;

@@ -19,6 +19,8 @@
     <div v-if="impact.visible" class="tp-impact">
       <i class="fa-solid fa-sitemap"></i> 影响 <strong>{{ impact.count }}</strong> 个下游节点:
       <span class="tp-impact-nodes">{{ impact.nodes.join(', ') }}</span>
+      <span class="tp-impact-sep">|</span>
+      <span class="tp-root-cause"><i class="fa-solid fa-circle-exclamation"></i> 根因: {{ impact.rootCauseLabel }}</span>
     </div>
 
     <div v-if="tooltip.visible" class="tp-tooltip" :style="{ top: tooltip.y + 'px', left: tooltip.x + 'px' }">
@@ -52,7 +54,7 @@ const fullscreenVisible = ref(false)
 let graph = null
 let fullscreenGraph = null
 const tooltip = reactive({ visible: false, label: '', ip: '', status: 'normal', metrics: '', x: 0, y: 0 })
-const impact = reactive({ visible: false, count: 0, nodes: [] })
+const impact = reactive({ visible: false, count: 0, nodes: [], rootCauseLabel: '' })
 let hideTimer = null
 
 const STATUS_COLORS = { normal: '#1890ff', warning: '#fa8c16', error: '#f5222d', critical: '#f5222d' }
@@ -183,6 +185,8 @@ async function initGraph() {
         const n = props.data.nodes.find(n => n.id === did)
         return n ? n.label : did
       })
+      const rootNode = props.data.nodes.find(n => n.id === id)
+      impact.rootCauseLabel = rootNode ? rootNode.label : id
       setTimeout(() => { impact.visible = false }, 8000)
     }
   })
@@ -365,6 +369,9 @@ watch(() => props.selectedNodeId, () => { nextTick(() => { setTimeout(() => init
 .tp-impact { padding: 4px 16px; font-size: 11px; color: #FF7D00; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; border-top: 1px solid #f0f0f0; }
 .tp-impact i { color: #FF7D00; }
 .tp-impact-nodes { color: #666; }
+.tp-impact-sep { color: #d9d9d9; }
+.tp-root-cause { color: #F5222D; font-weight: 600; }
+.tp-root-cause i { margin-right: 3px; }
 .tp-tooltip {
   position: fixed;
   background: #fff;

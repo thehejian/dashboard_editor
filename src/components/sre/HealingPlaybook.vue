@@ -16,6 +16,11 @@
       <div class="hp-agent-sub">全场景流水线、自愈结果自动校验</div>
     </div>
 
+    <div class="hp-search" v-if="recommendations.length">
+      <i class="fa-solid fa-search"></i>
+      <input v-model="searchQuery" class="hp-search-input" placeholder="搜索历史预案..." />
+    </div>
+
     <div class="hp-steps">
       <div v-for="(step, i) in playbook.steps" :key="step.id" class="hp-step" :class="'step-' + step.status">
         <div class="hp-step-header">
@@ -70,16 +75,47 @@
         <span>状态码 200 水平: <b :class="playbook.validation.http200Status === '已恢复' ? 'val-ok' : 'val-warn'">{{ playbook.validation.http200Status }}</b></span>
       </div>
     </div>
+
+    <div class="hp-recommendations" v-if="filteredRecommendations.length">
+      <div class="hp-rec-header" @click="recOpen = !recOpen">
+        <span><i class="fa-solid fa-lightbulb"></i> 推荐预案 ({{ filteredRecommendations.length }})</span>
+        <i class="fa-solid" :class="recOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </div>
+      <div v-if="recOpen" class="hp-rec-list">
+        <div v-for="rec in filteredRecommendations" :key="rec.id" class="hp-rec-item">
+          <div class="hp-rec-title">{{ rec.title }}</div>
+          <div class="hp-rec-summary">{{ rec.summary }}</div>
+          <div class="hp-rec-meta">
+            <span class="hp-rec-tag" v-for="tag in rec.tags" :key="tag">{{ tag }}</span>
+            <span class="hp-rec-date">{{ rec.createdAt }}</span>
+          </div>
+          <div v-if="rec.matchReason" class="hp-rec-reason">{{ rec.matchReason }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 const props = defineProps({
   playbook: { type: Object, required: true },
   appName: { type: String, default: '' },
+  recommendations: { type: Array, default: () => [] },
 })
 
 defineEmits(['execute-step', 'ai-auto-execute'])
+
+const searchQuery = ref('')
+const recOpen = ref(false)
+
+const filteredRecommendations = computed(() => {
+  if (!searchQuery.value) return props.recommendations
+  const q = searchQuery.value.toLowerCase()
+  return props.recommendations.filter(r =>
+    r.title.toLowerCase().includes(q) || r.summary.toLowerCase().includes(q) || r.tags.some(t => t.toLowerCase().includes(q))
+  )
+})
 
 function skipStep(i) {
   const step = props.playbook.steps[i]
@@ -136,6 +172,10 @@ function skipStep(i) {
   transition: all 0.2s;
 }
 .hp-ai-btn:hover { background: #9254de; }
+.hp-search { display: flex; align-items: center; gap: 6px; margin: 6px 12px; padding: 4px 8px; border: 1px solid #d9d9d9; border-radius: 4px; background: #fff; }
+.hp-search i { color: #8c8c8c; font-size: 12px; }
+.hp-search-input { border: none; outline: none; flex: 1; font-size: 12px; color: #333; background: transparent; }
+.hp-search-input::placeholder { color: #bfbfbf; }
 .hp-steps { flex: 1; overflow-y: auto; padding: 0 12px; }
 .hp-step {
   border: 1px solid #f0f0f0;
@@ -237,6 +277,19 @@ function skipStep(i) {
 .hp-val-sep { margin: 0 8px; color: #d9d9d9; }
 .val-ok { color: #52c41a; font-weight: 600; }
 .val-warn { color: #FF7D00; font-weight: 600; }
+.hp-recommendations { border-top: 1px solid #f0f0f0; flex-shrink: 0; }
+.hp-rec-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; cursor: pointer; font-size: 12px; color: #1a1a1a; font-weight: 600; user-select: none; }
+.hp-rec-header:hover { background: #fafafa; }
+.hp-rec-header i:first-child { color: #722ED1; margin-right: 4px; }
+.hp-rec-header i:last-child { font-size: 10px; color: #8c8c8c; }
+.hp-rec-list { padding: 0 12px 8px; max-height: 180px; overflow-y: auto; }
+.hp-rec-item { padding: 6px 8px; margin-bottom: 4px; background: #fafafa; border-radius: 4px; border: 1px solid #f0f0f0; }
+.hp-rec-title { font-size: 12px; font-weight: 600; color: #1a1a1a; }
+.hp-rec-summary { font-size: 11px; color: #666; margin: 2px 0; }
+.hp-rec-meta { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 10px; }
+.hp-rec-tag { padding: 1px 4px; background: #f9f0ff; color: #722ED1; border-radius: 2px; }
+.hp-rec-date { color: #8c8c8c; }
+.hp-rec-reason { font-size: 10px; color: #1890ff; margin-top: 2px; }
 
 @media (max-width: 768px) {
   .healing-playbook { border: none; border-radius: 0; }

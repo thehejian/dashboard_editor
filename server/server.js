@@ -1107,6 +1107,8 @@ const MOCK_INCIDENTS = [
     metrics: {
       p99: { current: 3500, baseline: 20, unit: 'ms', multiplier: '175x 突增' },
       failureRate: { current: 85.4, unit: '%', label: '大量 HTTP 504 熔断' },
+      affectedUsers: { current: 2300, label: '受影响用户' },
+      affectedSessions: { current: 2500, label: '受影响会话' },
     },
     healingProgress: 15,
     topologyNodeIds: ['lb-api', 'prod-order-01', 'redis-cache', 'mysql-master', 'mysql-slave'],
@@ -1134,6 +1136,8 @@ const MOCK_INCIDENTS = [
     metrics: {
       p99: { current: 2800, baseline: 40, unit: 'ms', multiplier: '70x 突增' },
       failureRate: { current: 62.1, unit: '%', label: '大量 HTTP 503 超时' },
+      affectedUsers: { current: 1200, label: '受影响用户' },
+      affectedSessions: { current: 1350, label: '受影响会话' },
     },
     healingProgress: 100,
     topologyNodeIds: ['lb-api', 'prod-user-01', 'redis-cache', 'mysql-master'],
@@ -1153,6 +1157,8 @@ const MOCK_INCIDENTS = [
     metrics: {
       p99: { current: 5200, baseline: 100, unit: 'ms', multiplier: '52x 突增' },
       failureRate: { current: 45.3, unit: '%', label: '回调超时' },
+      affectedUsers: { current: 890, label: '受影响用户' },
+      affectedSessions: { current: 1020, label: '受影响会话' },
     },
     healingProgress: 100,
     topologyNodeIds: ['lb-api', 'prod-pay-01', 'mq-order', 'redis-cache'],
@@ -1234,6 +1240,41 @@ const MOCK_HEALING_PLAYBOOK = {
     validation: { totalSteps: 2, completedSteps: 2, http200Status: '已恢复' },
   },
 }
+
+const MOCK_PLAYBOOK_RECOMMENDATIONS = [
+  {
+    id: 'rec-001',
+    title: '数据库连接池耗尽处理指南',
+    tags: ['数据库', '智能推荐'],
+    summary: 'HikariCP 连接池耗尽的标准处理流程，含扩容、清理、监控',
+    createdAt: '2025-08-21',
+    matchReason: '匹配当前故障类型：数据库连接池耗尽',
+  },
+  {
+    id: 'rec-002',
+    title: 'MySQL 慢查询排查与优化',
+    tags: ['数据库', '运维'],
+    summary: '慢查询定位、索引优化、连接池参数调整',
+    createdAt: '2025-07-15',
+    matchReason: '匹配关联节点：mysql-master',
+  },
+  {
+    id: 'rec-003',
+    title: 'Kubernetes Pod 重启排查指南',
+    tags: ['容器', 'K8s'],
+    summary: 'Pod CrashLoopBackOff 原因分析及修复步骤',
+    createdAt: '2025-06-10',
+    matchReason: '',
+  },
+  {
+    id: 'rec-004',
+    title: 'Redis 缓存击穿解决方案',
+    tags: ['缓存', '智能推荐'],
+    summary: '缓存击穿、缓存雪崩的预防与应急处理',
+    createdAt: '2025-05-18',
+    matchReason: '匹配关联节点：redis-cache',
+  },
+]
 
 const MOCK_POSTMORTEM_REPORTS = {
   'INC-2026-0720': {
@@ -1551,6 +1592,11 @@ app.post('/api/sre/reset', (req, res) => {
     playbook.validation.http200Status = '暂未恢复'
   }
   res.json({ success: true })
+})
+
+// GET /api/sre/playbook-recommendations
+app.get('/api/sre/playbook-recommendations', (req, res) => {
+  res.json({ success: true, data: MOCK_PLAYBOOK_RECOMMENDATIONS })
 })
 
 // ==================== Start Server ====================

@@ -72,7 +72,7 @@
         </div>
 
         <div class="sre-main-right">
-          <HealingPlaybook v-if="playbook" :playbook="playbook" :app-name="incident?.appName" @execute-step="executeStep" @ai-auto-execute="aiAutoExecute" />
+          <HealingPlaybook v-if="playbook" :playbook="playbook" :app-name="incident?.appName" :recommendations="recommendations" @execute-step="executeStep" @ai-auto-execute="aiAutoExecute" />
         </div>
       </div>
 
@@ -110,6 +110,7 @@ const logs = ref([])
 const traces = ref([])
 const callTrace = ref([])
 const linkedLogs = ref([])
+const recommendations = ref([])
 const activeTab = ref('analysis')
 const selectedNodeId = ref('')
 
@@ -148,6 +149,10 @@ async function fetchData() {
     const linkedLogsRes = await fetch(`/api/sre/incidents/${id}/linked-logs`)
     const linkedLogsJson = await linkedLogsRes.json()
     if (linkedLogsJson.success) linkedLogs.value = linkedLogsJson.data
+
+    const recRes = await fetch(`/api/sre/playbook-recommendations`)
+    const recJson = await recRes.json()
+    if (recJson.success) recommendations.value = recJson.data
   } catch (e) {
     console.error('Failed to fetch incident data:', e)
   } finally {
