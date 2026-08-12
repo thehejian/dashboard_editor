@@ -3,7 +3,7 @@
     <div class="rca-head">
       <span class="rca-title"><i class="fa-solid fa-microscope"></i> 根因定位证据链</span>
       <span v-if="rca" class="rca-meta">
-        <span class="rca-conf">置信度: <b>{{ confidenceText }}</b></span>
+        <span class="rca-conf">置信度: <b>{{ confidenceLabel }}</b></span>
         <span class="rca-sep">|</span>
         <span>检测方式: AI 异常检测</span>
         <span class="rca-sep">|</span>
@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   rca: { type: Object, default: null },
@@ -75,6 +75,11 @@ const props = defineProps({
 
 const expandedIndex = ref(null)
 const eLogs = ref({})
+
+const confidenceLabel = computed(() => {
+  const c = props.rca?.evidence?.[0]?.aiScore?.confidence
+  return c || '高'
+})
 
 function toggleExpand(i) {
   expandedIndex.value = expandedIndex.value === i ? null : i
@@ -86,11 +91,6 @@ function changeText(e) {
   const ratio = ((value - baseline) / baseline) * 100
   const dir = ratio >= 0 ? '↑' : '↓'
   return `${value}${unit} (基线 ${baseline}${unit}) ${dir}${Math.abs(Math.round(ratio))}%`
-}
-
-function confidenceText() {
-  const c = props.rca?.evidence?.[0]?.aiScore?.confidence
-  return c || '高'
 }
 
 watch(() => props.rca, () => {
