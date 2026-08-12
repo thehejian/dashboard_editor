@@ -185,6 +185,7 @@
             <div class="app-card-head">
               <span class="app-card-name">{{ app.name }}</span>
               <span class="app-card-type">{{ app.type }}</span>
+              <span v-if="isRootApp(app)" class="app-root-badge"><i class="fa-solid fa-circle-exclamation"></i> 根因</span>
             </div>
             <div class="app-card-main">
               <span class="app-card-score">{{ app.score }}</span>
@@ -196,6 +197,10 @@
               <span v-for="f in getAppFaultLabels(app)" :key="f.nodeId" class="app-fault-chip">{{ f.nodeLabel }}</span>
             </div>
           </div>
+        </div>
+        <div class="aiops-impact-summary" v-if="aiopsRootCause">
+          <i class="fa-solid fa-sitemap"></i>
+          影响 <strong>{{ aiopsBusinessImpact.affectedServices }}</strong> 个服务 · <strong>{{ aiopsBusinessImpact.affectedUsers.toLocaleString() }}</strong> 用户 · 失败率 <strong>{{ aiopsAnomalies.filter(a => a.level === 'critical').length ? '85%' : '-' }}</strong>
         </div>
       </div>
 
@@ -704,6 +709,13 @@
                   <span class="am-value">{{ activeAppDuration }}</span>
                 </div>
               </div>
+              <div class="app-meta-chip" v-if="activeApp?.affectedUsers">
+                <span class="am-chip-icon"><i class="fa-solid fa-users" style="color:#FF7D00"></i></span>
+                <div class="am-chip-body">
+                  <span class="am-label">受影响用户</span>
+                  <span class="am-value">{{ activeApp.affectedUsers.toLocaleString() }} 人</span>
+                </div>
+              </div>
             </div>
             <div class="app-summary-foot">
               <div class="app-summary-trend" v-if="activeAppTrend">
@@ -912,6 +924,9 @@ const visibleApps = computed(() => {
   if (appFilter.value === 'all') return aiopsApps.value
   return aiopsApps.value.filter(a => a.status !== 'normal')
 })
+function isRootApp(app) {
+  return !!(aiopsRootCause.value && app.nodes && app.nodes.includes(aiopsRootCause.value.nodeId))
+}
 const abnormalAppCounts = computed(() => {
   const c = { critical: 0, warning: 0 }
   aiopsApps.value.forEach(a => { if (c[a.status] != null) c[a.status]++ })
@@ -927,6 +942,7 @@ const activeFaultNode = ref('')
 const evidenceOpen = ref(false)
 const aiopsPredictions = ref([])
 const aiopsRemediationRecords = ref([])
+const aiopsBusinessImpact = ref({ affectedUsers: 0, affectedSessions: 0, affectedServices: 0 })
 const anomalyFilter = ref('all')
 
 const anomalyColumns = [
@@ -1763,6 +1779,8 @@ async function fetchAiopsData() {
     const recData = recRes.data || []
     const goldenData = goldenRes.data || {}
 
+    aiopsBusinessImpact.value = health.businessImpact || { affectedUsers: 0, affectedSessions: 0, affectedServices: 0 }
+
     if (goldenData.nodes) {
       const byNode = {}
       goldenData.nodes.forEach(n => { byNode[n.nodeId] = n.signals })
@@ -1778,6 +1796,7 @@ async function fetchAiopsData() {
       { key: 'healthScore', label: '健康度', value: (health.score || 0), icon: 'fa-solid fa-heart-pulse', iconBg: '#F6FFED', iconColor: '#07C160', valClass: health.score < 90 ? 'kpi-warn' : 'kpi-ok', trendText: '较昨日 -5.4%', trendDir: 'down', sparklinePath: calcSparklinePath(kpiHistory.healthScore || []) },
       { key: 'predictedAlerts', label: '预测告警', value: pred.items?.length || 0, icon: 'fa-solid fa-clock-rotate-left', iconBg: '#FFF7E6', iconColor: '#FF7D00', valClass: 'kpi-warn', trendText: '较昨日 +50%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.predictedAlerts || []) },
       { key: 'autoRemediationRate', label: '自动修复率', value: (remed.rate || 0) + '%', icon: 'fa-solid fa-rotate-right', iconBg: '#F0F5FF', iconColor: '#007DFF', valClass: 'kpi-ok', trendText: '较昨日 +8.2%', trendDir: 'up', sparklinePath: calcSparklinePath(kpiHistory.autoRemediationRate || []) },
+      { key: 'affectedUsers', label: '受影响用户', value: (health.businessImpact?.affectedUsers || 0).toLocaleString(), icon: 'fa-solid fa-users', iconBg: '#FFF7E6', iconColor: '#FF7D00', valClass: 'kpi-warn', trendText: '', trendDir: '', sparklinePath: '' },
     ]
 
     aiopsApps.value = health.apps || []
@@ -2373,7 +2392,7 @@ const refreshCard = (card) => {
 }
 .suggestion-chip:hover { border-color: var(--intelligent, #722ED1); color: var(--intelligent, #722ED1); background: rgba(114,46,209,0.05); }
 
-.aiops-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+.aiops-kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 16px; }
 .aiops-kpi-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .aiops-kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .aiops-kpi-info { flex: 1; }
@@ -2396,6 +2415,9 @@ const refreshCard = (card) => {
 .ab-badge.ab-warning { color: #FF7D00; background: #FFF7E6; }
 .title-toggle { margin-left: auto; }
 .app-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+.aiops-impact-summary { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 12px; background: #fff7e6; border: 1px solid #ffd591; border-radius: 6px; font-size: 12px; color: #666; }
+.aiops-impact-summary i { color: #FF7D00; }
+.aiops-impact-summary strong { color: #1a1a1a; }
 .app-card {
   border: 1px solid #E8E8E8; border-radius: 8px; padding: 10px;
   cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 5px;
@@ -2405,6 +2427,8 @@ const refreshCard = (card) => {
 .app-card-head { display: flex; justify-content: space-between; align-items: center; }
 .app-card-name { font-size: 13px; font-weight: 600; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .app-card-type { font-size: 10px; color: #6B7280; background: #F5F5F5; padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
+.app-root-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #fff; background: #F5222D; padding: 1px 6px; border-radius: 4px; font-weight: 600; margin-left: 4px; }
+.app-root-badge i { font-size: 9px; }
 .app-card-main { display: flex; align-items: baseline; gap: 8px; }
 .app-card-score { font-size: 22px; font-weight: 700; line-height: 1; }
 .app-card-status { font-size: 11px; }
