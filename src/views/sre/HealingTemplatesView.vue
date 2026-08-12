@@ -2,9 +2,9 @@
   <div class="page-view">
     <div class="page-header"><h3>自愈策略模板</h3></div>
     <div v-if="loading" style="text-align:center;margin:60px 0"><a-spin /></div>
-    <template v-else>
+<template v-else>
       <div class="ic-filter-bar">
-        <a-button type="primary" size="small" @click="createModalOpen = true"><i class="fa-solid fa-plus"></i> 新建模板</a-button>
+        <a-button type="primary" size="small" @click="router.push('/ops/incidents/config/templates/create')"><i class="fa-solid fa-plus"></i> 新建模板</a-button>
         <a-input-search v-model:value="search" placeholder="搜索模板名称..." style="width:280px;margin-left:auto" allow-clear />
       </div>
       <div class="tmpl-grid">
@@ -24,17 +24,16 @@
         </div>
       </div>
     </template>
-    <HealingTemplateCreateModal :open="createModalOpen" @close="createModalOpen = false" @saved="onTemplateSaved" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import HealingTemplateCreateModal from '../../components/sre/HealingTemplateCreateModal.vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const loading = ref(true)
 const templates = ref([])
 const search = ref('')
-const createModalOpen = ref(false)
 const filtered = computed(() => {
   if (!search.value) return templates.value
   const q = search.value.toLowerCase()
@@ -48,10 +47,6 @@ onMounted(async () => {
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 })
-
-function onTemplateSaved(template) {
-  templates.value.unshift({ id: 'tmpl-new-' + Date.now(), name: template.name, enabled: true, type: template.type, trigger: '自定义', targetNode: template.targetNode.join(','), steps: template.steps, execCount: 0, successRate: 0, lastExecutedAt: null })
-}
 </script>
 
 <style scoped>

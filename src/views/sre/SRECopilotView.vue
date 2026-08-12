@@ -17,6 +17,12 @@
         </div>
       </div>
       <div class="sre-header-right">
+        <div class="sre-timeline-compact" v-if="incident">
+          <span v-for="s in healingStages" :key="s.id" class="stc-item" :class="'stc-' + s.status" :title="s.desc" @click="onTimelineStage(s)">
+            <i :class="s.status === 'completed' ? 'fa-solid fa-check-circle' : s.status === 'active' ? 'fa-solid fa-spinner fa-spin' : 'fa-regular fa-circle'"></i>
+            <span class="stc-label">{{ s.label }}</span>
+          </span>
+        </div>
         <a-button type="primary" size="large" class="sre-postmortem-btn" @click="activeTab = 'postmortem'" v-if="incident">
           <i class="fa-solid fa-lightbulb"></i>
           一键智能分析
@@ -45,7 +51,6 @@
     </div>
 
     <template v-else-if="incident">
-      <IncidentTimeline :stages="healingStages" title="智能故障自愈终端" @stage-change="onTimelineStage" />
       <!-- 故障分析视图 -->
       <div v-if="activeTab === 'analysis'" class="sre-content">
         <div class="sre-main-left">
@@ -103,7 +108,6 @@ import PostmortemReport from '../../components/sre/PostmortemReport.vue'
 import CallTracePanel from '../../components/sre/CallTracePanel.vue'
 import LinkedLogsPanel from '../../components/sre/LinkedLogsPanel.vue'
 import RCAEvidencePanel from '../../components/sre/RCAEvidencePanel.vue'
-import IncidentTimeline from '../../components/IncidentTimeline.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -320,9 +324,33 @@ watch(() => route.params.id, fetchData)
 .sre-header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 12px;
 }
+.sre-timeline-compact {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 8px;
+  height: 28px;
+  background: #f5f5f5;
+  border-radius: 6px;
+}
+.stc-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 5px;
+  font-size: 10px;
+  color: #8c8c8c;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.stc-item:hover { color: #1a1a1a; }
+.stc-item i { font-size: 10px; }
+.stc-completed { color: #52C41A; }
+.stc-completed:hover { color: #389e0d; }
+.stc-active { color: #1890ff; font-weight: 600; }
+.stc-pending { color: #bfbfbf; }
 .sre-status-badge {
   display: flex;
   align-items: center;

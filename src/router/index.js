@@ -100,6 +100,7 @@ const routes = [
       { path: 'list', name: 'ops-incidents-list', component: () => import('../views/sre/IncidentListView.vue') },
       { path: 'postmortems', name: 'ops-incidents-postmortems', component: () => import('../views/sre/PostmortemListView.vue') },
       { path: 'config/templates', name: 'ops-incidents-config-templates', component: () => import('../views/sre/HealingTemplatesView.vue') },
+      { path: 'config/templates/create', name: 'ops-incidents-config-templates-create', component: () => import('../views/sre/HealingTemplateCreatePage.vue') },
       { path: 'config/records', name: 'ops-incidents-config-records', component: () => import('../views/sre/HealingRecordsView.vue') },
       { path: 'analysis/trend', name: 'ops-incidents-analysis-trend', component: () => import('../views/sre/IncidentTrendView.vue') },
       { path: 'analysis/rca', name: 'ops-incidents-analysis-rca', component: () => import('../views/sre/RCAReportsView.vue') },
