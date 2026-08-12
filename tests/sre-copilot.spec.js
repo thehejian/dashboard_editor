@@ -72,6 +72,21 @@ test.describe('SRE 故障自愈终端', () => {
     await expect(page.locator('.sre-postmortem-btn')).toBeVisible()
   })
 
+  test('根因定位证据链渲染', async ({ page }) => {
+    await page.goto('/ops/incident/INC-2026-0720')
+    await expect(page.locator('.rca-evidence-panel')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('.rca-cause-banner')).toContainText('根因')
+    await expect(page.locator('.rca-evidence-card')).toHaveCount(4)
+  })
+
+  test('根因证据展开详情', async ({ page }) => {
+    await page.goto('/ops/incident/INC-2026-0720')
+    await expect(page.locator('.rca-evidence-panel')).toBeVisible({ timeout: 10000 })
+    await page.locator('.rca-ev-detail-btn').first().click()
+    await expect(page.locator('.rca-metric-grid')).toBeVisible()
+    await expect(page.locator('.rca-metric-item')).toHaveCount(6)
+  })
+
   test('切换到复盘沉淀 tab', async ({ page }) => {
     await page.goto('/ops/incident/INC-2026-0720')
 

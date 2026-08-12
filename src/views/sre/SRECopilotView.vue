@@ -56,6 +56,11 @@
               <TopologyPanel :data="topology" :selected-node-id="selectedNodeId" :highlight-app-node-id="appNodeId" @node-click="onNodeClick" />
             </div>
           </div>
+          <div class="sre-row sre-row-rca">
+            <div class="sre-cell sre-cell-rca">
+              <RCAEvidencePanel :rca="rcaEvidence" :logs="linkedLogs" />
+            </div>
+          </div>
           <div class="sre-row sre-row-2">
             <div class="sre-cell sre-cell-full">
               <CallTracePanel :traces="callTrace" :app-name="incident?.service" />
@@ -96,6 +101,7 @@ import HealingPlaybook from '../../components/sre/HealingPlaybook.vue'
 import PostmortemReport from '../../components/sre/PostmortemReport.vue'
 import CallTracePanel from '../../components/sre/CallTracePanel.vue'
 import LinkedLogsPanel from '../../components/sre/LinkedLogsPanel.vue'
+import RCAEvidencePanel from '../../components/sre/RCAEvidencePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -105,6 +111,7 @@ const incident = ref(null)
 const topology = ref({ nodes: [], edges: [] })
 const playbook = ref(null)
 const postmortem = ref(null)
+const rcaEvidence = ref(null)
 const errorRateTrend = ref([])
 const logs = ref([])
 const traces = ref([])
@@ -132,6 +139,7 @@ async function fetchData() {
       topology.value = json.data.topology
       playbook.value = json.data.playbook
       postmortem.value = json.data.postmortem
+      rcaEvidence.value = json.data.rcaEvidence
       errorRateTrend.value = json.data.errorRateTrend
     }
     const logsRes = await fetch(`/api/sre/incidents/${id}/logs`)
@@ -373,6 +381,9 @@ watch(() => route.params.id, fetchData)
   flex-shrink: 0;
 }
 .sre-row-3 { height: 410px; }
+.sre-row-rca { flex-shrink: 0; }
+.sre-cell-rca { flex: 1; min-height: 0; }
+.sre-cell-rca .rca-evidence-panel { flex: 1; }
 .sre-cell { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .sre-cell-full { flex: 1; max-height: 210px; overflow-y: auto; }
 .sre-cell-left { flex: 1; }
