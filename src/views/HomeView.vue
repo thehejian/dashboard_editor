@@ -183,9 +183,11 @@
         <div class="app-grid">
           <div v-for="app in visibleApps" :key="app.name" class="app-card" :class="'app-' + app.status" @click="openAppDrawer(app)">
             <div class="app-card-head">
-              <span class="app-card-name">{{ app.name }}</span>
+              <div class="app-card-head-left">
+                <span class="app-card-name">{{ app.name }}</span>
+                <span v-if="isRootApp(app)" class="app-root-badge"><i class="fa-solid fa-circle-exclamation"></i> 根因</span>
+              </div>
               <span class="app-card-type">{{ app.type }}</span>
-              <span v-if="isRootApp(app)" class="app-root-badge"><i class="fa-solid fa-circle-exclamation"></i> 根因</span>
             </div>
             <div class="app-card-main">
               <span class="app-card-score">{{ app.score }}</span>
@@ -197,10 +199,6 @@
               <span v-for="f in getAppFaultLabels(app)" :key="f.nodeId" class="app-fault-chip">{{ f.nodeLabel }}</span>
             </div>
           </div>
-        </div>
-        <div class="aiops-impact-summary" v-if="aiopsRootCause">
-          <i class="fa-solid fa-sitemap"></i>
-          影响 <strong>{{ aiopsBusinessImpact.affectedServices }}</strong> 个服务 · <strong>{{ aiopsBusinessImpact.affectedUsers.toLocaleString() }}</strong> 用户 · 失败率 <strong>{{ aiopsAnomalies.filter(a => a.level === 'critical').length ? '85%' : '-' }}</strong>
         </div>
       </div>
 
@@ -942,7 +940,6 @@ const activeFaultNode = ref('')
 const evidenceOpen = ref(false)
 const aiopsPredictions = ref([])
 const aiopsRemediationRecords = ref([])
-const aiopsBusinessImpact = ref({ affectedUsers: 0, affectedSessions: 0, affectedServices: 0 })
 const anomalyFilter = ref('all')
 
 const anomalyColumns = [
@@ -1779,8 +1776,6 @@ async function fetchAiopsData() {
     const recData = recRes.data || []
     const goldenData = goldenRes.data || {}
 
-    aiopsBusinessImpact.value = health.businessImpact || { affectedUsers: 0, affectedSessions: 0, affectedServices: 0 }
-
     if (goldenData.nodes) {
       const byNode = {}
       goldenData.nodes.forEach(n => { byNode[n.nodeId] = n.signals })
@@ -2415,9 +2410,6 @@ const refreshCard = (card) => {
 .ab-badge.ab-warning { color: #FF7D00; background: #FFF7E6; }
 .title-toggle { margin-left: auto; }
 .app-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
-.aiops-impact-summary { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 12px; background: #fff7e6; border: 1px solid #ffd591; border-radius: 6px; font-size: 12px; color: #666; }
-.aiops-impact-summary i { color: #FF7D00; }
-.aiops-impact-summary strong { color: #1a1a1a; }
 .app-card {
   border: 1px solid #E8E8E8; border-radius: 8px; padding: 10px;
   cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 5px;
@@ -2425,9 +2417,10 @@ const refreshCard = (card) => {
 }
 .app-card:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); transform: translateY(-2px); }
 .app-card-head { display: flex; justify-content: space-between; align-items: center; }
+.app-card-head-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .app-card-name { font-size: 13px; font-weight: 600; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .app-card-type { font-size: 10px; color: #6B7280; background: #F5F5F5; padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
-.app-root-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #fff; background: #F5222D; padding: 1px 6px; border-radius: 4px; font-weight: 600; margin-left: 4px; }
+.app-root-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #fff; background: #F5222D; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
 .app-root-badge i { font-size: 9px; }
 .app-card-main { display: flex; align-items: baseline; gap: 8px; }
 .app-card-score { font-size: 22px; font-weight: 700; line-height: 1; }
