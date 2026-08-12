@@ -95,7 +95,15 @@ const routes = [
     ],
   },
   { path: '/ops/inspect', name: 'ops-inspect', component: () => import('../views/ops/InspectView.vue') },
-  { path: '/ops/incidents', name: 'ops-incidents', component: () => import('../views/sre/IncidentListView.vue') },
+  { path: '/ops/incidents', component: () => import('../views/sre/IncidentCenterView.vue'), children: [
+      { path: '', redirect: '/ops/incidents/list' },
+      { path: 'list', name: 'ops-incidents-list', component: () => import('../views/sre/IncidentListView.vue') },
+      { path: 'postmortems', name: 'ops-incidents-postmortems', component: () => import('../views/sre/PostmortemListView.vue') },
+      { path: 'config/templates', name: 'ops-incidents-config-templates', component: () => import('../views/sre/HealingTemplatesView.vue') },
+      { path: 'config/records', name: 'ops-incidents-config-records', component: () => import('../views/sre/HealingRecordsView.vue') },
+      { path: 'analysis/trend', name: 'ops-incidents-analysis-trend', component: () => import('../views/sre/IncidentTrendView.vue') },
+      { path: 'analysis/rca', name: 'ops-incidents-analysis-rca', component: () => import('../views/sre/RCAReportsView.vue') },
+    ] },
   { path: '/ops/incident/:id', name: 'ops-incident', component: () => import('../views/sre/SRECopilotView.vue'), props: true },
   {
     path: '/ops/settings',

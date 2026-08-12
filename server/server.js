@@ -1618,6 +1618,243 @@ const MOCK_LINKED_LOGS = {
   ],
 }
 
+const MOCK_HEALING_TEMPLATES = [
+  {
+    id: 'tmpl-001',
+    name: '数据库连接池耗尽自愈',
+    type: 'static',
+    enabled: true,
+    trigger: 'errorRate > 85% && p99 > 3000ms',
+    targetNode: 'mysql-master',
+    steps: [
+      { id: 1, name: '故障节点网络隔离', mode: 'auto', skippable: false },
+      { id: 2, name: '连接池容量扩容', mode: 'confirm', skippable: true },
+      { id: 3, name: 'MySQL 连接刷新与备库倒换', mode: 'manual', skippable: false },
+      { id: 4, name: '全链路监控与业务健康拨测', mode: 'manual', skippable: false },
+    ],
+    lastExecutedAt: '2026-07-20 09:00:00',
+    execCount: 3,
+    successRate: 100,
+  },
+  {
+    id: 'tmpl-002',
+    name: 'Redis 缓存击穿防护',
+    type: 'ai',
+    enabled: true,
+    trigger: 'cacheMissRate > 60%',
+    targetNode: 'redis-cache',
+    steps: [
+      { id: 1, name: '互斥锁防击穿', mode: 'auto', skippable: false },
+      { id: 2, name: '热点数据预加载', mode: 'auto', skippable: false },
+      { id: 3, name: '连接池扩容', mode: 'confirm', skippable: true },
+    ],
+    lastExecutedAt: '2026-07-18 10:20:00',
+    execCount: 5,
+    successRate: 80,
+  },
+  {
+    id: 'tmpl-003',
+    name: 'MQ 消息堆积消解',
+    type: 'static',
+    enabled: true,
+    trigger: 'queueDepth > 5000 && consumerLag > 30s',
+    targetNode: 'mq-order',
+    steps: [
+      { id: 1, name: '消费者扩容', mode: 'auto', skippable: false },
+      { id: 2, name: '消息积压限流', mode: 'confirm', skippable: true },
+      { id: 3, name: '死信队列清理', mode: 'manual', skippable: false },
+    ],
+    lastExecutedAt: '2026-07-15 14:45:00',
+    execCount: 2,
+    successRate: 50,
+  },
+  {
+    id: 'tmpl-004',
+    name: 'K8s Pod 异常重启',
+    type: 'ai',
+    enabled: false,
+    trigger: 'crashLoopBackoff > 3 次',
+    targetNode: 'prod-order-01',
+    steps: [
+      { id: 1, name: 'Pod 状态诊断', mode: 'auto', skippable: false },
+      { id: 2, name: '配置回滚', mode: 'confirm', skippable: true },
+      { id: 3, name: '滚动重启', mode: 'manual', skippable: false },
+    ],
+    lastExecutedAt: null,
+    execCount: 0,
+    successRate: 0,
+  },
+  {
+    id: 'tmpl-005',
+    name: '日志采集 Agent 故障修复',
+    type: 'static',
+    enabled: true,
+    trigger: 'logAgentDown > 5 个节点',
+    targetNode: 'es-cluster',
+    steps: [
+      { id: 1, name: 'Agent 重启', mode: 'auto', skippable: false },
+      { id: 2, name: '采集队列重置', mode: 'confirm', skippable: true },
+      { id: 3, name: '数据补偿导入', mode: 'manual', skippable: false },
+    ],
+    lastExecutedAt: '2026-07-17 11:40:00',
+    execCount: 1,
+    successRate: 100,
+  },
+]
+
+const MOCK_HEALING_EXECUTION_RECORDS = [
+  {
+    id: 'rec-001',
+    incidentId: 'INC-2026-0720',
+    templateId: 'tmpl-001',
+    templateName: '数据库连接池耗尽自愈',
+    triggeredAt: '2026-07-20 09:00:05',
+    status: 'running',
+    currentStep: 2,
+    totalSteps: 4,
+    elapsed: '12min',
+    result: null,
+  },
+  {
+    id: 'rec-002',
+    incidentId: 'INC-2026-0718',
+    templateId: 'tmpl-002',
+    templateName: 'Redis 缓存击穿防护',
+    triggeredAt: '2026-07-18 10:18:00',
+    status: 'success',
+    currentStep: 3,
+    totalSteps: 3,
+    elapsed: '13min',
+    result: { metric: '缓存命中率', before: '45%', after: '98%', status: 'recovered' },
+  },
+  {
+    id: 'rec-003',
+    incidentId: 'INC-2026-0715',
+    templateId: 'tmpl-003',
+    templateName: 'MQ 消息堆积消解',
+    triggeredAt: '2026-07-15 14:40:00',
+    status: 'failed',
+    currentStep: 2,
+    totalSteps: 3,
+    elapsed: '15min',
+    result: { metric: '队列深度', before: '5200', after: '4800', status: 'rolled-back' },
+  },
+  {
+    id: 'rec-004',
+    incidentId: 'INC-2026-0722',
+    templateId: 'tmpl-001',
+    templateName: '数据库连接池耗尽自愈',
+    triggeredAt: '2026-07-22 14:25:00',
+    status: 'success',
+    currentStep: 4,
+    totalSteps: 4,
+    elapsed: '18min',
+    result: { metric: 'P99', before: '1800ms', after: '60ms', status: 'recovered' },
+  },
+  {
+    id: 'rec-005',
+    incidentId: 'INC-2026-0717',
+    templateId: 'tmpl-005',
+    templateName: '日志采集 Agent 故障修复',
+    triggeredAt: '2026-07-17 11:35:00',
+    status: 'success',
+    currentStep: 3,
+    totalSteps: 3,
+    elapsed: '10min',
+    result: { metric: 'Agent 在线数', before: '5', after: '18', status: 'recovered' },
+  },
+]
+
+const MOCK_INCIDENT_TREND_AGG = {
+  days: [
+    { date: '07-01', total: 0, p1: 0, p2: 0, p3: 0, mttr: 0 },
+    { date: '07-02', total: 1, p1: 0, p2: 1, p3: 0, mttr: 25 },
+    { date: '07-03', total: 0, p1: 0, p2: 0, p3: 0, mttr: 0 },
+    { date: '07-04', total: 2, p1: 1, p2: 1, p3: 0, mttr: 30 },
+    { date: '07-05', total: 1, p1: 0, p2: 0, p3: 1, mttr: 15 },
+    { date: '07-06', total: 0, p1: 0, p2: 0, p3: 0, mttr: 0 },
+    { date: '07-07', total: 1, p1: 0, p2: 1, p3: 0, mttr: 20 },
+    { date: '07-08', total: 0, p1: 0, p2: 0, p3: 0, mttr: 0 },
+    { date: '07-09', total: 2, p1: 0, p2: 2, p3: 0, mttr: 22 },
+    { date: '07-10', total: 1, p1: 0, p2: 0, p3: 1, mttr: 10 },
+    { date: '07-11', total: 0, p1: 0, p2: 0, p3: 0, mttr: 0 },
+    { date: '07-12', total: 1, p1: 0, p2: 1, p3: 0, mttr: 18 },
+    { date: '07-13', total: 0, p1: 0, p2: 0, p3: 0, mttr: 0 },
+    { date: '07-14', total: 1, p1: 0, p2: 0, p3: 1, mttr: 12 },
+    { date: '07-15', total: 1, p1: 0, p2: 1, p3: 0, mttr: 15 },
+    { date: '07-16', total: 0, p1: 0, p2: 0, p3: 0, mttr: 0 },
+    { date: '07-17', total: 1, p1: 0, p2: 0, p3: 1, mttr: 10 },
+    { date: '07-18', total: 1, p1: 0, p2: 1, p3: 0, mttr: 13 },
+    { date: '07-19', total: 1, p1: 0, p2: 1, p3: 0, mttr: 20 },
+    { date: '07-20', total: 1, p1: 1, p2: 0, p3: 0, mttr: 12 },
+    { date: '07-21', total: 1, p1: 0, p2: 0, p3: 1, mttr: 15 },
+    { date: '07-22', total: 1, p1: 0, p2: 1, p3: 0, mttr: 8 },
+  ],
+  byApp: [
+    { app: '订单服务', count: 4, p1: 1, p2: 2, p3: 1 },
+    { app: '用户服务', count: 2, p1: 0, p2: 2, p3: 0 },
+    { app: '支付服务', count: 2, p1: 0, p2: 2, p3: 0 },
+    { app: '库存服务', count: 1, p1: 0, p2: 1, p3: 0 },
+    { app: '推荐服务', count: 1, p1: 0, p2: 0, p3: 1 },
+    { app: '消息服务', count: 1, p1: 0, p2: 1, p3: 0 },
+    { app: '监控服务', count: 1, p1: 0, p2: 0, p3: 1 },
+  ],
+  summary: {
+    totalIncidents: 11,
+    p1: 1,
+    p2: 5,
+    p3: 5,
+    avgMttr: 16,
+    selfHealSuccessRate: 80,
+  },
+}
+
+const MOCK_RCA_REPORTS = [
+  {
+    id: 'rca-001',
+    incidentId: 'INC-2026-0720',
+    title: '数据库连接池耗尽根因分析',
+    createdAt: '2026-07-20 10:00:00',
+    rootCause: '数据库连接池配额不足 + 行锁竞争正反馈效应',
+    evidence: [
+      { key: '连接数', detail: 'mysql-master 连接数↑120% (1024/1024 满)' },
+      { key: 'P99', detail: '结账接口 P99 由 20ms 飙升至 3500ms' },
+      { key: '错误率', detail: '灰度节点错误率 88% (大量 504)' },
+      { key: '慢SQL', detail: 'SELECT * FROM orders 命中行锁 3400ms' },
+    ],
+    suggestions: ['引入 RDS Proxy 连接复用', '主从读写分离', '动态连接池容量模型', '开启 leak-detection-threshold'],
+    severity: 'P1',
+  },
+  {
+    id: 'rca-002',
+    incidentId: 'INC-2026-0718',
+    title: 'Redis 缓存击穿根因分析',
+    createdAt: '2026-07-18 11:00:00',
+    rootCause: '热点 key 过期后请求穿透至数据库',
+    evidence: [
+      { key: '缓存命中率', detail: '命中率由 95% 骤降至 45%' },
+      { key: '连接池', detail: '数据库连接池耗尽 (active=50)' },
+      { key: '登录超时', detail: '登录接口 P99 2800ms' },
+    ],
+    suggestions: ['互斥锁防击穿', '热点数据永不过期+异步刷新', '连接池扩容至 200'],
+    severity: 'P2',
+  },
+  {
+    id: 'rca-003',
+    incidentId: 'INC-2026-0715',
+    title: 'MQ 消息堆积根因分析',
+    createdAt: '2026-07-15 15:00:00',
+    rootCause: '支付回调消费线程池耗尽',
+    evidence: [
+      { key: '队列深度', detail: 'MQ 队列堆积 5200 条' },
+      { key: '消费延迟', detail: 'consumer lag > 30s' },
+      { key: '回调失败', detail: '回调接口失败率 45.3%' },
+    ],
+    suggestions: ['消费者实例扩容', '消费限流削峰', '死信队列独立处理'],
+    severity: 'P2',
+  },
+]
+
 // GET /api/sre/incidents
 app.get('/api/sre/incidents', (req, res) => {
   const { appName } = req.query
@@ -1721,6 +1958,26 @@ app.post('/api/sre/reset', (req, res) => {
 // GET /api/sre/playbook-recommendations
 app.get('/api/sre/playbook-recommendations', (req, res) => {
   res.json({ success: true, data: MOCK_PLAYBOOK_RECOMMENDATIONS })
+})
+
+// GET /api/sre/healing-templates
+app.get('/api/sre/healing-templates', (req, res) => {
+  res.json({ success: true, data: MOCK_HEALING_TEMPLATES })
+})
+
+// GET /api/sre/healing-records
+app.get('/api/sre/healing-records', (req, res) => {
+  res.json({ success: true, data: MOCK_HEALING_EXECUTION_RECORDS })
+})
+
+// GET /api/sre/incident-trend
+app.get('/api/sre/incident-trend', (req, res) => {
+  res.json({ success: true, data: MOCK_INCIDENT_TREND_AGG })
+})
+
+// GET /api/sre/rca-reports
+app.get('/api/sre/rca-reports', (req, res) => {
+  res.json({ success: true, data: MOCK_RCA_REPORTS })
 })
 
 // ==================== Start Server ====================

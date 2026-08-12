@@ -1,45 +1,27 @@
 <template>
   <div class="incident-list-view">
-    <div class="page-header"><h3>故障中心</h3></div>
-
-    <div class="il-tabs-bar">
-      <button class="il-tab" :class="{ active: activeTab === 'incidents' }" @click="activeTab = 'incidents'">
-        <i class="fa-solid fa-list"></i> 故障列表 ({{ incidents.length }})
-      </button>
-      <button class="il-tab" :class="{ active: activeTab === 'postmortems' }" @click="activeTab = 'postmortems'">
-        <i class="fa-solid fa-file-lines"></i> 复盘记录 ({{ postmortems.length }})
-      </button>
-    </div>
+    <div class="page-header"><h3>故障列表</h3></div>
 
     <template v-if="loading">
       <a-spin style="display:block;margin:60px auto" />
     </template>
 
-    <template v-else-if="activeTab === 'incidents'">
+    <template v-else>
       <div class="il-stats-grid">
         <span class="il-stats-group-title" style="grid-column:span 3">级别分布</span>
         <span class="il-stats-group-title" style="grid-column:span 3">状态</span>
         <span class="il-stats-group-title" style="grid-column:span 1">今日新增</span>
         <div class="il-stat-card" v-for="s in severityStats" :key="s.label">
           <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-          <div class="il-stat-info">
-            <div class="il-stat-val">{{ s.value }}</div>
-            <div class="il-stat-label">{{ s.label }}</div>
-          </div>
+          <div class="il-stat-info"><div class="il-stat-val">{{ s.value }}</div><div class="il-stat-label">{{ s.label }}</div></div>
         </div>
         <div class="il-stat-card" v-for="s in statusStats" :key="s.label">
           <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-          <div class="il-stat-info">
-            <div class="il-stat-val">{{ s.value }}</div>
-            <div class="il-stat-label">{{ s.label }}</div>
-          </div>
+          <div class="il-stat-info"><div class="il-stat-val">{{ s.value }}</div><div class="il-stat-label">{{ s.label }}</div></div>
         </div>
         <div class="il-stat-card" v-for="s in todayStats" :key="s.label">
           <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-          <div class="il-stat-info">
-            <div class="il-stat-val">{{ s.value }}</div>
-            <div class="il-stat-label">{{ s.label }}</div>
-          </div>
+          <div class="il-stat-info"><div class="il-stat-val">{{ s.value }}</div><div class="il-stat-label">{{ s.label }}</div></div>
         </div>
       </div>
 
@@ -54,48 +36,9 @@
 
       <a-table :data-source="filteredIncidents" :columns="incidentColumns" row-key="id" :pagination="{ pageSize: 15, showSizeChanger: true }" :scroll="{ y: 420 }" :custom-row="rowClickHandler">
         <template #bodyCell="{ column, text, record }">
-          <template v-if="column.key === 'severity'">
-            <span class="il-severity" :style="{ color: severityColors[text] || '#666' }">{{ text }}</span>
-          </template>
-          <template v-else-if="column.key === 'title'">
-            <span class="il-clickable-title">{{ text }}</span>
-          </template>
-          <template v-else-if="column.key === 'status'">
-            <a-tag :color="statusTagMap[text]?.color || 'default'">{{ statusTagMap[text]?.label || text }}</a-tag>
-          </template>
-        </template>
-      </a-table>
-    </template>
-
-    <template v-else>
-      <div class="il-stats-grid" style="grid-template-columns:repeat(4,1fr)">
-        <span class="il-stats-group-title" style="grid-column:span 1">复盘报告</span>
-        <span class="il-stats-group-title" style="grid-column:span 3">关联故障级别</span>
-        <div class="il-stat-card" v-for="s in pmCountStats" :key="s.label">
-          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-          <div class="il-stat-info">
-            <div class="il-stat-val">{{ s.value }}</div>
-            <div class="il-stat-label">{{ s.label }}</div>
-          </div>
-        </div>
-        <div class="il-stat-card" v-for="s in pmSevStats" :key="s.label">
-          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-          <div class="il-stat-info">
-            <div class="il-stat-val">{{ s.value }}</div>
-            <div class="il-stat-label">{{ s.label }}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="il-filter-bar">
-        <a-input-search v-model:value="pmSearchQuery" placeholder="搜索报告标题..." allow-clear class="il-search-wide" />
-      </div>
-
-      <a-table :data-source="filteredPostmortems" :columns="postmortemColumns" row-key="id" :pagination="{ pageSize: 15, showSizeChanger: true }" :scroll="{ y: 420 }" :custom-row="postmortemRowClickHandler">
-        <template #bodyCell="{ column, text }">
-          <template v-if="column.key === 'title'">
-            <span class="il-clickable-title">{{ text }}</span>
-          </template>
+          <template v-if="column.key === 'severity'"><span class="il-severity" :style="{ color: severityColors[text] || '#666' }">{{ text }}</span></template>
+          <template v-else-if="column.key === 'title'"><span class="il-clickable-title">{{ text }}</span></template>
+          <template v-else-if="column.key === 'status'"><a-tag :color="statusTagMap[text]?.color || 'default'">{{ statusTagMap[text]?.label || text }}</a-tag></template>
         </template>
       </a-table>
     </template>
@@ -108,11 +51,8 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const loading = ref(true)
-const activeTab = ref('incidents')
 const incidents = ref([])
-const postmortems = ref([])
 const searchQuery = ref('')
-const pmSearchQuery = ref('')
 const statusFilter = ref(undefined)
 
 const severityColors = { P1: '#F5222D', P2: '#FF7D00', P3: '#FAAD14' }
@@ -173,25 +113,6 @@ const todayStats = computed(() => [
   { label: '今日新增', value: todayNewCount.value, icon: 'fa-solid fa-calendar-plus', iconBg: '#e6f7ff', iconColor: '#096dd9' },
 ])
 
-const pmCountStats = computed(() => [
-  { label: '已归档', value: postmortems.value.length, icon: 'fa-solid fa-file-lines', iconBg: '#f6ffed', iconColor: '#389e0d' },
-])
-
-const pmSevStats = computed(() => [
-  { label: 'P1', value: pmStatsBySeverity.value.P1, icon: 'fa-solid fa-circle-exclamation', iconBg: '#fff1f0', iconColor: '#cf1322' },
-  { label: 'P2', value: pmStatsBySeverity.value.P2, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#fff7e6', iconColor: '#d46b08' },
-  { label: 'P3', value: pmStatsBySeverity.value.P3, icon: 'fa-solid fa-exclamation', iconBg: '#fffbe6', iconColor: '#d48806' },
-])
-
-const pmStatsBySeverity = computed(() => {
-  const c = { P1: 0, P2: 0, P3: 0 }
-  postmortems.value.forEach(pm => {
-    const s = pm.severity
-    if (c[s] != null) c[s]++
-  })
-  return c
-})
-
 const filteredIncidents = computed(() => {
   let list = incidents.value
   if (searchQuery.value) {
@@ -204,32 +125,17 @@ const filteredIncidents = computed(() => {
   return list
 })
 
-const filteredPostmortems = computed(() => {
-  if (!pmSearchQuery.value) return postmortems.value
-  const q = pmSearchQuery.value.toLowerCase()
-  return postmortems.value.filter(pm => pm.title.toLowerCase().includes(q) || pm.incidentId.toLowerCase().includes(q))
-})
-
 function rowClickHandler(record) {
   return { onClick: () => router.push('/ops/incident/' + record.id), style: { cursor: 'pointer' } }
 }
 
-function postmortemRowClickHandler(record) {
-  return { onClick: () => router.push('/ops/incident/' + record.incidentId + '?tab=postmortem'), style: { cursor: 'pointer' } }
-}
-
 onMounted(async () => {
   try {
-    const [incRes, pmRes] = await Promise.all([
-      fetch('/api/sre/incidents'),
-      fetch('/api/sre/postmortems'),
-    ])
-    const incJson = await incRes.json()
-    const pmJson = await pmRes.json()
-    if (incJson.success) incidents.value = incJson.data
-    if (pmJson.success) postmortems.value = pmJson.data
+    const res = await fetch('/api/sre/incidents')
+    const json = await res.json()
+    if (json.success) incidents.value = json.data
   } catch (e) {
-    console.error('Failed to load incident list:', e)
+    console.error('Failed to load incidents:', e)
   } finally {
     loading.value = false
   }
