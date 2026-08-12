@@ -45,6 +45,7 @@
     </div>
 
     <template v-else-if="incident">
+      <IncidentTimeline :stages="healingStages" title="智能故障自愈终端" @stage-change="onTimelineStage" />
       <!-- 故障分析视图 -->
       <div v-if="activeTab === 'analysis'" class="sre-content">
         <div class="sre-main-left">
@@ -102,6 +103,7 @@ import PostmortemReport from '../../components/sre/PostmortemReport.vue'
 import CallTracePanel from '../../components/sre/CallTracePanel.vue'
 import LinkedLogsPanel from '../../components/sre/LinkedLogsPanel.vue'
 import RCAEvidencePanel from '../../components/sre/RCAEvidencePanel.vue'
+import IncidentTimeline from '../../components/IncidentTimeline.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -127,6 +129,37 @@ const statusText = computed(() => {
 })
 
 const appNodeId = computed(() => incident.value?.appNodeId || '')
+
+const healingStages = computed(() => {
+  if (!incident.value) return []
+  const tl = incident.value.timeline || []
+  const pb = playbook.value
+  const done = s => s === 'success' || s === 'completed'
+  const running = s => s === 'running' || s === 'executing'
+  const steps = pb?.steps || []
+  const anyRunning = steps.some(s => running(s.status))
+  const anyDone = steps.some(s => done(s.status))
+  return [
+    { id: 'detect', label: '检测', time: tl[0]?.time?.slice(0, 5) || '--:--', desc: tl[0]?.detail || '异常检测告警触发', status: 'completed' },
+    { id: 'diagnose', label: '诊断', time: tl[1]?.time?.slice(0, 5) || '--:--', desc: tl[1]?.detail || '根因定位完成', status: 'completed' },
+    { id: 'match', label: '匹配', time: '--:--', desc: '匹配自愈策略模板', status: 'completed' },
+    { id: 'execute', label: '执行', time: '--:--', desc: anyRunning ? '自愈步骤执行中' : anyDone ? '自愈步骤执行完成' : '等待执行', status: anyRunning ? 'active' : anyDone ? 'completed' : 'pending' },
+    { id: 'validate', label: '校验', time: '--:--', desc: pb?.validation?.http200Status === '已恢复' ? '健康拨测通过' : '等待健康校验', status: pb?.validation?.http200Status === '已恢复' ? 'completed' : 'pending' },
+    { id: 'record', label: '记录', time: '--:--', desc: '写入自愈执行记录', status: incident.value.status === 'resolved' ? 'completed' : 'pending' },
+  ]
+})
+
+function onTimelineStage(stage) {
+  if (stage.id === 'execute') {
+    activeTab.value = 'analysis'
+    document.querySelector('.sre-main-right')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  } else if (stage.id === 'diagnose') {
+    activeTab.value = 'analysis'
+    document.querySelector('.sre-row-rca')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  } else if (stage.id === 'postmortem') {
+    activeTab.value = 'postmortem'
+  }
+}
 
 async function fetchData() {
   loading.value = true
