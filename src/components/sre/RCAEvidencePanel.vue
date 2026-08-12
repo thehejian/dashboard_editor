@@ -22,9 +22,9 @@
           v-for="(e, i) in rca.evidence"
           :key="i"
           class="rca-evidence-card"
-          :class="{ 'is-dimmed': expandedIndex !== null && expandedIndex !== i, 'is-active': expandedIndex === i, 'lv-critical': e.level === 'critical', 'lv-warning': e.level === 'warning' }"
+          :class="{ 'lv-critical': e.level === 'critical', 'lv-warning': e.level === 'warning' }"
         >
-          <div class="rca-ev-top" @click="toggleExpand(i)">
+          <div class="rca-ev-top">
             <span class="rca-ev-level"><i :class="e.level === 'critical' ? 'fa-solid fa-circle' : 'fa-solid fa-circle-dot'"></i></span>
             <div class="rca-ev-main">
               <span class="rca-ev-key">{{ e.key }}</span>
@@ -32,36 +32,57 @@
             </div>
           </div>
           <div class="rca-ev-node">{{ e.nodeLabel }} · {{ e.time }}</div>
-          <button class="rca-ev-detail-btn" @click="toggleExpand(i)">{{ expandedIndex === i ? '收起' : '查看详情' }}</button>
-
-          <div v-if="expandedIndex === i" class="rca-ev-detail">
-            <div class="rca-detail-section">
-              <div class="rca-detail-title"><i class="fa-solid fa-chart-line"></i> AI 检测评分</div>
-              <div class="rca-metric-grid">
-                <div class="rca-metric-item"><span class="rca-m-label">Z-Score</span><span class="rca-m-value">{{ e.aiScore?.zScore ?? '-' }}</span></div>
-                <div class="rca-metric-item"><span class="rca-m-label">EWMA 斜率</span><span class="rca-m-value">{{ e.aiScore?.ewmaSlope ?? '-' }}</span></div>
-                <div class="rca-metric-item"><span class="rca-m-label">偏离度</span><span class="rca-m-value">{{ e.aiScore?.deviation ?? '-' }}%</span></div>
-                <div class="rca-metric-item"><span class="rca-m-label">历史相似度</span><span class="rca-m-value">{{ e.aiScore?.historicalSimilarity ? Math.round(e.aiScore.historicalSimilarity * 100) + '%' : '-' }}</span></div>
-                <div class="rca-metric-item"><span class="rca-m-label">置信度</span><span class="rca-m-value">{{ e.aiScore?.confidence ?? '-' }}</span></div>
-                <div class="rca-metric-item"><span class="rca-m-label">持续时间</span><span class="rca-m-value">{{ e.aiScore?.duration ?? '-' }}</span></div>
-              </div>
-            </div>
-            <div class="rca-detail-logs">
-              <div class="rca-detail-title"><i class="fa-solid fa-scroll"></i> 关联日志</div>
-              <div v-if="eLogs[i] && eLogs[i].length" class="rca-log-list">
-                <div v-for="(log, li) in eLogs[i].slice(0, 3)" :key="li" class="rca-log-line">
-                  <span class="rca-log-time">{{ log.time.slice(11) }}</span>
-                  <span class="rca-log-level" :class="'lv-' + log.level">{{ log.level }}</span>
-                  <span class="rca-log-msg">{{ log.message }}</span>
-                </div>
-              </div>
-              <div v-else class="rca-log-empty">暂无关联日志</div>
-            </div>
-          </div>
+          <button class="rca-ev-detail-btn" @click="openDetail(e, i)"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看详情</button>
         </div>
       </div>
     </template>
     <div v-else class="rca-empty">暂无根因分析数据</div>
+
+    <a-modal
+      :open="modalOpen"
+      :title="modalTitle"
+      :footer="null"
+      width="640px"
+      centered
+      @cancel="modalOpen = false"
+    >
+      <template v-if="currentEvidence">
+        <div class="modal-overview">
+          <span class="modal-ov-label">指标</span>
+          <span class="modal-ov-value">{{ currentEvidence.key }}</span>
+          <span class="modal-ov-label">当前</span>
+          <span class="modal-ov-value">{{ currentEvidence.value }}{{ currentEvidence.unit }}</span>
+          <span class="modal-ov-label">基线</span>
+          <span class="modal-ov-value">{{ currentEvidence.baseline }}{{ currentEvidence.unit }}</span>
+          <span class="modal-ov-label">节点</span>
+          <span class="modal-ov-value">{{ currentEvidence.nodeLabel }}</span>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title"><i class="fa-solid fa-chart-line"></i> AI 检测评分</div>
+          <div class="modal-metric-grid">
+            <div class="modal-metric-item"><span class="mm-label">Z-Score</span><span class="mm-value">{{ currentEvidence.aiScore?.zScore ?? '-' }}</span></div>
+            <div class="modal-metric-item"><span class="mm-label">EWMA 斜率</span><span class="mm-value">{{ currentEvidence.aiScore?.ewmaSlope ?? '-' }}</span></div>
+            <div class="modal-metric-item"><span class="mm-label">偏离度</span><span class="mm-value">{{ currentEvidence.aiScore?.deviation ?? '-' }}%</span></div>
+            <div class="modal-metric-item"><span class="mm-label">历史相似度</span><span class="mm-value">{{ currentEvidence.aiScore?.historicalSimilarity ? Math.round(currentEvidence.aiScore.historicalSimilarity * 100) + '%' : '-' }}</span></div>
+            <div class="modal-metric-item"><span class="mm-label">置信度</span><span class="mm-value">{{ currentEvidence.aiScore?.confidence ?? '-' }}</span></div>
+            <div class="modal-metric-item"><span class="mm-label">持续时间</span><span class="mm-value">{{ currentEvidence.aiScore?.duration ?? '-' }}</span></div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title"><i class="fa-solid fa-scroll"></i> 关联日志</div>
+          <div v-if="currentLogs.length" class="modal-log-list">
+            <div v-for="(log, li) in currentLogs" :key="li" class="modal-log-line">
+              <span class="modal-log-time">{{ log.time }}</span>
+              <span class="modal-log-level" :class="'lv-' + log.level">{{ log.level }}</span>
+              <span class="modal-log-msg">{{ log.message }}</span>
+            </div>
+          </div>
+          <div v-else class="modal-log-empty">暂无关联日志</div>
+        </div>
+      </template>
+    </a-modal>
   </div>
 </template>
 
@@ -73,16 +94,24 @@ const props = defineProps({
   logs: { type: Array, default: () => [] },
 })
 
-const expandedIndex = ref(null)
-const eLogs = ref({})
+const modalOpen = ref(false)
+const currentEvidence = ref(null)
+const currentLogs = ref([])
 
 const confidenceLabel = computed(() => {
   const c = props.rca?.evidence?.[0]?.aiScore?.confidence
   return c || '高'
 })
 
-function toggleExpand(i) {
-  expandedIndex.value = expandedIndex.value === i ? null : i
+const modalTitle = computed(() => {
+  if (!currentEvidence.value) return ''
+  return `${currentEvidence.value.key} 异常检测详情`
+})
+
+function openDetail(e, i) {
+  currentEvidence.value = e
+  currentLogs.value = props.logs.filter(l => l.nodeId === e.node)
+  modalOpen.value = true
 }
 
 function changeText(e) {
@@ -94,13 +123,8 @@ function changeText(e) {
 }
 
 watch(() => props.rca, () => {
-  expandedIndex.value = null
-  eLogs.value = {}
-  if (props.rca) {
-    props.rca.evidence.forEach((e, i) => {
-      eLogs.value[i] = props.logs.filter(l => l.nodeId === e.node)
-    })
-  }
+  currentEvidence.value = null
+  modalOpen.value = false
 }, { immediate: true })
 </script>
 
@@ -173,10 +197,9 @@ watch(() => props.rca, () => {
 }
 .rca-evidence-card.lv-critical { border-top-color: #F5222D; }
 .rca-evidence-card.lv-warning { border-top-color: #FF7D00; }
-.rca-evidence-card.is-dimmed { opacity: 0.45; }
-.rca-evidence-card.is-active { border-color: #722ED1; box-shadow: 0 1px 6px rgba(114,46,209,0.15); }
+.rca-evidence-card:hover { border-color: #722ED1; box-shadow: 0 1px 6px rgba(114,46,209,0.15); }
 
-.rca-ev-top { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.rca-ev-top { display: flex; align-items: center; gap: 8px; }
 .rca-ev-level { color: #F5222D; font-size: 10px; }
 .rca-evidence-card.lv-warning .rca-ev-level { color: #FF7D00; }
 .rca-ev-main { display: flex; flex-direction: column; min-width: 0; }
@@ -194,30 +217,54 @@ watch(() => props.rca, () => {
   cursor: pointer;
   padding: 0;
 }
+.rca-ev-detail-btn i { font-size: 10px; margin-right: 3px; }
 .rca-ev-detail-btn:hover { text-decoration: underline; }
+.rca-empty { font-size: 12px; color: #8c8c8c; text-align: center; padding: 20px 0; }
 
-.rca-ev-detail {
-  grid-column: 1 / -1;
+/* Modal styles */
+.modal-overview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #fafafa;
   border: 1px solid #f0f0f0;
   border-radius: 6px;
   padding: 10px 12px;
-  margin-bottom: 4px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
 }
-.rca-detail-title { font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
-.rca-detail-title i { color: #722ED1; margin-right: 4px; }
-.rca-metric-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 10px; }
-.rca-metric-item { display: flex; flex-direction: column; background: #fff; border-radius: 4px; padding: 6px 8px; }
-.rca-m-label { font-size: 10px; color: #8c8c8c; }
-.rca-m-value { font-size: 13px; font-weight: 600; color: #1a1a1a; }
-.rca-log-list { max-height: 120px; overflow-y: auto; }
-.rca-log-line { display: flex; gap: 8px; font-size: 11px; padding: 3px 0; border-bottom: 1px dashed #f0f0f0; }
-.rca-log-time { color: #8c8c8c; flex-shrink: 0; font-family: monospace; }
-.rca-log-level { font-weight: 700; flex-shrink: 0; }
-.rca-log-level.lv-error { color: #F5222D; }
-.rca-log-level.lv-warn { color: #FAAD14; }
-.rca-log-level.lv-info { color: #1890ff; }
-.rca-log-msg { color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rca-log-empty { font-size: 11px; color: #8c8c8c; }
-.rca-empty { font-size: 12px; color: #8c8c8c; text-align: center; padding: 20px 0; }
+.modal-ov-label { font-size: 11px; color: #8c8c8c; }
+.modal-ov-value { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-right: 8px; }
+
+.modal-section { margin-bottom: 14px; }
+.modal-section-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+.modal-section-title i { color: #722ED1; margin-right: 4px; }
+
+.modal-metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.modal-metric-item {
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.mm-label { font-size: 10px; color: #8c8c8c; }
+.mm-value { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
+
+.modal-log-list { max-height: 200px; overflow-y: auto; }
+.modal-log-line {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #f0f0f0;
+}
+.modal-log-time { color: #8c8c8c; flex-shrink: 0; font-family: monospace; }
+.modal-log-level { font-weight: 700; flex-shrink: 0; }
+.modal-log-level.lv-error { color: #F5222D; }
+.modal-log-level.lv-warn { color: #FAAD14; }
+.modal-log-level.lv-info { color: #1890ff; }
+.modal-log-msg { color: #333; }
+.modal-log-empty { font-size: 12px; color: #8c8c8c; }
 </style>

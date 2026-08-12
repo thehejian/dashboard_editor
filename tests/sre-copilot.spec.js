@@ -83,8 +83,9 @@ test.describe('SRE 故障自愈终端', () => {
     await page.goto('/ops/incident/INC-2026-0720')
     await expect(page.locator('.rca-evidence-panel')).toBeVisible({ timeout: 10000 })
     await page.locator('.rca-ev-detail-btn').first().click()
-    await expect(page.locator('.rca-metric-grid')).toBeVisible()
-    await expect(page.locator('.rca-metric-item')).toHaveCount(6)
+    await expect(page.locator('.ant-modal')).toBeVisible()
+    await expect(page.locator('.modal-metric-grid')).toBeVisible()
+    await expect(page.locator('.modal-metric-item')).toHaveCount(6)
   })
 
   test('切换到复盘沉淀 tab', async ({ page }) => {
