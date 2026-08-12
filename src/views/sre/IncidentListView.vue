@@ -16,34 +16,13 @@
     </template>
 
     <template v-else-if="activeTab === 'incidents'">
-      <div class="il-stats-bar">
-        <div class="il-tag-card" style="background:#fff1f0;color:#cf1322">
-          <span class="il-tag-label">P1</span>
-          <span class="il-tag-num">{{ statsBySeverity.P1 }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#fff7e6;color:#d46b08">
-          <span class="il-tag-label">P2</span>
-          <span class="il-tag-num">{{ statsBySeverity.P2 }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#fffbe6;color:#d48806">
-          <span class="il-tag-label">P3</span>
-          <span class="il-tag-num">{{ statsBySeverity.P3 }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#e6f7ff;color:#096dd9">
-          <span class="il-tag-label">自愈中</span>
-          <span class="il-tag-num">{{ statsByStatus.healing }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#fff7e6;color:#d46b08">
-          <span class="il-tag-label">排查中</span>
-          <span class="il-tag-num">{{ statsByStatus.investigating }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#f6ffed;color:#389e0d">
-          <span class="il-tag-label">已恢复</span>
-          <span class="il-tag-num">{{ statsByStatus.resolved }}</span>
-        </div>
-        <div class="il-tag-card il-tag-card-accent" style="background:#e6f7ff;color:#096dd9">
-          <span class="il-tag-label">今日+</span>
-          <span class="il-tag-num">{{ todayNewCount }}</span>
+      <div class="il-stats-row">
+        <div class="il-stat-card" v-for="s in faultStats" :key="s.label">
+          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+          <div class="il-stat-info">
+            <div class="il-stat-val">{{ s.value }}</div>
+            <div class="il-stat-label">{{ s.label }}</div>
+          </div>
         </div>
       </div>
 
@@ -72,22 +51,13 @@
     </template>
 
     <template v-else>
-      <div class="il-stats-bar">
-        <div class="il-tag-card" style="background:#f6ffed;color:#389e0d">
-          <span class="il-tag-label">已归档</span>
-          <span class="il-tag-num">{{ postmortems.length }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#fff1f0;color:#cf1322">
-          <span class="il-tag-label">P1</span>
-          <span class="il-tag-num">{{ pmStatsBySeverity.P1 }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#fff7e6;color:#d46b08">
-          <span class="il-tag-label">P2</span>
-          <span class="il-tag-num">{{ pmStatsBySeverity.P2 }}</span>
-        </div>
-        <div class="il-tag-card" style="background:#fffbe6;color:#d48806">
-          <span class="il-tag-label">P3</span>
-          <span class="il-tag-num">{{ pmStatsBySeverity.P3 }}</span>
+      <div class="il-stats-row">
+        <div class="il-stat-card" v-for="s in pmStats" :key="s.label">
+          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+          <div class="il-stat-info">
+            <div class="il-stat-val">{{ s.value }}</div>
+            <div class="il-stat-label">{{ s.label }}</div>
+          </div>
         </div>
       </div>
 
@@ -160,6 +130,23 @@ const todayNewCount = computed(() => {
   const today = '2026-08-12'
   return incidents.value.filter(i => i.startTime?.startsWith(today)).length
 })
+
+const faultStats = computed(() => [
+  { label: 'P1', value: statsBySeverity.value.P1, icon: 'fa-solid fa-circle-exclamation', iconBg: '#fff1f0', iconColor: '#cf1322' },
+  { label: 'P2', value: statsBySeverity.value.P2, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#fff7e6', iconColor: '#d46b08' },
+  { label: 'P3', value: statsBySeverity.value.P3, icon: 'fa-solid fa-exclamation', iconBg: '#fffbe6', iconColor: '#d48806' },
+  { label: '自愈中', value: statsByStatus.value.healing, icon: 'fa-solid fa-heart-pulse', iconBg: '#e6f7ff', iconColor: '#096dd9' },
+  { label: '排查中', value: statsByStatus.value.investigating, icon: 'fa-solid fa-magnifying-glass', iconBg: '#fff7e6', iconColor: '#d46b08' },
+  { label: '已恢复', value: statsByStatus.value.resolved, icon: 'fa-solid fa-check-circle', iconBg: '#f6ffed', iconColor: '#389e0d' },
+  { label: '今日新增', value: todayNewCount.value, icon: 'fa-solid fa-calendar-plus', iconBg: '#e6f7ff', iconColor: '#096dd9' },
+])
+
+const pmStats = computed(() => [
+  { label: '已归档', value: postmortems.value.length, icon: 'fa-solid fa-file-lines', iconBg: '#f6ffed', iconColor: '#389e0d' },
+  { label: 'P1', value: pmStatsBySeverity.value.P1, icon: 'fa-solid fa-circle-exclamation', iconBg: '#fff1f0', iconColor: '#cf1322' },
+  { label: 'P2', value: pmStatsBySeverity.value.P2, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#fff7e6', iconColor: '#d46b08' },
+  { label: 'P3', value: pmStatsBySeverity.value.P3, icon: 'fa-solid fa-exclamation', iconBg: '#fffbe6', iconColor: '#d48806' },
+])
 
 const pmStatsBySeverity = computed(() => {
   const c = { P1: 0, P2: 0, P3: 0 }
@@ -241,35 +228,45 @@ onMounted(async () => {
 .il-tab:hover { color: #1a1a1a; }
 .il-tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 600; }
 
-.il-stats-bar {
+.il-stats-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
-.il-tag-card {
+.il-stat-card {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  flex: 1;
+  min-width: 120px;
+}
+.il-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 72px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.04);
+  font-size: 18px;
+  flex-shrink: 0;
 }
-.il-tag-label {
-  font-size: 11px;
-  opacity: 0.85;
-  line-height: 1.2;
+.il-stat-info {
+  display: flex;
+  flex-direction: column;
 }
-.il-tag-num {
-  font-size: 20px;
+.il-stat-val {
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.2;
-  margin-top: 2px;
 }
-.il-tag-card-accent {
-  border: 1px solid #91caff;
+.il-stat-label {
+  font-size: 12px;
+  color: #6B7280;
 }
 
 .il-filter-bar {
