@@ -16,41 +16,29 @@
     </template>
 
     <template v-else-if="activeTab === 'incidents'">
-      <div class="il-stats-wrap">
-        <div class="il-stats-group">
-          <span class="il-stats-group-title">级别分布</span>
-          <div class="il-stats-row">
-            <div class="il-stat-card" v-for="s in severityStats" :key="s.label">
-              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-              <div class="il-stat-info">
-                <div class="il-stat-val">{{ s.value }}</div>
-                <div class="il-stat-label">{{ s.label }}</div>
-              </div>
-            </div>
+      <div class="il-stats-grid">
+        <span class="il-stats-group-title" style="grid-column:span 3">级别分布</span>
+        <span class="il-stats-group-title" style="grid-column:span 3">状态</span>
+        <span class="il-stats-group-title" style="grid-column:span 1">今日新增</span>
+        <div class="il-stat-card" v-for="s in severityStats" :key="s.label">
+          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+          <div class="il-stat-info">
+            <div class="il-stat-val">{{ s.value }}</div>
+            <div class="il-stat-label">{{ s.label }}</div>
           </div>
         </div>
-        <div class="il-stats-group">
-          <span class="il-stats-group-title">状态</span>
-          <div class="il-stats-row">
-            <div class="il-stat-card" v-for="s in statusStats" :key="s.label">
-              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-              <div class="il-stat-info">
-                <div class="il-stat-val">{{ s.value }}</div>
-                <div class="il-stat-label">{{ s.label }}</div>
-              </div>
-            </div>
+        <div class="il-stat-card" v-for="s in statusStats" :key="s.label">
+          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+          <div class="il-stat-info">
+            <div class="il-stat-val">{{ s.value }}</div>
+            <div class="il-stat-label">{{ s.label }}</div>
           </div>
         </div>
-        <div class="il-stats-group">
-          <span class="il-stats-group-title">今日新增</span>
-          <div class="il-stats-row">
-            <div class="il-stat-card" v-for="s in todayStats" :key="s.label">
-              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-              <div class="il-stat-info">
-                <div class="il-stat-val">{{ s.value }}</div>
-                <div class="il-stat-label">{{ s.label }}</div>
-              </div>
-            </div>
+        <div class="il-stat-card" v-for="s in todayStats" :key="s.label">
+          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+          <div class="il-stat-info">
+            <div class="il-stat-val">{{ s.value }}</div>
+            <div class="il-stat-label">{{ s.label }}</div>
           </div>
         </div>
       </div>
@@ -80,29 +68,21 @@
     </template>
 
     <template v-else>
-      <div class="il-stats-wrap">
-        <div class="il-stats-group">
-          <span class="il-stats-group-title">复盘报告</span>
-          <div class="il-stats-row">
-            <div class="il-stat-card" v-for="s in pmCountStats" :key="s.label">
-              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-              <div class="il-stat-info">
-                <div class="il-stat-val">{{ s.value }}</div>
-                <div class="il-stat-label">{{ s.label }}</div>
-              </div>
-            </div>
+      <div class="il-stats-grid" style="grid-template-columns:repeat(4,1fr)">
+        <span class="il-stats-group-title" style="grid-column:span 1">复盘报告</span>
+        <span class="il-stats-group-title" style="grid-column:span 3">关联故障级别</span>
+        <div class="il-stat-card" v-for="s in pmCountStats" :key="s.label">
+          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+          <div class="il-stat-info">
+            <div class="il-stat-val">{{ s.value }}</div>
+            <div class="il-stat-label">{{ s.label }}</div>
           </div>
         </div>
-        <div class="il-stats-group">
-          <span class="il-stats-group-title">关联故障级别</span>
-          <div class="il-stats-row">
-            <div class="il-stat-card" v-for="s in pmSevStats" :key="s.label">
-              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-              <div class="il-stat-info">
-                <div class="il-stat-val">{{ s.value }}</div>
-                <div class="il-stat-label">{{ s.label }}</div>
-              </div>
-            </div>
+        <div class="il-stat-card" v-for="s in pmSevStats" :key="s.label">
+          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+          <div class="il-stat-info">
+            <div class="il-stat-val">{{ s.value }}</div>
+            <div class="il-stat-label">{{ s.label }}</div>
           </div>
         </div>
       </div>
@@ -283,27 +263,17 @@ onMounted(async () => {
 .il-tab:hover { color: #1a1a1a; }
 .il-tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 600; }
 
-.il-stats-wrap {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.il-stats-group {
-  display: flex;
-  flex-direction: column;
+.il-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 8px;
-  flex: 1;
-  min-width: 0;
+  margin-bottom: 16px;
 }
 .il-stats-group-title {
   font-size: 12px;
   color: #8c8c8c;
   font-weight: 500;
   padding-left: 4px;
-}
-.il-stats-row {
-  display: flex;
-  gap: 8px;
 }
 .il-stat-card {
   display: flex;
@@ -313,8 +283,6 @@ onMounted(async () => {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  flex: 1;
-  min-width: 0;
 }
 .il-stat-icon {
   width: 40px;
