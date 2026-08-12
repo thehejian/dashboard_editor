@@ -25,11 +25,20 @@
         </a-select>
       </div>
 
-      <a-table :data-source="filteredIncidents" :columns="incidentColumns" row-key="id" :pagination="{ pageSize: 15, showSizeChanger: true }" :scroll="{ y: 420 }" @row-click="(record) => $router.push('/ops/incident/' + record.id)" />
+      <a-table :data-source="filteredIncidents" :columns="incidentColumns" row-key="id" :pagination="{ pageSize: 15, showSizeChanger: true }" :scroll="{ y: 420 }" :custom-row="rowClickHandler">
+        <template #bodyCell="{ column, text, record }">
+          <template v-if="column.key === 'severity'">
+            <span :style="{ color: severityColors[text] || '#666', fontWeight: 600 }">{{ text }}</span>
+          </template>
+          <template v-else-if="column.key === 'status'">
+            <a-tag :color="statusTagMap[text]?.color || 'default'">{{ statusTagMap[text]?.label || text }}</a-tag>
+          </template>
+        </template>
+      </a-table>
     </template>
 
     <template v-else>
-      <a-table :data-source="postmortems" :columns="postmortemColumns" row-key="id" :pagination="{ pageSize: 15, showSizeChanger: true }" :scroll="{ y: 420 }" @row-click="(record) => $router.push('/ops/incident/' + record.id + '?tab=postmortem')" />
+      <a-table :data-source="postmortems" :columns="postmortemColumns" row-key="id" :pagination="{ pageSize: 15, showSizeChanger: true }" :scroll="{ y: 420 }" :custom-row="postmortemRowClickHandler" />
     </template>
   </div>
 </template>
@@ -46,19 +55,20 @@ const postmortems = ref([])
 const searchQuery = ref('')
 const statusFilter = ref(undefined)
 
+const severityColors = { P1: '#F5222D', P2: '#FF7D00', P3: '#FAAD14' }
+
+const statusTagMap = {
+  healing: { label: '自愈中', color: 'processing' },
+  resolved: { label: '已恢复', color: 'success' },
+  investigating: { label: '排查中', color: 'warning' },
+}
+
 const incidentColumns = [
-  { title: '级别', dataIndex: 'severity', key: 'severity', width: 70, customRender: ({ text }) => {
-    const colors = { P1: '#F5222D', P2: '#FF7D00', P3: '#FAAD14' }
-    return `<span style="color:${colors[text] || '#666'};font-weight:600">${text}</span>`
-  } },
+  { title: '级别', dataIndex: 'severity', key: 'severity', width: 70 },
   { title: '故障ID', dataIndex: 'id', key: 'id', width: 140 },
   { title: '标题', dataIndex: 'title', key: 'title', ellipsis: true },
   { title: '应用', dataIndex: 'appName', key: 'appName', width: 100 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100, customRender: ({ text }) => {
-    const m = { healing: { text: '自愈中', color: 'processing' }, resolved: { text: '已恢复', color: 'success' }, investigating: { text: '排查中', color: 'warning' } }
-    const tag = m[text] || { text, color: 'default' }
-    return `<a-tag color="${tag.color}">${tag.text}</a-tag>`
-  } },
+  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
   { title: 'P99', key: 'p99', width: 100, customRender: ({ record }) => `${record.metrics?.p99?.current || '-'}ms` },
   { title: '失败率', key: 'failRate', width: 80, customRender: ({ record }) => `${record.metrics?.failureRate?.current || '-'}%` },
 ]
@@ -81,6 +91,14 @@ const filteredIncidents = computed(() => {
   }
   return list
 })
+
+function rowClickHandler(record) {
+  return { onClick: () => router.push('/ops/incident/' + record.id), style: { cursor: 'pointer' } }
+}
+
+function postmortemRowClickHandler(record) {
+  return { onClick: () => router.push('/ops/incident/' + record.incidentId + '?tab=postmortem'), style: { cursor: 'pointer' } }
+}
 
 onMounted(async () => {
   try {
