@@ -285,19 +285,21 @@ onMounted(async () => {
 
 .il-stats-wrap {
   display: flex;
-  gap: 32px;
+  gap: 12px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
 }
 .il-stats-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 .il-stats-group-title {
   font-size: 12px;
   color: #8c8c8c;
   font-weight: 500;
+  padding-left: 4px;
 }
 .il-stats-row {
   display: flex;
@@ -311,7 +313,8 @@ onMounted(async () => {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  min-width: 120px;
+  flex: 1;
+  min-width: 0;
 }
 .il-stat-icon {
   width: 40px;
