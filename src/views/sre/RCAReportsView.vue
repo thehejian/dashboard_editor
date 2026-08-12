@@ -4,7 +4,7 @@
     <div v-if="loading" style="text-align:center;margin:60px 0"><a-spin /></div>
     <template v-else>
       <div class="rca-list">
-        <div v-for="r in reports" :key="r.id" class="rca-card" @click="router.push('/ops/incident/' + r.incidentId + '?tab=postmortem')">
+        <div v-for="r in reports" :key="r.id" class="rca-card" @click="router.push('/ops/incident/' + r.incidentId)">
           <div class="rca-head">
             <span class="rca-sev" :style="{ background: severityBg[r.severity] }">{{ r.severity }}</span>
             <span class="rca-title">{{ r.title }}</span>
