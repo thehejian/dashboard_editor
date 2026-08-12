@@ -180,8 +180,10 @@
               <span class="af-title">{{ fault.title }}</span>
               <span class="af-app">{{ fault.appName }}</span>
               <a-tag :color="fault.status === 'healing' ? 'processing' : 'warning'">{{ fault.status === 'healing' ? '自愈中' : '排查中' }}</a-tag>
-              <a-button size="small" class="af-btn" @click.stop="router.push('/ops/incident/' + fault.id)">分析</a-button>
-              <a-button size="small" class="af-btn" @click.stop="router.push('/ops/incident/' + fault.id + '?tab=postmortem')">复盘</a-button>
+              <span class="af-actions">
+                <a-button size="small" class="af-btn" @click.stop="router.push('/ops/incident/' + fault.id)">分析</a-button>
+                <a-button size="small" class="af-btn" @click.stop="router.push('/ops/incident/' + fault.id + '?tab=postmortem')">复盘</a-button>
+              </span>
             </div>
           </div>
         </div>
@@ -2422,8 +2424,9 @@ const refreshCard = (card) => {
 .af-severity.sev-P1 { background: #F5222D; }
 .af-severity.sev-P2 { background: #FF7D00; }
 .af-severity.sev-P3 { background: #FAAD14; }
-.af-title { flex: 1; font-size: 13px; font-weight: 500; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.af-title { flex: none; font-size: 13px; font-weight: 500; color: #1a1a1a; }
 .af-app { font-size: 11px; color: #8c8c8c; background: #f5f5f5; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; }
+.af-actions { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
 .af-btn { font-size: 11px; height: 24px; padding: 0 8px; flex-shrink: 0; }
 .aiops-kpi-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .aiops-kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
