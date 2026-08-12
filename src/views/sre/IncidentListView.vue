@@ -16,12 +16,41 @@
     </template>
 
     <template v-else-if="activeTab === 'incidents'">
-      <div class="il-stats-row">
-        <div class="il-stat-card" v-for="s in faultStats" :key="s.label">
-          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-          <div class="il-stat-info">
-            <div class="il-stat-val">{{ s.value }}</div>
-            <div class="il-stat-label">{{ s.label }}</div>
+      <div class="il-stats-wrap">
+        <div class="il-stats-group">
+          <span class="il-stats-group-title">级别分布</span>
+          <div class="il-stats-row">
+            <div class="il-stat-card" v-for="s in severityStats" :key="s.label">
+              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+              <div class="il-stat-info">
+                <div class="il-stat-val">{{ s.value }}</div>
+                <div class="il-stat-label">{{ s.label }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="il-stats-group">
+          <span class="il-stats-group-title">状态</span>
+          <div class="il-stats-row">
+            <div class="il-stat-card" v-for="s in statusStats" :key="s.label">
+              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+              <div class="il-stat-info">
+                <div class="il-stat-val">{{ s.value }}</div>
+                <div class="il-stat-label">{{ s.label }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="il-stats-group">
+          <span class="il-stats-group-title">今日新增</span>
+          <div class="il-stats-row">
+            <div class="il-stat-card" v-for="s in todayStats" :key="s.label">
+              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+              <div class="il-stat-info">
+                <div class="il-stat-val">{{ s.value }}</div>
+                <div class="il-stat-label">{{ s.label }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -51,12 +80,29 @@
     </template>
 
     <template v-else>
-      <div class="il-stats-row">
-        <div class="il-stat-card" v-for="s in pmStats" :key="s.label">
-          <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
-          <div class="il-stat-info">
-            <div class="il-stat-val">{{ s.value }}</div>
-            <div class="il-stat-label">{{ s.label }}</div>
+      <div class="il-stats-wrap">
+        <div class="il-stats-group">
+          <span class="il-stats-group-title">复盘报告</span>
+          <div class="il-stats-row">
+            <div class="il-stat-card" v-for="s in pmCountStats" :key="s.label">
+              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+              <div class="il-stat-info">
+                <div class="il-stat-val">{{ s.value }}</div>
+                <div class="il-stat-label">{{ s.label }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="il-stats-group">
+          <span class="il-stats-group-title">关联故障级别</span>
+          <div class="il-stats-row">
+            <div class="il-stat-card" v-for="s in pmSevStats" :key="s.label">
+              <div class="il-stat-icon" :style="{ background: s.iconBg, color: s.iconColor }"><i :class="s.icon"></i></div>
+              <div class="il-stat-info">
+                <div class="il-stat-val">{{ s.value }}</div>
+                <div class="il-stat-label">{{ s.label }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -131,18 +177,27 @@ const todayNewCount = computed(() => {
   return incidents.value.filter(i => i.startTime?.startsWith(today)).length
 })
 
-const faultStats = computed(() => [
+const severityStats = computed(() => [
   { label: 'P1', value: statsBySeverity.value.P1, icon: 'fa-solid fa-circle-exclamation', iconBg: '#fff1f0', iconColor: '#cf1322' },
   { label: 'P2', value: statsBySeverity.value.P2, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#fff7e6', iconColor: '#d46b08' },
   { label: 'P3', value: statsBySeverity.value.P3, icon: 'fa-solid fa-exclamation', iconBg: '#fffbe6', iconColor: '#d48806' },
+])
+
+const statusStats = computed(() => [
   { label: '自愈中', value: statsByStatus.value.healing, icon: 'fa-solid fa-heart-pulse', iconBg: '#e6f7ff', iconColor: '#096dd9' },
   { label: '排查中', value: statsByStatus.value.investigating, icon: 'fa-solid fa-magnifying-glass', iconBg: '#fff7e6', iconColor: '#d46b08' },
   { label: '已恢复', value: statsByStatus.value.resolved, icon: 'fa-solid fa-check-circle', iconBg: '#f6ffed', iconColor: '#389e0d' },
+])
+
+const todayStats = computed(() => [
   { label: '今日新增', value: todayNewCount.value, icon: 'fa-solid fa-calendar-plus', iconBg: '#e6f7ff', iconColor: '#096dd9' },
 ])
 
-const pmStats = computed(() => [
+const pmCountStats = computed(() => [
   { label: '已归档', value: postmortems.value.length, icon: 'fa-solid fa-file-lines', iconBg: '#f6ffed', iconColor: '#389e0d' },
+])
+
+const pmSevStats = computed(() => [
   { label: 'P1', value: pmStatsBySeverity.value.P1, icon: 'fa-solid fa-circle-exclamation', iconBg: '#fff1f0', iconColor: '#cf1322' },
   { label: 'P2', value: pmStatsBySeverity.value.P2, icon: 'fa-solid fa-triangle-exclamation', iconBg: '#fff7e6', iconColor: '#d46b08' },
   { label: 'P3', value: pmStatsBySeverity.value.P3, icon: 'fa-solid fa-exclamation', iconBg: '#fffbe6', iconColor: '#d48806' },
@@ -228,11 +283,25 @@ onMounted(async () => {
 .il-tab:hover { color: #1a1a1a; }
 .il-tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 600; }
 
-.il-stats-row {
+.il-stats-wrap {
   display: flex;
-  gap: 12px;
+  gap: 32px;
   margin-bottom: 16px;
   flex-wrap: wrap;
+}
+.il-stats-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.il-stats-group-title {
+  font-size: 12px;
+  color: #8c8c8c;
+  font-weight: 500;
+}
+.il-stats-row {
+  display: flex;
+  gap: 8px;
 }
 .il-stat-card {
   display: flex;
@@ -242,7 +311,6 @@ onMounted(async () => {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  flex: 1;
   min-width: 120px;
 }
 .il-stat-icon {
