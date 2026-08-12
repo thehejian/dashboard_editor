@@ -1522,6 +1522,20 @@ app.get('/api/sre/incidents', (req, res) => {
   res.json({ success: true, data: incidents })
 })
 
+// GET /api/sre/postmortems
+app.get('/api/sre/postmortems', (req, res) => {
+  const list = Object.entries(MOCK_POSTMORTEM_REPORTS).map(([incidentId, report]) => ({
+    id: incidentId,
+    incidentId,
+    title: report.title,
+    markdown: report.markdown,
+    author: report.author || 'SRE 自动化运维组',
+    status: report.status || '已归档',
+    createdAt: report.createdAt || '2026-07-20',
+  }))
+  res.json({ success: true, data: list })
+})
+
 // GET /api/sre/incidents/:id
 app.get('/api/sre/incidents/:id', (req, res) => {
   const incident = MOCK_INCIDENTS.find(i => i.id === req.params.id)

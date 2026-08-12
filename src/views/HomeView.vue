@@ -168,6 +168,23 @@
         </div>
       </div>
 
+      <div class="aiops-active-faults" v-if="aiopsActiveFaults.length">
+        <div class="aiops-section-title">
+          <span class="title-text"><i class="fa-solid fa-circle-exclamation" style="color:#F5222D"></i> 当前活动故障</span>
+          <router-link to="/ops/incidents" class="title-link">前往故障中心 <i class="fa-solid fa-arrow-right"></i></router-link>
+        </div>
+        <div class="active-fault-list">
+          <div v-for="fault in aiopsActiveFaults" :key="fault.id" class="active-fault-item" @click="router.push('/ops/incident/' + fault.id)">
+            <span class="af-severity" :class="'sev-' + fault.severity">{{ fault.severity }}</span>
+            <span class="af-title">{{ fault.title }}</span>
+            <span class="af-app">{{ fault.appName }}</span>
+            <a-tag :color="fault.status === 'healing' ? 'processing' : 'warning'">{{ fault.status === 'healing' ? '自愈中' : '排查中' }}</a-tag>
+            <a-button size="small" class="af-btn" @click.stop="router.push('/ops/incident/' + fault.id)">分析</a-button>
+            <a-button size="small" class="af-btn" @click.stop="router.push('/ops/incident/' + fault.id + '?tab=postmortem')">复盘</a-button>
+          </div>
+        </div>
+      </div>
+
       <div class="aiops-heatmap" v-if="aiopsApps.length">
         <div class="aiops-section-title">
           <span class="title-text"><i class="fa-solid fa-heart-pulse"></i> 需关注的应用 / 云服务</span>
@@ -917,6 +934,10 @@ const appDrawerOpen = ref(false)
 const appDrawerTab = ref('fault-detail')
 const appFilter = ref('abnormal')
 const allIncidents = ref([])
+
+const aiopsActiveFaults = computed(() => {
+  return allIncidents.value.filter(i => i.status === 'healing' || i.status === 'investigating')
+})
 
 const visibleApps = computed(() => {
   if (appFilter.value === 'all') return aiopsApps.value
@@ -2388,6 +2409,19 @@ const refreshCard = (card) => {
 .suggestion-chip:hover { border-color: var(--intelligent, #722ED1); color: var(--intelligent, #722ED1); background: rgba(114,46,209,0.05); }
 
 .aiops-kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 16px; }
+.aiops-active-faults { margin-bottom: 16px; }
+.title-link { font-size: 12px; color: #1890ff; font-weight: 400; margin-left: auto; text-decoration: none; }
+.title-link i { font-size: 10px; margin-left: 4px; }
+.active-fault-list { display: flex; flex-direction: column; gap: 6px; }
+.active-fault-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #fff; border: 1px solid #f0f0f0; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.active-fault-item:hover { border-color: #1890ff; box-shadow: 0 1px 4px rgba(24,144,255,0.1); }
+.af-severity { font-size: 11px; font-weight: 700; padding: 1px 5px; border-radius: 3px; color: #fff; flex-shrink: 0; }
+.af-severity.sev-P1 { background: #F5222D; }
+.af-severity.sev-P2 { background: #FF7D00; }
+.af-severity.sev-P3 { background: #FAAD14; }
+.af-title { flex: 1; font-size: 13px; font-weight: 500; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.af-app { font-size: 11px; color: #8c8c8c; background: #f5f5f5; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; }
+.af-btn { font-size: 11px; height: 24px; padding: 0 8px; flex-shrink: 0; }
 .aiops-kpi-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .aiops-kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .aiops-kpi-info { flex: 1; }

@@ -111,7 +111,7 @@ const traces = ref([])
 const callTrace = ref([])
 const linkedLogs = ref([])
 const recommendations = ref([])
-const activeTab = ref('analysis')
+const activeTab = ref(route.query.tab === 'postmortem' ? 'postmortem' : 'analysis')
 const selectedNodeId = ref('')
 
 const statusText = computed(() => {
