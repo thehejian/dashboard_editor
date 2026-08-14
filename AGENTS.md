@@ -12,6 +12,8 @@ npm run build                              # 构建 dist/
 npx playwright test                        # E2E 测试
 ```
 
+**禁止直接用 Playwright 截图/evaluate 做视觉验证**，只用它跑 `tests/*.spec.js` 现有测试。
+
 Node/npm 不在 PATH → `export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"`。  
 Bash tool 超时会杀死前台进程 → 必须 `nohup` 或 `start.sh` 脱离进程组。  
 `lsof -i :5173 -i :3001` 确认服务状态。  

@@ -38,6 +38,7 @@
               <a-menu @click="handleNavClick">
                 <a-menu-item key="/ops/jobs">自动作业</a-menu-item>
                 <a-menu-item key="/ops/logs">日志管理</a-menu-item>
+                <a-menu-item key="/ops/events">异常事件</a-menu-item>
                 <a-menu-item key="/ops/account">账号管理</a-menu-item>
                 <a-menu-item key="/ops/incidents">故障中心</a-menu-item>
                 <a-menu-item key="/ops/inspect">巡检报告</a-menu-item>
@@ -83,6 +84,7 @@
     </header>
 
     <div class="main" :class="{ 'dashboard-mode': $route.path === '/monitor' || $route.path === '/monitor/dashboard' || $route.path.startsWith('/dashboard/') }">
+      <SiteNavbar />
       <template v-if="$route.path === '/monitor' || $route.path === '/monitor/dashboard' || $route.path.startsWith('/dashboard/')">
         <main class="canvas">
           <div class="dashboard-toolbar">
@@ -163,8 +165,7 @@
             </div>
           </div>
           <div class="canvas-scroll">
-            <OBSDashboard v-if="isOBSDashboard" />
-            <VMDashboard v-else-if="isVMDashboard" />
+            <VMDashboard v-if="isVMDashboard" />
             <NASDashboard v-else-if="isNASDashboard" />
             <ContainerDashboard v-else-if="isContainerDashboard" />
             <BigDataDashboard v-else-if="isBigDataDashboard" />
@@ -198,13 +199,13 @@ import { useEditorState } from './composables/useEditorState'
 import { useExport } from './composables/useExport'
 import ChartGrid from './components/ChartGrid.vue'
 import ConfigPanel from './components/ConfigPanel.vue'
-import OBSDashboard from './components/OBSDashboard.vue'
 import VMDashboard from './components/VMDashboard.vue'
 import NASDashboard from './components/NASDashboard.vue'
 import ContainerDashboard from './components/ContainerDashboard.vue'
 import BigDataDashboard from './components/BigDataDashboard.vue'
 import AiModelDashboard from './components/AiModelDashboard.vue'
 import AIAssistant from './components/AIAssistant.vue'
+import SiteNavbar from './components/SiteNavbar.vue'
 
 const logoUrl = new URL('../logo/huawei-logo.png', import.meta.url).href
 const router = useRouter()
@@ -228,13 +229,12 @@ const { exportToPng, exportToPdf, generateShareLink, copyShareLink } = useExport
 
 const currentRegion = computed(() => REGIONS.find(r => r.id === state.currentRegion))
 
-const isOBSDashboard = computed(() => currentDashboard.value?.title === 'OBS监控')
 const isVMDashboard = computed(() => currentDashboard.value?.title === '虚拟机监控')
 const isNASDashboard = computed(() => currentDashboard.value?.title === 'NAS监控')
 const isContainerDashboard = computed(() => currentDashboard.value?.title === '容器监控')
 const isBigDataDashboard = computed(() => currentDashboard.value?.title === '大数据监控')
 const isAiModelDashboard = computed(() => currentDashboard.value?.title === 'AI模型监控')
-const isCustomDashboard = computed(() => isOBSDashboard.value || isVMDashboard.value || isNASDashboard.value || isContainerDashboard.value || isBigDataDashboard.value || isAiModelDashboard.value)
+const isCustomDashboard = computed(() => isVMDashboard.value || isNASDashboard.value || isContainerDashboard.value || isBigDataDashboard.value || isAiModelDashboard.value)
 
 function scrollToChart(chartId) {
   const el = document.querySelector(`[data-chart-id="${chartId}"]`)

@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap');
+    * { font-family: 'Noto Sans SC', 'PingFang SC', sans-serif; }
+  </style>
+  <rect width="1000" height="700" fill="#f5f6fa"/>
+  
+  <rect x="0" y="0" width="220" height="700" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <rect x="0" y="0" width="220" height="42" fill="#fafafa"/>
+  <text x="16" y="26" fill="#333" font-size="13" font-weight="600">异常事件管理</text>
+  
+  <text x="36" y="58" fill="#666" font-size="12">▶ 概览</text>
+  <text x="36" y="88" fill="#1890ff" font-size="12" font-weight="500">▼ 事件列表</text>
+  <rect x="0" y="100" width="220" height="28" fill="#e6f7ff"/>
+  <text x="52" y="118" fill="#1890ff" font-size="12" font-weight="500">├ 全部事件</text>
+  <text x="52" y="146" fill="#666" font-size="12">├ 未处理事件</text>
+  <text x="52" y="166" fill="#666" font-size="12">├ 紧急事件</text>
+  
+  <text x="36" y="196" fill="#666" font-size="12">▶ 日志追踪</text>
+  <text x="36" y="226" fill="#666" font-size="12">▶ 检测规则</text>
+  <text x="36" y="256" fill="#666" font-size="12">▶ 转告警规则</text>
+  
+  <!-- Page header -->
+  <text x="240" y="26" fill="#999" font-size="12">异常事件管理 / 事件关联分析</text>
+  <text x="240" y="56" fill="#333" font-size="16" font-weight="600">事件关联分析 - GaussDB OOM 检测</text>
+  
+  <!-- Event info bar -->
+  <rect x="240" y="68" width="600" height="24" rx="3" fill="#fafafa"/>
+  <text x="260" y="84" fill="#999" font-size="11">事件 ID: EVT-20260812-001</text>
+  <text x="440" y="84" fill="#999" font-size="11">级别：</text>
+  <rect x="480" y="72" width="40" height="16" rx="2" fill="#ff4d4f"/>
+  <text x="500" y="84" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+  <text x="560" y="84" fill="#999" font-size="11">资源：gaussdb-01</text>
+  <text x="720" y="84" fill="#999" font-size="11">时间：2026-08-12 14:23:40</text>
+  
+  <rect x="860" y="68" width="60" height="24" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="890" y="84" fill="#666" font-size="11" text-anchor="middle">← 返回</text>
+  
+  <!-- Time range selector -->
+  <text x="240" y="116" fill="#666" font-size="11">时间范围：</text>
+  <rect x="300" y="104" width="70" height="22" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="335" y="119" fill="#666" font-size="10" text-anchor="middle">近1小时</text>
+  <rect x="374" y="104" width="70" height="22" rx="3" fill="#1890ff"/>
+  <text x="409" y="119" fill="#fff" font-size="10" text-anchor="middle">近6小时</text>
+  <rect x="448" y="104" width="70" height="22" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="483" y="119" fill="#666" font-size="10" text-anchor="middle">近24小时</text>
+  <rect x="522" y="104" width="70" height="22" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="557" y="119" fill="#666" font-size="10" text-anchor="middle">近3天</text>
+  
+  <!-- Topology description -->
+  <rect x="240" y="136" width="748" height="30" rx="4" fill="#e6f7ff" stroke="#91d5ff" stroke-width="1"/>
+  <text x="280" y="156" fill="#1890ff" font-size="11">上游对象 2 个，共 3 个事件 → </text>
+  <text x="480" y="156" fill="#ff4d4f" font-size="12" font-weight="600">gaussdb-01 (GaussDB 实例) 3 个事件</text>
+  <text x="720" y="156" fill="#1890ff" font-size="11"> → 下游对象 2 个，共 4 个事件</text>
+  <text x="880" y="156" fill="#999" font-size="11">| 2026-08-12 08:00 - 15:00</text>
+  
+  <!-- Swimlane diagram -->
+  <rect x="240" y="178" width="748" height="380" rx="4" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <!-- Time axis -->
+  <line x1="460" y1="198" x2="960" y2="198" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="470" y="194" fill="#999" font-size="9">08:00</text>
+  <text x="550" y="194" fill="#999" font-size="9">09:15</text>
+  <text x="640" y="194" fill="#999" font-size="9">10:30</text>
+  <text x="730" y="194" fill="#999" font-size="9">11:45</text>
+  <text x="820" y="194" fill="#999" font-size="9">13:00</text>
+  <text x="900" y="194" fill="#999" font-size="9">14:15</text>
+  <text x="960" y="194" fill="#999" font-size="9">15:00</text>
+  
+  <!-- Grid lines -->
+  <line x1="460" y1="198" x2="460" y2="540" stroke="#f0f0f0" stroke-width="1"/>
+  <line x1="550" y1="198" x2="550" y2="540" stroke="#f0f0f0" stroke-width="1"/>
+  <line x1="640" y1="198" x2="640" y2="540" stroke="#f0f0f0" stroke-width="1"/>
+  <line x1="730" y1="198" x2="730" y2="540" stroke="#f0f0f0" stroke-width="1"/>
+  <line x1="820" y1="198" x2="820" y2="540" stroke="#f0f0f0" stroke-width="1"/>
+  <line x1="900" y1="198" x2="900" y2="540" stroke="#f0f0f0" stroke-width="1"/>
+  
+  <!-- "Now" line -->
+  <line x1="940" y1="198" x2="940" y2="540" stroke="#ff4d4f" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.6"/>
+  <text x="946" y="210" fill="#ff4d4f" font-size="9">现在</text>
+  
+  <!-- Swimlane 1: 下游对象 层级2 -->
+  <rect x="240" y="210" width="748" height="62" fill="#fafafa"/>
+  <rect x="240" y="210" width="220" height="62" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <text x="260" y="234" fill="#333" font-size="12" font-weight="600">oc-service-01</text>
+  <text x="260" y="252" fill="#999" font-size="10">OC 微服务 | 微服务</text>
+  <text x="260" y="266" fill="#faad14" font-size="10">下游 · 层级 2</text>
+  <!-- Event dots -->
+  <rect x="620" y="226" width="40" height="16" rx="2" fill="#fa8c16"/>
+  <text x="640" y="238" fill="#fff" font-size="9" text-anchor="middle">重要</text>
+  <rect x="700" y="226" width="40" height="16" rx="2" fill="#faad14"/>
+  <text x="720" y="238" fill="#fff" font-size="9" text-anchor="middle">提示</text>
+  
+  <!-- Swimlane 2: 下游对象 层级1 -->
+  <rect x="240" y="272" width="748" height="62" fill="#fafafa"/>
+  <rect x="240" y="272" width="220" height="62" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <text x="260" y="296" fill="#333" font-size="12" font-weight="600">rds-mysql-01</text>
+  <text x="260" y="314" fill="#999" font-size="10">RDS 微服务 | RDS 实例</text>
+  <text x="260" y="328" fill="#faad14" font-size="10">下游 · 层级 1</text>
+  <rect x="560" y="288" width="40" height="16" rx="2" fill="#fa8c16"/>
+  <text x="580" y="300" fill="#fff" font-size="9" text-anchor="middle">重要</text>
+  <rect x="720" y="288" width="40" height="16" rx="2" fill="#1890ff"/>
+  <text x="740" y="300" fill="#fff" font-size="9" text-anchor="middle">次要</text>
+  
+  <!-- Swimlane 3: 当前对象 (highlighted) -->
+  <rect x="240" y="334" width="748" height="72" fill="#fff8f0"/>
+  <rect x="240" y="334" width="220" height="72" fill="#fff7e6" stroke="#ffd591" stroke-width="1"/>
+  <text x="260" y="358" fill="#ff4d4f" font-size="12" font-weight="600">gaussdb-01</text>
+  <text x="260" y="376" fill="#999" font-size="10">GaussDB 实例</text>
+  <text x="260" y="390" fill="#ff4d4f" font-size="10">当前对象 · 3 个事件</text>
+  <rect x="560" y="352" width="40" height="16" rx="2" fill="#faad14"/>
+  <text x="580" y="364" fill="#fff" font-size="9" text-anchor="middle">提示</text>
+  <rect x="640" y="352" width="40" height="16" rx="2" fill="#fa8c16"/>
+  <text x="660" y="364" fill="#fff" font-size="9" text-anchor="middle">重要</text>
+  <rect x="820" y="348" width="48" height="24" rx="2" fill="#ff4d4f" stroke="#000" stroke-width="2"/>
+  <text x="844" y="364" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+  <text x="844" y="380" fill="#fff" font-size="8" text-anchor="middle">当前事件</text>
+  
+  <!-- Swimlane 4: 上游对象 层级1 -->
+  <rect x="240" y="406" width="748" height="62" fill="#fafafa"/>
+  <rect x="240" y="406" width="220" height="62" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <text x="260" y="430" fill="#333" font-size="12" font-weight="600">vm-gaussdb-01</text>
+  <text x="260" y="448" fill="#999" font-size="10">虚拟机</text>
+  <text x="260" y="462" fill="#1890ff" font-size="10">上游 · 层级 1</text>
+  <rect x="580" y="422" width="40" height="16" rx="2" fill="#1890ff"/>
+  <text x="600" y="434" fill="#fff" font-size="9" text-anchor="middle">次要</text>
+  <rect x="680" y="422" width="40" height="16" rx="2" fill="#faad14"/>
+  <text x="700" y="434" fill="#fff" font-size="9" text-anchor="middle">提示</text>
+  
+  <!-- Swimlane 5: 上游对象 层级2 -->
+  <rect x="240" y="468" width="748" height="62" fill="#fafafa"/>
+  <rect x="240" y="468" width="220" height="62" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <text x="260" y="492" fill="#333" font-size="12" font-weight="600">pm-rack-01</text>
+  <text x="260" y="510" fill="#999" font-size="10">物理机</text>
+  <text x="260" y="524" fill="#1890ff" font-size="10">上游 · 层级 2</text>
+  <rect x="640" y="484" width="40" height="16" rx="2" fill="#faad14"/>
+  <text x="660" y="496" fill="#fff" font-size="9" text-anchor="middle">提示</text>
+  
+  <!-- Legend -->
+  <rect x="240" y="568" width="748" height="36" rx="4" fill="#fafafa" stroke="#e8e8e8" stroke-width="1"/>
+  <text x="260" y="590" fill="#666" font-size="11">图例：</text>
+  <rect x="310" y="580" width="16" height="12" rx="2" fill="#ff4d4f"/>
+  <text x="330" y="590" fill="#666" font-size="10">紧急</text>
+  <rect x="370" y="580" width="16" height="12" rx="2" fill="#fa8c16"/>
+  <text x="390" y="590" fill="#666" font-size="10">重要</text>
+  <rect x="430" y="580" width="16" height="12" rx="2" fill="#faad14"/>
+  <text x="450" y="590" fill="#666" font-size="10">次要</text>
+  <rect x="490" y="580" width="16" height="12" rx="2" fill="#1890ff"/>
+  <text x="510" y="590" fill="#666" font-size="10">提示</text>
+  <rect x="550" y="580" width="16" height="12" rx="2" fill="#999"/>
+  <text x="570" y="590" fill="#666" font-size="10">信息</text>
+  <rect x="620" y="578" width="20" height="16" rx="2" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="645" y="590" fill="#666" font-size="10">当前事件</text>
+  
+  <text x="900" y="660" fill="#ccc" font-size="10" text-anchor="end">页面七：事件关联分析（泳道图）</text>
+</svg>

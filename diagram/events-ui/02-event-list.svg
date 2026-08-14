@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap');
+    * { font-family: 'Noto Sans SC', 'PingFang SC', sans-serif; }
+  </style>
+  <rect width="1000" height="700" fill="#f5f6fa"/>
+  
+  <!-- Left sidebar -->
+  <rect x="0" y="0" width="220" height="700" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <rect x="0" y="0" width="220" height="42" fill="#fafafa"/>
+  <text x="16" y="26" fill="#333" font-size="13" font-weight="600">异常事件管理</text>
+  
+  <text x="36" y="58" fill="#666" font-size="12" font-weight="500">▶ 概览</text>
+  
+  <text x="36" y="88" fill="#1890ff" font-size="12" font-weight="500">▼ 事件列表</text>
+  <rect x="0" y="100" width="220" height="28" fill="#e6f7ff"/>
+  <text x="52" y="118" fill="#1890ff" font-size="12" font-weight="500">├ 全部事件</text>
+  <rect x="156" y="106" width="22" height="16" rx="8" fill="#ff4d4f"/>
+  <text x="167" y="118" fill="#fff" font-size="10" text-anchor="middle">12</text>
+  <text x="52" y="146" fill="#666" font-size="12">├ 未处理事件</text>
+  <text x="52" y="166" fill="#666" font-size="12">├ 紧急事件</text>
+  
+  <text x="36" y="196" fill="#666" font-size="12" font-weight="500">▶ 日志追踪</text>
+  <text x="36" y="226" fill="#666" font-size="12" font-weight="500">▶ 检测规则</text>
+  <text x="36" y="256" fill="#666" font-size="12" font-weight="500">▶ 转告警规则</text>
+  
+  <!-- Breadcrumb -->
+  <text x="240" y="26" fill="#999" font-size="12">异常事件管理 / 事件列表 / 全部事件</text>
+  
+  <!-- Filter bar -->
+  <rect x="240" y="40" width="748" height="80" rx="4" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <text x="260" y="60" fill="#666" font-size="11">事件来源</text>
+  <rect x="310" y="48" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="360" y="63" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <text x="430" y="60" fill="#666" font-size="11">事件级别</text>
+  <rect x="480" y="48" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="530" y="63" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <text x="600" y="60" fill="#666" font-size="11">处理状态</text>
+  <rect x="650" y="48" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="700" y="63" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <text x="770" y="60" fill="#666" font-size="11">资源类型</text>
+  <rect x="820" y="48" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="870" y="63" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <rect x="310" y="80" width="160" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="390" y="95" fill="#bbb" font-size="10" text-anchor="middle">关键词搜索...</text>
+  
+  <text x="490" y="95" fill="#666" font-size="11">时间范围</text>
+  <rect x="540" y="80" width="120" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="600" y="95" fill="#666" font-size="10" text-anchor="middle">近7天 ▼</text>
+  
+  <rect x="680" y="80" width="60" height="24" rx="3" fill="#1890ff"/>
+  <text x="710" y="95" fill="#fff" font-size="11" text-anchor="middle">查询</text>
+  <rect x="748" y="80" width="60" height="24" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="778" y="95" fill="#666" font-size="11" text-anchor="middle">重置</text>
+  
+  <!-- Table toolbar -->
+  <text x="240" y="148" fill="#333" font-size="13" font-weight="600">事件列表</text>
+  <text x="310" y="148" fill="#999" font-size="11">共 12 条</text>
+  
+  <rect x="740" y="136" width="100" height="24" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="790" y="152" fill="#666" font-size="11" text-anchor="middle">批量标记已处理</text>
+  <rect x="848" y="136" width="60" height="24" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="878" y="152" fill="#666" font-size="11" text-anchor="middle">导出</text>
+  
+  <!-- Table header -->
+  <rect x="240" y="168" width="748" height="32" fill="#fafafa" stroke="#e8e8e8" stroke-width="1"/>
+  <rect x="240" y="170" width="30" height="28" fill="none"/>
+  <text x="275" y="188" fill="#999" font-size="10" text-anchor="middle">□</text>
+  <text x="290" y="188" fill="#666" font-size="11">级别</text>
+  <text x="360" y="188" fill="#666" font-size="11">来源</text>
+  <text x="440" y="188" fill="#666" font-size="11">名称</text>
+  <text x="560" y="188" fill="#666" font-size="11">资源类型</text>
+  <text x="660" y="188" fill="#666" font-size="11">状态</text>
+  <text x="760" y="188" fill="#666" font-size="11">事件时间</text>
+  <text x="900" y="188" fill="#666" font-size="11">操作</text>
+  
+  <!-- Table rows -->
+  <g font-size="11" fill="#333">
+    <rect x="240" y="200" width="748" height="36" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="222" fill="#999" text-anchor="middle">□</text>
+    <rect x="290" y="210" width="40" height="16" rx="2" fill="#ff4d4f"/>
+    <text x="310" y="222" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+    <text x="360" y="222">运行日志</text>
+    <text x="440" y="222" fill="#1890ff">GaussDB OOM 检测</text>
+    <text x="560" y="222">GaussDB 实例</text>
+    <rect x="660" y="210" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="680" y="222" fill="#fff" font-size="10" text-anchor="middle">未处理</text>
+    <text x="760" y="222">2026-08-12 14:23:15</text>
+    <text x="900" y="222" fill="#1890ff">详情 追踪 分析</text>
+    
+    <rect x="240" y="236" width="748" height="36" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="258" fill="#999" text-anchor="middle">□</text>
+    <rect x="290" y="246" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="310" y="258" fill="#fff" font-size="10" text-anchor="middle">重要</text>
+    <text x="360" y="258">操作日志</text>
+    <text x="440" y="258" fill="#1890ff">RDS 连接数超限</text>
+    <text x="560" y="258">RDS 实例</text>
+    <rect x="660" y="246" width="40" height="16" rx="2" fill="#52c41a"/>
+    <text x="680" y="258" fill="#fff" font-size="10" text-anchor="middle">已处理</text>
+    <text x="760" y="258">2026-08-12 12:10:30</text>
+    <text x="900" y="258" fill="#1890ff">详情 追踪 分析</text>
+    
+    <rect x="240" y="272" width="748" height="36" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="294" fill="#999" text-anchor="middle">□</text>
+    <rect x="290" y="282" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="310" y="294" fill="#fff" font-size="10" text-anchor="middle">次要</text>
+    <text x="360" y="294">告警</text>
+    <text x="440" y="294" fill="#1890ff">ECS 磁盘空间不足</text>
+    <text x="560" y="294">虚拟机</text>
+    <rect x="660" y="282" width="40" height="16" rx="2" fill="#999"/>
+    <text x="680" y="294" fill="#fff" font-size="10" text-anchor="middle">已忽略</text>
+    <text x="760" y="294">2026-08-12 10:05:00</text>
+    <text x="900" y="294" fill="#1890ff">详情 追踪 分析</text>
+    
+    <rect x="240" y="308" width="748" height="36" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="330" fill="#999" text-anchor="middle">□</text>
+    <rect x="290" y="318" width="40" height="16" rx="2" fill="#faad14"/>
+    <text x="310" y="330" fill="#fff" font-size="10" text-anchor="middle">提示</text>
+    <text x="360" y="330">巡检</text>
+    <text x="440" y="330" fill="#1890ff">慢查询检测</text>
+    <text x="560" y="330">GaussDB 实例</text>
+    <rect x="660" y="318" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="680" y="330" fill="#fff" font-size="10" text-anchor="middle">未处理</text>
+    <text x="760" y="330">2026-08-12 09:45:22</text>
+    <text x="900" y="330" fill="#1890ff">详情 追踪 分析</text>
+    
+    <rect x="240" y="344" width="748" height="36" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="366" fill="#999" text-anchor="middle">□</text>
+    <rect x="290" y="354" width="40" height="16" rx="2" fill="#ff4d4f"/>
+    <text x="310" y="366" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+    <text x="360" y="366">运行日志</text>
+    <text x="440" y="366" fill="#1890ff">服务宕机检测</text>
+    <text x="560" y="366">微服务</text>
+    <rect x="660" y="354" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="680" y="366" fill="#fff" font-size="10" text-anchor="middle">未处理</text>
+    <text x="760" y="366">2026-08-11 22:15:00</text>
+    <text x="900" y="366" fill="#1890ff">详情 追踪 分析</text>
+    
+    <rect x="240" y="380" width="748" height="36" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="402" fill="#999" text-anchor="middle">□</text>
+    <rect x="290" y="390" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="310" y="402" fill="#fff" font-size="10" text-anchor="middle">重要</text>
+    <text x="360" y="402">运行日志</text>
+    <text x="440" y="402" fill="#1890ff">非法操作检测</text>
+    <text x="560" y="402">微服务</text>
+    <rect x="660" y="390" width="40" height="16" rx="2" fill="#52c41a"/>
+    <text x="680" y="402" fill="#fff" font-size="10" text-anchor="middle">已处理</text>
+    <text x="760" y="402">2026-08-11 18:30:45</text>
+    <text x="900" y="402" fill="#1890ff">详情 追踪 分析</text>
+  </g>
+  
+  <!-- Pagination -->
+  <text x="240" y="460" fill="#999" font-size="11">显示 1-6 条，共 12 条</text>
+  <g transform="translate(700, 444)">
+    <rect x="0" y="0" width="28" height="22" rx="2" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+    <text x="14" y="15" fill="#666" font-size="11" text-anchor="middle">&lt;</text>
+    <rect x="30" y="0" width="28" height="22" rx="2" fill="#1890ff"/>
+    <text x="44" y="15" fill="#fff" font-size="11" text-anchor="middle">1</text>
+    <rect x="60" y="0" width="28" height="22" rx="2" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+    <text x="74" y="15" fill="#666" font-size="11" text-anchor="middle">2</text>
+    <rect x="90" y="0" width="28" height="22" rx="2" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+    <text x="104" y="15" fill="#666" font-size="11" text-anchor="middle">&gt;</text>
+  </g>
+  
+  <text x="900" y="660" fill="#ccc" font-size="10" text-anchor="end">页面二：事件列表（全部事件）</text>
+</svg>

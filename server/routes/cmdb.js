@@ -118,6 +118,7 @@ router.get('/alerts/stats', async (req, res) => {
       critical_firing: firing.filter(a => a.level === 'critical').length,
       warning_firing: firing.filter(a => a.level === 'warning').length,
       info_firing: firing.filter(a => a.level === 'info').length,
+      unlinked_firing_count: firing.filter(a => !a.incident_id).length,
     }
 
     const byLevelCount = {}

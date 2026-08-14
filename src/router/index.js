@@ -4,6 +4,7 @@ const routes = [
   { path: '/', redirect: '/aiops' },
   { path: '/overview', name: 'overview', component: () => import('../views/HomeView.vue') },
   { path: '/aiops', name: 'aiops', component: () => import('../views/HomeView.vue') },
+  { path: '/obs/overview', name: 'obs-overview', component: () => import('../views/obs/OBSOpsView.vue') },
 
   { path: '/alarm/realtime', redirect: '/alarm/current' },
   { path: '/alarm/history', redirect: '/alarm/current' },
@@ -66,6 +67,20 @@ const routes = [
       { path: 'config/templates', component: () => import('../views/ops/logs/LogCollectTemplates.vue') },
       { path: 'config/destinations', component: () => import('../views/ops/logs/LogForwardDestinations.vue') },
       { path: 'config/download-settings', component: () => import('../views/ops/logs/LogDownloadConfig.vue') },
+    ],
+  },
+  {
+    path: '/ops/events',
+    component: () => import('../views/ops/events/EventsView.vue'),
+    children: [
+      { path: '', redirect: '/ops/events/overview/view' },
+      { path: 'overview/view', component: () => import('../views/ops/events/EventOverview.vue') },
+      { path: 'list/:filter', component: () => import('../views/ops/events/EventList.vue'), props: true },
+      { path: 'rules/manage', component: () => import('../views/ops/events/RuleManagement.vue') },
+      { path: 'alerts/rules', component: () => import('../views/ops/events/AlertConversion.vue') },
+      { path: 'trace/tasks', component: () => import('../views/ops/events/TraceTaskManagement.vue') },
+      { path: 'trace/result', component: () => import('../views/ops/events/TraceResult.vue') },
+      { path: 'analysis', component: () => import('../views/ops/events/EventAnalysis.vue') },
     ],
   },
   {

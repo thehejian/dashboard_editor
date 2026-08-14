@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap');
+    * { font-family: 'Noto Sans SC', 'PingFang SC', sans-serif; }
+  </style>
+  <rect width="1000" height="700" fill="#f5f6fa"/>
+  
+  <rect x="0" y="0" width="220" height="700" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <rect x="0" y="0" width="220" height="42" fill="#fafafa"/>
+  <text x="16" y="26" fill="#333" font-size="13" font-weight="600">异常事件管理</text>
+  
+  <text x="36" y="58" fill="#666" font-size="12">▶ 概览</text>
+  <text x="36" y="88" fill="#666" font-size="12">▶ 事件列表</text>
+  <text x="36" y="118" fill="#666" font-size="12">▶ 日志追踪</text>
+  <text x="36" y="148" fill="#666" font-size="12">▶ 检测规则</text>
+  
+  <text x="36" y="178" fill="#1890ff" font-size="12" font-weight="500">▼ 转告警规则</text>
+  <rect x="0" y="190" width="220" height="28" fill="#e6f7ff"/>
+  <text x="52" y="208" fill="#1890ff" font-size="12" font-weight="500">├ 告警转换规则</text>
+  
+  <!-- Breadcrumb -->
+  <text x="240" y="26" fill="#999" font-size="12">异常事件管理 / 转告警规则 / 告警转换规则</text>
+  
+  <!-- Filter bar -->
+  <rect x="240" y="40" width="748" height="60" rx="4" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <text x="260" y="62" fill="#666" font-size="11">告警级别</text>
+  <rect x="310" y="50" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="360" y="65" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <text x="430" y="62" fill="#666" font-size="11">启用状态</text>
+  <rect x="480" y="50" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="530" y="65" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <text x="600" y="62" fill="#666" font-size="11">规则来源</text>
+  <rect x="650" y="50" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="700" y="65" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <rect x="770" y="50" width="60" height="24" rx="3" fill="#1890ff"/>
+  <text x="800" y="65" fill="#fff" font-size="11" text-anchor="middle">查询</text>
+  <rect x="836" y="50" width="60" height="24" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="866" y="65" fill="#666" font-size="11" text-anchor="middle">重置</text>
+  
+  <rect x="920" y="50" width="100" height="24" rx="3" fill="#1890ff"/>
+  <text x="970" y="65" fill="#fff" font-size="11" text-anchor="middle">+ 新建告警转换规则</text>
+  
+  <!-- Table header -->
+  <rect x="240" y="112" width="748" height="32" fill="#fafafa" stroke="#e8e8e8" stroke-width="1"/>
+  <text x="270" y="132" fill="#666" font-size="11">序号</text>
+  <text x="320" y="132" fill="#666" font-size="11">告警名称</text>
+  <text x="480" y="132" fill="#666" font-size="11">关联检测规则</text>
+  <text x="620" y="132" fill="#666" font-size="11">告警级别</text>
+  <text x="700" y="132" fill="#666" font-size="11">触发次数</text>
+  <text x="780" y="132" fill="#666" font-size="11">启用</text>
+  <text x="860" y="132" fill="#666" font-size="11">来源</text>
+  <text x="920" y="132" fill="#666" font-size="11">操作</text>
+  
+  <!-- Table rows -->
+  <g font-size="11" fill="#333">
+    <rect x="240" y="144" width="748" height="32" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="270" y="164" fill="#999">1</text>
+    <text x="320" y="164" fill="#1890ff">GaussDB 内存溢出告警</text>
+    <text x="480" y="164">GaussDB OOM 检测</text>
+    <rect x="620" y="152" width="40" height="16" rx="2" fill="#ff4d4f"/>
+    <text x="640" y="164" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+    <text x="700" y="164">3 次 / 60s</text>
+    <rect x="780" y="152" width="40" height="16" rx="2" fill="#52c41a"/>
+    <text x="800" y="164" fill="#fff" font-size="10" text-anchor="middle">已启用</text>
+    <rect x="860" y="152" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="880" y="164" fill="#fff" font-size="10" text-anchor="middle">预置</text>
+    <text x="920" y="164" fill="#1890ff">详情 编辑 禁用</text>
+    
+    <rect x="240" y="176" width="748" height="32" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="270" y="196" fill="#999">2</text>
+    <text x="320" y="196" fill="#1890ff">RDS 连接池耗尽告警</text>
+    <text x="480" y="196">RDS 连接数超限</text>
+    <rect x="620" y="184" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="640" y="196" fill="#fff" font-size="10" text-anchor="middle">重要</text>
+    <text x="700" y="196">5 次 / 120s</text>
+    <rect x="780" y="184" width="40" height="16" rx="2" fill="#52c41a"/>
+    <text x="800" y="196" fill="#fff" font-size="10" text-anchor="middle">已启用</text>
+    <rect x="860" y="184" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="880" y="196" fill="#fff" font-size="10" text-anchor="middle">预置</text>
+    <text x="920" y="196" fill="#1890ff">详情 编辑 禁用</text>
+    
+    <rect x="240" y="208" width="748" height="32" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="270" y="228" fill="#999">3</text>
+    <text x="320" y="228" fill="#1890ff">ECS 磁盘空间告警</text>
+    <text x="480" y="228">ECS 磁盘空间不足</text>
+    <rect x="620" y="216" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="640" y="228" fill="#fff" font-size="10" text-anchor="middle">次要</text>
+    <text x="700" y="228">2 次 / 300s</text>
+    <rect x="780" y="216" width="40" height="16" rx="2" fill="#d9d9d9"/>
+    <text x="800" y="228" fill="#666" font-size="10" text-anchor="middle">未启用</text>
+    <rect x="860" y="216" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="880" y="228" fill="#fff" font-size="10" text-anchor="middle">预置</text>
+    <text x="920" y="228" fill="#1890ff">详情 编辑 启用</text>
+    
+    <rect x="240" y="240" width="748" height="32" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="270" y="260" fill="#999">4</text>
+    <text x="320" y="260" fill="#1890ff">慢查询告警</text>
+    <text x="480" y="260">慢查询检测</text>
+    <rect x="620" y="248" width="40" height="16" rx="2" fill="#faad14"/>
+    <text x="640" y="260" fill="#fff" font-size="10" text-anchor="middle">提示</text>
+    <text x="700" y="260">10 次 / 60s</text>
+    <rect x="780" y="248" width="40" height="16" rx="2" fill="#52c41a"/>
+    <text x="800" y="260" fill="#fff" font-size="10" text-anchor="middle">已启用</text>
+    <rect x="860" y="248" width="50" height="16" rx="2" fill="#52c41a"/>
+    <text x="885" y="260" fill="#fff" font-size="10" text-anchor="middle">自定义</text>
+    <text x="920" y="260" fill="#1890ff">详情 编辑 禁用</text>
+    
+    <rect x="240" y="272" width="748" height="32" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="270" y="292" fill="#999">5</text>
+    <text x="320" y="292" fill="#1890ff">服务宕机告警</text>
+    <text x="480" y="292">服务宕机检测</text>
+    <rect x="620" y="280" width="40" height="16" rx="2" fill="#ff4d4f"/>
+    <text x="640" y="292" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+    <text x="700" y="292">1 次 / 30s</text>
+    <rect x="780" y="280" width="40" height="16" rx="2" fill="#52c41a"/>
+    <text x="800" y="292" fill="#fff" font-size="10" text-anchor="middle">已启用</text>
+    <rect x="860" y="280" width="50" height="16" rx="2" fill="#52c41a"/>
+    <text x="885" y="292" fill="#fff" font-size="10" text-anchor="middle">自定义</text>
+    <text x="920" y="292" fill="#1890ff">详情 编辑 禁用</text>
+    
+    <rect x="240" y="304" width="748" height="32" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="270" y="324" fill="#999">6</text>
+    <text x="320" y="324" fill="#1890ff">非法操作告警</text>
+    <text x="480" y="324">非法操作检测</text>
+    <rect x="620" y="312" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="640" y="324" fill="#fff" font-size="10" text-anchor="middle">重要</text>
+    <text x="700" y="324">3 次 / 60s</text>
+    <rect x="780" y="312" width="40" height="16" rx="2" fill="#d9d9d9"/>
+    <text x="800" y="324" fill="#666" font-size="10" text-anchor="middle">未启用</text>
+    <rect x="860" y="312" width="50" height="16" rx="2" fill="#52c41a"/>
+    <text x="885" y="324" fill="#fff" font-size="10" text-anchor="middle">自定义</text>
+    <text x="920" y="324" fill="#1890ff">详情 编辑 启用</text>
+  </g>
+  
+  <text x="900" y="660" fill="#ccc" font-size="10" text-anchor="end">页面四：告警转换规则</text>
+</svg>

@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap');
+    * { font-family: 'Noto Sans SC', 'PingFang SC', sans-serif; }
+  </style>
+  <rect width="1000" height="700" fill="#f5f6fa"/>
+  
+  <rect x="0" y="0" width="220" height="700" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <rect x="0" y="0" width="220" height="42" fill="#fafafa"/>
+  <text x="16" y="26" fill="#333" font-size="13" font-weight="600">异常事件管理</text>
+  
+  <text x="36" y="58" fill="#666" font-size="12">▶ 概览</text>
+  <text x="36" y="88" fill="#666" font-size="12">▶ 事件列表</text>
+  <text x="36" y="118" fill="#666" font-size="12">▶ 日志追踪</text>
+  
+  <text x="36" y="148" fill="#1890ff" font-size="12" font-weight="500">▼ 检测规则</text>
+  <rect x="0" y="160" width="220" height="28" fill="#e6f7ff"/>
+  <text x="52" y="178" fill="#1890ff" font-size="12" font-weight="500">├ 规则管理</text>
+  
+  <text x="36" y="208" fill="#666" font-size="12">▶ 转告警规则</text>
+  
+  <!-- Breadcrumb -->
+  <text x="240" y="26" fill="#999" font-size="12">异常事件管理 / 检测规则 / 规则管理</text>
+  
+  <!-- Filter bar -->
+  <rect x="240" y="40" width="748" height="60" rx="4" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <text x="260" y="62" fill="#666" font-size="11">采集模板</text>
+  <rect x="310" y="50" width="130" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="375" y="65" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <text x="460" y="62" fill="#666" font-size="11">规则来源</text>
+  <rect x="510" y="50" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="560" y="65" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <text x="630" y="62" fill="#666" font-size="11">事件来源</text>
+  <rect x="680" y="50" width="100" height="22" rx="3" fill="#fafafa" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="730" y="65" fill="#666" font-size="10" text-anchor="middle">全部 ▼</text>
+  
+  <rect x="800" y="50" width="60" height="24" rx="3" fill="#1890ff"/>
+  <text x="830" y="65" fill="#fff" font-size="11" text-anchor="middle">查询</text>
+  <rect x="866" y="50" width="60" height="24" rx="3" fill="#fff" stroke="#d9d9d9" stroke-width="1"/>
+  <text x="896" y="65" fill="#666" font-size="11" text-anchor="middle">重置</text>
+  
+  <rect x="940" y="50" width="80" height="24" rx="3" fill="#1890ff"/>
+  <text x="980" y="65" fill="#fff" font-size="11" text-anchor="middle">+ 新建规则</text>
+  
+  <!-- Table header -->
+  <rect x="240" y="112" width="748" height="32" fill="#fafafa" stroke="#e8e8e8" stroke-width="1"/>
+  <text x="275" y="132" fill="#666" font-size="11">序号</text>
+  <text x="340" y="132" fill="#666" font-size="11">规则名称</text>
+  <text x="520" y="132" fill="#666" font-size="11">采集模板</text>
+  <text x="650" y="132" fill="#666" font-size="11">事件级别</text>
+  <text x="740" y="132" fill="#666" font-size="11">事件来源</text>
+  <text x="820" y="132" fill="#666" font-size="11">规则来源</text>
+  <text x="900" y="132" fill="#666" font-size="11">操作</text>
+  
+  <!-- Table rows -->
+  <g font-size="11" fill="#333">
+    <rect x="240" y="144" width="748" height="32" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="164" fill="#999">1</text>
+    <text x="340" y="164" fill="#1890ff">GaussDB OOM 检测</text>
+    <text x="520" y="164">GaussDB 日志采集模板</text>
+    <rect x="650" y="152" width="40" height="16" rx="2" fill="#ff4d4f"/>
+    <text x="670" y="164" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+    <text x="740" y="164">运行日志</text>
+    <rect x="820" y="152" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="840" y="164" fill="#fff" font-size="10" text-anchor="middle">预置</text>
+    <text x="900" y="164" fill="#1890ff">详情 复制为自定义</text>
+    
+    <rect x="240" y="176" width="748" height="32" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="196" fill="#999">2</text>
+    <text x="340" y="196" fill="#1890ff">RDS 连接数超限</text>
+    <text x="520" y="196">RDS 微服务日志模板</text>
+    <rect x="650" y="184" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="670" y="196" fill="#fff" font-size="10" text-anchor="middle">重要</text>
+    <text x="740" y="196">运行日志</text>
+    <rect x="820" y="184" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="840" y="196" fill="#fff" font-size="10" text-anchor="middle">预置</text>
+    <text x="900" y="196" fill="#1890ff">详情 复制为自定义</text>
+    
+    <rect x="240" y="208" width="748" height="32" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="228" fill="#999">3</text>
+    <text x="340" y="228" fill="#1890ff">ECS 磁盘空间不足</text>
+    <text x="520" y="228">ECS 主机日志模板</text>
+    <rect x="650" y="216" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="670" y="228" fill="#fff" font-size="10" text-anchor="middle">次要</text>
+    <text x="740" y="228">运行日志</text>
+    <rect x="820" y="216" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="840" y="228" fill="#fff" font-size="10" text-anchor="middle">预置</text>
+    <text x="900" y="228" fill="#1890ff">详情 复制为自定义</text>
+    
+    <rect x="240" y="240" width="748" height="32" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="260" fill="#999">4</text>
+    <text x="340" y="260" fill="#1890ff">慢查询检测</text>
+    <text x="520" y="260">GaussDB 日志采集模板</text>
+    <rect x="650" y="248" width="40" height="16" rx="2" fill="#faad14"/>
+    <text x="670" y="260" fill="#fff" font-size="10" text-anchor="middle">提示</text>
+    <text x="740" y="260">运行日志</text>
+    <rect x="820" y="248" width="50" height="16" rx="2" fill="#52c41a"/>
+    <text x="845" y="260" fill="#fff" font-size="10" text-anchor="middle">自定义</text>
+    <text x="900" y="260" fill="#1890ff">详情 编辑 删除</text>
+    
+    <rect x="240" y="272" width="748" height="32" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="292" fill="#999">5</text>
+    <text x="340" y="292" fill="#1890ff">服务宕机检测</text>
+    <text x="520" y="292">RDS 微服务日志模板</text>
+    <rect x="650" y="280" width="40" height="16" rx="2" fill="#ff4d4f"/>
+    <text x="670" y="292" fill="#fff" font-size="10" text-anchor="middle">紧急</text>
+    <text x="740" y="292">运行日志</text>
+    <rect x="820" y="280" width="50" height="16" rx="2" fill="#52c41a"/>
+    <text x="845" y="292" fill="#fff" font-size="10" text-anchor="middle">自定义</text>
+    <text x="900" y="292" fill="#1890ff">详情 编辑 删除</text>
+    
+    <rect x="240" y="304" width="748" height="32" fill="#fafafa" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="324" fill="#999">6</text>
+    <text x="340" y="324" fill="#1890ff">非法操作检测</text>
+    <text x="520" y="324">RDS 微服务日志模板</text>
+    <rect x="650" y="312" width="40" height="16" rx="2" fill="#fa8c16"/>
+    <text x="670" y="324" fill="#fff" font-size="10" text-anchor="middle">重要</text>
+    <text x="740" y="324">操作日志</text>
+    <rect x="820" y="312" width="50" height="16" rx="2" fill="#52c41a"/>
+    <text x="845" y="324" fill="#fff" font-size="10" text-anchor="middle">自定义</text>
+    <text x="900" y="324" fill="#1890ff">详情 编辑 删除</text>
+    
+    <rect x="240" y="336" width="748" height="32" fill="#fff" stroke="#f0f0f0" stroke-width="1"/>
+    <text x="275" y="356" fill="#999">7</text>
+    <text x="340" y="356" fill="#1890ff">FusionCare 健康检查异常</text>
+    <text x="520" y="356">ECS 主机日志模板</text>
+    <rect x="650" y="344" width="40" height="16" rx="2" fill="#faad14"/>
+    <text x="670" y="356" fill="#fff" font-size="10" text-anchor="middle">提示</text>
+    <text x="740" y="356">巡检</text>
+    <rect x="820" y="344" width="40" height="16" rx="2" fill="#1890ff"/>
+    <text x="840" y="356" fill="#fff" font-size="10" text-anchor="middle">预置</text>
+    <text x="900" y="356" fill="#1890ff">详情 复制为自定义</text>
+  </g>
+  
+  <text x="900" y="660" fill="#ccc" font-size="10" text-anchor="end">页面三：检测规则管理</text>
+</svg>

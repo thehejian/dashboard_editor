@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { exec } from 'child_process'
 import cmdbRouter from './routes/cmdb.js'
+import { getTable } from './db/mockData.js'
 
 dotenv.config()
 
@@ -1116,6 +1117,7 @@ const MOCK_INCIDENTS = [
       affectedSessions: { current: 2500, label: '受影响会话' },
     },
     healingProgress: 15,
+    relatedAlertIds: [1, 3, 4, 5],
     topologyNodeIds: ['lb-api', 'prod-order-01', 'redis-cache', 'mysql-master', 'mysql-slave'],
     impactScope: '影响 2 个下游服务: redis-cache(缓存命中率↓45%), mysql-master(连接数↑120%)',
     timeline: [
@@ -1145,6 +1147,7 @@ const MOCK_INCIDENTS = [
       affectedSessions: { current: 1350, label: '受影响会话' },
     },
     healingProgress: 100,
+    relatedAlertIds: [7],
     topologyNodeIds: ['lb-api', 'prod-user-01', 'redis-cache', 'mysql-master'],
   },
   {
@@ -1166,6 +1169,7 @@ const MOCK_INCIDENTS = [
       affectedSessions: { current: 1020, label: '受影响会话' },
     },
     healingProgress: 100,
+    relatedAlertIds: [9],
     topologyNodeIds: ['lb-api', 'prod-pay-01', 'mq-order', 'redis-cache'],
   },
   {
@@ -1187,6 +1191,7 @@ const MOCK_INCIDENTS = [
       affectedSessions: { current: 720, label: '受影响会话' },
     },
     healingProgress: 30,
+    relatedAlertIds: [6],
     topologyNodeIds: ['lb-api', 'prod-inventory-01', 'mysql-master', 'mq-order'],
     impactScope: '影响 1 个下游服务: mysql-master(行锁竞争↑)',
     timeline: [
@@ -1213,6 +1218,7 @@ const MOCK_INCIDENTS = [
       affectedSessions: { current: 360, label: '受影响会话' },
     },
     healingProgress: 45,
+    relatedAlertIds: [],
     topologyNodeIds: ['lb-api', 'prod-order-02', 'es-cluster'],
     impactScope: '影响 1 个下游服务: es-cluster(查询延迟↑)',
     timeline: [
@@ -1239,6 +1245,7 @@ const MOCK_INCIDENTS = [
       affectedSessions: { current: 580, label: '受影响会话' },
     },
     healingProgress: 50,
+    relatedAlertIds: [10],
     topologyNodeIds: ['lb-api', 'prod-user-02', 'redis-cache'],
     impactScope: '影响 1 个下游服务: redis-cache(连接数↑)',
     timeline: [
@@ -1265,6 +1272,7 @@ const MOCK_INCIDENTS = [
       affectedSessions: { current: 0, label: '受影响会话' },
     },
     healingProgress: 60,
+    relatedAlertIds: [],
     topologyNodeIds: ['lb-api', 'prod-pay-02', 'es-cluster'],
     impactScope: '影响 1 个下游服务: es-cluster(日志写入缺失)',
     timeline: [
@@ -1870,7 +1878,68 @@ app.get('/api/sre/incidents', (req, res) => {
   const { appName } = req.query
   let incidents = MOCK_INCIDENTS
   if (appName) incidents = incidents.filter(i => i.appName === appName)
-  res.json({ success: true, data: incidents })
+  const alerts = getTable('alerts')
+  const data = incidents.map(i => ({
+    ...i,
+    relatedAlertCount: (i.relatedAlertIds || []).filter(id => alerts.some(a => String(a.id) === String(id))).length,
+  }))
+  res.json({ success: true, data })
+})
+
+// POST /api/sre/incidents/aggregate — 把选中的告警聚合成一个新故障
+app.post('/api/sre/incidents/aggregate', (req, res) => {
+  const alertIds = (req.body?.alertIds || []).map(id => String(id))
+  if (!alertIds.length) return res.status(400).json({ success: false, message: 'alertIds 不能为空' })
+
+  const allAlerts = getTable('alerts')
+  const alerts = alertIds
+    .map(id => allAlerts.find(a => String(a.id) === id))
+    .filter(Boolean)
+  if (!alerts.length) return res.status(400).json({ success: false, message: '未找到匹配的告警' })
+
+  const now = new Date()
+  const ymd = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0')
+  const maxSeq = MOCK_INCIDENTS
+    .filter(i => i.id.startsWith('INC-' + ymd))
+    .reduce((m, i) => Math.max(m, parseInt(i.id.slice(-2)) || 0), 0)
+  const id = 'INC-' + ymd + '-' + String(maxSeq + 1).padStart(2, '0')
+
+  const worst = alerts.sort((a, b) => ({ critical: 0, warning: 1, info: 2 }[a.level] - { critical: 0, warning: 1, info: 2 }[b.level]))[0]
+  const title = alerts.length > 1
+    ? alerts[0].title + '等 ' + alerts.length + ' 项告警聚合'
+    : alerts[0].title
+
+  const incident = {
+    id,
+    title,
+    description: '由 ' + alerts.length + ' 条相关告警一键聚合生成，待排查确认。',
+    status: 'investigating',
+    severity: { critical: 'P1', warning: 'P2', info: 'P3' }[worst.level] || 'P2',
+    appName: '待确认',
+    appNodeId: '',
+    service: '',
+    startTime: now.toISOString().slice(0, 19).replace('T', ' '),
+    endTime: null,
+    duration: '0min',
+    metrics: {
+      p99: { current: 0, baseline: 0, unit: 'ms', multiplier: '' },
+      failureRate: { current: 0, unit: '%', label: '' },
+      affectedUsers: { current: 0, label: '受影响用户' },
+      affectedSessions: { current: 0, label: '受影响会话' },
+    },
+    healingProgress: 0,
+    relatedAlertIds: alerts.map(a => a.id),
+    topologyNodeIds: ['lb-api'],
+    timeline: [
+      { time: now.toTimeString().slice(0, 5), event: '告警聚合', type: 'alert', detail: alerts.length + ' 条告警聚合成故障 ' + id },
+    ],
+  }
+  MOCK_INCIDENTS.unshift(incident)
+
+  // 回写告警的 incident_id
+  alerts.forEach(a => { a.incident_id = id })
+
+  res.json({ success: true, data: { incident, relatedAlertCount: alerts.length } })
 })
 
 // GET /api/sre/postmortems
@@ -1894,6 +1963,10 @@ app.get('/api/sre/incidents/:id', (req, res) => {
   if (!incident) return res.status(404).json({ success: false, message: 'Incident not found' })
   const topoNodes = MOCK_TOPO_NODES.filter(n => incident.topologyNodeIds.includes(n.id))
   const topoEdges = MOCK_TOPO_EDGES.filter(e => incident.topologyNodeIds.includes(e.source) && incident.topologyNodeIds.includes(e.target))
+  const allAlerts = getTable('alerts')
+  const relatedAlerts = (incident.relatedAlertIds || [])
+    .map(id => allAlerts.find(a => String(a.id) === String(id)))
+    .filter(Boolean)
   res.json({
     success: true,
     data: {
@@ -1903,8 +1976,20 @@ app.get('/api/sre/incidents/:id', (req, res) => {
       postmortem: MOCK_POSTMORTEM_REPORTS[incident.id] || null,
       errorRateTrend: MOCK_ERROR_RATE_TREND[incident.id] || { data: [], annotations: [], executionResults: [] },
       rcaEvidence: MOCK_RCA_REPORTS.find(r => r.incidentId === incident.id) || null,
+      relatedAlerts,
     },
   })
+})
+
+// GET /api/sre/incidents/:id/related-alerts
+app.get('/api/sre/incidents/:id/related-alerts', (req, res) => {
+  const incident = MOCK_INCIDENTS.find(i => i.id === req.params.id)
+  if (!incident) return res.status(404).json({ success: false, message: 'Incident not found' })
+  const allAlerts = getTable('alerts')
+  const related = (incident.relatedAlertIds || [])
+    .map(id => allAlerts.find(a => String(a.id) === String(id)))
+    .filter(Boolean)
+  res.json({ success: true, data: related })
 })
 
 // GET /api/sre/incidents/:id/logs

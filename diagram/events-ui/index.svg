@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap');
+    * { font-family: 'Noto Sans SC', 'PingFang SC', sans-serif; }
+  </style>
+  <rect width="1000" height="480" fill="#0f172a"/>
+  <rect width="1000" height="480" fill="url(#grid)" opacity="0.3"/>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  
+  <text x="40" y="50" fill="#22d3ee" font-size="20" font-weight="700">异常事件管理 — UI 线框图索引</text>
+  <text x="40" y="76" fill="#94a3b8" font-size="12">共 8 张线框图，覆盖 7 个页面 + 弹窗组件</text>
+  
+  <!-- Card grid -->
+  <g>
+    <!-- Card 1 -->
+    <rect x="40" y="100" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+    <text x="150" y="130" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">01 整体布局</text>
+    <text x="150" y="150" fill="#94a3b8" font-size="10" text-anchor="middle">侧边栏 + 面包屑 + 内容区</text>
+    <text x="150" y="170" fill="#94a3b8" font-size="10" text-anchor="middle">左侧手风琴菜单结构</text>
+    <text x="150" y="210" fill="#64748b" font-size="9" text-anchor="middle">pages: 1</text>
+    
+    <!-- Card 2 -->
+    <rect x="280" y="100" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+    <text x="390" y="130" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">02 事件概览</text>
+    <text x="390" y="150" fill="#94a3b8" font-size="10" text-anchor="middle">5 统计卡片 + 5 图表</text>
+    <text x="390" y="170" fill="#94a3b8" font-size="10" text-anchor="middle">堆叠柱状图/环形图</text>
+    <text x="390" y="190" fill="#94a3b8" font-size="10" text-anchor="middle">柱状图/横向柱状图×2</text>
+    <text x="390" y="210" fill="#64748b" font-size="9" text-anchor="middle">pages: 1</text>
+    
+    <!-- Card 3 -->
+    <rect x="520" y="100" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+    <text x="630" y="130" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">03 事件列表</text>
+    <text x="630" y="150" fill="#94a3b8" font-size="10" text-anchor="middle">6 筛选条件 + 查询/重置</text>
+    <text x="630" y="170" fill="#94a3b8" font-size="10" text-anchor="middle">12 列表格 + 分页</text>
+    <text x="630" y="190" fill="#94a3b8" font-size="10" text-anchor="middle">批量操作 + 导出</text>
+    <text x="630" y="210" fill="#64748b" font-size="9" text-anchor="middle">pages: 3 (全部/未处理/紧急)</text>
+    
+    <!-- Card 4 -->
+    <rect x="760" y="100" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="870" y="130" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">04 检测规则</text>
+    <text x="870" y="150" fill="#94a3b8" font-size="10" text-anchor="middle">3 筛选条件 + 新建</text>
+    <text x="870" y="170" fill="#94a3b8" font-size="10" text-anchor="middle">7 条规则列表</text>
+    <text x="870" y="190" fill="#94a3b8" font-size="10" text-anchor="middle">预置/自定义标签</text>
+    <text x="870" y="210" fill="#64748b" font-size="9" text-anchor="middle">pages: 1</text>
+    
+    <!-- Card 5 -->
+    <rect x="40" y="260" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="150" y="290" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">05 告警转换规则</text>
+    <text x="150" y="310" fill="#94a3b8" font-size="10" text-anchor="middle">3 筛选条件 + 新建</text>
+    <text x="150" y="330" fill="#94a3b8" font-size="10" text-anchor="middle">6 条规则列表</text>
+    <text x="150" y="350" fill="#94a3b8" font-size="10" text-anchor="middle">启用/禁用切换</text>
+    <text x="150" y="370" fill="#64748b" font-size="9" text-anchor="middle">pages: 1</text>
+    
+    <!-- Card 6 -->
+    <rect x="280" y="260" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="390" y="290" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">06 追踪任务管理</text>
+    <text x="390" y="310" fill="#94a3b8" font-size="10" text-anchor="middle">3 筛选条件 + 创建</text>
+    <text x="390" y="330" fill="#94a3b8" font-size="10" text-anchor="middle">5 条任务列表</text>
+    <text x="390" y="350" fill="#94a3b8" font-size="10" text-anchor="middle">事件追踪/实时追踪</text>
+    <text x="390" y="370" fill="#64748b" font-size="9" text-anchor="middle">pages: 1</text>
+    
+    <!-- Card 7 -->
+    <rect x="520" y="260" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="630" y="290" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">07 追踪结果</text>
+    <text x="630" y="310" fill="#94a3b8" font-size="10" text-anchor="middle">任务信息卡片</text>
+    <text x="630" y="330" fill="#94a3b8" font-size="10" text-anchor="middle">深色代码框日志</text>
+    <text x="630" y="350" fill="#94a3b8" font-size="10" text-anchor="middle">事件行高亮</text>
+    <text x="630" y="370" fill="#64748b" font-size="9" text-anchor="middle">pages: 1</text>
+    
+    <!-- Card 8 -->
+    <rect x="760" y="260" width="220" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+    <text x="870" y="290" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">08 弹窗组件</text>
+    <text x="870" y="310" fill="#94a3b8" font-size="10" text-anchor="middle">事件详情弹窗</text>
+    <text x="870" y="330" fill="#94a3b8" font-size="10" text-anchor="middle">新建检测规则弹窗</text>
+    <text x="870" y="350" fill="#94a3b8" font-size="10" text-anchor="middle">条件编辑器展示</text>
+    <text x="870" y="370" fill="#64748b" font-size="9" text-anchor="middle">pages: 4 modals</text>
+    
+    <!-- Card 9 - Event Analysis (hidden on index, shown separately) -->
+    <rect x="40" y="420" width="220" height="40" rx="8" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="150" y="445" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">09 事件关联分析（泳道图）</text>
+  </g>
+  
+  <text x="40" y="470" fill="#64748b" font-size="9">文件位置：diagram/events-ui/01~08.svg</text>
+</svg>

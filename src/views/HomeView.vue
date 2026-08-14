@@ -918,7 +918,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { Chart } from '@antv/g2'
 import { setTopoHighlight } from '../composables/useEditorState.js'
-
 const router = useRouter()
 const route = useRoute()
 
