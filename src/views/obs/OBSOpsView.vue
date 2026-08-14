@@ -52,6 +52,7 @@
               />
             </div>
             <a-table
+              class="alarm-table"
               :columns="alarmColumns"
               :data-source="pagedAlarms"
               :pagination="false"
@@ -74,7 +75,6 @@
       </div>
 
       <div class="obs-section">
-        <div class="obs-section-title">租户与企业项目监控</div>
         <div class="tenant-ep-section">
           <div class="tenant-top5-table tenant-table">
             <div class="tenant-table-header">
@@ -111,8 +111,9 @@
             </a-table>
           </div>
           <div class="tenant-charts">
+            <div class="tc-wrap">
+            <div class="tc-hdr">企业项目资源占比</div>
             <div class="tc-card">
-              <div class="tc-hdr">企业项目资源占比</div>
               <div class="tc-chart">
                 <svg :viewBox="'0 0 200 200'" class="donut-svg">
                   <g transform="translate(100,100)">
@@ -126,11 +127,12 @@
                     <span class="legend-value">{{ (item.used / donutTotal * 100).toFixed(1) }}%</span>
 </div>
                   </div>
-                </div>
-              </div>
+</div>
             </div>
+            </div>
+            <div class="tc-wrap">
+            <div class="tc-hdr">租户使用量对比</div>
             <div class="tc-card">
-              <div class="tc-hdr">租户使用量对比</div>
               <div class="tc-chart">
                 <svg :viewBox="'0 0 320 160'" class="bar-svg">
                   <g v-for="(bar, i) in barData" :key="i">
@@ -141,20 +143,43 @@
                 </svg>
               </div>
             </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="obs-section-title" style="margin-bottom:8px;">区域解剖图</div>
+      <div class="obs-section-title anatomy-section-title" style="margin-bottom:0;">区域解剖图</div>
       <div class="obs-section">
         <div class="anatomy-block" v-for="r in regions" :key="r.id" :class="{ collapsed: expandedRegions[r.id] === false }">
           <div class="anatomy-block-title" style="cursor:pointer" @click="expandedRegions[r.id] = expandedRegions[r.id] === undefined ? false : !expandedRegions[r.id]">
-            <i class="fa-solid" :class="expandedRegions[r.id] !== false ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:10px; color:#8c8c8c; margin-right:6px;"></i>
-            <span>{{ r.name }}</span>
-            <span class="health-tag" :class="r.health">{{ healthText(r.health) }}</span>
+            <div class="abl-left">
+              <i class="fa-solid" :class="expandedRegions[r.id] !== false ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:10px; color:#8c8c8c;"></i>
+              <span class="abl-name">{{ r.name }}</span>
+              <span class="abl-sep">|</span>
+              <span class="abl-endpoint">{{ r.domain }}</span>
+              <span class="health-tag" :class="r.health">{{ healthText(r.health) }}</span>
+            </div>
+            <div class="abl-capacity">
+              <div class="abl-cap-mod">
+                <span class="abl-cap-label">逻辑容量</span>
+                <div class="abl-cap-bar"><span class="abl-cap-fill" :style="{ width: r.metrics.logicPercent + '%', background: percentColor(r.metrics.logicPercent) }"></span></div>
+                <span class="abl-cap-nums">{{ fmtCap(r.metrics.logicUsed) }}<em>/</em>{{ fmtCap(r.metrics.logicTotal) }}</span>
+                <span class="abl-cap-pct">{{ r.metrics.logicPercent }}%</span>
+              </div>
+              <div class="abl-cap-mod">
+                <span class="abl-cap-label">物理容量</span>
+                <div class="abl-cap-bar"><span class="abl-cap-fill" :style="{ width: r.metrics.phyPercent + '%', background: percentColor(r.metrics.phyPercent) }"></span></div>
+                <span class="abl-cap-nums">{{ fmtCap(r.metrics.phyUsed) }}<em>/</em>{{ fmtCap(r.metrics.phyTotal) }}</span>
+                <span class="abl-cap-pct">{{ r.metrics.phyPercent }}%</span>
+              </div>
+            </div>
           </div>
 
-          <div class="obs-section-title" style="font-size:14px; margin-top:12px;">业务集群</div>
+          <div class="anatomy-part" :class="{ collapsed: expandedParts[r.id + ':cluster'] === false }">
+          <div class="obs-section-title anatomy-dropdown" style="font-size:14px; margin-top:12px; cursor:pointer" @click="expandedParts[r.id + ':cluster'] = expandedParts[r.id + ':cluster'] === undefined ? false : !expandedParts[r.id + ':cluster']">
+            <i class="fa-solid" :class="expandedParts[r.id + ':cluster'] !== false ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:10px; color:#8c8c8c; margin-right:6px;"></i>
+            业务集群
+          </div>
           <div class="cluster-detail-grid" v-for="c in getClustersByRegion(r.id)" :key="c.id">
             <div class="cluster-detail-card" @click="openClusterDrawer(c)">
               <div class="cdc-header">
@@ -165,18 +190,15 @@
                   <span class="cdc-redun">{{ redundancyText(c.redundancy) }}</span>
                 </div>
               </div>
-              <div class="cdc-capacity">
+              <div class="cdc-body-row">
+                <div class="cdc-capacity">
                 <div class="cdc-cap-row">
-                  <span class="cdc-cap-label">逻辑</span>
-                  <span class="cdc-cap-text">{{ c.metrics.logicUsed }}/{{ c.metrics.logicTotal }} TB</span>
-                  <div class="cap-bar"><div class="cap-fill" :style="{ width: c.metrics.logicPercent + '%', background: percentColor(c.metrics.logicPercent) }"></div></div>
-                  <span class="cdc-cap-pct">{{ c.metrics.logicPercent }}%</span>
+                  <span class="cdc-cap-title">逻辑</span>
+                  <div :ref="el => { if (el) capChartRefs[c.id + ':logic'] = el }" class="cdc-cap-chart"></div>
                 </div>
                 <div class="cdc-cap-row">
-                  <span class="cdc-cap-label">物理</span>
-                  <span class="cdc-cap-text">{{ c.metrics.phyUsed }}/{{ c.metrics.phyTotal }} TB</span>
-                  <div class="cap-bar"><div class="cap-fill" :style="{ width: c.metrics.phyPercent + '%', background: percentColor(c.metrics.phyPercent) }"></div></div>
-                  <span class="cdc-cap-pct">{{ c.metrics.phyPercent }}%</span>
+                  <span class="cdc-cap-title">物理</span>
+                  <div :ref="el => { if (el) capChartRefs[c.id + ':phy'] = el }" class="cdc-cap-chart"></div>
                 </div>
               </div>
               <div class="cdc-charts">
@@ -195,41 +217,44 @@
                 <div class="cdc-kpi"><span class="cdc-kpi-label">对象数</span><span class="cdc-kpi-val">{{ (c.objCount / 100000000).toFixed(2) }}亿</span></div>
                 <div class="cdc-kpi"><span class="cdc-kpi-label">连接数</span><span class="cdc-kpi-val">{{ (c.metrics.conns / 10000).toFixed(1) }}万</span></div>
               </div>
+              </div>
               <div class="honeycomb">
-                <div class="hex-cell" v-for="b in getBucketsByCluster(c.id).slice(0, 12)" :key="b.name" :class="'hex-' + (b.health === 'ok' ? 'green' : b.health === 'warn' ? 'orange' : 'red')" @click.stop="openBucketDrawer(b)">
-                  <div class="hex-inner">
-                    <div class="hex-name">{{ b.name.replace('bucket-', '') }}</div>
-                    <div class="hex-val">{{ b.metrics.usage }}%</div>
+                <div class="hex-cell" :class="hexHealth(b)" v-for="b in honeycombRow(c.id)" :key="b.name" :title="b.name" @click.stop="openBucketDrawer(b)"></div>
+              </div>
+            </div>
+          </div>
+          </div>
+
+          <div class="anatomy-part" :class="{ collapsed: expandedParts[r.id + ':sc'] === false }">
+          <div class="obs-section-title anatomy-dropdown" style="font-size:14px; margin-top:12px; cursor:pointer" @click="expandedParts[r.id + ':sc'] = expandedParts[r.id + ':sc'] === undefined ? false : !expandedParts[r.id + ':sc']">
+            <i class="fa-solid" :class="expandedParts[r.id + ':sc'] !== false ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:10px; color:#8c8c8c; margin-right:6px;"></i>
+            存储集群
+          </div>
+          <div class="sc-detail-grid">
+            <div class="sc-detail-card" v-for="sc in getStorageClustersByRegion(r.id)" :key="sc.id" @click="openSCDrawer(sc)">
+              <div class="sdc-name">{{ sc.name }}</div>
+              <div class="sdc-pool-list">
+                <div class="sdc-pool" v-for="p in getPoolsBySC(sc.id)" :key="p.id">
+                  <div class="sdp-title">{{ p.name }}</div>
+                  <div class="sdp-body">
+                    <div :ref="el => { if (el) scPoolBarRefs[sc.id + ':' + p.id] = el }" class="sdp-bar-chart"></div>
+                    <div class="sdp-bar-cap"><span>已用 {{ p.metrics.phyUsed }} TB</span><span>总量 {{ p.metrics.phyTotal }} TB</span></div>
+                  </div>
+                  <div class="sdp-trend">
+                    <div class="sdp-trend-label">使用率趋势</div>
+                    <div :ref="el => { if (el) scPoolChartRefs[sc.id + ':' + p.id] = el }" class="sdp-trend-chart"></div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <div class="obs-section-title" style="font-size:14px; margin-top:12px;">存储集群</div>
-          <div class="sc-detail-grid" v-for="sc in getStorageClustersByRegion(r.id)" :key="sc.id">
-            <div class="sc-detail-card" @click="openSCDrawer(sc)">
-              <div class="sdc-header">
-                <div class="sdc-name">{{ sc.name }}</div>
-                <div class="sdc-meta">
-                  <span>控制节点: {{ sc.ctrlNodeCount }}</span>
-                  <span>存储池: {{ sc.poolCount }}</span>
-                  <span class="health-tag" :class="sc.health">{{ healthText(sc.health) }}</span>
-                </div>
-              </div>
-              <div class="pool-waterfall">
-                <div v-for="p in getPoolsBySC(sc.id)" :key="p.id" class="pool-wl-row">
-                  <span class="pool-wl-name">{{ p.name }}</span>
-                  <div class="pw-fill-track"><div class="pw-fill" :style="{ width: p.metrics.phyPercent + '%', background: percentColor(p.metrics.phyPercent) }"></div></div>
-                  <span class="pool-wl-label">{{ p.metrics.phyUsed }}/{{ p.metrics.phyTotal }} TB</span>
-                  <span class="pool-wl-val">{{ p.metrics.phyPercent }}%</span>
-                </div>
-              </div>
-              <div :ref="el => { if (el) scChartRefs[sc.id] = el }" class="cdc-chart-box" style="height:100px;"></div>
-            </div>
           </div>
 
-          <div class="obs-section-title" style="font-size:14px; margin-top:12px;">存储节点</div>
+          <div class="anatomy-part" :class="{ collapsed: expandedParts[r.id + ':node'] === false }">
+          <div class="obs-section-title anatomy-dropdown" style="font-size:14px; margin-top:12px; cursor:pointer" @click="expandedParts[r.id + ':node'] = expandedParts[r.id + ':node'] === undefined ? false : !expandedParts[r.id + ':node']">
+            <i class="fa-solid" :class="expandedParts[r.id + ':node'] !== false ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size:10px; color:#8c8c8c; margin-right:6px;"></i>
+            存储节点
+          </div>
           <div class="node-grid">
             <div class="node-tile" v-for="n in getNodesByRegion(r.id)" :key="n.name" :class="n.health" @click="openNodeDrawer(n)">
               <div class="nt-header">
@@ -250,6 +275,7 @@
         </div>
       </div>
     </div>
+  </div>
     
     <div class="detail-panel" :class="{ open: drawerOpen }">
       <div class="detail-mask" @click="closeDrawer"></div>
@@ -267,6 +293,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
@@ -276,6 +303,7 @@ import { Chart } from '@antv/g2'
 const period = ref('24h')
 const lastRefresh = ref('')
 const expandedRegions = reactive({})
+const expandedParts = reactive({})
 
 const summaryCards = [
   { label: '区域', num: '2', unit: '个', icon: 'fa-solid fa-globe', iconBg: '#e6f0ff' },
@@ -348,17 +376,17 @@ const clusters = [
 ]
 
 const storageClusters = [
-  { id: 'sc-001', name: 'sc-data-01', ctrlNodeCount: 3, poolCount: 2, cluster: 'cluster-001', health: 'ok' },
-  { id: 'sc-002', name: 'sc-cache-01', ctrlNodeCount: 2, poolCount: 1, cluster: 'cluster-001', health: 'ok' },
-  { id: 'sc-003', name: 'sc-data-02', ctrlNodeCount: 3, poolCount: 2, cluster: 'cluster-002', health: 'warn' },
-  { id: 'sc-004', name: 'sc-data-03', ctrlNodeCount: 2, poolCount: 1, cluster: 'cluster-003', health: 'ok' },
+  { id: 'sc-001', name: '存储集群01', ctrlNodeCount: 3, poolCount: 2, cluster: 'cluster-001', health: 'ok' },
+  { id: 'sc-002', name: '存储集群02', ctrlNodeCount: 2, poolCount: 1, cluster: 'cluster-001', health: 'ok' },
+  { id: 'sc-003', name: '存储集群03', ctrlNodeCount: 3, poolCount: 1, cluster: 'cluster-002', health: 'warn' },
+  { id: 'sc-004', name: '存储集群04', ctrlNodeCount: 2, poolCount: 1, cluster: 'cluster-003', health: 'ok' },
 ]
 
 const storagePools = [
-  { id: 'pool-001', name: 'obsData', safety: '节点级', ecRatio: '12+3', redundancy: 'FUSION', cacheDisk: 'NVMe SSD', mainDisk: 'NL-SAS HDD', sc: 'sc-001', health: 'normal', metrics: { phyTotal: 100, phyUsed: 87.3, phyPercent: 87.3, objCount: 520000, readBw: 320, readBwTrend: genTrend(24, 200, 500), writeBw: 180, writeBwTrend: genTrend(24, 100, 300), iops: 4500, iopsTrend: genTrend(24, 2000, 7000), lat: 5.2, latTrend: genTrend(24, 3, 10) } },
-  { id: 'pool-002', name: 'backupPool', safety: '柜级', ecRatio: '8+2', redundancy: 'THREE_AZ', cacheDisk: 'SAS SSD', mainDisk: 'NL-SAS HDD', sc: 'sc-001', health: 'degraded', metrics: { phyTotal: 60, phyUsed: 43.2, phyPercent: 72, objCount: 180000, readBw: 150, readBwTrend: genTrend(24, 80, 250), writeBw: 90, writeBwTrend: genTrend(24, 50, 180), iops: 2200, iopsTrend: genTrend(24, 1000, 4000), lat: 8.5, latTrend: genTrend(24, 4, 15) } },
-  { id: 'pool-003', name: 'test_ec', safety: '节点级', ecRatio: '12+3', redundancy: 'FUSION', cacheDisk: 'NVMe SSD', mainDisk: 'NL-SAS HDD', sc: 'sc-003', health: 'migrating', metrics: { phyTotal: 50, phyUsed: 32.5, phyPercent: 65, objCount: 95000, readBw: 200, readBwTrend: genTrend(24, 100, 350), writeBw: 120, writeBwTrend: genTrend(24, 60, 220), iops: 3800, iopsTrend: genTrend(24, 1500, 6000), lat: 4.8, latTrend: genTrend(24, 2, 9) } },
-  { id: 'pool-004', name: 'cachePool', safety: '节点级', ecRatio: '4+2', redundancy: 'ONE_AZ', cacheDisk: 'NVMe SSD', mainDisk: 'NVMe SSD', sc: 'sc-002', health: 'normal', metrics: { phyTotal: 20, phyUsed: 8.6, phyPercent: 43, objCount: 45000, readBw: 450, readBwTrend: genTrend(24, 300, 700), writeBw: 280, writeBwTrend: genTrend(24, 150, 450), iops: 8500, iopsTrend: genTrend(24, 5000, 12000), lat: 1.2, latTrend: genTrend(24, 0.5, 3) } },
+  { id: 'pool-001', name: 'EC性能池', safety: '节点级', ecRatio: '12+3', redundancy: 'FUSION', cacheDisk: 'NVMe SSD', mainDisk: 'NL-SAS HDD', sc: 'sc-001', health: 'normal', metrics: { phyTotal: 186, phyUsed: 118, phyPercent: 63, objCount: 520000, readBw: 320, readBwTrend: genTrend(24, 200, 500), writeBw: 180, writeBwTrend: genTrend(24, 100, 300), iops: 4500, iopsTrend: genTrend(24, 2000, 7000), lat: 5.2, latTrend: genTrend(24, 3, 10) } },
+  { id: 'pool-002', name: 'EC容量池', safety: '柜级', ecRatio: '8+2', redundancy: 'THREE_AZ', cacheDisk: 'SAS SSD', mainDisk: 'NL-SAS HDD', sc: 'sc-001', health: 'degraded', metrics: { phyTotal: 372, phyUsed: 286, phyPercent: 77, objCount: 180000, readBw: 150, readBwTrend: genTrend(24, 80, 250), writeBw: 90, writeBwTrend: genTrend(24, 50, 180), iops: 2200, iopsTrend: genTrend(24, 1000, 4000), lat: 8.5, latTrend: genTrend(24, 4, 15) } },
+  { id: 'pool-003', name: 'EC归档池', safety: '节点级', ecRatio: '12+3', redundancy: 'FUSION', cacheDisk: 'NVMe SSD', mainDisk: 'NL-SAS HDD', sc: 'sc-002', health: 'migrating', metrics: { phyTotal: 496, phyUsed: 198, phyPercent: 40, objCount: 95000, readBw: 200, readBwTrend: genTrend(24, 100, 350), writeBw: 120, writeBwTrend: genTrend(24, 60, 220), iops: 3800, iopsTrend: genTrend(24, 1500, 6000), lat: 4.8, latTrend: genTrend(24, 2, 9) } },
+  { id: 'pool-004', name: 'EC性能池02', safety: '节点级', ecRatio: '4+2', redundancy: 'ONE_AZ', cacheDisk: 'NVMe SSD', mainDisk: 'NVMe SSD', sc: 'sc-003', health: 'normal', metrics: { phyTotal: 186, phyUsed: 152, phyPercent: 82, objCount: 45000, readBw: 450, readBwTrend: genTrend(24, 300, 700), writeBw: 280, writeBwTrend: genTrend(24, 150, 450), iops: 8500, iopsTrend: genTrend(24, 5000, 12000), lat: 1.2, latTrend: genTrend(24, 0.5, 3) } },
   { id: 'pool-005', name: 'obsIndex', safety: '节点级', ecRatio: '6+3', redundancy: 'FUSION', cacheDisk: 'SAS SSD', mainDisk: 'SAS SSD', sc: 'sc-004', health: 'normal', metrics: { phyTotal: 15, phyUsed: 9.8, phyPercent: 65.3, objCount: 20000, readBw: 80, readBwTrend: genTrend(24, 40, 150), writeBw: 35, writeBwTrend: genTrend(24, 15, 70), iops: 1200, iopsTrend: genTrend(24, 600, 2200), lat: 3.8, latTrend: genTrend(24, 2, 7) } },
 ]
 
@@ -366,10 +394,24 @@ const buckets = [
   { name: 'bucket-data-01', createTime: '2025-03-15 10:30:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-001', ep: 'ep-data-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 50, used: 38.5, usage: 77, objCount: 285000, successRate: 99.99, tps: 3200, successTrend: genTrend(24, 99.9, 100), tpsTrend: genTrend(24, 2000, 5000), readBw: 180, readBwTrend: genTrend(24, 100, 300), lat: 3.2, latTrend: genTrend(24, 1.5, 6), concurrency: 120, concurrencyTrend: genTrend(24, 60, 200) }, health: 'ok' },
   { name: 'bucket-log-01', createTime: '2025-04-20 14:00:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-001', ep: 'ep-data-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 100, used: 72.3, usage: 72.3, objCount: 420000, successRate: 99.97, tps: 4500, successTrend: genTrend(24, 99.8, 100), tpsTrend: genTrend(24, 3000, 7000), readBw: 250, readBwTrend: genTrend(24, 150, 400), lat: 2.8, latTrend: genTrend(24, 1, 5), concurrency: 200, concurrencyTrend: genTrend(24, 100, 350) }, health: 'ok' },
   { name: 'bucket-backup-01', createTime: '2025-05-10 08:00:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-002', ep: 'ep-backup-01', type: 'OBJECT', redundancy: 'THREE_AZ', aliasTarget: '', metrics: { quota: 200, used: 145.8, usage: 72.9, objCount: 18000, successRate: 99.95, tps: 800, successTrend: genTrend(24, 99.8, 100), tpsTrend: genTrend(24, 400, 1400), readBw: 60, readBwTrend: genTrend(24, 30, 120), lat: 5.5, latTrend: genTrend(24, 3, 10), concurrency: 45, concurrencyTrend: genTrend(24, 20, 80) }, health: 'ok' },
+  { name: 'bucket-obs-02', createTime: '2025-03-20 09:00:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-001', ep: 'ep-data-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 40, used: 33.2, usage: 83, objCount: 90000, successRate: 99.9, tps: 900, successTrend: genTrend(24, 99.5, 100), tpsTrend: genTrend(24, 500, 1500), readBw: 80, readBwTrend: genTrend(24, 40, 150), lat: 6.8, latTrend: genTrend(24, 3, 12), concurrency: 30, concurrencyTrend: genTrend(24, 15, 60) }, health: 'warn' },
+  { name: 'bucket-trace-01', createTime: '2025-04-01 10:30:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-001', ep: 'ep-data-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 20, used: 19.4, usage: 97, objCount: 150000, successRate: 99.72, tps: 2100, successTrend: genTrend(24, 99.0, 100), tpsTrend: genTrend(24, 1500, 3500), readBw: 320, readBwTrend: genTrend(24, 200, 500), lat: 12.5, latTrend: genTrend(24, 6, 20), concurrency: 90, concurrencyTrend: genTrend(24, 40, 160) }, health: 'crit' },
+  { name: 'bucket-log-02', createTime: '2025-05-15 11:00:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-002', ep: 'ep-backup-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 60, used: 30.6, usage: 51, objCount: 62000, successRate: 99.96, tps: 1300, successTrend: genTrend(24, 99.8, 100), tpsTrend: genTrend(24, 800, 2200), readBw: 95, readBwTrend: genTrend(24, 50, 200), lat: 3.9, latTrend: genTrend(24, 2, 8), concurrency: 55, concurrencyTrend: genTrend(24, 25, 90) }, health: 'ok' },
+  { name: 'bucket-media-02', createTime: '2025-06-10 15:00:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-002', ep: 'ep-backup-01', type: 'POSIX', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 120, used: 91.5, usage: 76.3, objCount: 78000, successRate: 99.94, tps: 2400, successTrend: genTrend(24, 99.7, 100), tpsTrend: genTrend(24, 1500, 4000), readBw: 410, readBwTrend: genTrend(24, 250, 650), lat: 2.5, latTrend: genTrend(24, 1, 5), concurrency: 160, concurrencyTrend: genTrend(24, 80, 260) }, health: 'ok' },
+  { name: 'bucket-temp-01', createTime: '2025-07-01 18:00:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-001', ep: 'ep-data-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 30, used: 29.1, usage: 97, objCount: 30000, successRate: 99.81, tps: 450, successTrend: genTrend(24, 99.2, 100), tpsTrend: genTrend(24, 200, 800), readBw: 60, readBwTrend: genTrend(24, 30, 120), lat: 9.3, latTrend: genTrend(24, 5, 18), concurrency: 20, concurrencyTrend: genTrend(24, 10, 45) }, health: 'crit' },
   { name: 'bucket-media-01', createTime: '2025-06-01 16:30:00', region: 'region-001', cluster: 'cluster-002', tenant: 'tenant-002', ep: 'ep-media-01', type: 'POSIX', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 80, used: 52.1, usage: 65.1, objCount: 95000, successRate: 99.98, tps: 2800, successTrend: genTrend(24, 99.9, 100), tpsTrend: genTrend(24, 1500, 4500), readBw: 350, readBwTrend: genTrend(24, 200, 600), lat: 2.1, latTrend: genTrend(24, 1, 4), concurrency: 180, concurrencyTrend: genTrend(24, 100, 300) }, health: 'ok' },
+  { name: 'bucket-share-01', createTime: '2025-06-05 09:30:00', region: 'region-001', cluster: 'cluster-002', tenant: 'tenant-002', ep: 'ep-media-01', type: 'POSIX', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 40, used: 35.8, usage: 89.5, objCount: 18000, successRate: 99.9, tps: 700, successTrend: genTrend(24, 99.4, 100), tpsTrend: genTrend(24, 300, 1200), readBw: 95, readBwTrend: genTrend(24, 40, 180), lat: 7.8, latTrend: genTrend(24, 4, 15), concurrency: 25, concurrencyTrend: genTrend(24, 10, 50) }, health: 'warn' },
+  { name: 'bucket-ai-inf-01', createTime: '2025-06-12 13:00:00', region: 'region-001', cluster: 'cluster-002', tenant: 'tenant-003', ep: 'ep-media-01', type: 'POSIX', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 200, used: 198.4, usage: 99.2, objCount: 240000, successRate: 99.61, tps: 5200, successTrend: genTrend(24, 98.8, 100), tpsTrend: genTrend(24, 3000, 8000), readBw: 640, readBwTrend: genTrend(24, 400, 900), lat: 18.2, latTrend: genTrend(24, 8, 30), concurrency: 320, concurrencyTrend: genTrend(24, 150, 500) }, health: 'crit' },
   { name: 'bucket-archive-01', createTime: '2025-07-05 09:00:00', region: 'region-001', cluster: 'cluster-002', tenant: 'tenant-001', ep: 'ep-archive-01', type: 'OBJECT', redundancy: 'THREE_AZ', aliasTarget: '', metrics: { quota: 500, used: 286.5, usage: 57.3, objCount: 85000, successRate: 99.99, tps: 600, successTrend: genTrend(24, 99.9, 100), tpsTrend: genTrend(24, 300, 1100), readBw: 40, readBwTrend: genTrend(24, 20, 80), lat: 6.8, latTrend: genTrend(24, 4, 12), concurrency: 30, concurrencyTrend: genTrend(24, 10, 60) }, health: 'ok' },
+  { name: 'bucket-audit-01', createTime: '2025-07-10 10:00:00', region: 'region-001', cluster: 'cluster-002', tenant: 'tenant-001', ep: 'ep-archive-01', type: 'OBJECT', redundancy: 'THREE_AZ', aliasTarget: '', metrics: { quota: 80, used: 45.2, usage: 56.5, objCount: 38000, successRate: 99.97, tps: 400, successTrend: genTrend(24, 99.8, 100), tpsTrend: genTrend(24, 200, 900), readBw: 30, readBwTrend: genTrend(24, 15, 70), lat: 5.2, latTrend: genTrend(24, 2, 10), concurrency: 18, concurrencyTrend: genTrend(24, 8, 40) }, health: 'ok' },
+  { name: 'bucket-hot-01', createTime: '2025-07-18 14:00:00', region: 'region-001', cluster: 'cluster-002', tenant: 'tenant-002', ep: 'ep-media-01', type: 'POSIX', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 30, used: 25.6, usage: 85.3, objCount: 56000, successRate: 99.88, tps: 3100, successTrend: genTrend(24, 99.3, 100), tpsTrend: genTrend(24, 2000, 5200), readBw: 520, readBwTrend: genTrend(24, 300, 800), lat: 4.4, latTrend: genTrend(24, 2, 9), concurrency: 210, concurrencyTrend: genTrend(24, 100, 380) }, health: 'ok' },
+  { name: 'bucket-cold-01', createTime: '2025-07-28 09:00:00', region: 'region-001', cluster: 'cluster-002', tenant: 'tenant-001', ep: 'ep-archive-01', type: 'OBJECT', redundancy: 'THREE_AZ', aliasTarget: '', metrics: { quota: 80, used: 46.8, usage: 58.5, objCount: 32000, successRate: 99.95, tps: 220, successTrend: genTrend(24, 99.8, 100), tpsTrend: genTrend(24, 100, 500), readBw: 18, readBwTrend: genTrend(24, 8, 40), lat: 6.1, latTrend: genTrend(24, 3, 12), concurrency: 12, concurrencyTrend: genTrend(24, 4, 28) }, health: 'ok' },
   { name: 'bucket-ai-01', createTime: '2025-08-12 11:00:00', region: 'region-002', cluster: 'cluster-003', tenant: 'tenant-003', ep: 'ep-ai-01', type: 'POSIX', redundancy: 'ONE_AZ', aliasTarget: '', metrics: { quota: 60, used: 42.8, usage: 71.3, objCount: 520000, successRate: 99.93, tps: 5600, successTrend: genTrend(24, 99.7, 100), tpsTrend: genTrend(24, 3000, 8000), readBw: 420, readBwTrend: genTrend(24, 250, 700), lat: 1.8, latTrend: genTrend(24, 0.8, 3.5), concurrency: 250, concurrencyTrend: genTrend(24, 150, 400) }, health: 'warn' },
   { name: 'bucket-backup-02', createTime: '2025-09-01 13:00:00', region: 'region-002', cluster: 'cluster-003', tenant: 'tenant-003', ep: 'ep-ai-01', type: 'OBJECT', redundancy: 'ONE_AZ', aliasTarget: '', metrics: { quota: 100, used: 58.3, usage: 58.3, objCount: 12000, successRate: 99.96, tps: 350, successTrend: genTrend(24, 99.8, 100), tpsTrend: genTrend(24, 100, 700), readBw: 25, readBwTrend: genTrend(24, 10, 60), lat: 7.2, latTrend: genTrend(24, 4, 14), concurrency: 15, concurrencyTrend: genTrend(24, 5, 35) }, health: 'ok' },
+  { name: 'bucket-cache-01', createTime: '2025-09-08 10:00:00', region: 'region-002', cluster: 'cluster-003', tenant: 'tenant-003', ep: 'ep-ai-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 50, used: 33.5, usage: 67, objCount: 64000, successRate: 99.95, tps: 2100, successTrend: genTrend(24, 99.7, 100), tpsTrend: genTrend(24, 1200, 3600), readBw: 280, readBwTrend: genTrend(24, 150, 500), lat: 2.6, latTrend: genTrend(24, 1.2, 5), concurrency: 140, concurrencyTrend: genTrend(24, 70, 240) }, health: 'ok' },
+  { name: 'bucket-model-01', createTime: '2025-09-15 11:30:00', region: 'region-002', cluster: 'cluster-003', tenant: 'tenant-003', ep: 'ep-ai-01', type: 'POSIX', redundancy: 'ONE_AZ', aliasTarget: '', metrics: { quota: 300, used: 245.7, usage: 81.9, objCount: 43000, successRate: 99.92, tps: 850, successTrend: genTrend(24, 99.5, 100), tpsTrend: genTrend(24, 400, 1500), readBw: 160, readBwTrend: genTrend(24, 80, 320), lat: 9.6, latTrend: genTrend(24, 4, 18), concurrency: 65, concurrencyTrend: genTrend(24, 30, 120) }, health: 'warn' },
+  { name: 'bucket-label-01', createTime: '2025-09-20 09:00:00', region: 'region-002', cluster: 'cluster-003', tenant: 'tenant-003', ep: 'ep-ai-01', type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '', metrics: { quota: 40, used: 38.9, usage: 97.3, objCount: 86000, successRate: 99.7, tps: 3900, successTrend: genTrend(24, 98.9, 100), tpsTrend: genTrend(24, 2500, 6000), readBw: 480, readBwTrend: genTrend(24, 300, 750), lat: 14.3, latTrend: genTrend(24, 6, 25), concurrency: 280, concurrencyTrend: genTrend(24, 150, 420) }, health: 'crit' },
+  { name: 'bucket-ckpt-01', createTime: '2025-09-25 15:00:00', region: 'region-002', cluster: 'cluster-003', tenant: 'tenant-003', ep: 'ep-ai-01', type: 'POSIX', redundancy: 'ONE_AZ', aliasTarget: '', metrics: { quota: 150, used: 96.4, usage: 64.3, objCount: 21000, successRate: 99.94, tps: 520, successTrend: genTrend(24, 99.8, 100), tpsTrend: genTrend(24, 250, 1000), readBw: 88, readBwTrend: genTrend(24, 40, 180), lat: 4.1, latTrend: genTrend(24, 2, 8), concurrency: 40, concurrencyTrend: genTrend(24, 18, 80) }, health: 'ok' },
   { name: 'bucket-alias-01', createTime: '2025-10-01 10:00:00', region: 'region-001', cluster: 'cluster-001', tenant: 'tenant-001', ep: 'ep-data-01', type: 'ALIAS', redundancy: 'FUSION', aliasTarget: 'bucket-data-01', metrics: { quota: 0, used: 0, usage: 0, objCount: 0, successRate: 0, tps: 0, successTrend: [], tpsTrend: [], readBw: 0, readBwTrend: [], lat: 0, latTrend: [], concurrency: 0, concurrencyTrend: [] }, health: 'ok' },
 ]
 
@@ -400,27 +442,31 @@ const dataDisks = [
 ]
 
 const tenants = [
-  { name: 'tenant-001', ep: 'ep-data-01', bucketCount: 4, objCount: 808000, used: 257.1, quota: 400, usage: 64.3, health: 'ok' },
-  { name: 'tenant-002', ep: 'ep-backup-01, ep-media-01', bucketCount: 2, objCount: 113000, used: 197.9, quota: 300, usage: 66, health: 'ok' },
-  { name: 'tenant-003', ep: 'ep-ai-01', bucketCount: 2, objCount: 532000, used: 101.1, quota: 200, usage: 50.6, health: 'warn' },
+  { name: 'tenant-001', ep: 'ep-data-01', type: '生产', bucketCount: 4, objCount: 808000, used: 257.1, quota: 400, usage: 64.3, health: 'ok' },
+  { name: 'tenant-002', ep: 'ep-backup-01, ep-media-01', type: '备份', bucketCount: 2, objCount: 113000, used: 197.9, quota: 300, usage: 66, health: 'ok' },
+  { name: 'tenant-003', ep: 'ep-ai-01', type: '大数据', bucketCount: 2, objCount: 532000, used: 101.1, quota: 200, usage: 50.6, health: 'warn' },
+  { name: 'tenant-004', ep: 'ep-log-01', type: '日志', bucketCount: 2, objCount: 24000, used: 18.6, quota: 50, usage: 37.2, health: 'ok' },
+  { name: 'tenant-005', ep: 'ep-warehouse-01', type: '数仓', bucketCount: 1, objCount: 32000, used: 42.3, quota: 80, usage: 52.9, health: 'ok' },
+  { name: 'tenant-006', ep: 'ep-cdn-01', type: 'CDN', bucketCount: 3, objCount: 156000, used: 72.1, quota: 100, usage: 72.1, health: 'warn' },
+  { name: 'tenant-007', ep: 'ep-audit-01', type: '审计', bucketCount: 2, objCount: 98000, used: 28.2, quota: 60, usage: 47, health: 'ok' },
 ]
 
 const tenantTop5 = [
-  { name: 'tenant-log', ep: '企业项目-日志', bucketCount: 3, quota: 30, used: 28.2, usage: 94, successRate: 99.85, effectiveRate: 99.78, tps: '18.2k', outBw: '4.1 Gbps', inBw: '3.8 Gbps', health: 'crit' },
-  { name: 'tenant-mrs', ep: '企业项目-大数据', bucketCount: 4, quota: 200, used: 156, usage: 78, successRate: 99.98, effectiveRate: 99.92, tps: '32.6k', outBw: '8.5 Gbps', inBw: '6.2 Gbps', health: 'warn' },
-  { name: 'tenant-media', ep: '企业项目-媒体', bucketCount: 3, quota: 100, used: 72.1, usage: 72.1, successRate: 99.96, effectiveRate: 99.91, tps: '15.8k', outBw: '6.5 Gbps', inBw: '4.2 Gbps', health: 'warn' },
-  { name: 'tenant-backup', ep: '企业项目-备份', bucketCount: 2, quota: 150, used: 98.5, usage: 65.7, successRate: 99.97, effectiveRate: 99.93, tps: '5.6k', outBw: '1.2 Gbps', inBw: '2.8 Gbps', health: 'ok' },
-  { name: 'tenant-ai', ep: '企业项目-AI', bucketCount: 5, quota: 400, used: 257.1, usage: 64.3, successRate: 99.99, effectiveRate: 99.95, tps: '28.4k', outBw: '12.3 Gbps', inBw: '9.8 Gbps', health: 'ok' },
+  { name: 'tenant-log', ep: '企业项目-日志', type: '日志', bucketCount: 3, quota: 30, used: 28.2, usage: 94, successRate: 99.85, effectiveRate: 99.78, tps: '18.2k', outBw: '4.1 Gbps', inBw: '3.8 Gbps', health: 'crit' },
+  { name: 'tenant-mrs', ep: '企业项目-大数据', type: '大数据', bucketCount: 4, quota: 200, used: 156, usage: 78, successRate: 99.98, effectiveRate: 99.92, tps: '32.6k', outBw: '8.5 Gbps', inBw: '6.2 Gbps', health: 'warn' },
+  { name: 'tenant-media', ep: '企业项目-媒体', type: '媒体', bucketCount: 3, quota: 100, used: 72.1, usage: 72.1, successRate: 99.96, effectiveRate: 99.91, tps: '15.8k', outBw: '6.5 Gbps', inBw: '4.2 Gbps', health: 'warn' },
+  { name: 'tenant-backup', ep: '企业项目-备份', type: '备份', bucketCount: 2, quota: 150, used: 98.5, usage: 65.7, successRate: 99.97, effectiveRate: 99.93, tps: '5.6k', outBw: '1.2 Gbps', inBw: '2.8 Gbps', health: 'ok' },
+  { name: 'tenant-ai', ep: '企业项目-AI', type: 'AI', bucketCount: 5, quota: 400, used: 257.1, usage: 64.3, successRate: 99.99, effectiveRate: 99.95, tps: '28.4k', outBw: '12.3 Gbps', inBw: '9.8 Gbps', health: 'ok' },
 ]
 
 const enterpriseProjects = [
-  { name: '企业项目-大数据', used: 156, total: 200 },
-  { name: '企业项目-日志', used: 28.2, total: 30 },
-  { name: '企业项目-AI', used: 257.1, total: 400 },
-  { name: '企业项目-备份', used: 98.5, total: 150 },
-  { name: '企业项目-媒体', used: 72.1, total: 100 },
-  { name: '企业项目-测试', used: 18.6, total: 50 },
-  { name: '企业项目-归档', used: 42.3, total: 80 },
+  { id: 'EPS-001', name: '企业项目-大数据', desc: '大数据业务项目，包含数据仓库与计算分析相关资源', tenantCount: 2, used: 156, total: 200, usage: 78 },
+  { id: 'EPS-002', name: '企业项目-日志', desc: '日志采集、存储与分析项目', tenantCount: 2, used: 28.2, total: 30, usage: 94 },
+  { id: 'EPS-003', name: '企业项目-AI', desc: 'AI 训练与推理业务项目', tenantCount: 1, used: 257.1, total: 400, usage: 64.3 },
+  { id: 'EPS-004', name: '企业项目-备份', desc: '数据备份与容灾项目', tenantCount: 1, used: 98.5, total: 150, usage: 65.7 },
+  { id: 'EPS-005', name: '企业项目-媒体', desc: '音视频媒体存储与分发项目', tenantCount: 1, used: 72.1, total: 100, usage: 72.1 },
+  { id: 'EPS-006', name: '企业项目-测试', desc: '测试环境资源项目', tenantCount: 1, used: 18.6, total: 50, usage: 37.2 },
+  { id: 'EPS-007', name: '企业项目-归档', desc: '冷数据归档存储项目', tenantCount: 1, used: 42.3, total: 80, usage: 52.9 },
 ]
 
 const donutColors = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96']
@@ -486,6 +532,40 @@ function getBucketsByCluster(clusterId) {
   return buckets.filter(b => b.cluster === clusterId)
 }
 
+const HEX_RANK = { crit: 0, warn: 1, ok: 2 }
+
+function hexHealth(b) {
+  return b.health === 'ok' ? 'hcx-ok' : b.health === 'warn' ? 'hcx-warn' : 'hcx-crit'
+}
+
+const HONEY_TARGET = 120
+
+function makeHoneyBucket(clusterId, i) {
+  const cluster = clusters.find(c => c.id === clusterId)
+  const region = cluster ? cluster.region : 'region-001'
+  const usage = [97, 93, 88, 84, 79, 74, 68, 62, 55, 48, 41, 33, 27, 21, 16, 12][i % 16]
+  const health = usage >= 90 ? 'crit' : usage >= 80 ? 'warn' : 'ok'
+  const bucketCount = 60 + i * 7
+  return {
+    name: `bucket-honey-${String(i + 1).padStart(2, '0')}`,
+    createTime: '2026-08-10 09:00:00',
+    region, cluster: clusterId,
+    tenant: region === 'region-001' ? (i % 2 ? 'tenant-002' : 'tenant-001') : 'tenant-003',
+    ep: region === 'region-001' ? 'ep-data-01' : 'ep-ai-01',
+    type: 'OBJECT', redundancy: 'FUSION', aliasTarget: '',
+    metrics: { quota: 100, used: usage, usage, objCount: bucketCount * 1000, successRate: health === 'crit' ? 99.6 : 99.9, tps: 500 + i * 30, successTrend: genTrend(24, 99, 100), tpsTrend: genTrend(24, 400, 900), readBw: 40 + i * 8, readBwTrend: genTrend(24, 30, 120), lat: health === 'crit' ? 15 : 4, latTrend: genTrend(24, 2, 8), concurrency: 30 + i * 5, concurrencyTrend: genTrend(24, 20, 80) },
+    health
+  }
+}
+
+function honeycombRow(clusterId) {
+  const real = buckets.filter(b => b.cluster === clusterId)
+  const list = real.slice()
+  for (let i = real.length; i < HONEY_TARGET; i++) list.push(makeHoneyBucket(clusterId, i))
+  list.sort((a, b) => (HEX_RANK[a.health] ?? 0) - (HEX_RANK[b.health] ?? 0))
+  return list
+}
+
 function getNodesByCluster(clusterId) {
   return nodes.filter(n => n.cluster === clusterId)
 }
@@ -496,6 +576,17 @@ function getNodesByRegion(regionId) {
 
 function getPoolsBySC(scId) {
   return storagePools.filter(p => p.sc === scId)
+}
+
+function getBucketsByPool(poolId) {
+  const p = storagePools.find(x => x.id === poolId)
+  if (!p) return []
+  const sc = storageClusters.find(x => x.id === p.sc)
+  return buckets.filter(b => b.cluster === sc?.cluster)
+}
+
+function getNodesByPool(poolId) {
+  return nodes.filter(n => n.pool === poolId)
 }
 
 function getDisksByNode(nodeName) {
@@ -548,9 +639,9 @@ function alarmCustomRow(record) {
 const alarmColumns = [
   { title: '级别', dataIndex: 'level', width: 80, key: 'level' },
   { title: '告警标题', dataIndex: 'title', key: 'title', ellipsis: true },
-  { title: '对象类型', dataIndex: 'objType', width: 80, key: 'objType' },
-  { title: '对象名称', dataIndex: 'objName', width: 90, key: 'objName' },
-  { title: '时间', dataIndex: 'time', width: 150, key: 'time' },
+  { title: '对象类型', dataIndex: 'objType', key: 'objType' },
+  { title: '对象名称', dataIndex: 'objName', key: 'objName' },
+  { title: '时间', dataIndex: 'time', key: 'time' },
 ]
 
 const tenantSearch = ref('')
@@ -587,8 +678,16 @@ function percentColor(p) {
   return p >= 85 ? '#f5222d' : p >= 70 ? '#fa8c16' : '#52c41a'
 }
 
+function fmtCap(tb) {
+  return tb >= 1024 ? (tb / 1024).toFixed(2) + ' PB' : Math.round(tb) + ' TB'
+}
+
 function diskStatusColor(s) {
   return s === 'online' ? '#52c41a' : s === 'degraded' ? '#fa8c16' : s === 'offline' ? '#f5222d' : '#1890ff'
+}
+
+function diskStatusText(s) {
+  return s === 'online' ? '在线' : s === 'degraded' ? '降级' : s === 'offline' ? '离线' : s
 }
 
 function redundancyText(r) {
@@ -622,7 +721,7 @@ function poolStatusText(s) {
 }
 
 function useHelpers() {
-  return { healthText, alarmLevelText, alarmLevelColor, percentColor, redundancyText, bucketTypeText, roleText, poolStatusText, diskStatusColor, regions, getDisksByNode: (n) => dataDisks.filter(d => d.node === n) }
+  return { healthText, alarmLevelText, alarmLevelColor, percentColor, redundancyText, bucketTypeText, roleText, poolStatusText, diskStatusColor, diskStatusText, regions, storageClusters, dataDisks, getDisksByNode: (n) => dataDisks.filter(d => d.node === n) }
 }
 
 const drawerOpen = ref(false)
@@ -669,7 +768,14 @@ function openStatDrawer(s) {
   let detailComponent = null
   let detailProps = null
   if (label.includes('区域')) {
-    items = regions.map(r => ({ id: r.id, name: r.name, 域名: r.domain, 逻辑TB: r.metrics.logicUsed + '/' + r.metrics.logicTotal, 物理TB: r.metrics.phyUsed + '/' + r.metrics.phyTotal, 状态: r.health }))
+    items = regions.map(r => ({
+      id: r.id,
+      regionId: r.domain.replace(/^obs\./, '').replace(/\.myhuaweicloud\.com$/, ''),
+      name: r.name,
+      domain: r.domain,
+      usage: r.metrics.phyPercent,
+      health: r.health
+    }))
     label = '区域列表'
     detailComponent = RegionDetail
     detailProps = (item) => {
@@ -678,7 +784,13 @@ function openStatDrawer(s) {
     }
   }
   else if (label.includes('业务集群')) {
-    items = clusters.map(c => ({ id: c.id, name: c.name, 区域: regions.find(r => r.id === c.region)?.name, 冗余: redundancyText(c.redundancy), 桶数: c.buckets, 节点数: c.nodes }))
+    items = clusters.map(c => ({
+      id: c.id,
+      name: c.name,
+      region: regions.find(r => r.id === c.region)?.name || c.region,
+      redundancy: redundancyText(c.redundancy),
+      health: c.health
+    }))
     label = '集群列表'
     detailComponent = ClusterDetail
     detailProps = (item) => {
@@ -687,7 +799,13 @@ function openStatDrawer(s) {
     }
   }
   else if (label.includes('存储集群')) {
-    items = storageClusters.map(s => ({ id: s.id, name: s.name, 区域: regions.find(r => r.id === s.region)?.name, 池数: s.pools }))
+    items = storageClusters.map(s => ({
+      id: s.id,
+      name: s.name,
+      ctrlNodeCount: s.ctrlNodeCount,
+      poolCount: s.poolCount,
+      health: s.health
+    }))
     label = '存储集群列表'
     detailComponent = SCDetail
     detailProps = (item) => {
@@ -696,7 +814,13 @@ function openStatDrawer(s) {
     }
   }
   else if (label.includes('存储池')) {
-    items = storagePools.map(p => ({ id: p.id, name: p.name, 类型: p.type, 总量TB: p.metrics.total, 已用TB: p.metrics.used, 使用率: p.metrics.usedPercent + '%' }))
+    items = storagePools.map(p => ({
+      id: p.id,
+      name: p.name,
+      safety: p.safety,
+      usage: p.metrics.phyPercent,
+      health: p.health
+    }))
     label = '存储池列表'
     detailComponent = PoolDetail
     detailProps = (item) => {
@@ -705,19 +829,108 @@ function openStatDrawer(s) {
     }
   }
   else if (label.includes('节点')) {
-    items = nodes.map(n => ({ id: n.id, name: n.name, 角色: roleText(n.role), CPU: n.metrics.cpu + '%', 内存: n.metrics.mem + '%', 磁盘: n.metrics.disk + '%', 状态: n.health }))
+    items = nodes.map(n => ({
+      id: n.name,
+      name: n.name,
+      role: roleShort(n.role),
+      cluster: clusters.find(c => c.id === n.cluster)?.name || n.cluster,
+      cpu: n.metrics.cpu,
+      mem: n.metrics.mem,
+      health: n.health
+    }))
     label = '节点列表'
     detailComponent = NodeDetail
     detailProps = (item) => {
-      const n = nodes.find(x => x.id === item.id)
+      const n = nodes.find(x => x.name === item.id)
       return { node: n, dataDisks, alarms }
     }
   }
-  else if (label.includes('数据盘')) { items = dataDisks; label = '数据盘列表' }
-  else if (label.includes('桶')) { items = buckets; label = '桶列表' }
-  else if (label.includes('租户')) { items = tenants; label = '租户列表' }
-  else if (label.includes('企业项目')) { items = enterpriseProjects; label = '企业项目列表' }
-  openDrawer(StatListDrawer, { items, type: label, detailComponent, detailProps }, label)
+  else if (label.includes('数据盘')) {
+    items = dataDisks.map(d => ({
+      id: d.esn,
+      esn: d.esn,
+      media: d.media,
+      role: d.role,
+      node: d.node,
+      status: d.health
+    }))
+    label = '数据盘列表'
+    detailComponent = DiskDetail
+    detailProps = (item) => {
+      const d = dataDisks.find(x => x.esn === item.id)
+      const n = nodes.find(x => x.name === d.node)
+      return { disk: d, node: n, alarms }
+    }
+  }
+  else if (label.includes('桶')) {
+    items = buckets.slice(0, 200).map(b => ({
+      id: b.name,
+      name: b.name,
+      type: bucketTypeText(b.type),
+      cluster: clusters.find(c => c.id === b.cluster)?.name || b.cluster,
+      usage: b.metrics.usage,
+      health: b.health
+    }))
+    label = '桶列表'
+    detailComponent = BucketDetail
+    detailProps = (item) => {
+      const b = buckets.find(x => x.name === item.id)
+      return { bucket: b, alarms }
+    }
+  }
+  else if (label.includes('租户')) {
+    items = tenants.map(t => ({
+      id: t.name,
+      name: t.name,
+      ep: t.ep,
+      type: t.type,
+      bucketCount: t.bucketCount,
+      usage: t.usage,
+      health: t.health
+    }))
+    label = '租户列表'
+    detailComponent = TenantDetail
+    detailProps = (item) => {
+      const t = tenants.find(x => x.name === item.id)
+      return { tenant: t, buckets, tenantTop5 }
+    }
+  }
+  else if (label.includes('企业项目')) {
+    items = enterpriseProjects.map(ep => ({
+      id: ep.id,
+      name: ep.name,
+      desc: ep.desc,
+      tenantCount: ep.tenantCount,
+      usage: ep.usage
+    }))
+    label = '企业项目列表'
+    detailComponent = EnterpriseProjectDetail
+    detailProps = (item) => {
+      const ep = enterpriseProjects.find(x => x.id === item.id)
+      return { ep, tenants, buckets }
+    }
+  }
+  else if (label.includes('对象')) {
+    items = buckets.slice(0, 200).map(b => ({
+      id: b.name,
+      name: b.name,
+      type: bucketTypeText(b.type),
+      cluster: clusters.find(c => c.id === b.cluster)?.name || b.cluster,
+      usage: b.metrics.usage,
+      health: b.health
+    }))
+    label = '桶列表'
+    detailComponent = BucketDetail
+    detailProps = (item) => {
+      const b = buckets.find(x => x.name === item.id)
+      return { bucket: b, alarms }
+    }
+  }
+  if (label.includes('区域')) {
+    openDrawer(RegionListDrawer, { items, type: label, detailComponent, detailProps }, label)
+  } else {
+    openDrawer(StatListDrawer, { items, type: label, detailComponent, detailProps }, label)
+  }
 }
 
 function openRegionDrawer(r) {
@@ -748,23 +961,145 @@ function openBucketDrawer(b) {
   openDrawer(BucketDetail, { bucket: b, alarms }, b.name)
 }
 
+const LIST_COLUMNS = {
+  '集群列表': [
+    { title: '集群ID', dataIndex: 'id', key: 'id', width: 110 },
+    { title: '名称', dataIndex: 'name', key: 'name' },
+    { title: '区域', dataIndex: 'region', key: 'region', width: 120 },
+    { title: '冗余', dataIndex: 'redundancy', key: 'redundancy', width: 150 },
+    { title: '健康', dataIndex: 'health', key: 'health', width: 90 },
+  ],
+  '存储集群列表': [
+    { title: '集群ID', dataIndex: 'id', key: 'id', width: 100 },
+    { title: '名称', dataIndex: 'name', key: 'name' },
+    { title: '控制节点', dataIndex: 'ctrlNodeCount', key: 'ctrlNodeCount', width: 100 },
+    { title: '存储池', dataIndex: 'poolCount', key: 'poolCount', width: 90 },
+    { title: '健康', dataIndex: 'health', key: 'health', width: 90 },
+  ],
+  '存储池列表': [
+    { title: '池ID', dataIndex: 'id', key: 'id', width: 100 },
+    { title: '名称', dataIndex: 'name', key: 'name' },
+    { title: '安全级别', dataIndex: 'safety', key: 'safety', width: 100 },
+    { title: '使用率', dataIndex: 'usage', key: 'usage', width: 170 },
+    { title: '健康', dataIndex: 'health', key: 'health', width: 90 },
+  ],
+  '节点列表': [
+    { title: '节点名', dataIndex: 'name', key: 'name', width: 120 },
+    { title: '角色', dataIndex: 'role', key: 'role', width: 100 },
+    { title: '集群', dataIndex: 'cluster', key: 'cluster' },
+    { title: 'CPU', dataIndex: 'cpu', key: 'cpu', width: 90 },
+    { title: '内存', dataIndex: 'mem', key: 'mem', width: 90 },
+    { title: '健康', dataIndex: 'health', key: 'health', width: 90 },
+  ],
+  '数据盘列表': [
+    { title: 'ESN', dataIndex: 'esn', key: 'esn', width: 100 },
+    { title: '介质', dataIndex: 'media', key: 'media' },
+    { title: '角色', dataIndex: 'role', key: 'role', width: 90 },
+    { title: '节点', dataIndex: 'node', key: 'node', width: 90 },
+    { title: '状态', dataIndex: 'status', key: 'status', width: 90 },
+  ],
+  '桶列表': [
+    { title: '桶名', dataIndex: 'name', key: 'name' },
+    { title: '类型', dataIndex: 'type', key: 'type', width: 130 },
+    { title: '集群', dataIndex: 'cluster', key: 'cluster' },
+    { title: '使用率', dataIndex: 'usage', key: 'usage', width: 170 },
+    { title: '健康', dataIndex: 'health', key: 'health', width: 90 },
+  ],
+  '租户列表': [
+    { title: '租户名', dataIndex: 'name', key: 'name' },
+    { title: '企业项目', dataIndex: 'ep', key: 'ep', width: 200 },
+    { title: '类型', dataIndex: 'type', key: 'type', width: 90 },
+    { title: '桶数', dataIndex: 'bucketCount', key: 'bucketCount', width: 80 },
+    { title: '使用率', dataIndex: 'usage', key: 'usage', width: 170 },
+    { title: '健康', dataIndex: 'health', key: 'health', width: 90 },
+  ],
+  '企业项目列表': [
+    { title: 'EPS ID', dataIndex: 'id', key: 'id', width: 100 },
+    { title: '名称', dataIndex: 'name', key: 'name' },
+    { title: '描述', dataIndex: 'desc', key: 'desc', ellipsis: true },
+    { title: '租户数', dataIndex: 'tenantCount', key: 'tenantCount', width: 90 },
+    { title: '使用率', dataIndex: 'usage', key: 'usage', width: 170 },
+  ],
+}
+
 const StatListDrawer = {
   props: ['items', 'type', 'detailComponent', 'detailProps'],
   template: `<div class="drawer-content">
-    <h3 class="drawer-content-title">{{ type }}</h3>
-    <div class="stat-list-table-wrap"><table class="stat-list-table"><thead><tr><th v-for="h in headers" :key="h">{{ h }}</th></tr></thead>
-    <tbody><tr v-for="(item, i) in items" :key="i" @click="handleClick(item)"><td v-for="(v, k) in item" :key="k" v-if="showKey(k)">{{ formatValue(v) }}</td></tr></tbody></table></div>
+    <a-input v-model:value="keyword" placeholder="搜索..." allow-clear class="rld-input" style="width: 240px; margin-bottom: 12px;" />
+    <a-table :data-source="filtered" :columns="columns" :pagination="false" :row-key="rowKey" size="middle" :custom-row="rowClick">
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'name'"><a class="rld-link" @click.stop="handleClick(record)">{{ record.name }}</a></template>
+        <template v-else-if="column.key === 'esn'"><a class="rld-link" @click.stop="handleClick(record)">{{ record.esn }}</a></template>
+        <template v-else-if="column.key === 'health'"><a-tag :color="healthColor(record.health)">{{ healthText(record.health) }}</a-tag></template>
+        <template v-else-if="column.key === 'status'"><a-tag :color="diskStatusColor(record.status)">{{ diskStatusText(record.status) }}</a-tag></template>
+        <template v-else-if="column.key === 'usage'"><span class="rld-usage"><span class="rld-usage-fill" :style="{ width: record.usage + '%' }"></span></span><span class="rld-usage-text">{{ record.usage }}%</span></template>
+        <template v-else-if="column.key === 'cpu' || column.key === 'mem'">{{ record[column.key] }}%</template>
+      </template>
+    </a-table>
   </div>`,
   setup(props, { emit }) {
-    const headers = computed(() => props.items.length ? Object.keys(props.items[0]).filter(k => showKey(k)) : [])
-    function showKey(k) { return !['id', 'metrics', 'desc', 'diagSteps', 'recovery', 'status', 'objId', 'objType', 'processes', 'aliasTarget', 'createTime', 'ep', 'time', 'successTrend', 'tpsTrend', 'readBwTrend', 'latTrend', 'concurrencyTrend', 'bwTrend', 'connsTrend', 'logicUsedTrend', 'phyUsedTrend', 'objCountTrend', 'effectiveTrend', 'inBw', 'outBw', 'effectiveRate', 'successRate', 'tps'].includes(k) && k !== 'level' && k !== 'esn' }
-    function formatValue(v) { return typeof v === 'object' ? JSON.stringify(v) : v }
+    const keyword = ref('')
+    const columns = computed(() => LIST_COLUMNS[props.type] || [])
+    const filtered = computed(() => {
+      const kw = keyword.value.trim().toLowerCase()
+      if (!kw) return props.items
+      return props.items.filter(it => JSON.stringify(it).toLowerCase().includes(kw))
+    })
+    function rowKey(record) {
+      return record.id || record.esn || record.name || Math.random()
+    }
     function handleClick(item) {
       if (props.detailComponent && props.detailProps) {
         emit('navigate', { component: props.detailComponent, props: props.detailProps(item), label: item.name || item.id })
       }
     }
-    return { headers, showKey, formatValue, handleClick }
+    function rowClick(record) {
+      return { onClick: () => handleClick(record) }
+    }
+    function healthColor(h) {
+      return h === 'ok' ? 'green' : h === 'warn' ? 'orange' : 'red'
+    }
+    return { keyword, columns, filtered, rowKey, handleClick, rowClick, healthText, healthColor, diskStatusColor, diskStatusText }
+  }
+}
+
+const RegionListDrawer = {
+  props: ['items', 'type', 'detailComponent', 'detailProps'],
+  template: `<div class="drawer-content">
+    <a-input v-model:value="keyword" placeholder="搜索..." allow-clear class="rld-input" style="width: 240px; margin-bottom: 0px;" />
+    <a-table :data-source="filtered" :columns="columns" :pagination="false" row-key="id" size="middle" :custom-row="rowClick">
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'regionId'"><span class="rld-region-id">{{ record.regionId }}</span></template>
+        <template v-else-if="column.key === 'name'"><a class="rld-link" @click.stop="handleClick(record)">{{ record.name }}</a></template>
+        <template v-else-if="column.key === 'domain'"><span class="rld-domain">{{ record.domain }}</span></template>
+        <template v-else-if="column.key === 'usage'"><span class="rld-usage"><span class="rld-usage-fill" :style="{ width: record.usage + '%' }"></span></span><span class="rld-usage-text">{{ record.usage }}%</span></template>
+        <template v-else-if="column.key === 'health'"><a-tag :color="record.health === 'ok' ? 'green' : record.health === 'warn' ? 'orange' : 'red'">{{ healthText(record.health) }}</a-tag></template>
+      </template>
+    </a-table>
+  </div>`,
+  setup(props, { emit }) {
+    const keyword = ref('')
+    const columns = [
+      { title: '区域ID', dataIndex: 'regionId', key: 'regionId', width: 150 },
+      { title: '区域名称', dataIndex: 'name', key: 'name', width: 140 },
+      { title: '域名', dataIndex: 'domain', key: 'domain' },
+      { title: '容量使用', dataIndex: 'usage', key: 'usage', width: 160 },
+      { title: '健康', dataIndex: 'health', key: 'health', width: 90 },
+    ]
+    const filtered = computed(() => {
+      const kw = keyword.value.trim().toLowerCase()
+      if (!kw) return props.items
+      return props.items.filter(it => (it.regionId + it.name + it.domain).toLowerCase().includes(kw))
+    })
+    function handleClick(item) {
+      if (props.detailComponent && props.detailProps) {
+        emit('navigate', { component: props.detailComponent, props: props.detailProps(item), label: item.name || item.id })
+      }
+    }
+    function rowClick(record) {
+      return { onClick: () => handleClick(record) }
+    }
+    return { keyword, columns, filtered, handleClick, rowClick, healthText }
   }
 }
 
@@ -809,7 +1144,7 @@ const RegionDetail = {
     </div>
   </div>`,
   setup(props, { emit }) {
-    return { emit, ...useHelpers() }
+    return { emit, ClusterDetail, SCDetail, ...useHelpers() }
   }
 }
 
@@ -848,26 +1183,51 @@ const ClusterDetail = {
       </div>
     </div>
     <div class="detail-section">
-      <h4 class="detail-section-title">桶列表</h4>
-      <table class="inner-table"><thead><tr><th>桶名称</th><th>类型</th><th>冗余策略</th><th>配额(TB)</th><th>已用(TB)</th><th>对象数</th><th>成功率</th><th>TPS</th><th>健康状态</th></tr></thead>
-      <tbody><tr v-for="b in getBucketsByCluster(cluster.id)" :key="b.name" @click="emit('navigate', { component: BucketDetail, props: { bucket: b, alarms }, label: b.name })">
-        <td>{{ b.name }}</td><td>{{ bucketTypeText(b.type) }}</td><td>{{ redundancyText(b.redundancy) }}</td><td>{{ b.metrics.quota }}</td><td>{{ b.metrics.used }}</td><td>{{ b.metrics.objCount.toLocaleString() }}</td><td>{{ b.metrics.successRate }}%</td><td>{{ b.metrics.tps }}</td><td><span class="health-tag" :class="b.health">{{ healthText(b.health) }}</span></td>
-      </tr></tbody></table>
+      <h4 class="detail-section-title">桶列表（前 50）</h4>
+      <a-table :data-source="bucketsOfCluster" :columns="bucketCols" :pagination="false" row-key="name" size="small" :custom-row="bucketRowClick">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'"><a class="rld-link" @click.stop="emit('navigate', { component: BucketDetail, props: { bucket: record, alarms }, label: record.name })">{{ record.name }}</a></template>
+          <template v-else-if="column.key === 'type'">{{ bucketTypeText(record.type) }}</template>
+          <template v-else-if="column.key === 'usage'"><span class="rld-usage"><span class="rld-usage-fill" :style="{ width: record.metrics.usage + '%' }"></span></span><span class="rld-usage-text">{{ record.metrics.usage }}%</span></template>
+          <template v-else-if="column.key === 'health'"><a-tag :color="healthColor(record.health)">{{ healthText(record.health) }}</a-tag></template>
+        </template>
+      </a-table>
     </div>
     <div class="detail-section">
       <h4 class="detail-section-title">节点列表</h4>
-      <div class="node-card-grid">
-        <div class="node-card" v-for="n in getNodesByCluster(cluster.id)" :key="n.name" @click="emit('navigate', { component: NodeDetail, props: { node: n, dataDisks, alarms }, label: n.name })">
-          <div class="node-card-hdr">{{ n.name }}<span class="health-tag-sm" :class="n.health">{{ healthText(n.health) }}</span></div>
-          <div class="node-card-info"><span>{{ roleText(n.role) }}</span></div>
-          <div class="node-card-metrics"><span>CPU: {{ n.metrics.cpu }}%</span><span>内存: {{ n.metrics.mem }}%</span><span>磁盘: {{ n.metrics.disk }}%</span></div>
-          <div class="node-card-bar"><div class="bar-fill" :style="{ width: n.metrics.cpu + '%', background: percentColor(n.metrics.cpu) }"></div></div>
-        </div>
-      </div>
+      <a-table :data-source="nodesOfCluster" :columns="nodeCols" :pagination="false" row-key="name" size="small" :custom-row="nodeRowClick">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'"><a class="rld-link" @click.stop="emit('navigate', { component: NodeDetail, props: { node: record, dataDisks, alarms }, label: record.name })">{{ record.name }}</a></template>
+          <template v-else-if="column.key === 'role'">{{ roleText(record.role) }}</template>
+          <template v-else-if="column.key === 'health'"><a-tag :color="healthColor(record.health)">{{ healthText(record.health) }}</a-tag></template>
+        </template>
+      </a-table>
     </div>
   </div>`,
   setup(props, { emit }) {
-    return { emit, ...useHelpers() }
+    const bucketsOfCluster = computed(() => props.getBucketsByCluster(props.cluster.id).slice(0, 50))
+    const nodesOfCluster = computed(() => props.getNodesByCluster(props.cluster.id))
+    const bucketCols = [
+      { title: '桶名', dataIndex: 'name', key: 'name' },
+      { title: '类型', dataIndex: 'type', key: 'type', width: 130 },
+      { title: '使用率', dataIndex: 'usage', key: 'usage', width: 170 },
+      { title: '健康状态', dataIndex: 'health', key: 'health', width: 90 },
+    ]
+    const nodeCols = [
+      { title: '节点名', dataIndex: 'name', key: 'name' },
+      { title: '角色', dataIndex: 'role', key: 'role' },
+      { title: '健康状态', dataIndex: 'health', key: 'health', width: 100 },
+    ]
+    function bucketRowClick(record) {
+      return { onClick: () => emit('navigate', { component: BucketDetail, props: { bucket: record, alarms: props.alarms }, label: record.name }) }
+    }
+    function nodeRowClick(record) {
+      return { onClick: () => emit('navigate', { component: NodeDetail, props: { node: record, dataDisks: props.dataDisks, alarms: props.alarms }, label: record.name }) }
+    }
+    function healthColor(h) {
+      return h === 'ok' ? 'green' : h === 'warn' ? 'orange' : 'red'
+    }
+    return { emit, bucketsOfCluster, nodesOfCluster, bucketCols, nodeCols, bucketRowClick, nodeRowClick, healthColor, BucketDetail, NodeDetail, ...useHelpers() }
   }
 }
 
@@ -909,16 +1269,19 @@ const NodeDetail = {
     </div>
     <div class="detail-section">
       <h4 class="detail-section-title">进程列表</h4>
-      <table class="inner-table"><thead><tr><th>进程名称</th><th>PID</th><th>状态</th><th>CPU%</th><th>内存%</th></tr></thead>
-      <tbody><tr v-for="p in node.processes" :key="p.pid">
-        <td>{{ p.name }}</td><td>{{ p.pid }}</td><td><span class="proc-status" :class="p.status">{{ p.status === 'normal' ? '正常' : p.status === 'warn' ? '警告' : '异常' }}</span></td><td>{{ p.cpu }}%</td><td>{{ p.mem }}%</td>
-      </tr></tbody></table>
+      <a-table :data-source="node.processes" :columns="procCols" :pagination="false" row-key="pid" size="small">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'status'"><a-tag :color="record.status === 'normal' ? 'green' : 'orange'">{{ record.status === 'normal' ? '正常' : '告警' }}</a-tag></template>
+          <template v-else-if="column.key === 'cpu'">{{ record.cpu }}%</template>
+          <template v-else-if="column.key === 'mem'">{{ record.mem }}%</template>
+        </template>
+      </a-table>
     </div>
     <div class="detail-section">
       <h4 class="detail-section-title">数据盘列表</h4>
       <div class="disk-card-grid">
-        <div class="disk-card" v-for="d in getDisksByNode(node.name)" :key="d.esn">
-          <div class="disk-card-hdr">{{ d.slot }}<span class="disk-status" :style="{ background: diskStatusColor(d.health) }">{{ d.health === 'online' ? '在线' : d.health === 'degraded' ? '降级' : '离线' }}</span></div>
+        <div class="disk-card" v-for="d in getDisksByNode(node.name)" :key="d.esn" @click="emit('navigate', { component: DiskDetail, props: { disk: d, node, alarms }, label: d.esn })">
+          <div class="disk-card-hdr">{{ d.slot }}<span class="disk-status" :style="{ background: diskStatusColor(d.health) }">{{ diskStatusText(d.health) }}</span></div>
           <div class="disk-card-info"><span>{{ d.media }}</span><span>{{ d.role }}</span></div>
           <div class="disk-card-cap"><span>{{ d.metrics.capacity }} TB</span><span>已用 {{ d.metrics.used }} TB</span><span>{{ d.metrics.usage }}%</span></div>
           <div class="disk-card-cap"><span>带宽 {{ d.metrics.bw }} MB/s</span><span>IOPS {{ d.metrics.iops.toLocaleString() }}</span></div>
@@ -926,8 +1289,15 @@ const NodeDetail = {
       </div>
     </div>
   </div>`,
-  setup(props) {
-    return { ...useHelpers() }
+  setup(props, { emit }) {
+    const procCols = [
+      { title: '进程名称', dataIndex: 'name', key: 'name' },
+      { title: 'PID', dataIndex: 'pid', key: 'pid', width: 80 },
+      { title: '状态', dataIndex: 'status', key: 'status', width: 90 },
+      { title: 'CPU%', dataIndex: 'cpu', key: 'cpu', width: 90 },
+      { title: '内存%', dataIndex: 'mem', key: 'mem', width: 90 },
+    ]
+    return { emit, procCols, DiskDetail, ...useHelpers() }
   }
 }
 
@@ -957,7 +1327,7 @@ const SCDetail = {
     </div>
   </div>`,
   setup(props, { emit }) {
-    return { emit, ...useHelpers() }
+    return { emit, PoolDetail, ...useHelpers() }
   }
 }
 
@@ -973,6 +1343,7 @@ const PoolDetail = {
         <div class="detail-info-item"><span class="dii-label">冗余策略</span><span class="dii-value">{{ redundancyText(pool.redundancy) }}</span></div>
         <div class="detail-info-item"><span class="dii-label">缓存盘类型</span><span class="dii-value">{{ pool.cacheDisk }}</span></div>
         <div class="detail-info-item"><span class="dii-label">主存盘类型</span><span class="dii-value">{{ pool.mainDisk }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">所属存储集群</span><span class="dii-value">{{ storageClusters.find(s => s.id === pool.sc)?.name || pool.sc }}</span></div>
         <div class="detail-info-item"><span class="dii-label">状态</span><span class="dii-value"><span class="pool-status" :class="pool.health">{{ poolStatusText(pool.health) }}</span></span></div>
       </div>
     </div>
@@ -990,9 +1361,31 @@ const PoolDetail = {
         <div class="perf-item"><span class="perf-label">延迟</span><span class="perf-value">{{ pool.metrics.lat }} ms</span></div>
       </div>
     </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">所属节点</h4>
+      <a-table :data-source="poolNodes" :columns="nodeCols" :pagination="false" row-key="name" size="small" :custom-row="nodeRowClick">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'"><a class="rld-link" @click.stop="emit('navigate', { component: NodeDetail, props: { node: record, dataDisks, alarms }, label: record.name })">{{ record.name }}</a></template>
+          <template v-else-if="column.key === 'role'">{{ roleText(record.role) }}</template>
+          <template v-else-if="column.key === 'health'"><a-tag :color="healthColor(record.health)">{{ healthText(record.health) }}</a-tag></template>
+        </template>
+      </a-table>
+    </div>
   </div>`,
-  setup(props) {
-    return { emit: () => {}, ...useHelpers() }
+  setup(props, { emit }) {
+    const poolNodes = computed(() => getNodesByPool(props.pool.id))
+    const nodeCols = [
+      { title: '节点名', dataIndex: 'name', key: 'name' },
+      { title: '角色', dataIndex: 'role', key: 'role' },
+      { title: '健康状态', dataIndex: 'health', key: 'health', width: 100 },
+    ]
+    function nodeRowClick(record) {
+      return { onClick: () => emit('navigate', { component: NodeDetail, props: { node: record, dataDisks, alarms: props.alarms }, label: record.name }) }
+    }
+    function healthColor(h) {
+      return h === 'ok' ? 'green' : h === 'warn' ? 'orange' : 'red'
+    }
+    return { emit, poolNodes, nodeCols, nodeRowClick, healthColor, NodeDetail, ...useHelpers() }
   }
 }
 
@@ -1049,7 +1442,7 @@ const AlarmDetail = {
         <div class="detail-info-item"><span class="dii-label">对象类型</span><span class="dii-value">{{ alarm.objType }}</span></div>
         <div class="detail-info-item"><span class="dii-label">对象名称</span><span class="dii-value">{{ alarm.objName }}</span></div>
         <div class="detail-info-item"><span class="dii-label">发生时间</span><span class="dii-value">{{ alarm.time }}</span></div>
-        <div class="detail-info-item"><span class="dii-label">状态</span><span class="dii-value">{{ alarm.status === 'active' ? '活动' : alarm.status === 'cleared' ? '已清除' : '已确认' }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">状态</span><span class="dii-value">{{ alarm.status === 'active' ? '未恢复' : '已恢复' }}</span></div>
       </div>
     </div>
     <div class="detail-section" v-if="alarm.diagSteps && alarm.diagSteps.length">
@@ -1057,12 +1450,56 @@ const AlarmDetail = {
       <ol class="diag-steps"><li v-for="(step, i) in alarm.diagSteps" :key="i">{{ step }}</li></ol>
     </div>
     <div class="detail-section" v-if="alarm.recovery">
-      <h4 class="detail-section-title">修复建议</h4>
+      <h4 class="detail-section-title">恢复操作</h4>
       <p class="recovery-text">{{ alarm.recovery }}</p>
+      <a-button type="primary" size="small" class="alarm-recover-btn" @click="execRecovery">{{ recovered ? '已执行' : '执行恢复' }}</a-button>
+    </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">关联对象</h4>
+      <a-button size="small" class="alarm-link-btn" @click="openLinkedObject">查看关联对象详情</a-button>
     </div>
   </div>`,
-  setup(props) {
-    return { ...useHelpers() }
+  setup(props, { emit }) {
+    const recovered = ref(false)
+    function execRecovery() {
+      recovered.value = true
+    }
+    function openLinkedObject() {
+      emit('navigate', { component: resolveLinkedObject(), props: buildLinkedProps(), label: props.alarm.objName })
+    }
+    function resolveLinkedObject() {
+      const t = props.alarm.objType
+      const n = props.alarm.objName
+      if (t.includes('节点') || t.includes('node')) return NodeDetail
+      if (t.includes('存储池')) return PoolDetail
+      if (t.includes('桶')) return BucketDetail
+      if (t.includes('集群')) return ClusterDetail
+      if (t.includes('存储集群')) return SCDetail
+      return BucketDetail
+    }
+    function buildLinkedProps() {
+      const t = props.alarm.objType
+      const n = props.alarm.objName
+      if (t.includes('节点') || t.includes('node')) {
+        const node = nodes.find(x => x.name === n)
+        return { node, dataDisks, alarms }
+      }
+      if (t.includes('存储池')) {
+        const pool = storagePools.find(x => x.name === n)
+        return { pool, buckets: getBucketsByPool(pool?.id), alarms }
+      }
+      if (t.includes('桶')) {
+        const bucket = buckets.find(x => x.name === n)
+        return { bucket, alarms }
+      }
+      if (t.includes('集群')) {
+        const c = clusters.find(x => x.name === n)
+        return { cluster: c, getBucketsByCluster, getNodesByCluster, buckets, nodes, dataDisks, alarms }
+      }
+      const bucket = buckets.find(x => x.name === n)
+      return { bucket, alarms }
+    }
+    return { recovered, execRecovery, openLinkedObject, ...useHelpers() }
   }
 }
 
@@ -1074,6 +1511,7 @@ const TenantDetail = {
       <div class="detail-info-grid">
         <div class="detail-info-item"><span class="dii-label">租户名称</span><span class="dii-value">{{ tenant.name }}</span></div>
         <div class="detail-info-item"><span class="dii-label">企业项目</span><span class="dii-value">{{ tenant.ep }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">租户类型</span><span class="dii-value">{{ tenant.type || '生产' }}</span></div>
         <div class="detail-info-item"><span class="dii-label">桶数量</span><span class="dii-value">{{ tenant.bucketCount }}</span></div>
         <div class="detail-info-item"><span class="dii-label">总容量</span><span class="dii-value">{{ tenant.quota }} TB</span></div>
         <div class="detail-info-item"><span class="dii-label">使用量</span><span class="dii-value">{{ tenant.used }} TB</span></div>
@@ -1086,71 +1524,224 @@ const TenantDetail = {
         <div class="detail-info-item"><span class="dii-label">健康状态</span><span class="dii-value"><span class="health-tag" :class="tenant.health">{{ healthText(tenant.health) }}</span></span></div>
       </div>
     </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">关联桶列表</h4>
+      <a-table :data-source="tenantBuckets" :columns="bucketCols" :pagination="false" row-key="name" size="small" :custom-row="bucketRowClick">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'"><a class="rld-link" @click.stop="emit('navigate', { component: BucketDetail, props: { bucket: record, alarms }, label: record.name })">{{ record.name }}</a></template>
+          <template v-else-if="column.key === 'type'">{{ bucketTypeText(record.type) }}</template>
+          <template v-else-if="column.key === 'usage'"><span class="rld-usage"><span class="rld-usage-fill" :style="{ width: record.metrics.usage + '%' }"></span></span><span class="rld-usage-text">{{ record.metrics.usage }}%</span></template>
+          <template v-else-if="column.key === 'health'"><a-tag :color="healthColor(record.health)">{{ healthText(record.health) }}</a-tag></template>
+        </template>
+      </a-table>
+    </div>
   </div>`,
-  setup(props) {
-    return { ...useHelpers() }
+  setup(props, { emit }) {
+    const tenantBuckets = computed(() => (props.buckets || []).filter(b => b.tenant === props.tenant.name))
+    const bucketCols = [
+      { title: '桶名', dataIndex: 'name', key: 'name' },
+      { title: '类型', dataIndex: 'type', key: 'type', width: 130 },
+      { title: '使用率', dataIndex: 'usage', key: 'usage', width: 170 },
+      { title: '健康状态', dataIndex: 'health', key: 'health', width: 90 },
+    ]
+    function bucketRowClick(record) {
+      return { onClick: () => emit('navigate', { component: BucketDetail, props: { bucket: record, alarms: [] }, label: record.name }) }
+    }
+    function healthColor(h) {
+      return h === 'ok' ? 'green' : h === 'warn' ? 'orange' : 'red'
+    }
+    return { emit, tenantBuckets, bucketCols, bucketRowClick, healthColor, BucketDetail, ...useHelpers() }
+  }
+}
+
+const DiskDetail = {
+  props: ['disk', 'node', 'alarms'],
+  template: `<div class="drawer-content">
+    <div class="detail-section">
+      <h4 class="detail-section-title">基本信息</h4>
+      <div class="detail-info-grid">
+        <div class="detail-info-item"><span class="dii-label">ESN</span><span class="dii-value">{{ disk.esn }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">槽位</span><span class="dii-value">{{ disk.slot }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">介质</span><span class="dii-value">{{ disk.media }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">角色</span><span class="dii-value">{{ disk.role }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">所属节点</span><span class="dii-value"><a class="rld-link" @click.stop="emit('navigate', { component: NodeDetail, props: { node, dataDisks, alarms }, label: node?.name })">{{ node?.name || disk.node }}</a></span></div>
+        <div class="detail-info-item"><span class="dii-label">状态</span><span class="dii-value"><a-tag :color="diskStatusColor(disk.health)">{{ diskStatusText(disk.health) }}</a-tag></span></div>
+        <div class="detail-info-item"><span class="dii-label">健康状态</span><span class="dii-value"><a-tag :color="healthColor(disk.health)">{{ diskStatusText(disk.health) }}</a-tag></span></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">容量</h4>
+      <div class="detail-cap-row"><span>物理总量</span><span>{{ disk.metrics.capacity }} TB</span></div>
+      <div class="detail-cap-row"><span>物理使用</span><span>{{ disk.metrics.used }} TB</span></div>
+      <div class="detail-cap-row"><span>物理剩余</span><span>{{ (disk.metrics.capacity - disk.metrics.used).toFixed(2) }} TB</span></div>
+      <div class="detail-cap-row"><span>使用率</span><span>{{ disk.metrics.usage }}%</span><div class="cap-bar"><div class="cap-fill" :style="{ width: disk.metrics.usage + '%', background: percentColor(disk.metrics.usage) }"></div></div></div>
+    </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">性能指标</h4>
+      <div class="perf-grid">
+        <div class="perf-item"><span class="perf-label">带宽</span><span class="perf-value">{{ disk.metrics.bw }} MB/s</span></div>
+        <div class="perf-item"><span class="perf-label">IOPS</span><span class="perf-value">{{ disk.metrics.iops.toLocaleString() }}</span></div>
+      </div>
+    </div>
+  </div>`,
+  setup(props, { emit }) {
+    function healthColor(h) {
+      return h === 'online' ? 'green' : h === 'degraded' ? 'orange' : 'red'
+    }
+    return { emit, healthColor, NodeDetail, ...useHelpers() }
+  }
+}
+
+const EnterpriseProjectDetail = {
+  props: ['ep', 'tenants', 'buckets'],
+  template: `<div class="drawer-content">
+    <div class="detail-section">
+      <h4 class="detail-section-title">企业项目信息</h4>
+      <div class="detail-info-grid">
+        <div class="detail-info-item"><span class="dii-label">项目 ID</span><span class="dii-value">{{ ep.id }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">项目名称</span><span class="dii-value">{{ ep.name }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">项目描述</span><span class="dii-value">{{ ep.desc }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">租户数量</span><span class="dii-value">{{ ep.tenantCount }}</span></div>
+        <div class="detail-info-item"><span class="dii-label">总容量</span><span class="dii-value">{{ ep.total }} TB</span></div>
+        <div class="detail-info-item"><span class="dii-label">已使用</span><span class="dii-value">{{ ep.used }} TB</span></div>
+        <div class="detail-info-item"><span class="dii-label">使用率</span><span class="dii-value">{{ ep.usage }}%</span></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">容量使用</h4>
+      <div class="detail-cap-row"><span>容量使用</span><span>{{ ep.used }}/{{ ep.total }} TB</span><div class="cap-bar"><div class="cap-fill" :style="{ width: ep.usage + '%', background: percentColor(ep.usage) }"></div></div><span>{{ ep.usage }}%</span></div>
+    </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">关联租户列表</h4>
+      <a-table :data-source="epTenants" :columns="tenantCols" :pagination="false" row-key="name" size="small" :custom-row="tenantRowClick">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'"><a class="rld-link" @click.stop="emit('navigate', { component: TenantDetail, props: { tenant: record, buckets }, label: record.name })">{{ record.name }}</a></template>
+          <template v-else-if="column.key === 'type'">{{ record.type }}</template>
+          <template v-else-if="column.key === 'usage'"><span class="rld-usage"><span class="rld-usage-fill" :style="{ width: record.usage + '%' }"></span></span><span class="rld-usage-text">{{ record.usage }}%</span></template>
+          <template v-else-if="column.key === 'health'"><a-tag :color="healthColor(record.health)">{{ healthText(record.health) }}</a-tag></template>
+        </template>
+      </a-table>
+    </div>
+  </div>`,
+  setup(props, { emit }) {
+    const epTenants = computed(() => (props.tenants || []).filter(t => t.ep.includes(props.ep.name) || (props.ep.tenantCount && t.ep.startsWith('ep-'))).slice(0, 20))
+    const tenantCols = [
+      { title: '租户名', dataIndex: 'name', key: 'name' },
+      { title: '类型', dataIndex: 'type', key: 'type', width: 90 },
+      { title: '容量', dataIndex: 'quota', key: 'quota', width: 100 },
+      { title: '使用率', dataIndex: 'usage', key: 'usage', width: 170 },
+      { title: '健康状态', dataIndex: 'health', key: 'health', width: 90 },
+    ]
+    function tenantRowClick(record) {
+      return { onClick: () => emit('navigate', { component: TenantDetail, props: { tenant: record, buckets: props.buckets }, label: record.name }) }
+    }
+    function healthColor(h) {
+      return h === 'ok' ? 'green' : h === 'warn' ? 'orange' : 'red'
+    }
+    return { emit, epTenants, tenantCols, tenantRowClick, healthColor, TenantDetail, ...useHelpers() }
   }
 }
 
 const slaChartRefs = reactive({})
 const bwChartRefs = reactive({})
-const scChartRefs = reactive({})
+const capChartRefs = reactive({})
+const scPoolChartRefs = reactive({})
+const scPoolBarRefs = reactive({})
 let chartInstances = []
 
 function renderRegionCharts() {
   clusters.forEach((cl, i) => {
+    [['logic', cl.metrics.logicUsed, cl.metrics.logicTotal, cl.metrics.logicPercent], ['phy', cl.metrics.phyUsed, cl.metrics.phyTotal, cl.metrics.phyPercent]].forEach(([kind, used, total, pct]) => {
+      const key = cl.id + ':' + kind
+      if (capChartRefs[key]) {
+        const c = new Chart({ container: capChartRefs[key], autoFit: true, padding: [2, 2, 2, 2] })
+        chartInstances.push(c)
+        c.coordinate({ transform: [{ type: 'transpose' }] })
+        c.interval().data([{ type: kind, value: used, total, pct }])
+          .encode('x', 'type').encode('y', 'value')
+          .style('maxWidth', 22).style('radiusTopLeft', 4).style('radiusTopRight', 4)
+          .label({ text: (d) => d.value + '/' + d.total + ' TB · ' + d.pct + '%', position: 'right', style: { fontSize: 11, fill: '#1a1a1a', dy: 1, dx: 8, textAlign: 'left' } })
+        c.scale('y', { domain: [0, total] })
+        c.axis('x', false)
+        c.axis('y', false)
+        c.render()
+      }
+    })
     if (slaChartRefs[cl.id]) {
-      const c = new Chart({ container: slaChartRefs[cl.id], autoFit: true, padding: [4, 4, 16, 20] })
+      const c = new Chart({ container: slaChartRefs[cl.id], autoFit: true, padding: [4, 4, 4, 4] })
       chartInstances.push(c)
       const sucData = cl.metrics.successTrend.map(d => ({ time: d.time, value: d.value, type: '成功率' }))
       const effData = cl.metrics.effectiveTrend.map(d => ({ time: d.time, value: d.value, type: '有效请求率' }))
       const allData = [...sucData, ...effData]
-      c.area().data(allData).encode('x', 'time').encode('y', 'value').encode('color', 'type')
-        .style('fillOpacity', 0.15).style('shape', 'smooth')
       c.line().data(allData).encode('x', 'time').encode('y', 'value').encode('color', 'type')
         .style('lineWidth', 1.5).style('shape', 'smooth')
       c.scale('color', { range: ['#52c41a', '#1890ff'] })
+      c.axis('x', false)
+      c.axis('y', false)
       c.render()
     }
     if (bwChartRefs[cl.id]) {
-      const c = new Chart({ container: bwChartRefs[cl.id], autoFit: true, padding: [4, 4, 16, 20] })
+      const c = new Chart({ container: bwChartRefs[cl.id], autoFit: true, padding: [4, 4, 4, 4] })
       chartInstances.push(c)
       const outData = cl.metrics.bwTrend ? cl.metrics.bwTrend.map(d => ({ time: d.time, value: d.value, type: '流出带宽' })) : genTrend(30, 1, 4).map(d => ({ ...d, type: '流出带宽' }))
       const inData = genTrend(30, 0.8, 3.5).map(d => ({ ...d, type: '流入带宽' }))
       const allData = [...outData, ...inData]
-      c.area().data(allData).encode('x', 'time').encode('y', 'value').encode('color', 'type')
-        .style('fillOpacity', 0.15).style('shape', 'smooth')
       c.line().data(allData).encode('x', 'time').encode('y', 'value').encode('color', 'type')
         .style('lineWidth', 1.5).style('shape', 'smooth')
       c.scale('color', { range: ['#1890ff', '#722ed1'] })
+      c.axis('x', false)
+      c.axis('y', false)
       c.render()
     }
   })
 
   storageClusters.forEach((sc, i) => {
-    if (scChartRefs[sc.id]) {
-      const c = new Chart({ container: scChartRefs[sc.id], autoFit: true, padding: [4, 4, 16, 20] })
-      chartInstances.push(c)
-      const pools = getPoolsBySC(sc.id)
-      const allData = []
-      pools.forEach((p, pi) => {
-        p.metrics.readBwTrend.forEach((d, di) => {
-          allData.push({ time: d.time, value: d.value, pool: p.name })
-        })
-      })
-      c.area().data(allData).encode('x', 'time').encode('y', 'value').encode('color', 'pool')
-        .style('fillOpacity', 0.15).style('shape', 'smooth')
-      c.line().data(allData).encode('x', 'time').encode('y', 'value').encode('color', 'pool')
-        .style('lineWidth', 1.5).style('shape', 'smooth')
-      c.render()
-    }
+    getPoolsBySC(sc.id).forEach((p) => {
+      const key = sc.id + ':' + p.id
+      if (scPoolBarRefs[key]) {
+        const c = new Chart({ container: scPoolBarRefs[key], autoFit: true, padding: [0, 0, 0, 0] })
+        chartInstances.push(c)
+        c.coordinate({ transform: [{ type: 'transpose' }] })
+        c.interval()
+          .data([{ value: p.metrics.phyUsed }])
+          .encode('x', 'used').encode('y', 'value')
+          .style('fill', '#1890ff')
+          .style('minWidth', 24)
+          .style('maxWidth', 24)
+          .style('radiusTopLeft', 3).style('radiusTopRight', 3)
+        c.scale('y', { domain: [0, p.metrics.phyTotal] })
+        c.scale('x', { padding: 0 })
+        c.axis('x', false)
+        c.axis('y', false)
+        c.render()
+      }
+      if (scPoolChartRefs[key]) {
+        const c = new Chart({ container: scPoolChartRefs[key], autoFit: true, padding: [2, 2, 2, 2] })
+        chartInstances.push(c)
+        const trend = p.metrics.readBwTrend || genTrend(24, 20, 80)
+        const vals = trend.map(d => d.value)
+        const tMin = Math.min(...vals) * 0.85
+        const tMax = Math.max(...vals) * 1.08
+        c.line().data(trend).encode('x', 'time').encode('y', 'value')
+          .style('lineWidth', 1.5).style('shape', 'smooth')
+        c.scale('y', { domain: [tMin, tMax] })
+        c.axis('x', false)
+        c.axis('y', false)
+        c.legend(false)
+        c.render()
+      }
+    })
   })
 }
 
 onMounted(() => {
   lastRefresh.value = new Date().toLocaleString()
   nextTick(() => {
-    renderRegionCharts()
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        renderRegionCharts()
+      })
+    })
   })
 })
 
@@ -1173,7 +1764,10 @@ export default {
 .obs-ops-actions { display: flex; align-items: center; gap: 12px; }
 .obs-ops-body { flex: 1; overflow-y: auto; padding: 16px 24px 80px; display: flex; flex-direction: column; gap: 20px; }
 .obs-section { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-.obs-section-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.obs-section-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 0; padding-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.obs-section-title.anatomy-dropdown { margin-bottom: 8px; padding-bottom: 0; }
+.obs-section-title.anatomy-section-title { padding-bottom: 0; }
+.obs-section-title.anatomy-section-title + .obs-section { margin-top: -12px; }
 
 .stats-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -1198,28 +1792,32 @@ export default {
 .alarm-level-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; color: #fff; display: inline-block; }
 .alarm-empty { padding: 20px; text-align: center; color: #8c8c8c; }
 .alarm-list-wrap .ant-table { min-height: 220px; }
+.alarm-table .ant-table-content table { table-layout: fixed; width: 100%; }
+.alarm-table .ant-table-content table th,
+.alarm-table .ant-table-content table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .tenant-ep-section { display: flex; gap: 16px; }
-.tenant-top5-table { width: 60%; overflow-x: auto; }
-.tenant-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.tenant-table-title { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+.tenant-top5-table { width: 65%; overflow-x: auto; }
+.tenant-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.tenant-table-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
 .tenant-search { width: 200px; }
 .cap-bar-sm { display: inline-block; width: 60px; height: 5px; background: #f0f0f0; border-radius: 3px; overflow: hidden; vertical-align: middle; }
 .cap-pct-sm { font-size: 11px; color: #595959; margin-left: 4px; }
 
-.tenant-charts { width: 40%; display: flex; flex-direction: row; gap: 12px; }
-.tc-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 10px; flex: 1; }
-.tc-hdr { font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
-.tc-chart { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; }
+.tenant-charts { width: 35%; display: flex; flex-direction: row; gap: 12px; align-items: stretch; }
+.tc-wrap { display: flex; flex-direction: column; flex: 1; }
+.tc-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 10px; flex: 1; display: flex; align-items: center; justify-content: center; }
+.tc-hdr { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+.tc-chart { width: 100%; display: flex; align-items: center; justify-content: center; }
 
-.donut-svg { width: 160px; height: 160px; flex-shrink: 0; margin-top: 40px; }
-.donut-legend { display: flex; flex-direction: column; gap: 4px; margin-left: 12px; margin-top: 40px; font-size: 11px; }
+.donut-svg { width: 160px; height: 160px; flex-shrink: 0; }
+.donut-legend { display: flex; flex-direction: column; gap: 4px; margin-left: 12px; font-size: 11px; }
 .legend-item { display: flex; align-items: center; gap: 6px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 .legend-label { color: #595959; }
 .legend-value { color: #8c8c8c; margin-left: auto; }
 
-.bar-svg { width: 100%; height: 100%; margin-top: 40px; }
+.bar-svg { width: 100%; height: 100%; }
 .bar-label { font-size: 9px; fill: #595959; }
 .bar-name { font-size: 10px; fill: #8c8c8c; }
 
@@ -1228,7 +1826,23 @@ export default {
 .anatomy-block.collapsed .cluster-detail-grid,
 .anatomy-block.collapsed .sc-detail-grid,
 .anatomy-block.collapsed .node-grid { display: none; }
-.anatomy-block-title { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 600; color: #1a1a1a; padding: 10px 0; border-bottom: 1px solid #e8e8e8; margin-bottom: 8px; }
+.anatomy-part.collapsed .cluster-detail-grid,
+.anatomy-part.collapsed .sc-detail-grid,
+.anatomy-part.collapsed .node-grid { display: none; }
+.anatomy-block-title { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 600; color: #1a1a1a; padding: 0 0 16px; margin-bottom: 8px; }
+.anatomy-block.collapsed .anatomy-block-title { border-bottom: 1px solid #e8e8e8; }
+.abl-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.abl-name { font-size: 15px; font-weight: 600; color: #1a1a1a; white-space: nowrap; }
+.abl-sep { color: #d9d9d9; margin: 0; font-size: 10px; font-weight: 400; }
+.abl-endpoint { font-size: 12px; color: #8c8c8c; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.abl-capacity { display: flex; align-items: center; gap: 24px; }
+.abl-cap-mod { display: flex; align-items: center; gap: 8px; }
+.abl-cap-label { font-size: 12px; color: #595959; flex-shrink: 0; }
+.abl-cap-bar { width: 90px; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
+.abl-cap-fill { display: block; height: 100%; border-radius: 3px; transition: width 0.3s; }
+.abl-cap-nums { font-size: 12px; color: #1a1a1a; font-weight: 500; white-space: nowrap; }
+.abl-cap-nums em { font-style: normal; color: #8c8c8c; margin: 0 2px; }
+.abl-cap-pct { font-size: 12px; color: #595959; width: 40px; text-align: right; font-weight: 500; }
 
 .cluster-detail-grid { margin-bottom: 10px; }
 .cluster-detail-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 14px; cursor: pointer; transition: all 0.2s; }
@@ -1236,44 +1850,40 @@ export default {
 .cdc-header { margin-bottom: 10px; }
 .cdc-name { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
 .cdc-meta { display: flex; gap: 10px; font-size: 11px; color: #8c8c8c; flex-wrap: wrap; }
-.cdc-capacity { margin-bottom: 10px; }
-.cdc-cap-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px; }
-.cdc-cap-label { width: 30px; color: #8c8c8c; flex-shrink: 0; }
-.cdc-cap-text { width: 100px; color: #1a1a1a; flex-shrink: 0; }
-.cdc-cap-pct { width: 40px; text-align: right; color: #595959; font-weight: 500; flex-shrink: 0; }
-.cdc-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.cdc-chart-col { }
-.cdc-chart-label { font-size: 11px; color: #8c8c8c; margin-bottom: 4px; }
-.cdc-chart-box { width: 100%; height: 120px; }
-.cdc-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-.cdc-kpi { display: flex; flex-direction: column; gap: 2px; padding: 8px; background: #fafafa; border-radius: 6px; }
+.cdc-capacity { flex: 1 1 25%; min-width: 0; display: flex; flex-direction: column; justify-content: space-evenly; gap: 8px; }
+.cdc-cap-row { display: flex; align-items: center; gap: 8px; }
+.cdc-cap-title { font-size: 12px; color: #595959; font-weight: 500; width: 34px; flex-shrink: 0; }
+.cdc-cap-chart { flex: 1; height: 22px; min-width: 0; }
+.cdc-body-row { display: flex; align-items: stretch; gap: 14px; zoom: 1; min-height: 110px; }
+.cdc-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1 1 50%; min-width: 0; align-items: stretch; }
+.cdc-chart-col { min-width: 0; display: flex; flex-direction: column; height: 100%; }
+.cdc-chart-label { font-size: 11px; color: #8c8c8c; margin-bottom: 2px; flex-shrink: 0; }
+.cdc-chart-box { width: 100%; height: 90px; min-height: 0; overflow: hidden; position: relative; }
+.cdc-kpis { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 8px; flex: 1 1 25%; min-width: 0; }
+.cdc-kpi { display: flex; flex-direction: column; gap: 0; padding: 4px 8px; background: #fafafa; border-radius: 6px; justify-content: center; align-items: center; text-align: center; }
 .cdc-kpi-label { font-size: 11px; color: #8c8c8c; }
-.cdc-kpi-val { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.cdc-kpi-val { font-size: 18px; font-weight: 700; color: #1a1a1a; }
 
-.honeycomb { display: flex; flex-wrap: wrap; gap: 6px; }
-.hex-cell { width: 72px; height: 64px; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.15s; }
-.hex-cell:hover { transform: scale(1.08); }
-.hex-green { background: #f6ffed; }
-.hex-orange { background: #fff7e6; }
-.hex-red { background: #fff1f0; }
-.hex-inner { text-align: center; }
-.hex-name { font-size: 9px; color: #595959; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60px; }
-.hex-val { font-size: 12px; font-weight: 700; color: #1a1a1a; }
+.honeycomb { padding: 6px 0 2px; user-select: none; display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+.hex-cell { width: 18px; height: 18px; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); cursor: pointer; transition: transform 0.15s; flex-shrink: 0; }
+.hex-cell:hover { transform: scale(1.15); }
+.hcx-ok { background: #52c41a; }
+.hcx-warn { background: #fa8c16; }
+.hcx-crit { background: #f5222d; }
 
-.sc-detail-grid { margin-bottom: 10px; }
+.sc-detail-grid { margin-bottom: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .sc-detail-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 14px; cursor: pointer; transition: all 0.2s; }
 .sc-detail-card:hover { border-color: #1890ff; box-shadow: 0 2px 8px rgba(24,144,255,0.1); }
-.sdc-header { margin-bottom: 10px; }
-.sdc-name { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
-.sdc-meta { display: flex; gap: 10px; font-size: 11px; color: #8c8c8c; align-items: center; }
-
-.pool-waterfall { margin-bottom: 8px; }
-.pool-wl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
-.pool-wl-name { width: 80px; color: #595959; flex-shrink: 0; font-size: 11px; }
-.pw-fill-track { flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
-.pw-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
-.pool-wl-label { width: 100px; color: #595959; flex-shrink: 0; font-size: 11px; }
-.pool-wl-val { width: 40px; text-align: right; color: #1a1a1a; font-weight: 500; flex-shrink: 0; font-size: 11px; }
+.sdc-name { font-size: 15px; font-weight: 600; color: #1890ff; margin-bottom: 12px; }
+.sdc-pool-list { display: flex; gap: 10px; align-items: stretch; }
+.sdc-pool { flex: 1; min-width: 0; border: 1px solid #f0f0f0; border-radius: 8px; padding: 12px; background: #fafafa; }
+.sdp-title { font-size: 12px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px; }
+.sdp-body { display: flex; flex-direction: column; gap: 6px; }
+.sdp-bar-chart { width: 100%; height: 26px; border-radius: 3px; overflow: hidden; }
+.sdp-bar-cap { display: flex; justify-content: space-between; font-size: 11px; color: #8c8c8c; }
+.sdp-trend { margin-top: 10px; }
+.sdp-trend-label { font-size: 11px; color: #8c8c8c; margin-bottom: 2px; }
+.sdp-trend-chart { width: 100%; height: 60px; }
 
 .node-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 .node-tile { padding: 12px; border: 1px solid #e8e8e8; border-left: 3px solid #52c41a; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
@@ -1469,6 +2079,13 @@ export default {
 </style>
 
 <style>
+.rld-region-id { color: #595959; font-family: monospace; }
+.rld-link { color: #1890ff; cursor: pointer; }
+.rld-link:hover { color: #40a9ff; }
+.rld-domain { color: #595959; }
+.rld-usage { display: inline-block; width: 100px; height: 8px; border-radius: 4px; background: #e9e9e9; vertical-align: middle; overflow: hidden; position: relative; }
+.rld-usage-fill { display: block; height: 100%; border-radius: 4px; background: #1890ff; }
+.rld-usage-text { margin-left: 6px; color: #1a1a1a; font-weight: 500; }
 .detail-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0 24px; }
 .detail-info-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
 .dii-label { font-size: 13px; color: #8c8c8c; width: 100px; flex-shrink: 0; }
