@@ -67,6 +67,11 @@
               <RCAEvidencePanel :rca="rcaEvidence" :logs="linkedLogs" />
             </div>
           </div>
+          <div class="sre-row sre-row-related-alerts">
+            <div class="sre-cell sre-cell-related-alerts">
+              <RelatedAlertsPanel :alerts="relatedAlerts" />
+            </div>
+          </div>
           <div class="sre-row sre-row-2">
             <div class="sre-cell sre-cell-full">
               <CallTracePanel :traces="callTrace" :app-name="incident?.service" />
@@ -108,6 +113,7 @@ import PostmortemReport from '../../components/sre/PostmortemReport.vue'
 import CallTracePanel from '../../components/sre/CallTracePanel.vue'
 import LinkedLogsPanel from '../../components/sre/LinkedLogsPanel.vue'
 import RCAEvidencePanel from '../../components/sre/RCAEvidencePanel.vue'
+import RelatedAlertsPanel from '../../components/sre/RelatedAlertsPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -118,6 +124,7 @@ const topology = ref({ nodes: [], edges: [] })
 const playbook = ref(null)
 const postmortem = ref(null)
 const rcaEvidence = ref(null)
+const relatedAlerts = ref([])
 const errorRateTrend = ref([])
 const logs = ref([])
 const traces = ref([])
@@ -177,6 +184,7 @@ async function fetchData() {
       playbook.value = json.data.playbook
       postmortem.value = json.data.postmortem
       rcaEvidence.value = json.data.rcaEvidence
+      relatedAlerts.value = json.data.relatedAlerts || []
       errorRateTrend.value = json.data.errorRateTrend
     }
     const logsRes = await fetch(`/api/sre/incidents/${id}/logs`)
@@ -445,6 +453,9 @@ watch(() => route.params.id, fetchData)
 .sre-row-rca { flex-shrink: 0; }
 .sre-cell-rca { flex: 1; min-height: 0; }
 .sre-cell-rca .rca-evidence-panel { flex: 1; }
+.sre-row-related-alerts { flex-shrink: 0; }
+.sre-cell-related-alerts { flex: 1; min-height: 0; }
+.sre-cell-related-alerts .related-alerts-panel { flex: 1; }
 .sre-cell { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .sre-cell-full { flex: 1; max-height: 210px; overflow-y: auto; }
 .sre-cell-left { flex: 1; }

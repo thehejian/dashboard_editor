@@ -507,6 +507,19 @@ export function getTable(name) {
   return data[name] || []
 }
 
+// Snapshot of alerts' incident_id at boot time, so tests can restore it
+const ALERTS_INCIDENT_SNAPSHOT = (data.alerts || []).reduce((acc, a) => {
+  acc[String(a.id)] = a.incident_id ?? null
+  return acc
+}, {})
+
+export function resetAlertsIncidentId() {
+  const alerts = data.alerts || []
+  alerts.forEach(a => {
+    a.incident_id = ALERTS_INCIDENT_SNAPSHOT[String(a.id)] ?? null
+  })
+}
+
 export function getSchema() {
   return SCHEMA
 }

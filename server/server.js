@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { exec } from 'child_process'
 import cmdbRouter from './routes/cmdb.js'
-import { getTable } from './db/mockData.js'
+import { getTable, resetAlertsIncidentId } from './db/mockData.js'
 
 dotenv.config()
 
@@ -1282,6 +1282,9 @@ const MOCK_INCIDENTS = [
   },
 ]
 
+// Snapshot of initial incident IDs so tests can reset aggregate-created incidents
+const INITIAL_INCIDENT_IDS = MOCK_INCIDENTS.map(i => i.id)
+
 const MOCK_HEALING_PLAYBOOK = {
   'INC-2026-0720': {
     agentStatus: 'executing',
@@ -2031,6 +2034,14 @@ app.post('/api/sre/incidents/:id/heal/:stepIndex', (req, res) => {
 
 // POST /api/sre/reset — reset playbook to initial state (for testing)
 app.post('/api/sre/reset', (req, res) => {
+  // Restore alerts' incident_id links (undo aggregate-created incidents)
+  resetAlertsIncidentId()
+  // Remove aggregate-created incidents (those not in the initial snapshot)
+  for (let i = MOCK_INCIDENTS.length - 1; i >= 0; i--) {
+    if (!INITIAL_INCIDENT_IDS.includes(MOCK_INCIDENTS[i].id)) {
+      MOCK_INCIDENTS.splice(i, 1)
+    }
+  }
   const playbook = MOCK_HEALING_PLAYBOOK['INC-2026-0720']
   if (playbook) {
     playbook.agentStatus = 'executing'

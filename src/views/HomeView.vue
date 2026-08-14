@@ -46,6 +46,11 @@
             </span>
           </div>
           <div class="card-sub" v-if="card.sub">{{ card.sub }}</div>
+          <div class="card-unlinked-alert" v-if="card.key === 'today-alarms' && unlinkedFiringCount > 0" @click.stop>
+            <i class="fa-solid fa-link-slash"></i>
+            <span>{{ unlinkedFiringCount }} 条活动告警未关联故障</span>
+            <a-button size="small" type="primary" ghost @click.stop="aggregateUnlinkedAlerts">一键聚合</a-button>
+          </div>
         </div>
       </a-col>
 
@@ -937,6 +942,7 @@ const appDrawerOpen = ref(false)
 const appDrawerTab = ref('fault-detail')
 const appFilter = ref('abnormal')
 const allIncidents = ref([])
+const unlinkedFiringCount = ref(0)
 
 const aiopsActiveFaults = computed(() => {
   return allIncidents.value.filter(i => i.status === 'healing' || i.status === 'investigating')
@@ -1712,6 +1718,7 @@ const kpiCards = reactive([
   },
   {
     title: '当日告警',
+    key: 'today-alarms',
     value: '54,333',
     trend: -8,
     trendText: '较上周 -8%',
@@ -1781,7 +1788,7 @@ win.__openDrawerFromIncident = () => {
 async function fetchAiopsData() {
   try {
     aiopsLoading.value = true
-    const [anomalyRes, healthRes, predRes, remedRes, topoRes, recRes, goldenRes, incidentsRes] = await Promise.all([
+    const [anomalyRes, healthRes, predRes, remedRes, topoRes, recRes, goldenRes, incidentsRes, statsRes] = await Promise.all([
       fetch('/api/intelligent/anomalies').then(r => r.json()),
       fetch('/api/intelligent/health').then(r => r.json()),
       fetch('/api/intelligent/predictions').then(r => r.json()),
@@ -1790,6 +1797,7 @@ async function fetchAiopsData() {
       fetch('/api/intelligent/recommendations').then(r => r.json()),
       fetch('/api/intelligent/golden-signals').then(r => r.json()),
       fetch('/api/sre/incidents').then(r => r.json()),
+      fetch('/api/cmdb/alerts/stats').then(r => r.json()),
     ])
     const anomalies = anomalyRes.data || []
     const summary = anomalyRes.summary || {}
@@ -1824,6 +1832,7 @@ async function fetchAiopsData() {
     aiopsPredictions.value = pred.items || []
     aiopsRemediationRecords.value = remed.records || []
     allIncidents.value = incidentsRes.data || []
+    unlinkedFiringCount.value = statsRes?.data?.summary?.unlinked_firing_count ?? 0
 
     if (anomalies.length) {
       const root = anomalies.reduce((max, a) => a.score > max.score ? a : max, anomalies[0])
@@ -2031,6 +2040,31 @@ onBeforeUnmount(() => {
 const refreshCard = (card) => {
   message.success(`刷新 ${card.title} 数据`)
 }
+
+async function aggregateUnlinkedAlerts() {
+  try {
+    const listRes = await fetch('/api/cmdb/alerts?pageSize=500').then(r => r.json())
+    const list = listRes?.data?.list || listRes?.data || []
+    const alertIds = list.filter(a => a.status === 'firing' && !a.incident_id).map(a => a.id)
+    if (!alertIds.length) {
+      message.info('当前没有未关联的告警')
+      return
+    }
+    const res = await fetch('/api/sre/incidents/aggregate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alertIds }),
+    }).then(r => r.json())
+    if (res.success) {
+      message.success(`已聚合 ${res.data?.relatedAlertCount ?? alertIds.length} 条告警到 ${res.data?.incident?.id}`)
+      fetchAiopsData()
+    } else {
+      message.error(res.message || '聚合失败，请稍后重试')
+    }
+  } catch (e) {
+    message.error('聚合失败，请稍后重试')
+  }
+}
 </script>
 
 <style scoped>
@@ -2061,6 +2095,19 @@ const refreshCard = (card) => {
 .trend { font-size: 12px; display: flex; align-items: center; gap: 4px; }
 .trend.up { color: #52C41A; }
 .trend.down { color: #f5222d; }
+.card-unlinked-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: #fff7e6;
+  border: 1px solid #ffe7ba;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #ad6800;
+}
+.card-unlinked-alert i { color: #FA8C16; }
 .card-sub { font-size: 12px; color: var(--text-secondary); min-height: 16px; }
 
 .chart-card :deep(.ant-card-head) { border-bottom: 1px solid #f0f0f0; }

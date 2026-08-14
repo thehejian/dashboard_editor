@@ -38,6 +38,12 @@
         <template #bodyCell="{ column, text, record }">
           <template v-if="column.key === 'severity'"><span class="il-severity" :style="{ color: severityColors[text] || '#666' }">{{ text }}</span></template>
           <template v-else-if="column.key === 'title'"><span class="il-clickable-title">{{ text }}</span></template>
+          <template v-else-if="column.key === 'relatedAlerts'">
+            <template v-if="(record.relatedAlertCount || 0) > 0">
+              <a-tag color="orange" class="il-related-alert-tag" @click.stop="gotoRelatedAlerts(record)"><i class="fa-solid fa-bell"></i> {{ record.relatedAlertCount }}</a-tag>
+            </template>
+            <span v-else class="il-no-alert">—</span>
+          </template>
           <template v-else-if="column.key === 'status'"><a-tag :color="statusTagMap[text]?.color || 'default'">{{ statusTagMap[text]?.label || text }}</a-tag></template>
         </template>
       </a-table>
@@ -68,6 +74,7 @@ const incidentColumns = [
   { title: '故障ID', dataIndex: 'id', key: 'id', width: 140 },
   { title: '故障名称', dataIndex: 'title', key: 'title', ellipsis: true },
   { title: '应用', dataIndex: 'appName', key: 'appName', width: 100 },
+  { title: '关联告警', key: 'relatedAlerts', width: 100 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
   { title: 'P99', key: 'p99', width: 100, customRender: ({ record }) => `${record.metrics?.p99?.current || '-'}ms` },
   { title: '失败率', key: 'failRate', width: 80, customRender: ({ record }) => `${record.metrics?.failureRate?.current || '-'}%` },
@@ -127,6 +134,11 @@ const filteredIncidents = computed(() => {
 
 function rowClickHandler(record) {
   return { onClick: () => router.push('/ops/incident/' + record.id), style: { cursor: 'pointer' } }
+}
+
+function gotoRelatedAlerts(record) {
+  if (!record || !record.id) return
+  router.push('/alarm/current?incidentId=' + record.id)
 }
 
 onMounted(async () => {
@@ -237,4 +249,8 @@ onMounted(async () => {
   font-weight: 700;
   font-size: 13px;
 }
+
+.il-related-alert-tag { cursor: pointer; }
+.il-related-alert-tag:hover { opacity: 0.8; }
+.il-no-alert { color: #bfbfbf; }
 </style>

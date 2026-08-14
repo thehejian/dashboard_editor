@@ -44,7 +44,7 @@
             :row-selection="{ selectedRowKeys: selectedKeys, onChange: function(keys) { selectedKeys = keys } }"
             row-key="id"
             :row-class-name="function(record) { return 'row-' + record.level }"
-            :scroll="{ x: 1400, y: scrollY }"
+            :scroll="{ x: 1520, y: scrollY }"
             size="middle"
           >
             <template #bodyCell="{ column, record }">
@@ -58,6 +58,16 @@
                 <a-tag :color="record.status === 'firing' ? 'red' : record.status === 'resolved' ? 'green' : 'default'">
                   {{ record.status === 'firing' ? '告警中' : record.status === 'resolved' ? '已恢复' : '已屏蔽' }}
                 </a-tag>
+              </template>
+              <template v-if="column.key === 'incident'">
+                <template v-if="record.incidentId">
+                  <a-tag color="blue" class="incident-tag" @click.stop="gotoIncident(record.incidentId)">{{ record.incidentId }}</a-tag>
+                </template>
+                <template v-else>
+                  <a-button type="link" size="small" class="create-incident-btn" @click.stop="createIncidentFromAlert(record)">
+                    <i class="fa-solid fa-plus"></i> 一键建单
+                  </a-button>
+                </template>
               </template>
               <template v-if="column.key === 'action'">
                 <div class="action-btns">
@@ -258,6 +268,9 @@
             <a-tag v-if="currentAlert" :color="getLevelColor(currentAlert.level)" class="detail-level-tag">{{ getLevelText(currentAlert.level) }}</a-tag>
           </div>
           <div class="detail-actions">
+            <a-button v-if="!currentAlert?.incidentId" size="small" type="primary" class="drawer-create-incident-btn" @click="createIncidentFromAlert(currentAlert)">
+              <i class="fa-solid fa-file-circle-plus"></i> 一键生成故障单
+            </a-button>
             <a-button size="small" :type="alertConfirmed ? 'default' : 'primary'" :disabled="alertConfirmed" @click="onConfirmAlert">
               <i class="fa-solid fa-check"></i> {{ alertConfirmed ? '已确认' : '确认' }}
             </a-button>
@@ -533,6 +546,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 import { Chart } from '@antv/g2'
 
 const route = useRoute()
@@ -732,6 +746,7 @@ onMounted(async () => {
           triggerTime: item.trigger_time || item.triggerTime || '',
           recoveryTime: item.recovery_time || item.recoveryTime || '-',
           status: item.status || 'firing',
+          incidentId: item.incident_id || item.incidentId || '',
           suggestion: item.suggestion || '',
           sourceSystem: item.source_system || item.sourceSystem || '',
           cloudService: item.cloud_service || item.cloudService || '',
@@ -804,6 +819,7 @@ const columns = [
   { title: '持续时间', dataIndex: 'duration', key: 'duration', width: 110 },
   { title: '触发时间', dataIndex: 'triggerTime', key: 'triggerTime', width: 180 },
   { title: '恢复时间', dataIndex: 'recoveryTime', key: 'recoveryTime', width: 180 },
+  { title: '关联故障', key: 'incident', width: 110 },
   { title: '操作', key: 'action', width: 90, fixed: 'right' },
 ]
 
@@ -935,6 +951,34 @@ const expFilteredData = computed(function() {
 
 const handleAlert = function(id) {
   realtimeAlerts.value = realtimeAlerts.value.filter(function(a) { return a.id !== id })
+}
+
+const gotoIncident = function(incidentId) {
+  if (!incidentId) return
+  closeDetail()
+  router.push({ path: '/ops/incident/' + incidentId, query: { from: 'alert' } })
+}
+
+const createIncidentFromAlert = async function(alert) {
+  if (!alert) return
+  try {
+    const res = await fetch('/api/sre/incidents/aggregate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alertIds: [alert.id] }),
+    })
+    const json = await res.json()
+    if (json.success) {
+      alert.incidentId = json.data.incident.id
+      closeDetail()
+      router.push({ path: '/ops/incident/' + json.data.incident.id, query: { from: 'alert' } })
+    } else {
+      message.error(json.message || '创建故障单失败')
+    }
+  } catch (e) {
+    console.error('创建故障单失败:', e)
+    message.error('创建故障单失败')
+  }
 }
 
 const timelineSeq = { n: 1 }
@@ -1449,6 +1493,10 @@ onBeforeUnmount(function() {
 .icon-btn:hover { background: var(--bg-sec); color: var(--brand); }
 .icon-btn.ai-btn { color: #722ed1; }
 .icon-btn.ai-btn:hover { background: #f9f0ff; color: #531dab; }
+
+.incident-tag { cursor: pointer; }
+.incident-tag:hover { opacity: 0.8; }
+.create-incident-btn { padding: 0 2px; }
 
 .history-alerts { display: flex; flex-direction: column; height: 100%; }
 .history-alerts .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
