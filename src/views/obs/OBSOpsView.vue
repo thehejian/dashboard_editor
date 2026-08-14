@@ -661,17 +661,17 @@ function tenantCustomRow(record) {
 }
 
 const tenantColumns = [
-  { title: '租户名称', dataIndex: 'name', key: 'name', width: 100 },
+  { title: '租户名称', dataIndex: 'name', key: 'name', width: 130 },
   { title: '企业项目', dataIndex: 'ep', key: 'ep', ellipsis: true },
   { title: '桶数量', dataIndex: 'bucketCount', key: 'bucketCount', width: 70 },
   { title: '总容量', key: 'quota', width: 80, customRender: ({ record }) => record.quota + ' TB' },
   { title: '使用量', key: 'used', width: 80, customRender: ({ record }) => record.used + ' TB' },
-  { title: '使用率', dataIndex: 'usage', key: 'usage', width: 120 },
-  { title: '服务成功率', dataIndex: 'successRate', key: 'successRate', width: 100 },
-  { title: '有效请求率', dataIndex: 'effectiveRate', key: 'effectiveRate', width: 100 },
+  { title: '使用率', dataIndex: 'usage', key: 'usage', width: 110 },
+  { title: '服务成功率', dataIndex: 'successRate', key: 'successRate', width: 95 },
+  { title: '有效请求率', dataIndex: 'effectiveRate', key: 'effectiveRate', width: 95 },
   { title: 'TPS', dataIndex: 'tps', key: 'tps', width: 70 },
-  { title: '流出带宽', dataIndex: 'outBw', key: 'outBw', width: 90 },
-  { title: '流入带宽', dataIndex: 'inBw', key: 'inBw', width: 90 },
+  { title: '流出带宽', dataIndex: 'outBw', key: 'outBw', width: 85 },
+  { title: '流入带宽', dataIndex: 'inBw', key: 'inBw', width: 85 },
 ]
 
 function percentColor(p) {
