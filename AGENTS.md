@@ -123,3 +123,37 @@ Dashboard 特殊：`/dashboard/:slug` → `EmptyRoute.vue`，由 `App.vue` `v-if
 
 ### markdown 表格转换
 - `simpleMarkdownToHtml` 中 `\n{2,} → </p><p>` 必须在表格正则转换之后执行。否则 `\n\n` 被替换后表格正则 `(?=\n\n|$)` 永远找不到分隔符，吞并后续所有内容
+
+## OBS 运维页侧滑改造（2026-08-14）
+
+### Vue 3 string-template 组件注意事项
+- `template:` 字符串在 `<script>` 中由运行时编译器生成 render function，标识符解析基于 **setup() return**，而非模块级 `const`
+- 模板中引用的组件名（如 `ClusterDetail`、`PoolDetail`、`NodeDetail`）必须从 `setup()` 返回，否则为 `undefined` → `navigate` 发 `component: undefined` → 抽屉导航静默失败
+- 每个 drawer 组件需在 `return { ... }` 中显式列出其模板引用的子组件
+- 修复方式：逐一检查各组件 setup return，补齐被引用的组件名（如 `RegionDetail` 需 return `{ emit, ClusterDetail, SCDetail, ...useHelpers() }`）
+
+### 作用域 CSS 对 string-template 无效
+- `<style scoped>` 的 `data-v-xxx` 属性只作用于 `<template>` 块中的 DOM；`template:` 字符串内生成的 DOM 无此属性
+- 在 string-template 抽屉组件中使用的自定义类（`.rld-usage`、`.rld-link`、`.dii-label` 等）必须写在 `<style>`（全局），不能放在 `<style scoped>`
+- 症状：元素存在于 DOM 但无样式 → 空 `<span>` 因无 width/height 而 `hidden`
+
+### 进度条在 auto table-layout 中宽度坍缩
+- `<span class="rld-usage" :style="{ width: pct + '%' }">` 在 `table-layout: auto` 的 `<td>` 中，百分比宽度可能解析为 0
+- 修复：外层固定宽度 track + 内层 fill div，例如：
+  ```html
+  <span class="rld-usage"><span class="rld-usage-fill" :style="{ width: pct + '%' }"></span></span>
+  ```
+  CSS: `.rld-usage { width: 100px; overflow: hidden; } .rld-usage-fill { height: 100%; }`
+
+### git stash 与 playwright webServer 冲突
+- 运行 `git stash && npx playwright test ...; git stash pop` 时，若测试期间 webServer/vite 修改了源文件，pop 会失败："local changes would be overwritten"
+- 修复流程：
+  1. `git checkout -- <file>` 丢弃意外变更（或保留手动合并）
+  2. `git stash apply stash@{0}` 恢复完整工作区
+  3. 始终保留 stash 作为备份，pop 前不 `drop`
+- 经验：先确认 `git status` 干净再 stash pop；pop 失败时先 `git diff` 查当前状态再决定
+
+### 抽屉多级导航测试稳定性
+- 跨层抽屉跳转（SCDetail → PoolDetail → NodeDetail）依赖模板正确引用组件，否则静默失败
+- 测试中建议用 `.dii-label`（详情信息标签）做导航成功的断言，比 `h3` 标题文本更可靠（标题可能与其他层级混淆）
+- 测试顺序敏感：前一个测试未关闭侧滑会影响下一个；建议在测试末尾统一关闭侧滑或使用独立 fixture
