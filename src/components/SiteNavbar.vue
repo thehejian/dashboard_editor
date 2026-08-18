@@ -40,16 +40,16 @@ const router = useRouter()
 const quickItems = [
   { key: 'scene', icon: 'fa-solid fa-bars', label: '场景菜单', arrow: false },
   { key: 'quick', icon: 'fa-regular fa-clock', label: '快速访问', arrow: true },
-  { key: 'tenant', icon: 'fa-solid fa-puzzle-piece', label: '租户应用', arrow: false },
+  { key: 'tenant', icon: 'fa-solid fa-puzzle-piece', label: '应用', arrow: false },
   { key: 'cloud', icon: 'fa-solid fa-cloud', label: '云服务', arrow: true },
   { key: 'pool', icon: 'fa-solid fa-layer-group', label: '资源池', arrow: false },
-  { key: 'vdc', icon: 'fa-solid fa-network-wired', label: 'VDC', arrow: false },
+  { key: 'vdc', icon: 'fa-solid fa-network-wired', label: '组织', arrow: false },
   { key: 'container', icon: 'fa-solid fa-cube', label: '容器', arrow: false },
 ]
 
 const categoryItems = computed(() => [
-  '大数据运维', '数据库运维', '中间件运维', 'OBS运维', '容器运维',
-  '虚拟机运维', '虚拟网络运维', '资源池运维', '物理设备运维', '组织运维',
+  '大数据运维', '数据库运维', '中间件运维', 'OBS运维',
+  '虚拟机运维', '虚拟网络运维', '物理设备运维',
 ])
 
 const catRoutes = { 'OBS运维': '/obs/overview' }
@@ -179,5 +179,35 @@ function handleCatClick(cat) {
   text-decoration: underline;
   text-underline-offset: 4px;
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .site-sidebar {
+    width: 44px;
+  }
+  .site-sidebar:hover,
+  .site-sidebar:focus-within {
+    width: 44px;
+    box-shadow: none;
+  }
+  .s-icons {
+    width: 44px;
+  }
+  .s-icon {
+    width: 44px;
+    height: 38px;
+    font-size: 15px;
+  }
+  .s-panel {
+    left: 44px;
+    width: 220px;
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: none;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.08);
+  }
+  .site-sidebar:hover .s-panel {
+    pointer-events: auto;
+  }
 }
 </style>
