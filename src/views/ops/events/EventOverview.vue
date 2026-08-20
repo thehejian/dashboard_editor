@@ -117,11 +117,15 @@ let trendChart = null
 
 function renderTrendChart() {
   if (trendChart) trendChart.destroy()
-  const data = [
-    { date: '08-11', value: 85 }, { date: '08-12', value: 120 }, { date: '08-13', value: 95 },
-    { date: '08-14', value: 140 }, { date: '08-15', value: 110 }, { date: '08-16', value: 180 },
-    { date: '08-17', value: 220 },
-  ]
+  const data = []
+  const start = new Date(2026, 6, 19)
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    const date = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const base = 85 + Math.round(Math.random() * 120)
+    data.push({ date, value: base })
+  }
   trendChart = new Chart({ container: trendChartRef.value, autoFit: true, height: 200, padding: [20, 20, 30, 40] })
   trendChart.data(data)
   trendChart.interval().encode('x', 'date').encode('y', 'value').encode('color', (d) => d.value > 300 ? 'high' : d.value >= 150 ? 'warn' : d.value >= 80 ? 'attn' : 'ok').scale('color', { range: ['#ff4d4f', '#fa8c16', '#faad14', '#52c41a'] }).style('radius', 2)
@@ -220,4 +224,28 @@ onUnmounted(() => { if (trendChart) trendChart.destroy() })
 .trend-up { color: #ff4d4f; }
 .trend-down { color: #52c41a; }
 .trend-flat { color: #999; }
+
+@media (max-width: 768px) {
+  .top-bar { flex-wrap: wrap; gap: 8px; }
+  .update-time { margin-left: 0; width: 100%; }
+  .focus-grid { grid-template-columns: repeat(2, 1fr); }
+  .health-layout { flex-direction: column; gap: 12px; }
+  .health-gauge { padding: 8px 0; }
+  .svc-row { flex-wrap: wrap; }
+  .svc-card { flex: 1 1 calc(50% - 4px); }
+  .trend-legend { flex-wrap: wrap; gap: 8px 12px; }
+  .insight-grid { grid-template-columns: repeat(2, 1fr); }
+  .source-row { flex-wrap: wrap; gap: 4px 8px; }
+  .source-label { width: auto; }
+  .source-stat { width: 100%; text-align: left; }
+  .efficiency-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .section { padding: 12px; }
+  .focus-grid { grid-template-columns: 1fr; }
+  .svc-card { flex: 1 1 100%; }
+  .insight-grid { grid-template-columns: 1fr; }
+  .efficiency-grid { grid-template-columns: 1fr; }
+  .ii-item { flex-wrap: wrap; }
+}
 </style>
