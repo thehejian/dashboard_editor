@@ -253,4 +253,17 @@ onMounted(async () => {
 .il-related-alert-tag { cursor: pointer; }
 .il-related-alert-tag:hover { opacity: 0.8; }
 .il-no-alert { color: #bfbfbf; }
+
+@media (max-width: 768px) {
+  .incident-list-view { padding: 4px; }
+  .il-stats-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .il-stats-group-title { grid-column: 1 / -1; margin-top: 4px; }
+  .il-stat-card { padding: 10px 12px; gap: 8px; }
+  .il-stat-icon { width: 32px; height: 32px; font-size: 15px; }
+  .il-stat-val { font-size: 18px; }
+  .il-filter-bar { flex-wrap: wrap; }
+  .il-filter-bar :deep(.ant-select) { width: 100% !important; }
+  .il-search-wide { flex: 1 1 100%; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>

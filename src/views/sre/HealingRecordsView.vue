@@ -47,3 +47,10 @@ onMounted(async () => {
   finally { loading.value = false }
 })
 </script>
+
+<style scoped>
+:deep(.ant-table-wrapper) { width: 100%; }
+@media (max-width: 768px) {
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+</style>

@@ -105,4 +105,20 @@ watch(() => route.path, (v) => {
 .ic-content :deep(.page-view) {
   padding: 24px;
 }
+
+@media (max-width: 768px) {
+  .incident-center-view { flex-direction: column; }
+  .ic-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 16px;
+    flex-shrink: 0;
+  }
+  .sidebar-title { padding: 0 0 8px; }
+  .ic-content :deep(.incident-list-view),
+  .ic-content :deep(.page-view) { padding: 16px; }
+}
 </style>

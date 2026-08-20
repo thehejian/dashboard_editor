@@ -377,6 +377,14 @@ defineExpose({ form, validate })
 .card-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
 :deep(.card-body .ant-form-item) { margin-bottom: 12px; }
 .section-divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+@media (max-width: 768px) {
+  .icon-actions { flex-wrap: wrap; }
+  .icon-upload-area { flex-wrap: wrap; }
+  :deep(.ant-collapse-content-box) { padding-right: 0 !important; }
+  :deep(.ant-form-item) { margin-bottom: 16px; }
+  :deep(.ant-radio-group) { display: flex; flex-wrap: wrap; white-space: normal; }
+}
 </style>
 
 <style>

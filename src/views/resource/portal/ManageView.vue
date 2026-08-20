@@ -171,4 +171,13 @@ function doReset() {
 
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .search-input { flex: 1; min-width: 200px; }
+
+@media (max-width: 768px) {
+  .kpi-bar { flex-wrap: wrap; }
+  .kpi-card { flex: 1 1 calc(33.33% - 8px); min-width: 0; }
+  .category-bar { gap: 6px; }
+  .filter-bar :deep(.ant-select) { width: 100% !important; }
+  .search-input { min-width: 100%; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>

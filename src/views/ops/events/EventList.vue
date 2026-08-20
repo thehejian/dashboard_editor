@@ -259,4 +259,12 @@ onMounted(() => { pagination.total = filteredData.value.length })
 .log-block { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
 .empty-hint { color: #999; font-size: 12px; padding: 12px 0; }
 .detail-actions { display: flex; gap: 8px; margin-bottom: 16px; }
+
+@media (max-width: 768px) {
+  .filter-bar :deep(.ant-select), .filter-bar .ant-input { width: 100% !important; }
+  .table-toolbar { flex-wrap: wrap; gap: 8px; }
+  .table-toolbar-right { flex-wrap: wrap; gap: 8px; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .detail-actions { flex-wrap: wrap; }
+}
 </style>

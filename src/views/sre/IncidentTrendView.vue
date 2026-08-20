@@ -96,4 +96,11 @@ onMounted(async () => {
 .trend-chart-section h4 { margin:0 0 8px;font-size:13px;font-weight:600;color:#1a1a1a; }
 .trend-chart { width:100%;min-height:200px; }
 .trend-section-row { display:flex;gap:16px; }
+
+@media (max-width: 768px) {
+  .trend-summary { flex-wrap: wrap; }
+  .trend-summary-card { flex: 1 1 calc(33.33% - 8px); min-width: 0; padding: 12px; }
+  .tsc-val { font-size: 20px; }
+  .trend-section-row { flex-direction: column; }
+}
 </style>

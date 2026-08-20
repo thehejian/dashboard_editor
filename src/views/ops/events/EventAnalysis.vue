@@ -150,4 +150,16 @@ function goBack() { router.push('/ops/events/list/all') }
 .legend-item { display: flex; align-items: center; gap: 4px; }
 .legend-dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .current-dot { border: 2px solid #000; background: #ff4d4f; }
+
+@media (max-width: 768px) {
+  .page-header { flex-wrap: wrap; gap: 8px; }
+  .event-info-bar { flex-wrap: wrap; gap: 8px 16px; }
+  .time-range-bar { flex-wrap: wrap; }
+  .time-range-bar :deep(.ant-radio-group) { display: flex; flex-wrap: wrap; }
+  .swimlane-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .swimlane-label, .swimlane-label-area { width: 150px; }
+  .swimlane-timeline { min-width: 600px; }
+  .swimlane-track { min-width: 600px; }
+  .legend-bar { flex-wrap: wrap; gap: 8px 12px; }
+}
 </style>

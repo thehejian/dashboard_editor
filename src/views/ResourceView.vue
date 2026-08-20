@@ -312,4 +312,19 @@ const resetView = () => { zoom.value = 1 }
 .detail-item { display: flex; flex-direction: column; gap: 4px; }
 .detail-item .label { font-size: 12px; color: var(--text-secondary); }
 .detail-item .value { font-size: 14px; }
+
+@media (max-width: 768px) {
+  .resource-view { padding: 16px; }
+  .view-header h1 { font-size: 20px; }
+  .resource-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .resource-tabs .tab-btn { flex-shrink: 0; white-space: nowrap; }
+  .filter-bar { flex-wrap: wrap; gap: 8px; }
+  .filter-bar :deep(.ant-select), .filter-bar :deep(.ant-range-picker) { width: 100% !important; }
+  .search-input { min-width: 100%; }
+  .topology-toolbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .topology-canvas { height: 320px; }
+  .change-meta { flex-wrap: wrap; gap: 8px; }
+  .detail-grid { grid-template-columns: 1fr; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>

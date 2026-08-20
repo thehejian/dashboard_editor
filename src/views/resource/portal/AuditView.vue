@@ -263,4 +263,12 @@ function fixViolation(record) {
 .kpi-label { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
 
 .tab-toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 768px) {
+  .kpi-bar { flex-wrap: wrap; }
+  .kpi-card { flex: 1 1 calc(33.33% - 8px); min-width: 0; }
+  .tab-toolbar :deep(.ant-select) { width: 100% !important; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  :deep(.ant-drawer-content-wrapper) { width: 100% !important; }
+}
 </style>

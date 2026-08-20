@@ -315,4 +315,15 @@ const saveConfig = () => { message.success('配置已保存') }
 .config-section { background: var(--bg-card); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
 .config-section h3 { font-size: 16px; font-weight: 600; margin: 0 0 16px; }
 .form-help { margin-left: 8px; font-size: 12px; color: var(--text-secondary); }
+
+@media (max-width: 768px) {
+  .system-view { padding: 16px; }
+  .view-header h1 { font-size: 20px; }
+  .system-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .system-tabs .tab-btn { flex-shrink: 0; white-space: nowrap; }
+  .role-item { flex-wrap: wrap; gap: 8px; }
+  .role-actions { margin-left: auto; }
+  :deep(.ant-col-12) { flex: 0 0 100%; max-width: 100%; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>

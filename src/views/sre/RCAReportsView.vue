@@ -53,4 +53,10 @@ onMounted(async () => {
 .rca-evidence-tag { font-size:11px;background:#f5f5f5;padding:2px 8px;border-radius:4px;color:#666; }
 .rca-suggestions { display:flex;flex-wrap:wrap;gap:4px; }
 .rca-suggestion { font-size:11px;background:#e6f7ff;color:#096dd9;padding:2px 8px;border-radius:4px; }
+
+@media (max-width: 768px) {
+  .rca-head { flex-wrap: wrap; }
+  .rca-title { min-width: 0; }
+  .rca-time { width: 100%; margin-top: 2px; }
+}
 </style>

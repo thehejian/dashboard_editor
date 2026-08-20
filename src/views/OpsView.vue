@@ -283,4 +283,20 @@ const viewInspectReport = plan => {}
 .plan-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text-ter); }
 .plan-actions { display: flex; gap: 8px; margin-top: 16px; }
 .log-modal-content { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 6px; overflow: auto; max-height: 400px; }
+
+@media (max-width: 768px) {
+  .ops-view { padding: 16px; }
+  .view-header h1 { font-size: 20px; }
+  .ops-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ops-tabs .tab-btn { flex-shrink: 0; white-space: nowrap; }
+  .job-item, .script-item { flex-wrap: wrap; gap: 12px; }
+  .job-content, .script-info { min-width: 100%; }
+  .log-filters { flex-wrap: wrap; }
+  .log-search :deep(.ant-input-search) { width: 100% !important; }
+  .log-item { flex-wrap: wrap; gap: 6px; }
+  .inspect-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .inspect-stats { flex-wrap: wrap; gap: 12px; width: 100%; }
+  .plan-actions { flex-wrap: wrap; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>

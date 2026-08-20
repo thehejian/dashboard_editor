@@ -130,4 +130,9 @@ onMounted(() => { pagination.total = filteredData.value.length })
 .detail-section { margin-bottom: 16px; }
 .detail-section h4 { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
 .detail-section p { font-size: 12px; color: #555; line-height: 1.5; }
+
+@media (max-width: 768px) {
+  .filter-bar :deep(.ant-select) { width: 100% !important; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
 </style>

@@ -111,4 +111,11 @@ onUnmounted(function() {
 :deep(.ant-table) { flex: 1; min-height: 0; }
 :deep(.ant-table-container) { flex: 1; min-height: 0; }
 :deep(.ant-table-thead > tr > th) { background: #fafafa; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .page-header h2 { font-size: 18px; }
+  .filter-bar { flex-wrap: wrap; gap: 8px; }
+  .filter-bar :deep(.ant-select) { width: 100% !important; }
+  .search-input { min-width: 100%; }
+}
 </style>

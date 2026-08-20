@@ -75,4 +75,15 @@ onMounted(async () => {
 .il-search-wide { flex:1; }
 .il-clickable-title { color:#1890ff;cursor:pointer; }
 .il-clickable-title:hover { color:#40a9ff; }
+
+@media (max-width: 768px) {
+  .il-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .il-stats-group-title { grid-column: 1 / -1 !important; }
+  .il-stat-card { padding: 10px 12px; gap: 8px; }
+  .il-stat-icon { width: 32px; height: 32px; font-size: 15px; }
+  .il-stat-val { font-size: 18px; }
+  .il-filter-bar { flex-wrap: wrap; }
+  .il-search-wide { flex: 1 1 100%; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>

@@ -96,4 +96,12 @@ const columns = [
 .role-name { font-weight: 500; margin-bottom: 4px; }
 .role-desc { font-size: 12px; color: var(--text-secondary); }
 .role-users { font-size: 11px; color: var(--text-ter); }
+
+@media (max-width: 768px) {
+  .page-view { padding: 16px; }
+  .page-header { flex-wrap: wrap; gap: 8px; }
+  .page-header h2 { font-size: 18px; }
+  .role-item { flex-wrap: wrap; gap: 8px; }
+  :deep(.ant-table-wrapper) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>

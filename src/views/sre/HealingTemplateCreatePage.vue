@@ -345,4 +345,23 @@ function handleSave(status) {
 .tmpl-step-field-row { display: flex; gap: 6px; margin-bottom: 6px; }
 .tmpl-step-flow { display: flex; align-items: center; gap: 6px; }
 .tmpl-flow-label { font-size: 11px; color: #8c8c8c; }
+
+@media (max-width: 768px) {
+  .create-header { padding: 10px 16px; }
+  .create-body { padding: 16px; }
+  .create-footer { flex-wrap: wrap; gap: 8px; }
+  .create-footer .ant-btn { flex: 1; }
+  .tmpl-section { padding: 14px; }
+  .tmpl-field-row { flex-direction: column; gap: 8px; }
+  .tmpl-field-row .tmpl-field { flex: 1 1 100% !important; width: 100%; }
+  .tmpl-condition-row { flex-wrap: wrap; }
+  .tmpl-condition-row :deep(.ant-select), .tmpl-condition-row .ant-input-number { width: calc(50% - 4px) !important; }
+  .tmpl-step-head { flex-wrap: wrap; }
+  .tmpl-step-head .ant-input { flex: 1 1 100% !important; }
+  .tmpl-step-body { padding-left: 0; }
+  .tmpl-step-field-row { flex-direction: column; }
+  .tmpl-step-field-row :deep(.ant-select), .tmpl-step-field-row .ant-input { width: 100% !important; }
+  .tmpl-step-flow { flex-wrap: wrap; }
+  .tmpl-step-flow :deep(.ant-select) { width: 100% !important; }
+}
 </style>

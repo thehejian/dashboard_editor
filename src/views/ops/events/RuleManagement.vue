@@ -141,4 +141,11 @@ onMounted(() => { pagination.total = filteredData.value.length })
 .condition-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
 .json-preview { margin-top: 8px; }
 .json-preview pre { background: #1e1e1e; color: #6a9955; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 11px; max-height: 120px; overflow: auto; }
+
+@media (max-width: 768px) {
+  .filter-bar :deep(.ant-select) { width: 100% !important; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .condition-row { flex-wrap: wrap; }
+  .condition-row :deep(.ant-select), .condition-row .ant-input { width: 100% !important; }
+}
 </style>

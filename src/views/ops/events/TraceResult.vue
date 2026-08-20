@@ -89,4 +89,13 @@ function goBack() { router.push('/ops/events/trace/tasks') }
 .empty-state.error { color: #ff4d4f; }
 .empty-state.running { color: #faad14; }
 .empty-state.no-data { color: #999; }
+
+@media (max-width: 768px) {
+  .page-header { flex-wrap: wrap; gap: 8px; }
+  .info-grid { grid-template-columns: 1fr; }
+  .log-header { flex-wrap: wrap; gap: 8px; }
+  .log-line { flex-wrap: wrap; }
+  .line-content { white-space: pre-wrap; word-break: break-all; }
+  .line-num { min-width: 30px; }
+}
 </style>

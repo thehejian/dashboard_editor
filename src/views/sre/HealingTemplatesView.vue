@@ -64,4 +64,11 @@ onMounted(async () => {
 .tmpl-step-tag.mode-manual { background:#fff1f0;color:#cf1322; }
 .tmpl-footer { font-size:11px;color:#8c8c8c;display:flex;gap:16px; }
 .tmpl-last { margin-left:auto; }
+
+@media (max-width: 768px) {
+  .ic-filter-bar { flex-wrap: wrap; }
+  .ic-filter-bar :deep(.ant-input-search) { width: 100% !important; margin-left: 0 !important; }
+  .tmpl-footer { flex-wrap: wrap; gap: 4px 16px; }
+  .tmpl-last { margin-left: 0; }
+}
 </style>

@@ -115,4 +115,10 @@ onMounted(() => { pagination.total = filteredData.value.length })
 .breadcrumb span { color: #999; }
 .breadcrumb span:last-child { color: #333; font-weight: 500; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; background: #fff; padding: 12px; border: 1px solid #e8e8e8; border-radius: 6px; }
+
+@media (max-width: 768px) {
+  .filter-bar :deep(.ant-select) { width: 100% !important; }
+  .filter-bar [style*="flex:1"] { width: 100%; }
+  .filter-bar [style*="flex:1"] .ant-btn { flex: 1; }
+}
 </style>
