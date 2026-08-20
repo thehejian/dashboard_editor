@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="breadcrumb"><span>异常事件管理</span> / <span>日志追踪</span> / <span>追踪结果</span></div>
     <div class="page-header">
       <h3>追踪结果 - {{ task?.id || '' }}</h3>
       <a-button @click="goBack">← 返回</a-button>
@@ -61,9 +60,7 @@ function goBack() { router.push('/ops/events/trace/tasks') }
 </script>
 
 <style scoped>
-.breadcrumb { font-size: 12px; color: #999; margin-bottom: 16px; }
-.breadcrumb span { color: #999; }
-.breadcrumb span:last-child { color: #333; font-weight: 500; }
+.page-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
 .task-info-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 16px; margin-bottom: 16px; }

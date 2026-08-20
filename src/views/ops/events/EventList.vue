@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="breadcrumb"><span>异常事件管理</span> / <span>事件列表</span> / <span>{{ breadcrumbTitle }}</span></div>
+    <h3 class="page-title">{{ breadcrumbTitle }}</h3>
     <div class="filter-bar">
       <a-select v-model:value="filters.sourceType" style="width:120px" placeholder="事件来源" allowClear>
         <a-select-option value="">全部</a-select-option>
@@ -37,11 +37,10 @@
         <a-select-option value="7d">近 7 天</a-select-option>
         <a-select-option value="30d">近 30 天</a-select-option>
       </a-select>
-      <a-button type="primary" @click="handleSearch">查询</a-button>
+      <a-button type="primary" style="margin-left:auto" @click="handleSearch">查询</a-button>
       <a-button @click="handleReset">重置</a-button>
     </div>
     <div class="table-toolbar">
-      <div class="table-toolbar-left"><span class="table-title">事件列表</span><span class="table-total">共 {{ filteredData.length }} 条</span></div>
       <div class="table-toolbar-right">
         <a-button :disabled="selectedRowKeys.length === 0" @click="handleBatchProcess">批量标记已处理</a-button>
         <a-button @click="handleExport">导出</a-button>
@@ -240,14 +239,9 @@ onMounted(() => { pagination.total = filteredData.value.length })
 </script>
 
 <style scoped>
-.breadcrumb { font-size: 12px; color: #999; margin-bottom: 16px; }
-.breadcrumb span { color: #999; }
-.breadcrumb span:last-child { color: #333; font-weight: 500; }
+.page-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; background: #fff; padding: 12px; border: 1px solid #e8e8e8; border-radius: 6px; }
-.table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.table-toolbar-left { display: flex; align-items: center; gap: 8px; }
-.table-title { font-size: 14px; font-weight: 600; color: #333; }
-.table-total { font-size: 12px; color: #999; }
+.table-toolbar { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 12px; }
 .table-toolbar-right { display: flex; gap: 8px; }
 .detail-section { margin-bottom: 20px; }
 .detail-section h4 { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }

@@ -1,7 +1,7 @@
 <template>
   <div class="overview-page">
     <div class="top-bar">
-      <a-radio-group v-model:value="timeRange" size="small" button-style="solid">
+      <a-radio-group v-model:value="timeRange" size="small" button-style="solid" @change="renderTrendChart">
         <a-radio-button value="24h">近 24 小时</a-radio-button>
         <a-radio-button value="7d">近 7 天</a-radio-button>
         <a-radio-button value="30d">近 30 天</a-radio-button>
@@ -23,7 +23,7 @@
       <div class="section-title"><i class="fa-solid fa-heart-pulse"></i> 系统健康度</div>
       <div class="health-layout">
         <div class="health-gauge">
-          <div class="gauge-ring"><svg viewBox="0 0 120 120" style="width:120px;height:120px"><circle cx="60" cy="60" r="50" fill="none" stroke="#f0f0f0" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="#fa8c16" stroke-width="10" stroke-dasharray="236 314" stroke-linecap="round" transform="rotate(-90 60 60)"/><text x="60" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#333">警告</text><text x="60" y="68" text-anchor="middle" font-size="10" fill="#999">健康度 75%</text></svg></div>
+          <div class="gauge-ring"><svg viewBox="0 0 120 120" style="width:120px;height:120px"><circle cx="60" cy="60" r="50" fill="none" stroke="#f0f0f0" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="#fa8c16" stroke-width="10" stroke-dasharray="236 314" stroke-linecap="round" transform="rotate(-90 60 60)"/><text x="60" y="52" text-anchor="middle" font-size="18" font-weight="700" fill="#333">警告</text><text x="60" y="70" text-anchor="middle" font-size="11" fill="#999">健康度 75%</text></svg></div>
           <div class="gauge-desc">基于近24h事件综合评估</div>
         </div>
         <div class="health-services">
@@ -118,13 +118,22 @@ let trendChart = null
 function renderTrendChart() {
   if (trendChart) trendChart.destroy()
   const data = []
+  const points = timeRange.value === '24h' ? 24 : timeRange.value === '7d' ? 7 : 30
   const start = new Date(2026, 6, 19)
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(start)
-    d.setDate(start.getDate() + i)
-    const date = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    const base = 85 + Math.round(Math.random() * 120)
-    data.push({ date, value: base })
+  if (timeRange.value === '24h') {
+    for (let i = 0; i < points; i++) {
+      const date = `${String(i).padStart(2, '0')}:00`
+      const base = 8 + Math.round(Math.random() * 18)
+      data.push({ date, value: base })
+    }
+  } else {
+    for (let i = 0; i < points; i++) {
+      const d = new Date(start)
+      d.setDate(start.getDate() + i)
+      const date = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const base = 85 + Math.round(Math.random() * 120)
+      data.push({ date, value: base })
+    }
   }
   trendChart = new Chart({ container: trendChartRef.value, autoFit: true, height: 200, padding: [20, 20, 30, 40] })
   trendChart.data(data)
@@ -142,7 +151,7 @@ onUnmounted(() => { if (trendChart) trendChart.destroy() })
 
 <style scoped>
 .overview-page { width: 100%; }
-.top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .update-time { font-size: 11px; color: #999; margin-left: auto; }
 .section { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
 .section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }

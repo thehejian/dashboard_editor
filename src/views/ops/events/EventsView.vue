@@ -167,3 +167,7 @@ function onMobileSelectTree(keys) {
   .events-content { padding: 16px 12px; }
 }
 </style>
+
+<style>
+.ant-tag-has-color { color: #fff !important; }
+</style>

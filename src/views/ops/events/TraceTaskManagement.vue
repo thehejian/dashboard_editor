@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="breadcrumb"><span>异常事件管理</span> / <span>日志追踪</span></div>
     <h3 style="margin-bottom:16px">日志追踪任务管理</h3>
     <div class="filter-bar">
       <a-select v-model:value="filters.traceType" style="width:130px" placeholder="任务类型" allowClear>
@@ -23,12 +22,12 @@
         <a-select-option value="24h">近 24 小时</a-select-option>
         <a-select-option value="7d">近 7 天</a-select-option>
       </a-select>
-      <a-button type="primary" @click="handleSearch">查询</a-button>
+      <a-button type="primary" style="margin-left:auto" @click="handleSearch">查询</a-button>
       <a-button @click="handleReset">重置</a-button>
-      <div style="flex:1;text-align:right;display:flex;gap:8px;justify-content:flex-end">
-        <a-button type="primary" @click="openCreate('realtime')">+ 创建实时追踪</a-button>
-        <a-button type="primary" @click="openCreate('event')">+ 创建事件追踪</a-button>
-      </div>
+    </div>
+    <div class="table-toolbar">
+      <a-button type="primary" @click="openCreate('realtime')">+ 创建实时追踪</a-button>
+      <a-button type="primary" @click="openCreate('event')">+ 创建事件追踪</a-button>
     </div>
     <a-table :columns="columns" :data-source="filteredData" :pagination="pagination" row-key="id" :row-selection="{ selectedRowKeys, onChange: onSelectChange }" :scroll="{ x: 1100 }" @change="onTableChange">
       <template #bodyCell="{ column, record }">
@@ -111,9 +110,8 @@ onMounted(() => { pagination.total = filteredData.value.length })
 </script>
 
 <style scoped>
-.breadcrumb { font-size: 12px; color: #999; margin-bottom: 16px; }
-.breadcrumb span { color: #999; }
-.breadcrumb span:last-child { color: #333; font-weight: 500; }
+.page-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.table-toolbar { display: flex; justify-content: flex-start; align-items: center; gap: 8px; margin-bottom: 12px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; background: #fff; padding: 12px; border: 1px solid #e8e8e8; border-radius: 6px; }
 
 @media (max-width: 768px) {

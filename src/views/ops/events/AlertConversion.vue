@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="breadcrumb"><span>异常事件管理</span> / <span>转告警规则</span> / <span>告警转换规则</span></div>
+    <h3 class="page-title">告警转换规则</h3>
     <div class="filter-bar">
       <a-select v-model:value="filters.severity" style="width:120px" placeholder="告警级别" allowClear>
         <a-select-option value="">全部</a-select-option>
@@ -19,9 +19,11 @@
         <a-select-option value="预置">预置规则</a-select-option>
         <a-select-option value="自定义">自定义规则</a-select-option>
       </a-select>
-      <a-button type="primary" @click="handleSearch">查询</a-button>
+      <a-button type="primary" style="margin-left:auto" @click="handleSearch">查询</a-button>
       <a-button @click="handleReset">重置</a-button>
-      <div style="flex:1;text-align:right"><a-button type="primary" @click="createModalOpen = true">+ 新建告警转换规则</a-button></div>
+    </div>
+    <div class="table-toolbar">
+      <a-button type="primary" @click="createModalOpen = true">+ 新建告警转换规则</a-button>
     </div>
     <a-table :columns="columns" :data-source="filteredData" :pagination="pagination" row-key="id" @change="onTableChange" :scroll="{ x: 1000 }">
       <template #bodyCell="{ column, record }">
@@ -119,9 +121,8 @@ onMounted(() => { pagination.total = filteredData.value.length })
 </script>
 
 <style scoped>
-.breadcrumb { font-size: 12px; color: #999; margin-bottom: 16px; }
-.breadcrumb span { color: #999; }
-.breadcrumb span:last-child { color: #333; font-weight: 500; }
+.page-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.table-toolbar { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 12px; }
 .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; background: #fff; padding: 12px; border: 1px solid #e8e8e8; border-radius: 6px; }
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 .detail-grid div { display: flex; gap: 8px; font-size: 12px; }

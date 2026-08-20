@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="breadcrumb"><span>异常事件管理</span> / <span>事件关联分析</span></div>
     <div class="page-header">
       <h3>事件关联分析 - {{ data?.event?.ruleName || '' }}</h3>
       <a-button @click="goBack">← 返回</a-button>
@@ -106,9 +105,7 @@ function goBack() { router.push('/ops/events/list/all') }
 </script>
 
 <style scoped>
-.breadcrumb { font-size: 12px; color: #999; margin-bottom: 16px; }
-.breadcrumb span { color: #999; }
-.breadcrumb span:last-child { color: #333; font-weight: 500; }
+.page-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .page-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
 .event-info-bar { display: flex; gap: 20px; align-items: center; padding: 8px 12px; background: #fafafa; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #666; }

@@ -63,10 +63,11 @@ test.describe('异常事件管理', () => {
 
   test('事件列表 - 全部事件页', async ({ page }) => {
     await page.goto('/ops/events/list/all')
-    await expect(page.locator('.breadcrumb')).toContainText('全部事件')
+    await expect(page.locator('.page-title')).toContainText('全部事件')
     await expect(page.locator('.filter-bar')).toBeVisible()
     await expect(page.locator('.ant-table')).toBeVisible()
-    await expect(page.locator('.table-title')).toContainText('事件列表')
+    await expect(page.getByRole('button', { name: '批量标记已处理' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '导 出' })).toBeVisible()
   })
 
   test('事件列表 - 筛选查询', async ({ page }) => {
@@ -79,7 +80,7 @@ test.describe('异常事件管理', () => {
 
   test('事件列表 - 分页功能', async ({ page }) => {
     await page.goto('/ops/events/list/all')
-    await expect(page.locator('.table-total')).toContainText('6')
+    await expect(page.locator('.ant-table-tbody tr.ant-table-row')).toHaveCount(6)
   })
 
   test('事件列表 - 详情弹窗', async ({ page }) => {
@@ -102,17 +103,17 @@ test.describe('异常事件管理', () => {
 
   test('未处理事件页', async ({ page }) => {
     await page.goto('/ops/events/list/unprocessed')
-    await expect(page.locator('.breadcrumb')).toContainText('未处理事件')
+    await expect(page.locator('.page-title')).toContainText('未处理事件')
   })
 
   test('紧急事件页', async ({ page }) => {
     await page.goto('/ops/events/list/emergency')
-    await expect(page.locator('.breadcrumb')).toContainText('紧急事件')
+    await expect(page.locator('.page-title')).toContainText('紧急事件')
   })
 
   test('检测规则管理页', async ({ page }) => {
     await page.goto('/ops/events/rules/manage')
-    await expect(page.locator('.breadcrumb')).toContainText('规则管理')
+    await expect(page.locator('.page-title')).toContainText('规则管理')
     await expect(page.locator('.ant-table')).toBeVisible()
     await expect(page.getByRole('button', { name: '新建规则' })).toBeVisible()
   })
@@ -134,7 +135,7 @@ test.describe('异常事件管理', () => {
 
   test('告警转换规则页', async ({ page }) => {
     await page.goto('/ops/events/alerts/rules')
-    await expect(page.locator('.breadcrumb')).toContainText('告警转换规则')
+    await expect(page.locator('.page-title')).toContainText('告警转换规则')
     await expect(page.locator('.ant-table')).toBeVisible()
     await expect(page.getByRole('button', { name: '新建告警转换规则' })).toBeVisible()
   })
