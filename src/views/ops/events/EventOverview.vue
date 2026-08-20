@@ -1,33 +1,107 @@
 <template>
-  <div>
-    <div class="breadcrumb"><span>异常事件管理</span> / <span>概览</span></div>
-    <div class="stat-cards">
-      <div class="stat-card"><div class="stat-icon stat-icon-total"><i class="fa-solid fa-chart-simple"></i></div><div class="stat-info"><div class="stat-label">事件总数</div><div class="stat-value">1,286</div><div class="stat-trend trend-up">↑ 12.5% 较昨日</div></div></div>
-      <div class="stat-card"><div class="stat-icon stat-icon-critical"><i class="fa-solid fa-circle"></i></div><div class="stat-info"><div class="stat-label">紧急事件</div><div class="stat-value stat-value-critical">3</div><div class="stat-trend trend-down">↓ 2 较昨日</div></div></div>
-      <div class="stat-card"><div class="stat-icon stat-icon-major"><i class="fa-solid fa-circle"></i></div><div class="stat-info"><div class="stat-label">重要事件</div><div class="stat-value stat-value-major">28</div><div class="stat-trend trend-up">↑ 5 较昨日</div></div></div>
-      <div class="stat-card"><div class="stat-icon stat-icon-minor"><i class="fa-solid fa-circle"></i></div><div class="stat-info"><div class="stat-label">次要事件</div><div class="stat-value stat-value-minor">156</div><div class="stat-trend trend-up">↑ 18 较昨日</div></div></div>
-      <div class="stat-card"><div class="stat-icon stat-icon-warning"><i class="fa-solid fa-circle"></i></div><div class="stat-info"><div class="stat-label">提示事件</div><div class="stat-value stat-value-warning">1,099</div><div class="stat-trend trend-up">↑ 127 较昨日</div></div></div>
+  <div class="overview-page">
+    <div class="top-bar">
+      <a-radio-group v-model:value="timeRange" size="small" button-style="solid">
+        <a-radio-button value="24h">近 24 小时</a-radio-button>
+        <a-radio-button value="7d">近 7 天</a-radio-button>
+        <a-radio-button value="30d">近 30 天</a-radio-button>
+      </a-radio-group>
+      <span class="update-time">更新于 10:32</span>
     </div>
-    <div class="chart-grid">
-      <div class="chart-card chart-card-wide">
-        <div class="chart-header"><span class="chart-title">事件趋势图</span>
-          <a-radio-group v-model:value="trendRange" size="small" button-style="solid" @change="renderTrendChart">
-            <a-radio-button value="24h">近 24 小时</a-radio-button>
-            <a-radio-button value="7d">近 7 天</a-radio-button>
-            <a-radio-button value="30d">近 30 天</a-radio-button>
-          </a-radio-group>
+
+    <div class="section">
+      <div class="section-title"><i class="fa-solid fa-bell"></i> 今日要关注</div>
+      <div class="focus-grid">
+        <div class="focus-card focus-critical"><div class="focus-label">紧急事件待处理</div><div class="focus-desc">需立即处理</div><div class="focus-num">3</div><div class="focus-tags">GaussDB×1, ECS×2</div></div>
+        <div class="focus-card focus-warning"><div class="focus-label">事件积压超2小时</div><div class="focus-desc">关注</div><div class="focus-num">12</div><div class="focus-tags">紧急×5, 重要×7</div></div>
+        <div class="focus-card focus-danger"><div class="focus-label">事件量突增</div><div class="focus-desc">↑320%</div><div class="focus-num">GaussDB</div><div class="focus-tags">今日15个 vs 昨日3个</div></div>
+        <div class="focus-card focus-muted"><div class="focus-label">高级别事件未配置转告警</div><div class="focus-desc">配置遗漏</div><div class="focus-num">critical事件</div><div class="focus-tags">无法及时通知</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fa-solid fa-heart-pulse"></i> 系统健康度</div>
+      <div class="health-layout">
+        <div class="health-gauge">
+          <div class="gauge-ring"><svg viewBox="0 0 120 120" style="width:120px;height:120px"><circle cx="60" cy="60" r="50" fill="none" stroke="#f0f0f0" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="#fa8c16" stroke-width="10" stroke-dasharray="236 314" stroke-linecap="round" transform="rotate(-90 60 60)"/><text x="60" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#333">警告</text><text x="60" y="68" text-anchor="middle" font-size="10" fill="#999">健康度 75%</text></svg></div>
+          <div class="gauge-desc">基于近24h事件综合评估</div>
         </div>
-        <div ref="trendChartRef" class="chart-body"></div>
+        <div class="health-services">
+          <div class="svc-row">
+            <div class="svc-card svc-up"><span class="svc-name">GaussDB</span><span class="svc-count">15 个事件</span><span class="svc-trend trend-up">↑320%</span></div>
+            <div class="svc-card svc-up"><span class="svc-name">ECS</span><span class="svc-count">8 个事件</span><span class="svc-trend trend-up">↑45%</span></div>
+            <div class="svc-card svc-up"><span class="svc-name">MRS</span><span class="svc-count">5 个事件</span><span class="svc-trend trend-up">↑60%</span></div>
+          </div>
+          <div class="svc-row">
+            <div class="svc-card svc-down"><span class="svc-name">RDS</span><span class="svc-count">3 个事件</span><span class="svc-trend trend-down">↓20%</span></div>
+            <div class="svc-card svc-flat"><span class="svc-name">VPC</span><span class="svc-count">2 个事件</span><span class="svc-trend trend-flat">—</span></div>
+            <div class="svc-card svc-down"><span class="svc-name">ELB</span><span class="svc-count">1 个事件</span><span class="svc-trend trend-down">↓10%</span></div>
+          </div>
+          <div class="svc-row">
+            <div class="svc-card svc-flat"><span class="svc-name">IAM</span><span class="svc-count">1 个事件</span><span class="svc-trend trend-flat">—</span></div>
+            <div class="svc-card svc-ok"><span class="svc-name">OBS</span><span class="svc-count">0 个事件</span><span class="svc-trend trend-flat">—</span></div>
+            <div class="svc-card svc-ok"><span class="svc-name">AS</span><span class="svc-count">0 个事件</span><span class="svc-trend trend-flat">—</span></div>
+          </div>
+          <div class="svc-row">
+            <div class="svc-card svc-flat"><span class="svc-name">DCS</span><span class="svc-count">1 个事件</span><span class="svc-trend trend-flat">—</span></div>
+            <div class="svc-card svc-up"><span class="svc-name">DMS</span><span class="svc-count">3 个事件</span><span class="svc-trend trend-up">↑25%</span></div>
+            <div class="svc-card svc-down"><span class="svc-name">APIG</span><span class="svc-count">1 个事件</span><span class="svc-trend trend-down">↓15%</span></div>
+          </div>
+        </div>
       </div>
-      <div class="chart-card"><div class="chart-header"><span class="chart-title">按来源分布</span></div><div ref="sourceChartRef" class="chart-body"></div></div>
-      <div class="chart-card"><div class="chart-header"><span class="chart-title">按级别分布</span></div><div ref="levelChartRef" class="chart-body"></div></div>
-      <div class="chart-card chart-card-wide">
-        <div class="chart-header"><span class="chart-title">按资源类型分布</span></div>
-        <div ref="resourceChartRef" class="chart-body"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fa-solid fa-chart-line"></i> 异常趋势洞察</div>
+      <div class="insight-subtitle">异常热度趋势（按级别加权：紧急×10 + 重要×5 + 次要×1）</div>
+      <div ref="trendChartRef" class="trend-chart-box"></div>
+      <div class="trend-legend">
+        <span class="legend-dot dot-high">高危（>300）</span>
+        <span class="legend-dot dot-warn">警告（150-300）</span>
+        <span class="legend-dot dot-attn">关注（80-150）</span>
+        <span class="legend-dot dot-ok">正常（<80）</span>
       </div>
-      <div class="chart-card chart-card-wide">
-        <div class="chart-header"><span class="chart-title">触发次数最多的规则</span></div>
-        <div ref="rulesChartRef" class="chart-body"></div>
+      <div class="insight-grid">
+        <div class="insight-card"><div class="insight-card-title">环比对比</div>
+          <div class="insight-item"><span class="ii-label">近7天 本周 vs 上周</span><span class="ii-val trend-up">↑ 23%</span></div>
+          <div class="insight-item"><span class="ii-label">今日 vs 昨日同时段</span><span class="ii-val trend-up">↑ 45%</span></div>
+          <div class="insight-item"><span class="ii-label">本月 vs 上月同期</span><span class="ii-val trend-down">↓ 8%</span></div>
+        </div>
+        <div class="insight-card"><div class="insight-card-title">突增事件源</div>
+          <div class="insight-item"><span class="ii-label">GaussDB</span><span class="ii-val trend-up">↑ 320% (今日15 vs 日均3)</span></div>
+          <div class="insight-item"><span class="ii-label">ECS</span><span class="ii-val trend-up">↑ 45% (今日8 vs 日均5)</span></div>
+          <div class="insight-item"><span class="ii-label">MRS</span><span class="ii-val trend-up">↑ 60% (今日5 vs 日均3)</span></div>
+        </div>
+        <div class="insight-card"><div class="insight-card-title">新出现异常</div>
+          <div class="insight-item"><span class="ii-label">RDS连接池耗尽检测</span><span class="ii-badge new">NEW 今日首次</span></div>
+          <div class="insight-item"><span class="ii-label">Kafka消费者延迟告警</span><span class="ii-badge new">NEW 昨日首次</span></div>
+        </div>
+        <div class="top-rules-card">
+          <div class="insight-card-title">持续高频规则 (近7天)</div>
+          <div class="rule-item"><span class="rule-name">慢查询检测</span><span class="rule-freq">日均 45 次</span></div>
+          <div class="rule-item"><span class="rule-name">CPU使用率告警</span><span class="rule-freq">日均 32 次</span></div>
+          <div class="rule-item"><span class="rule-name">ECS磁盘空间不足</span><span class="rule-freq">日均 28 次</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fa-solid fa-circle-nodes"></i> 四源事件分布</div>
+      <div class="source-summary">总计: 1,286（近7天事件）</div>
+      <div class="source-bars">
+        <div class="source-row"><span class="source-label">运行日志</span><span class="source-bar-bg"><span class="source-bar-fill" style="width:74.3%"></span></span><span class="source-stat">956 (74.3%) <span class="trend-up">↑12%</span></span></div>
+        <div class="source-row"><span class="source-label">操作日志</span><span class="source-bar-bg"><span class="source-bar-fill" style="width:14%"></span></span><span class="source-stat">180 (14.0%) <span class="trend-flat">—持平</span></span></div>
+        <div class="source-row"><span class="source-label">告警</span><span class="source-bar-bg"><span class="source-bar-fill" style="width:6.9%"></span></span><span class="source-stat">89 (6.9%) <span class="trend-down">↓5%</span></span></div>
+        <div class="source-row"><span class="source-label">巡检</span><span class="source-bar-bg"><span class="source-bar-fill" style="width:4.7%"></span></span><span class="source-stat">61 (4.7%) <span class="trend-flat">—持平</span></span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fa-solid fa-gauge-high"></i> 处理效能</div>
+      <div class="efficiency-grid">
+        <div class="eff-card"><div class="eff-label">处理及时率</div><div class="eff-value">78%</div><div class="eff-detail">平均处理时长 2.5h</div><div class="eff-detail warn">超时未处理 5 个</div></div>
+        <div class="eff-card"><div class="eff-label">告警转化率</div><div class="eff-value">85%</div><div class="eff-detail">已转告警 1,093 个</div><div class="eff-detail warn">未配置规则 15%</div></div>
+        <div class="eff-card"><div class="eff-label">规则有效性</div><div class="eff-value">92%</div><div class="eff-detail">有效规则 46 条</div><div class="eff-detail warn">待优化 3 条(忽略率>80%)</div></div>
       </div>
     </div>
   </div>
@@ -36,147 +110,114 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Chart } from '@antv/g2'
-import { MOCK_CHART_DATA, EVENT_LEVEL_COLORS } from './mockData.js'
 
-const trendRange = ref('7d')
+const timeRange = ref('7d')
 const trendChartRef = ref(null)
-const sourceChartRef = ref(null)
-const levelChartRef = ref(null)
-const resourceChartRef = ref(null)
-const rulesChartRef = ref(null)
-
 let trendChart = null
-let sourceChart = null
-let levelChart = null
-let resourceChart = null
-let rulesChart = null
 
 function renderTrendChart() {
   if (trendChart) trendChart.destroy()
-  const data = MOCK_CHART_DATA.trend.flatMap(d => [
-    { date: d.date, type: '紧急', value: d.critical },
-    { date: d.date, type: '重要', value: d.major },
-    { date: d.date, type: '次要', value: d.minor },
-    { date: d.date, type: '提示', value: d.warning },
-  ])
-  trendChart = new Chart({ container: trendChartRef.value, autoFit: true, height: 260 })
+  const data = [
+    { date: '08-11', value: 85 }, { date: '08-12', value: 120 }, { date: '08-13', value: 95 },
+    { date: '08-14', value: 140 }, { date: '08-15', value: 110 }, { date: '08-16', value: 180 },
+    { date: '08-17', value: 220 },
+  ]
+  trendChart = new Chart({ container: trendChartRef.value, autoFit: true, height: 200, padding: [20, 20, 30, 40] })
   trendChart.data(data)
-  trendChart.interval().encode('x', 'date').encode('y', 'value').encode('color', 'type').encode('series', 'type').transform({ type: 'stackY' }).scale('color', { range: ['#ff4d4f', '#fa8c16', '#1890ff', '#faad14'] })
-  trendChart.axis('x', { label: { fontSize: 11 } })
-  trendChart.axis('y', { label: { fontSize: 11 } })
+  trendChart.interval().encode('x', 'date').encode('y', 'value').encode('color', (d) => d.value > 300 ? 'high' : d.value >= 150 ? 'warn' : d.value >= 80 ? 'attn' : 'ok').scale('color', { range: ['#ff4d4f', '#fa8c16', '#faad14', '#52c41a'] }).style('radius', 2)
+  trendChart.axis('x', { label: { fontSize: 11 }, title: null })
+  trendChart.axis('y', { label: { fontSize: 11 }, title: null, grid: true })
   trendChart.legend(false)
   trendChart.interaction('tooltip', { shared: true })
   trendChart.render()
 }
 
-function renderSourceChart() {
-  if (sourceChart) sourceChart.destroy()
-  sourceChart = new Chart({ container: sourceChartRef.value, autoFit: true, height: 220 })
-  sourceChart.coordinate({ type: 'theta', innerRadius: 0.6 })
-  sourceChart.data(MOCK_CHART_DATA.source)
-  sourceChart.interval().encode('y', 'count').encode('color', 'type').transform({ type: 'stackY' }).scale('color', { range: ['#1890ff', '#52c41a', '#faad14', '#ff4d4f'] })
-  sourceChart.interaction('tooltip', { render: (e, { title, items }) => `<div style="padding:6px 8px;font-size:12px">${items.map(i => `<div>${i.name}: ${i.value}</div>`).join('')}</div>` })
-  sourceChart.legend(false)
-  sourceChart.render()
-  const total = MOCK_CHART_DATA.source.reduce((s, d) => s + d.count, 0)
-  const svg = sourceChartRef.value.querySelector('svg')
-  if (svg) {
-    const c = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-    c.setAttribute('x', '50%'); c.setAttribute('y', '50%'); c.setAttribute('text-anchor', 'middle'); c.setAttribute('dominant-baseline', 'middle')
-    c.setAttribute('font-size', '20'); c.setAttribute('font-weight', '700'); c.setAttribute('fill', '#333')
-    c.textContent = total.toLocaleString()
-    svg.appendChild(c)
-    const l = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-    l.setAttribute('x', '50%'); l.setAttribute('y', '56%'); l.setAttribute('text-anchor', 'middle'); l.setAttribute('dominant-baseline', 'middle')
-    l.setAttribute('font-size', '12'); l.setAttribute('fill', '#999')
-    l.textContent = '总数'
-    svg.appendChild(l)
-  }
-}
-
-function renderLevelChart() {
-  if (levelChart) levelChart.destroy()
-  levelChart = new Chart({ container: levelChartRef.value, autoFit: true, height: 220 })
-  levelChart.data(MOCK_CHART_DATA.byLevel)
-  levelChart.interval().encode('x', 'level').encode('y', 'count').encode('color', 'level').scale('color', { range: ['#ff4d4f', '#fa8c16', '#1890ff', '#faad14'] })
-  levelChart.axis('x', { label: { fontSize: 11 } })
-  levelChart.axis('y', { label: { fontSize: 11 } })
-  levelChart.legend(false)
-  levelChart.interaction('tooltip', { shared: true })
-  levelChart.render()
-}
-
-function renderResourceChart() {
-  if (resourceChart) resourceChart.destroy()
-  resourceChart = new Chart({ container: resourceChartRef.value, autoFit: true, height: 220 })
-  resourceChart.coordinate({ transform: [{ type: 'transpose' }] })
-  resourceChart.data(MOCK_CHART_DATA.byResource)
-  resourceChart.interval().encode('x', 'name').encode('y', 'count').encode('color', 'name').scale('color', { range: ['#1890ff'] })
-  resourceChart.axis('x', { label: { fontSize: 10 } })
-  resourceChart.axis('y', { label: { fontSize: 11 } })
-  resourceChart.legend(false)
-  resourceChart.interaction('tooltip', { shared: true })
-  resourceChart.render()
-}
-
-function renderRulesChart() {
-  if (rulesChart) rulesChart.destroy()
-  rulesChart = new Chart({ container: rulesChartRef.value, autoFit: true, height: 220 })
-  rulesChart.coordinate({ transform: [{ type: 'transpose' }] })
-  rulesChart.data(MOCK_CHART_DATA.topRules)
-  rulesChart.interval().encode('x', 'name').encode('y', 'count').encode('color', 'name').scale('color', { range: ['#1890ff'] })
-  rulesChart.axis('x', { label: { fontSize: 10 } })
-  rulesChart.axis('y', { label: { fontSize: 11 } })
-  rulesChart.legend(false)
-  rulesChart.interaction('tooltip', { shared: true })
-  rulesChart.render()
-}
-
-onMounted(() => {
-  setTimeout(() => {
-    renderTrendChart()
-    renderSourceChart()
-    renderLevelChart()
-    renderResourceChart()
-    renderRulesChart()
-  }, 100)
-})
-
-onUnmounted(() => {
-  if (trendChart) trendChart.destroy()
-  if (sourceChart) sourceChart.destroy()
-  if (levelChart) levelChart.destroy()
-  if (resourceChart) resourceChart.destroy()
-  if (rulesChart) rulesChart.destroy()
-})
+onMounted(() => { setTimeout(() => renderTrendChart(), 100) })
+onUnmounted(() => { if (trendChart) trendChart.destroy() })
 </script>
 
 <style scoped>
-.breadcrumb { font-size: 12px; color: #999; margin-bottom: 16px; }
-.breadcrumb span { color: #999; }
-.breadcrumb span:last-child { color: #333; font-weight: 500; }
-.stat-cards { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.stat-card { flex: 1; min-width: 160px; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; }
-.stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-.stat-icon-total { background: #e6f7ff; color: #1890ff; }
-.stat-icon-critical { background: #fff2f0; color: #ff4d4f; }
-.stat-icon-major { background: #fff7e6; color: #fa8c16; }
-.stat-icon-minor { background: #e6f7ff; color: #1890ff; }
-.stat-icon-warning { background: #fffbe6; color: #faad14; }
-.stat-info { flex: 1; min-width: 0; }
-.stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
-.stat-value { font-size: 22px; font-weight: 700; color: #333; line-height: 1.2; }
-.stat-value-critical { color: #ff4d4f; }
-.stat-value-major { color: #fa8c16; }
-.stat-value-minor { color: #1890ff; }
-.stat-value-warning { color: #faad14; }
-.stat-trend { font-size: 11px; margin-top: 4px; }
-.trend-up { color: #52c41a; }
-.trend-down { color: #ff4d4f; }
-.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.chart-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 16px; }
-.chart-card-wide { grid-column: 1 / -1; }
-.chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.chart-title { font-size: 13px; font-weight: 600; color: #333; }
-.chart-body { width: 100%; }
+.overview-page { width: 100%; }
+.top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.update-time { font-size: 11px; color: #999; margin-left: auto; }
+.section { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.section-title i { color: var(--brand, #1890ff); }
+
+.focus-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.focus-card { border-radius: 8px; padding: 14px; border: 1px solid #e8e8e8; }
+.focus-label { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.focus-desc { font-size: 11px; margin-bottom: 8px; }
+.focus-num { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.focus-tags { font-size: 11px; color: #666; }
+.focus-critical { border-left: 3px solid #ff4d4f; }
+.focus-critical .focus-label { color: #ff4d4f; }
+.focus-critical .focus-desc { color: #ff4d4f; }
+.focus-critical .focus-num { color: #ff4d4f; }
+.focus-warning { border-left: 3px solid #fa8c16; }
+.focus-warning .focus-label { color: #fa8c16; }
+.focus-warning .focus-num { color: #fa8c16; }
+.focus-danger { border-left: 3px solid #ff4d4f; background: #fff2f0; }
+.focus-danger .focus-label { color: #cf1322; }
+.focus-danger .focus-desc { color: #cf1322; }
+.focus-danger .focus-num { color: #cf1322; font-size: 20px; }
+.focus-muted { border-left: 3px solid #999; }
+.focus-muted .focus-label { color: #666; }
+.focus-muted .focus-num { color: #666; font-size: 14px; font-weight: 600; }
+
+.health-layout { display: flex; gap: 20px; }
+.health-gauge { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 20px; flex-shrink: 0; }
+.gauge-desc { font-size: 11px; color: #999; text-align: center; }
+.health-services { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.svc-row { display: flex; gap: 8px; }
+.svc-card { flex: 1; display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 6px; background: #fafafa; border: 1px solid #f0f0f0; font-size: 12px; }
+.svc-name { font-weight: 600; color: #333; min-width: 50px; }
+.svc-count { color: #666; font-size: 11px; }
+.svc-trend { font-size: 11px; font-weight: 500; margin-left: auto; }
+.svc-up { border-left: 3px solid #ff4d4f; }
+.svc-down { border-left: 3px solid #52c41a; }
+.svc-flat { border-left: 3px solid #faad14; }
+.svc-ok { border-left: 3px solid #d9d9d9; }
+
+.insight-subtitle { font-size: 12px; color: #666; margin-bottom: 10px; }
+.trend-chart-box { width: 100%; }
+.trend-legend { display: flex; gap: 16px; margin: 8px 0 14px; font-size: 11px; color: #666; }
+.legend-dot { display: flex; align-items: center; gap: 4px; }
+.legend-dot::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot-high::before { background: #ff4d4f; }
+.dot-warn::before { background: #fa8c16; }
+.dot-attn::before { background: #faad14; }
+.dot-ok::before { background: #52c41a; }
+.insight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+.insight-card { border: 1px solid #f0f0f0; border-radius: 6px; padding: 12px; }
+.insight-card-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 8px; }
+.insight-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; }
+.ii-label { color: #666; }
+.ii-val { font-weight: 500; }
+.ii-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+.ii-badge.new { background: #fff2f0; color: #ff4d4f; }
+.top-rules-card { border: 1px solid #f0f0f0; border-radius: 6px; padding: 12px; }
+.rule-item { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; border-bottom: 1px solid #fafafa; }
+.rule-item:last-child { border-bottom: none; }
+.rule-name { color: #333; }
+.rule-freq { color: #999; }
+
+.source-summary { font-size: 12px; color: #666; margin-bottom: 10px; }
+.source-bars { display: flex; flex-direction: column; gap: 10px; }
+.source-row { display: flex; align-items: center; gap: 12px; }
+.source-label { width: 60px; font-size: 12px; color: #333; flex-shrink: 0; }
+.source-bar-bg { flex: 1; height: 20px; background: #f5f5f5; border-radius: 4px; overflow: hidden; }
+.source-bar-fill { display: block; height: 100%; background: linear-gradient(90deg, #1890ff, #40a9ff); border-radius: 4px; }
+.source-stat { width: 160px; font-size: 12px; color: #666; flex-shrink: 0; text-align: right; }
+
+.efficiency-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.eff-card { border: 1px solid #f0f0f0; border-radius: 8px; padding: 16px; text-align: center; }
+.eff-label { font-size: 13px; color: #666; margin-bottom: 6px; }
+.eff-value { font-size: 28px; font-weight: 700; color: #333; margin-bottom: 8px; }
+.eff-detail { font-size: 12px; color: #999; }
+.eff-detail.warn { color: #fa8c16; }
+
+.trend-up { color: #ff4d4f; }
+.trend-down { color: #52c41a; }
+.trend-flat { color: #999; }
 </style>

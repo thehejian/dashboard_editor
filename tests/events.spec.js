@@ -18,15 +18,27 @@ test.describe('异常事件管理', () => {
     await expect(page.locator('.events-sidebar')).toContainText('转告警规则')
   })
 
-  test('事件概览页 - 统计卡片和图表', async ({ page }) => {
+  test('事件概览页 - 布局完整', async ({ page }) => {
     await page.goto('/ops/events/overview/view')
-    await expect(page.locator('.stat-cards')).toBeVisible()
-    const cards = page.locator('.stat-card')
-    await expect(cards).toHaveCount(5)
-    await expect(cards.first()).toContainText('事件总数')
-    await expect(cards.first()).toContainText('1,286')
-    await expect(page.locator('.chart-grid')).toBeVisible()
-    await expect(page.locator('.chart-card')).toHaveCount(5)
+    await expect(page.locator('.top-bar')).toBeVisible()
+    await expect(page.locator('.section')).toHaveCount(5)
+    await expect(page.locator('.section-title').first()).toContainText('今日要关注')
+    await expect(page.locator('.section-title').nth(1)).toContainText('系统健康度')
+    await expect(page.locator('.section-title').nth(2)).toContainText('异常趋势洞察')
+    await expect(page.locator('.section-title').nth(3)).toContainText('四源事件分布')
+    await expect(page.locator('.section-title').nth(4)).toContainText('处理效能')
+  })
+
+  test('事件概览 - 今日要关注四个卡片', async ({ page }) => {
+    await page.goto('/ops/events/overview/view')
+    await expect(page.locator('.focus-card')).toHaveCount(4)
+    await expect(page.locator('.focus-card').first()).toContainText('紧急事件待处理')
+  })
+
+  test('事件概览 - 系统健康度', async ({ page }) => {
+    await page.goto('/ops/events/overview/view')
+    await expect(page.locator('.health-gauge')).toBeVisible()
+    await expect(page.locator('.svc-card')).toHaveCount(12)
   })
 
   test('事件概览 - 趋势图时间切换', async ({ page }) => {
@@ -34,6 +46,19 @@ test.describe('异常事件管理', () => {
     await page.locator('.ant-radio-button-wrapper').filter({ hasText: '近 24 小时' }).click()
     await page.locator('.ant-radio-button-wrapper').filter({ hasText: '近 30 天' }).click()
     await page.locator('.ant-radio-button-wrapper').filter({ hasText: '近 7 天' }).click()
+  })
+
+  test('事件概览 - 四源事件分布', async ({ page }) => {
+    await page.goto('/ops/events/overview/view')
+    await expect(page.locator('.source-bars')).toBeVisible()
+    await expect(page.locator('.source-row')).toHaveCount(4)
+    await expect(page.locator('.source-row').first()).toContainText('运行日志')
+  })
+
+  test('事件概览 - 处理效能三个卡片', async ({ page }) => {
+    await page.goto('/ops/events/overview/view')
+    await expect(page.locator('.eff-card')).toHaveCount(3)
+    await expect(page.locator('.eff-card').first()).toContainText('处理及时率')
   })
 
   test('事件列表 - 全部事件页', async ({ page }) => {
