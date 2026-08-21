@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test'
 
-test('debug aggregate click', async ({ page }) => {
+test('debug aggregate state v2', async ({ page }) => {
   await page.goto('http://admin:745544752@localhost:5173/alarm/current')
   await page.waitForSelector('.ant-table', { timeout: 10000 })
   await page.waitForTimeout(1000)
 
-  // inject alerts
+  // inject
   await page.evaluate(() => {
     if (!window.__realtimeAlerts) return
     const alerts = window.__realtimeAlerts.value
@@ -26,37 +26,40 @@ test('debug aggregate click', async ({ page }) => {
   })
   await page.waitForTimeout(1000)
 
-  // Intercept BEFORE clicking
-  const responses = []
+  // Check banners exist before click
+  const beforeCount = await page.locator('.ai-agg-banner').count()
+  console.log('Banners before click:', beforeCount)
+
+  // intercept
   await page.route('**/api/alarm/ai-aggregate**', route => {
-    console.log('INTERCEPTED ai-aggregate!')
-    responses.push('intercepted')
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: { rootCause: 'test', suggestions: ['a', 'b'], incidentId: null } }),
+      body: JSON.stringify({ success: true, data: { rootCause: 'test', suggestions: ['a'], incidentId: null } }),
     })
   })
 
-  // Also listen to all responses
-  page.on('response', resp => {
-    if (resp.url().includes('ai-aggregate')) {
-      console.log('RESPONSE url:', resp.url(), 'status:', resp.status())
-    }
-  })
-
   const btn = page.locator('.ai-agg-banner').first().locator('button:has-text("AI 聚合降噪")')
-  await expect(btn).toBeVisible()
-  console.log('About to click btn...')
   await btn.click()
-  console.log('Clicked!')
   await page.waitForTimeout(2000)
 
-  console.log('responses:', responses)
-  console.log('has aggregated:', await page.locator('.ai-agg-banner.aggregated').count())
-  console.log('button text:', await page.locator('.ai-agg-banner').first().locator('button').textContent())
+  // Check state after click
+  const afterState = await page.evaluate(() => {
+    const banners = document.querySelectorAll('.ai-agg-banner')
+    const aggBanners = document.querySelectorAll('.ai-agg-banner.aggregated')
+    const btnText = document.querySelector('.ai-agg-banner button')?.textContent?.trim() || 'none'
+    return {
+      bannersCount: banners.length,
+      aggregatedCount: aggBanners.length,
+      buttonText: btnText,
+      bannerClasses: Array.from(banners).map(b => b.className),
+    }
+  })
+  console.log('After click state:', JSON.stringify(afterState))
 
-  // Check for any error messages
-  const errorMsg = await page.locator('.ant-message-error').textContent().catch(() => null)
-  console.log('error msg:', errorMsg)
+  // Check page console messages
+  const messages = await page.evaluate(() => {
+    return window.__testMessages || []
+  })
+  console.log('Messages:', messages)
 })

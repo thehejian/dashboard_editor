@@ -671,7 +671,6 @@ let aiTimer = null
 // AI 聚合相关
 const aggregatedGroups = ref({})   // key -> { alerts, rootCause, suggestions, incident }
 const aggregatingKeys = ref({})   // key -> boolean loading state
-const expandedKeys = ref({})      // key -> boolean expanded state
 
 const detailScrollRef = ref(null)
 const detailTabsWrapRef = ref(null)
@@ -1019,22 +1018,50 @@ const displayAlerts = computed(function() {
 
 // AI 聚合横幅数据
 const aggregationBannerState = ref({})  // key -> { aggregated, expanded }
-const aggregationBanners = computed(function() {
-  var groups = groupFiringAlerts.value
-  var banners = []
+const aggCandidateGroups = ref({})      // key -> { title, allRecentAlerts } (computed once, persists after suppress)
+
+// 所有告警（含 suppressed）按 title+metric 分组，找出高频组
+const allAlertGroups = computed(function() {
+  var groups = {}
+  var now = Date.now()
+  realtimeAlerts.value.forEach(function(a) {
+    var key = (a.title || '') + '|' + (a.metric || '')
+    if (!groups[key]) groups[key] = []
+    groups[key].push(a)
+  })
   Object.keys(groups).forEach(function(key) {
     var g = groups[key]
     var recent = g.filter(function(a) {
       var t = parseTime(a.triggerTime).getTime()
-      return Date.now() - t < 3600000
+      return now - t < 3600000
     })
-    if (recent.length < 3) return
+    if (recent.length >= 3) {
+      aggCandidateGroups.value[key] = { title: g[0].title, recent: recent }
+    }
+  })
+  // 清理已不满足条件的
+  Object.keys(aggCandidateGroups.value).forEach(function(key) {
+    var g = groups[key]
+    if (!g) return
+    var recent = g.filter(function(a) {
+      var t = parseTime(a.triggerTime).getTime()
+      return now - t < 3600000
+    })
+    if (recent.length < 3) delete aggCandidateGroups.value[key]
+  })
+  return groups
+})
+
+const aggregationBanners = computed(function() {
+  var banners = []
+  Object.keys(aggCandidateGroups.value).forEach(function(key) {
+    var candidate = aggCandidateGroups.value[key]
     var state = aggregationBannerState.value[key] || {}
     banners.push({
       key: key,
-      title: g[0].title,
-      count: recent.length,
-      alerts: recent,
+      title: candidate.title,
+      count: candidate.recent.length,
+      alerts: candidate.recent,
       aggregated: !!aggregatedGroups.value[key],
       expanded: !!state.expanded,
       aiResult: aggregatedGroups.value[key] ? aggregatedGroups.value[key].aiResult : null,
@@ -1060,15 +1087,20 @@ function aggregateAlerts(key) {
     .then(function(json) {
       if (json.success) {
         var result = json.data || json
+        console.log('[AI-Agg] success, key:', key, 'alerts count:', alerts.length)
         aggregatedGroups.value[key] = { alerts: alerts, aiResult: result }
+        console.log('[AI-Agg] aggregatedGroups set, keys:', Object.keys(aggregatedGroups.value))
         // 将同组 firing 告警标记为已聚合（相当于静默）
         var alertIds = new Set(alerts.map(function(a) { return a.id }))
+        var oldLen = realtimeAlerts.value.length
         realtimeAlerts.value = realtimeAlerts.value.map(function(a) {
           if (alertIds.has(a.id) && a.status === 'firing') {
             return Object.assign({}, a, { status: 'suppressed', muteReason: 'AI聚合降噪', mutedAt: new Date().toISOString() })
           }
           return a
         })
+        console.log('[AI-Agg] realtimeAlerts updated, old:', oldLen, 'new:', realtimeAlerts.value.length)
+        console.log('[AI-Agg] groupFiringAlerts keys:', Object.keys(groupFiringAlerts.value))
         message.success('AI 聚合分析完成，已生成 ' + (result.incidentId ? '故障单 ' + result.incidentId : '聚合组'))
       } else {
         message.error(json.message || 'AI 聚合分析失败')

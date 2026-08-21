@@ -4,6 +4,8 @@ const routes = [
   { path: '/', redirect: '/aiops' },
   { path: '/overview', name: 'overview', component: () => import('../views/HomeView.vue') },
   { path: '/aiops', name: 'aiops', component: () => import('../views/HomeView.vue') },
+  { path: '/alarm-analysis', name: 'alarm-analysis', component: () => import('../views/alarm/AlarmAnalysisView.vue') },
+  { path: '/alarm-analysis/:id', name: 'alarm-analysis-detail', component: () => import('../views/alarm/AlarmDetailView.vue') },
   { path: '/obs/overview', name: 'obs-overview', component: () => import('../views/obs/OBSOpsView.vue') },
 
   { path: '/alarm/realtime', redirect: '/alarm/current' },
@@ -14,8 +16,6 @@ const routes = [
     component: () => import('../views/alarm/AlarmManageView.vue'),
     children: [
       { path: '', redirect: '/alarm/current' },
-      { path: 'analysis', name: 'alarm-analysis', component: () => import('../views/alarm/AlarmAnalysisView.vue') },
-      { path: 'analysis/:id', name: 'alarm-analysis-detail', component: () => import('../views/alarm/AlarmDetailView.vue') },
       { path: 'current', component: () => import('../views/alarm/RealtimeView.vue') },
       { path: 'events', component: () => import('../views/alarm/EventsView.vue') },
       {

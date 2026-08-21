@@ -44,27 +44,12 @@
     <div class="aa-chart-row">
       <div class="aa-chart-card">
         <div class="aa-chart-title">TopN 告警分类分布</div>
-        <div class="aa-cat-bars">
-          <div v-for="c in alarmCategoryStats.slice(0,7)" :key="c.category" class="aa-cat-row">
-            <span class="aa-cat-label">{{ c.category }}</span>
-            <div class="aa-cat-track"><div class="aa-cat-fill" :style="{ width: c.pct + '%', background: catColor(c.category) }"></div></div>
-            <span class="aa-cat-pct">{{ c.pct }}%</span>
-          </div>
-          <div v-if="!alarmCategoryStats.length" class="aa-empty-text">暂无数据</div>
-        </div>
+        <div ref="topnContainer" class="aa-chart-inner"></div>
         <div class="aa-chart-hint">指导下一步基础设施优化方向</div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">降噪漏斗</div>
-        <div class="aa-funnel">
-          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:100%;background:#007DFF">{{ alarmFunnel.raw.toLocaleString() }}</div></div>
-          <div class="aa-funnel-arrow">↓ 频次去重</div>
-          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:85%;background:#597EF7">{{ alarmFunnel.dedup.toLocaleString() }}</div></div>
-          <div class="aa-funnel-arrow">↓ 拓扑聚合</div>
-          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:42%;background:#722ED1">{{ alarmFunnel.agg.toLocaleString() }}</div></div>
-          <div class="aa-funnel-arrow">有效事件</div>
-          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:25%;background:#07C160">{{ alarmFunnel.agg.toLocaleString() }}</div></div>
-        </div>
+        <div ref="funnelContainer" class="aa-chart-inner"></div>
         <div class="aa-funnel-rate">降噪率: {{ alarmFunnel.rate }}%</div>
       </div>
       <div class="aa-chart-card aa-trend-card">
@@ -89,12 +74,15 @@
       <a-table
         :columns="alarmIncidentColumns"
         :data-source="filteredAlarmIncidents"
-        :pagination="{ pageSize: 10, showTotal: t => '共 ' + t + ' 条' }"
+        :pagination="{ pageSize: 5, showTotal: t => '共 ' + t + ' 条' }"
         row-key="incident_no"
         size="small"
         :scroll="{ y: 360 }"
       >
         <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'title'">
+            <span class="aa-root-cause-link" @click="goToFaultDetail(record)">{{ record.title }}</span>
+          </template>
           <template v-if="column.key === 'level'">
             <a-tag :color="record.level === 'critical' ? 'red' : 'orange'">{{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[record.level] || record.level }}</a-tag>
           </template>
@@ -117,7 +105,7 @@
                   <i :class="record.category === '容量类' ? 'fa-solid fa-bolt' : 'fa-solid fa-robot'"></i>
                 </button>
               </a-tooltip>
-              <a-tooltip title="查看详情"><button class="icon-btn" @click.stop="router.push('/alarm/analysis/' + record.incident_no)"><i class="fa-solid fa-eye"></i></button></a-tooltip>
+              <a-tooltip title="查看详情"><button class="icon-btn" @click.stop="router.push('/alarm-analysis/' + record.incident_no)"><i class="fa-solid fa-eye"></i></button></a-tooltip>
             </div>
           </template>
         </template>
@@ -126,60 +114,22 @@
 
     <!-- Row 4: Apps to watch -->
     <div class="aa-table-card">
-      <div class="aa-table-header">
-        <span class="aa-table-title"><i class="fa-solid fa-server"></i> 需关注的应用 / 云服务</span>
-        <div class="aa-table-actions">
-          <span class="aa-badge aa-badge-critical">严重 {{ alarmAppCounts.critical || 0 }}</span>
-          <span class="aa-badge aa-badge-warning">警告 {{ alarmAppCounts.warning || 0 }}</span>
-        </div>
-      </div>
-      <div class="aa-app-grid" v-if="alarmApps.length">
-        <div v-for="app in alarmApps" :key="app.name" class="aa-app-card" :class="'aa-app-' + app.status" @click="router.push('/alarm/analysis/' + app.incidentNo)">
-          <div class="aa-app-head">
-            <span class="aa-app-name">{{ app.name }}</span>
-            <span class="aa-app-type">{{ app.type }}</span>
-          </div>
-          <div class="aa-app-body">
-            <span class="aa-app-score">{{ app.score }}</span>
-            <span class="aa-app-status">{{ { critical: '严重异常', warning: '需要关注', normal: '运行正常' }[app.status] }}</span>
-          </div>
-          <div class="aa-app-alerts" v-if="app.alertCount">
-            <i class="fa-solid fa-bell"></i> {{ app.alertCount }} 条告警关联
-          </div>
-        </div>
-      </div>
-      <div v-else class="aa-empty-text" style="padding:24px">暂无需关注的应用</div>
+      <AiopsAppCards :apps="alarmApps" :counts="alarmAppCounts" @app-click="onAppClick" />
     </div>
 
     <!-- Row 5: Healing Records -->
     <div class="aa-table-card">
-      <div class="aa-table-header">
-        <span class="aa-table-title"><i class="fa-solid fa-rotate"></i> 自动修复记录 · 近7天</span>
-        <router-link to="/alarm/current" class="aa-table-link">查看全部 <i class="fa-solid fa-arrow-right"></i></router-link>
-      </div>
-      <a-table
-        :data-source="alarmHealingRecords"
-        :columns="alarmHealingColumns"
-        :pagination="false"
-        size="small"
-        row-key="id"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'result'">
-            <a-tag :color="record.result === 'success' ? 'green' : record.result === 'pending' ? 'orange' : 'default'">
-              {{ { success: '✅ 成功', pending: '⏳ 等待审批', failed: '❌ 失败' }[record.result] || record.result }}
-            </a-tag>
-          </template>
-        </template>
-      </a-table>
+      <AiopsHealingRecords :records="alarmHealingRecords" @record-click="onHealingRecordClick" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Chart } from '@antv/g2'
+import AiopsAppCards from '../../components/aiops/AiopsAppCards.vue'
+import AiopsHealingRecords from '../../components/aiops/AiopsHealingRecords.vue'
 
 const router = useRouter()
 const alarmLoading = ref(false)
@@ -193,7 +143,11 @@ const alarmApps = ref([])
 const alarmAppCounts = ref({ critical: 0, warning: 0 })
 const alarmHealingRecords = ref([])
 const alarmTrendContainer = ref(null)
+const topnContainer = ref(null)
+const funnelContainer = ref(null)
 let alarmTrendChart = null
+let topnChart = null
+let funnelChart = null
 
 const alarmIncidentColumns = [
   { title: '事件ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
@@ -204,15 +158,6 @@ const alarmIncidentColumns = [
   { title: '状态', key: 'status', width: 80 },
   { title: '处理人', key: 'handler', width: 90 },
   { title: '操作', key: 'action', width: 80, fixed: 'right' },
-]
-
-const alarmHealingColumns = [
-  { title: '时间', dataIndex: 'time', key: 'time', width: 140 },
-  { title: '告警名称', dataIndex: 'alert', key: 'alert', ellipsis: true },
-  { title: '资源', dataIndex: 'resource', key: 'resource', ellipsis: true },
-  { title: '修复动作', dataIndex: 'action', key: 'action', ellipsis: true },
-  { title: '结果', key: 'result', width: 100 },
-  { title: '耗时', dataIndex: 'duration', key: 'duration', width: 80 },
 ]
 
 function catColor(cat) {
@@ -252,7 +197,11 @@ async function fetchAlarmData() {
         warning: alarmApps.value.filter(a => a.status === 'warning').length,
       }
     }
-    nextTick(() => renderAlarmTrendChart())
+    nextTick(() => {
+      renderTopNChart()
+      renderFunnelChart()
+      renderAlarmTrendChart()
+    })
   } finally {
     alarmLoading.value = false
   }
@@ -281,6 +230,57 @@ function renderAlarmTrendChart() {
   alarmTrendChart.render()
 }
 
+function renderTopNChart() {
+  if (topnChart) { topnChart.destroy(); topnChart = null }
+  if (!topnContainer.value) return
+  const data = alarmCategoryStats.value.slice(0, 7)
+  if (!data.length) return
+  topnChart = new Chart({ container: topnContainer.value, autoFit: true, height: 180, padding: [4, 48, 4, 56] })
+  topnChart.data(data)
+  topnChart.interval().coordinate({ type: 'transpose' })
+    .encode('x', 'category')
+    .encode('y', 'pct')
+    .encode('color', 'category')
+    .scale('color', { range: ['#007DFF', '#FA8C16', '#13C2C2', '#722ED1', '#F5222D', '#EB2F96', '#8C8C8C'] })
+    .style('maxWidth', 14)
+    .style('radius', [2, 2, 0, 0])
+    .axis('x', { title: null, labelFontSize: 10, line: null, tick: null })
+    .axis('y', { title: null, labelFontSize: 10, line: null, tick: null })
+    .label({ text: 'pct', formatter: v => v + '%', position: 'right', fontSize: 10, fill: '#8C8C8C' })
+    .tooltip({ title: 'category', items: [{ field: 'pct', name: '占比', formatter: v => v + '%' }] })
+  topnChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
+  topnChart.render()
+}
+
+function renderFunnelChart() {
+  if (funnelChart) { funnelChart.destroy(); funnelChart = null }
+  if (!funnelContainer.value) return
+  const f = alarmFunnel.value
+  if (!f.raw) return
+  const data = [
+    { step: '原始告警', count: f.raw },
+    { step: '频次去重', count: f.dedup },
+    { step: '拓扑聚合', count: f.agg },
+    { step: '有效事件', count: f.agg },
+  ]
+  funnelChart = new Chart({ container: funnelContainer.value, autoFit: true, height: 160, padding: [4, 48, 4, 8] })
+  funnelChart.coordinate({ type: 'transpose' })
+  funnelChart.data(data)
+  funnelChart.interval()
+    .encode('x', 'step')
+    .encode('y', 'count')
+    .encode('color', 'step')
+    .scale('color', { range: ['#007DFF', '#597EF7', '#722ED1', '#07C160'] })
+    .style('maxWidth', 20)
+    .style('radius', [2, 2, 0, 0])
+    .axis('x', { title: null, labelFontSize: 10, line: null, tick: null })
+    .axis('y', { title: null, label: false, line: null, tick: null })
+    .label({ text: 'count', formatter: v => v.toLocaleString(), position: 'right', fontSize: 10, fill: '#595959' })
+    .tooltip({ title: 'step', items: [{ field: 'count', name: '数量', formatter: v => v.toLocaleString() }] })
+  funnelChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
+  funnelChart.render()
+}
+
 const filteredAlarmIncidents = computed(function() {
   let list = alarmIncidents.value
   if (alarmStatusFilter.value) list = list.filter(a => a.status === alarmStatusFilter.value)
@@ -291,6 +291,18 @@ const filteredAlarmIncidents = computed(function() {
   return list
 })
 
+function goToFaultDetail(record) {
+  router.push('/ops/incident/' + (record.incident_no || record.id))
+}
+
+function onAppClick(app) {
+  if (app.incidentNo) router.push('/ops/incident/' + app.incidentNo)
+}
+
+function onHealingRecordClick(record) {
+  if (record.nodeId) router.push('/ops/incident/' + record.nodeId)
+}
+
 function openAlarmAnalysis(record) {
   if (record.category === '容量类') {
     // Mock auto-heal
@@ -300,12 +312,19 @@ function openAlarmAnalysis(record) {
       alarmIncidents.value = [...alarmIncidents.value]
     }
   } else {
-    router.push('/alarm/analysis/' + record.incident_no)
+    router.push('/alarm-analysis/' + record.incident_no)
   }
 }
 
 onMounted(() => { fetchAlarmData() })
+onBeforeUnmount(() => {
+  if (topnChart) topnChart.destroy()
+  if (funnelChart) funnelChart.destroy()
+  if (alarmTrendChart) alarmTrendChart.destroy()
+})
 watch(alarmTrendData, () => { nextTick(() => renderAlarmTrendChart()) }, { deep: true })
+watch(alarmCategoryStats, () => { nextTick(() => renderTopNChart()) }, { deep: true })
+watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true })
 </script>
 
 <style scoped>
@@ -322,41 +341,18 @@ watch(alarmTrendData, () => { nextTick(() => renderAlarmTrendChart()) }, { deep:
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
-.aa-cat-bars { display: flex; flex-direction: column; gap: 8px; }
-.aa-cat-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.aa-cat-label { width: 56px; flex-shrink: 0; color: #595959; }
-.aa-cat-track { flex: 1; height: 10px; background: #F0F0F0; border-radius: 5px; overflow: hidden; }
-.aa-cat-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
-.aa-cat-pct { width: 36px; text-align: right; color: #8C8C8C; flex-shrink: 0; }
+.aa-chart-inner { height: 160px; }
 .aa-chart-hint { font-size: 11px; color: #8C8C8C; margin-top: 8px; }
-.aa-funnel { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.aa-funnel-step { width: 100%; }
-.aa-funnel-bar { height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 600; }
-.aa-funnel-arrow { font-size: 11px; color: #8C8C8C; text-align: center; line-height: 1; margin: 2px 0; }
-.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 8px; }
+.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 4px; }
 .aa-trend-chart { height: 120px; }
+.aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
+.aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
 .aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
 .aa-table-actions { display: flex; align-items: center; gap: 8px; }
 .aa-table-link { font-size: 12px; color: var(--brand, #007DFF); cursor: pointer; text-decoration: none; }
 .aa-table-link:hover { text-decoration: underline; }
-.aa-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
-.aa-badge-critical { background: #FFF1F0; color: #F5222D; }
-.aa-badge-warning { background: #FFF7E6; color: #FA8C16; }
-.aa-app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.aa-app-card { border: 1px solid var(--border, #E8E8E8); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
-.aa-app-card:hover { border-color: var(--brand, #007DFF); box-shadow: 0 2px 8px rgba(0,125,255,0.1); }
-.aa-app-critical { border-left: 3px solid #F5222D; }
-.aa-app-warning { border-left: 3px solid #FA8C16; }
-.aa-app-normal { border-left: 3px solid #52C41A; }
-.aa-app-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.aa-app-name { font-size: 13px; font-weight: 600; color: #1A1A1A; }
-.aa-app-type { font-size: 11px; color: #8C8C8C; }
-.aa-app-body { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.aa-app-score { font-size: 12px; font-weight: 600; }
-.aa-app-status { font-size: 11px; color: #595959; }
-.aa-app-alerts { font-size: 11px; color: #8C8C8C; }
 .aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
 @media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) { .aa-hero-row { grid-template-columns: 1fr; } .aa-chart-row { grid-template-columns: 1fr; } }

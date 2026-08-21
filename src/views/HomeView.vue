@@ -1,7 +1,7 @@
 <template>
   <div class="home-view">
     <div class="home-tabs">
-      <button class="home-tab-btn" :class="{ active: homeTab === 'alarm' }" @click="router.push('/alarm/analysis')">
+      <button class="home-tab-btn" :class="{ active: homeTab === 'alarm' }" @click="router.push('/alarm-analysis')">
         告警分析
       </button>
       <button class="home-tab-btn" :class="{ active: homeTab === 'aiops' }" @click="switchTab('aiops')">
