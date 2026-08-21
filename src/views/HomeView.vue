@@ -1,7 +1,7 @@
 <template>
   <div class="home-view">
     <div class="home-tabs">
-      <button class="home-tab-btn" :class="{ active: homeTab === 'alarm' }" @click="router.push('/alarm-analysis')">
+      <button class="home-tab-btn" :class="{ active: homeTab === 'alarm' }" @click="switchTab('alarm')">
         告警分析
       </button>
       <button class="home-tab-btn" :class="{ active: homeTab === 'aiops' }" @click="switchTab('aiops')">
@@ -145,6 +145,10 @@
           </a-card>
         </a-col>
       </a-row>
+    </template>
+
+    <template v-if="homeTab === 'alarm'">
+      <AlarmAnalysisView />
     </template>
 
     <template v-if="homeTab === 'aiops'">
@@ -926,14 +930,16 @@ import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { Chart } from '@antv/g2'
 import { setTopoHighlight } from '../composables/useEditorState.js'
+import AlarmAnalysisView from './alarm/AlarmAnalysisView.vue'
 const router = useRouter()
 const route = useRoute()
 
-const homeTab = ref(route.path === '/aiops' ? 'aiops' : 'home')
+const homeTab = ref(route.path === '/aiops' ? 'aiops' : route.query.tab === 'alarm' ? 'alarm' : 'home')
 
 function switchTab(tab) {
   homeTab.value = tab
   if (tab === 'aiops') router.replace('/aiops')
+  else if (tab === 'alarm') router.replace('/overview?tab=alarm')
   else router.replace('/overview')
 }
 const aiopsIntent = ref('订单服务为什么告警？')

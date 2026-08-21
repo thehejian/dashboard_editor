@@ -4,11 +4,11 @@
       <div class="header-left">
         <div class="header-logo"><img :src="logoUrl" alt="Logo" class="logo-img"><span class="badge">运维中心</span></div>
         <nav class="module-nav">
-          <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">
+          <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' || $route.path === '/overview' || $route.path === '/aiops' || $route.path.startsWith('/alarm-analysis') }">
             <i class="fa-solid fa-house"></i><span>首页</span>
           </router-link>
 
-          <router-link to="/alarm/current" class="nav-item" :class="{ active: $route.path.startsWith('/alarm') }">
+          <router-link to="/alarm/current" class="nav-item" :class="{ active: $route.path.startsWith('/alarm') && !$route.path.startsWith('/alarm-analysis') }">
             <i class="fa-solid fa-bell"></i><span>告警</span>
           </router-link>
 

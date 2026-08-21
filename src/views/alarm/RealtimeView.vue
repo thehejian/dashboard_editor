@@ -1018,17 +1018,18 @@ const displayAlerts = computed(function() {
 
 // AI 聚合横幅数据
 const aggregationBannerState = ref({})  // key -> { aggregated, expanded }
-const aggCandidateGroups = ref({})      // key -> { title, allRecentAlerts } (computed once, persists after suppress)
+const aggCandidates = ref({})          // key -> { title, allRecentAlerts }
 
-// 所有告警（含 suppressed）按 title+metric 分组，找出高频组
-const allAlertGroups = computed(function() {
-  var groups = {}
+// 扫描所有告警（含 suppressed），识别可聚合组并持久化
+function scanAggCandidates() {
   var now = Date.now()
+  var groups = {}
   realtimeAlerts.value.forEach(function(a) {
     var key = (a.title || '') + '|' + (a.metric || '')
     if (!groups[key]) groups[key] = []
     groups[key].push(a)
   })
+  var newCandidates = {}
   Object.keys(groups).forEach(function(key) {
     var g = groups[key]
     var recent = g.filter(function(a) {
@@ -1036,26 +1037,17 @@ const allAlertGroups = computed(function() {
       return now - t < 3600000
     })
     if (recent.length >= 3) {
-      aggCandidateGroups.value[key] = { title: g[0].title, recent: recent }
+      newCandidates[key] = { title: g[0].title, recent: recent }
     }
   })
-  // 清理已不满足条件的
-  Object.keys(aggCandidateGroups.value).forEach(function(key) {
-    var g = groups[key]
-    if (!g) return
-    var recent = g.filter(function(a) {
-      var t = parseTime(a.triggerTime).getTime()
-      return now - t < 3600000
-    })
-    if (recent.length < 3) delete aggCandidateGroups.value[key]
-  })
-  return groups
-})
+  aggCandidates.value = newCandidates
+}
 
 const aggregationBanners = computed(function() {
+  scanAggCandidates()
   var banners = []
-  Object.keys(aggCandidateGroups.value).forEach(function(key) {
-    var candidate = aggCandidateGroups.value[key]
+  Object.keys(aggCandidates.value).forEach(function(key) {
+    var candidate = aggCandidates.value[key]
     var state = aggregationBannerState.value[key] || {}
     banners.push({
       key: key,

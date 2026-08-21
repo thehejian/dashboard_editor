@@ -4,7 +4,7 @@ const routes = [
   { path: '/', redirect: '/aiops' },
   { path: '/overview', name: 'overview', component: () => import('../views/HomeView.vue') },
   { path: '/aiops', name: 'aiops', component: () => import('../views/HomeView.vue') },
-  { path: '/alarm-analysis', name: 'alarm-analysis', component: () => import('../views/alarm/AlarmAnalysisView.vue') },
+  { path: '/alarm-analysis', redirect: '/overview?tab=alarm' },
   { path: '/alarm-analysis/:id', name: 'alarm-analysis-detail', component: () => import('../views/alarm/AlarmDetailView.vue') },
   { path: '/obs/overview', name: 'obs-overview', component: () => import('../views/obs/OBSOpsView.vue') },
 

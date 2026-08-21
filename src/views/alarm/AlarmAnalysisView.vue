@@ -237,7 +237,8 @@ function renderTopNChart() {
   if (!data.length) return
   topnChart = new Chart({ container: topnContainer.value, autoFit: true, height: 180, padding: [4, 48, 4, 56] })
   topnChart.data(data)
-  topnChart.interval().coordinate({ type: 'transpose' })
+  topnChart.coordinate({ transform: [{ type: 'transpose' }] })
+  topnChart.interval()
     .encode('x', 'category')
     .encode('y', 'pct')
     .encode('color', 'category')
@@ -264,7 +265,7 @@ function renderFunnelChart() {
     { step: '有效事件', count: f.agg },
   ]
   funnelChart = new Chart({ container: funnelContainer.value, autoFit: true, height: 160, padding: [4, 48, 4, 8] })
-  funnelChart.coordinate({ type: 'transpose' })
+  funnelChart.coordinate({ transform: [{ type: 'transpose' }] })
   funnelChart.data(data)
   funnelChart.interval()
     .encode('x', 'step')

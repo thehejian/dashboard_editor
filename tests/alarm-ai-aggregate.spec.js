@@ -127,7 +127,7 @@ test.describe('AI 告警聚合功能', () => {
     await page.waitForTimeout(300)
 
     await expect(page.locator('.agg-detail-panel')).toBeVisible()
-    await expect(page.locator('.agg-alert-row')).toBeVisible()
+    await expect(page.locator('.agg-alert-row').first()).toBeVisible()
     await expect(page.locator('.agg-ai-result')).toBeVisible()
     await expect(page.locator('.agg-ai-result')).toContainText('CPU 飙升')
   })

@@ -225,7 +225,7 @@ const statusTagColor = computed(() => {
 })
 const canHeal = computed(() => incident.value?.category === '容量类')
 
-function goBack() { router.push('/overview') }
+function goBack() { router.push('/overview?tab=alarm') }
 
 function jumpTo(path) { router.push(path) }
 
