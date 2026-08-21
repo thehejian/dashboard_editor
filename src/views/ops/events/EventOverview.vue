@@ -23,7 +23,10 @@
       <div class="section-title"><i class="fa-solid fa-heart-pulse"></i> 系统健康度</div>
       <div class="health-layout">
         <div class="health-gauge">
-          <div class="gauge-ring"><svg viewBox="0 0 120 120" style="width:120px;height:120px"><circle cx="60" cy="60" r="50" fill="none" stroke="#f0f0f0" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="#fa8c16" stroke-width="10" stroke-dasharray="236 314" stroke-linecap="round" transform="rotate(-90 60 60)"/><text x="60" y="52" text-anchor="middle" font-size="18" font-weight="700" fill="#333">警告</text><text x="60" y="70" text-anchor="middle" font-size="11" fill="#999">健康度 75%</text></svg></div>
+          <div class="gauge-ring"><svg viewBox="0 0 120 120" style="width:120px;height:120px"><circle cx="60" cy="60" r="50" fill="none" stroke="#f0f0f0" stroke-width="10"/><circle cx="60" cy="60" r="50" fill="none" stroke="#fa8c16" stroke-width="10" stroke-dasharray="236 314" stroke-linecap="round" transform="rotate(-90 60 60)"/><g text-anchor="middle" transform="translate(60 60)">
+            <text y="-4" font-size="18" font-weight="700" fill="#333">警告</text>
+            <text y="16" font-size="11" fill="#999">健康度 75%</text>
+          </g></svg></div>
           <div class="gauge-desc">基于近24h事件综合评估</div>
         </div>
         <div class="health-services">
