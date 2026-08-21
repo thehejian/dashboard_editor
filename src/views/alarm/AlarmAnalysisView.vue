@@ -1,340 +1,363 @@
 <template>
-  <div class="alarm-analysis-view">
-    <!-- Header -->
-    <div class="aa-header">
-      <div class="aa-header-left">
-        <button class="aa-back-btn" @click="goBack"><i class="fa-solid fa-arrow-left"></i></button>
-        <div class="aa-header-info">
-          <h1 class="aa-title">智能告警分析</h1>
-          <div class="aa-subtitle">
-            <span class="aa-incident-no">{{ incident?.incident_no }}</span>
-            <a-tag :color="levelColor">{{ levelText }}</a-tag>
-            <a-tag color="purple" v-if="incident?.handler === 'ai'"><i class="fa-solid fa-robot"></i> AI自动聚合</a-tag>
-            <a-tag :color="statusTagColor">{{ statusText }}</a-tag>
-          </div>
+  <div class="alarm-analysis-page">
+    <!-- Row 1: Hero Metric -->
+    <div class="aa-hero-row" v-loading="alarmLoading">
+      <div class="aa-hero-card">
+        <div class="aa-hero-icon" style="background:#F0F5FF;color:#007DFF"><i class="fa-solid fa-robot"></i></div>
+        <div class="aa-hero-info">
+          <div class="aa-hero-val">{{ alarmHeroStats.closedCount }}</div>
+          <div class="aa-hero-label">AI自动闭环数</div>
+          <div class="aa-hero-sub">次 / 近30天</div>
         </div>
+        <div class="aa-hero-trend up">↑ 12% vs上月</div>
       </div>
-      <div class="aa-header-right">
-        <a-button @click="continueInAI"><i class="fa-solid fa-comment-dots"></i> 在AI助手继续分析</a-button>
-        <a-button type="primary" @click="triggerHeal" v-if="canHeal"><i class="fa-solid fa-bolt"></i> 一键自愈</a-button>
+      <div class="aa-hero-card">
+        <div class="aa-hero-icon" style="background:#FFF7E6;color:#FF7D00"><i class="fa-solid fa-filter"></i></div>
+        <div class="aa-hero-info">
+          <div class="aa-hero-val">{{ alarmHeroStats.reductionRate }}%</div>
+          <div class="aa-hero-label">告警降噪率</div>
+          <div class="aa-hero-sub">{{ alarmFunnel.raw.toLocaleString() }} → {{ alarmFunnel.agg.toLocaleString() }}</div>
+        </div>
+        <div class="aa-hero-trend up">↑ 5.2% vs上月</div>
+      </div>
+      <div class="aa-hero-card">
+        <div class="aa-hero-icon" style="background:#F6FFED;color:#07C160"><i class="fa-solid fa-bolt"></i></div>
+        <div class="aa-hero-info">
+          <div class="aa-hero-val">{{ alarmHeroStats.autoRate }}%</div>
+          <div class="aa-hero-label">AI接管率</div>
+          <div class="aa-hero-sub">占总告警比例</div>
+        </div>
+        <div class="aa-hero-trend up">↑ 5.2pp vs上月</div>
+      </div>
+      <div class="aa-hero-card">
+        <div class="aa-hero-icon" style="background:#FFF1F0;color:#F5222D"><i class="fa-solid fa-clock"></i></div>
+        <div class="aa-hero-info">
+          <div class="aa-hero-val">{{ alarmHeroStats.savedHours }}</div>
+          <div class="aa-hero-label">节省人工时</div>
+          <div class="aa-hero-sub">小时 / 近30天</div>
+        </div>
+        <div class="aa-hero-trend up">↑ 38h vs上月</div>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="aa-tabs">
-      <button :class="['aa-tab', { active: activeTab === 'analysis' }]" @click="activeTab = 'analysis'">
-        <i class="fa-solid fa-magnifying-glass-chart"></i> 故障分析
-      </button>
-      <button :class="['aa-tab', { active: activeTab === 'postmortem' }]" @click="activeTab = 'postmortem'">
-        <i class="fa-solid fa-file-lines"></i> 复盘沉淀
-      </button>
+    <!-- Row 2: Charts -->
+    <div class="aa-chart-row">
+      <div class="aa-chart-card">
+        <div class="aa-chart-title">TopN 告警分类分布</div>
+        <div class="aa-cat-bars">
+          <div v-for="c in alarmCategoryStats.slice(0,7)" :key="c.category" class="aa-cat-row">
+            <span class="aa-cat-label">{{ c.category }}</span>
+            <div class="aa-cat-track"><div class="aa-cat-fill" :style="{ width: c.pct + '%', background: catColor(c.category) }"></div></div>
+            <span class="aa-cat-pct">{{ c.pct }}%</span>
+          </div>
+          <div v-if="!alarmCategoryStats.length" class="aa-empty-text">暂无数据</div>
+        </div>
+        <div class="aa-chart-hint">指导下一步基础设施优化方向</div>
+      </div>
+      <div class="aa-chart-card">
+        <div class="aa-chart-title">降噪漏斗</div>
+        <div class="aa-funnel">
+          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:100%;background:#007DFF">{{ alarmFunnel.raw.toLocaleString() }}</div></div>
+          <div class="aa-funnel-arrow">↓ 频次去重</div>
+          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:85%;background:#597EF7">{{ alarmFunnel.dedup.toLocaleString() }}</div></div>
+          <div class="aa-funnel-arrow">↓ 拓扑聚合</div>
+          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:42%;background:#722ED1">{{ alarmFunnel.agg.toLocaleString() }}</div></div>
+          <div class="aa-funnel-arrow">有效事件</div>
+          <div class="aa-funnel-step"><div class="aa-funnel-bar" style="width:25%;background:#07C160">{{ alarmFunnel.agg.toLocaleString() }}</div></div>
+        </div>
+        <div class="aa-funnel-rate">降噪率: {{ alarmFunnel.rate }}%</div>
+      </div>
+      <div class="aa-chart-card aa-trend-card">
+        <div class="aa-chart-title">处理趋势 · AI vs 人工（近30天）</div>
+        <div ref="alarmTrendContainer" class="aa-trend-chart"></div>
+      </div>
     </div>
 
-    <!-- Content -->
-    <div v-if="loading" class="aa-loading"><a-spin tip="加载分析数据..." /></div>
-    <template v-else-if="incident">
-      <!-- Analysis Tab -->
-      <div v-if="activeTab === 'analysis'" class="aa-layout">
-        <!-- Left 70% -->
-        <div class="aa-main-left">
-          <!-- Row 1: RCA + Timeline -->
-          <div class="aa-row">
-            <div class="aa-cell aa-cell-left">
-              <div class="aa-section">
-                <div class="aa-section-title"><i class="fa-solid fa-magnifying-glass"></i> 根因分析 (RCA)</div>
-                <div class="aa-confidence">
-                  <span>AI 置信度</span>
-                  <div class="aa-conf-bar"><div class="aa-conf-fill" :style="{ width: incident.ai_confidence + '%' }"></div></div>
-                  <span>{{ incident.ai_confidence }}%</span>
-                </div>
-                <div class="aa-root-cause">{{ incident.root_cause }}</div>
-                <div class="aa-evidence">
-                  <div class="aa-evidence-title">证据链</div>
-                  <div v-for="(ev, i) in (incident.evidence || [])" :key="i" class="aa-evidence-item">
-                    <i class="fa-solid fa-database" style="color:#722ED1"></i>
-                    <span class="aa-ev-time">{{ ev.time }}</span>
-                    <span class="aa-ev-type" :class="'aa-ev-' + ev.type">{{ ev.detail }}</span>
-                  </div>
-                  <div v-if="!incident.evidence?.length" class="aa-empty-text">暂无详细证据链</div>
-                </div>
-              </div>
-            </div>
-            <div class="aa-cell aa-cell-right">
-              <div class="aa-section">
-                <div class="aa-section-title"><i class="fa-solid fa-clock-rotate-left"></i> 告警时间线</div>
-                <div class="aa-timeline">
-                  <div v-for="(ev, i) in (incident.evidence || [])" :key="i" class="aa-timeline-item">
-                    <div class="aa-tl-dot" :class="'aa-tl-' + ev.type"></div>
-                    <div class="aa-tl-content">
-                      <div class="aa-tl-time">{{ ev.time }}</div>
-                      <div class="aa-tl-event">{{ ev.detail }}</div>
-                    </div>
-                  </div>
-                  <div v-if="!incident.evidence?.length" class="aa-empty-text">暂无时间线数据</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Row 2: Related Alerts -->
-          <div class="aa-row">
-            <div class="aa-cell aa-cell-full">
-              <div class="aa-section">
-                <div class="aa-section-title">
-                  <i class="fa-solid fa-bell"></i> 原始告警明细
-                  <span class="aa-alert-count">({{ relatedAlerts.length }} 条关联)</span>
-                </div>
-                <a-table
-                  :data-source="relatedAlerts"
-                  :columns="alertDetailColumns"
-                  :pagination="false"
-                  size="small"
-                  row-key="id"
-                  class="aa-alert-table"
-                >
-                  <template #bodyCell="{ column, record }">
-                    <template v-if="column.key === 'level'">
-                      <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'blue'" size="small">
-                        {{ { critical: '紧急', warning: '重要', info: '提示' }[record.level] }}
-                      </a-tag>
-                    </template>
-                    <template v-if="column.key === 'status'">
-                      <a-tag :color="record.status === 'firing' ? 'red' : record.status === 'resolved' ? 'green' : 'default'" size="small">
-                        {{ { firing: '告警中', resolved: '已恢复', suppressed: '已屏蔽' }[record.status] }}
-                      </a-tag>
-                    </template>
-                  </template>
-                </a-table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Row 3: AI Conclusion -->
-          <div class="aa-row">
-            <div class="aa-cell aa-cell-full">
-              <div class="aa-section aa-conclusion">
-                <div class="aa-section-title"><i class="fa-solid fa-robot"></i> AI 分析结论</div>
-                <div class="aa-conclusion-text">
-                  本 Incident 由 {{ relatedAlerts.length }} 条原始告警聚合而成，根因为{{ incident.root_cause }}。
-                  <template v-if="incident.suggestions?.length">
-                    建议处置步骤：
-                    <ol class="aa-suggest-list">
-                      <li v-for="(s, i) in incident.suggestions" :key="i">{{ s }}</li>
-                    </ol>
-                  </template>
-                </div>
-              </div>
-            </div>
-          </div>
+    <!-- Row 3: Incident List -->
+    <div class="aa-table-card">
+      <div class="aa-table-header">
+        <span class="aa-table-title"><i class="fa-solid fa-bell"></i> 告警分析列表 · 待处理</span>
+        <div class="aa-table-actions">
+          <a-select v-model:value="alarmStatusFilter" size="small" style="width:120px" placeholder="状态筛选" allow-clear>
+            <a-select-option value="investigating">进行中</a-select-option>
+            <a-select-option value="resolved">已闭环</a-select-option>
+          </a-select>
+          <a-input-search v-model:value="alarmSearchText" size="small" placeholder="搜索事件、根因" style="width:220px" />
+          <a-button size="small" @click="fetchAlarmData"><i class="fa-solid fa-rotate-right"></i></a-button>
         </div>
+      </div>
+      <a-table
+        :columns="alarmIncidentColumns"
+        :data-source="filteredAlarmIncidents"
+        :pagination="{ pageSize: 10, showTotal: t => '共 ' + t + ' 条' }"
+        row-key="incident_no"
+        size="small"
+        :scroll="{ y: 360 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'level'">
+            <a-tag :color="record.level === 'critical' ? 'red' : 'orange'">{{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[record.level] || record.level }}</a-tag>
+          </template>
+          <template v-if="column.key === 'category'">
+            <a-tag>{{ record.category }}</a-tag>
+          </template>
+          <template v-if="column.key === 'status'">
+            <a-tag :color="{ investigating: 'processing', resolved: 'green', suppressed: 'default' }[record.status] || 'default'">
+              {{ { investigating: '进行中', resolved: '已闭环', suppressed: '已屏蔽' }[record.status] || record.status }}
+            </a-tag>
+          </template>
+          <template v-if="column.key === 'handler'">
+            <span v-if="record.handler === 'ai'" style="color:#722ED1"><i class="fa-solid fa-robot"></i> AI自动</span>
+            <span v-else>{{ record.handler || '—' }}</span>
+          </template>
+          <template v-if="column.key === 'action'">
+            <div class="action-btns">
+              <a-tooltip :title="record.category === '容量类' ? '一键自愈' : 'AI分析'">
+                <button class="icon-btn" :class="{ 'ai-btn': record.category !== '容量类' }" @click.stop="openAlarmAnalysis(record)">
+                  <i :class="record.category === '容量类' ? 'fa-solid fa-bolt' : 'fa-solid fa-robot'"></i>
+                </button>
+              </a-tooltip>
+              <a-tooltip title="查看详情"><button class="icon-btn" @click.stop="router.push('/alarm/analysis/' + record.incident_no)"><i class="fa-solid fa-eye"></i></button></a-tooltip>
+            </div>
+          </template>
+        </template>
+      </a-table>
+    </div>
 
-        <!-- Right 28% -->
-        <div class="aa-main-right">
-          <!-- AI Recommendations -->
-          <div class="aa-section aa-rec-section">
-            <div class="aa-section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 处置建议</div>
-            <div class="aa-rec-steps">
-              <div v-for="(s, i) in (incident.suggestions || [])" :key="i" class="aa-rec-step">
-                <span class="aa-step-num">{{ i + 1 }}</span>
-                <span class="aa-step-text">{{ s }}</span>
-              </div>
-            </div>
-            <div class="aa-rec-actions">
-              <a-button size="small" type="primary" block @click="triggerHeal" v-if="canHeal">
-                <i class="fa-solid fa-bolt"></i> 一键自愈
-              </a-button>
-              <a-button size="small" block @click="continueInAI">
-                <i class="fa-solid fa-comment-dots"></i> 在AI助手中继续分析
-              </a-button>
-            </div>
+    <!-- Row 4: Apps to watch -->
+    <div class="aa-table-card">
+      <div class="aa-table-header">
+        <span class="aa-table-title"><i class="fa-solid fa-server"></i> 需关注的应用 / 云服务</span>
+        <div class="aa-table-actions">
+          <span class="aa-badge aa-badge-critical">严重 {{ alarmAppCounts.critical || 0 }}</span>
+          <span class="aa-badge aa-badge-warning">警告 {{ alarmAppCounts.warning || 0 }}</span>
+        </div>
+      </div>
+      <div class="aa-app-grid" v-if="alarmApps.length">
+        <div v-for="app in alarmApps" :key="app.name" class="aa-app-card" :class="'aa-app-' + app.status" @click="router.push('/alarm/analysis/' + app.incidentNo)">
+          <div class="aa-app-head">
+            <span class="aa-app-name">{{ app.name }}</span>
+            <span class="aa-app-type">{{ app.type }}</span>
           </div>
-
-          <!-- Category Breakdown -->
-          <div class="aa-section">
-            <div class="aa-section-title"><i class="fa-solid fa-chart-pie"></i> 关联指标</div>
-            <div class="aa-cat-breakdown">
-              <div v-for="c in categoryBreakdown" :key="c.category" class="aa-cat-item">
-                <span class="aa-cat-name">{{ c.category }}</span>
-                <div class="aa-cat-track"><div class="aa-cat-fill" :style="{ width: (c.count / relatedAlerts.length * 100) + '%', background: catColor(c.category) }"></div></div>
-                <span class="aa-cat-count">{{ c.count }}</span>
-              </div>
-              <div v-if="!categoryBreakdown.length" class="aa-empty-text" style="padding:8px">—</div>
-            </div>
+          <div class="aa-app-body">
+            <span class="aa-app-score">{{ app.score }}</span>
+            <span class="aa-app-status">{{ { critical: '严重异常', warning: '需要关注', normal: '运行正常' }[app.status] }}</span>
           </div>
-
-          <!-- Jump Links -->
-          <div class="aa-section">
-            <div class="aa-section-title"><i class="fa-solid fa-link"></i> 跳转链接</div>
-            <div class="aa-jump-links">
-              <a class="aa-jump-link" @click="jumpTo('/monitor/dashboard')"><i class="fa-solid fa-chart-line"></i> 关联仪表盘</a>
-              <a class="aa-jump-link" @click="jumpTo('/ops/logs/runtime/query')"><i class="fa-solid fa-file-lines"></i> 相关日志</a>
-              <a class="aa-jump-link" @click="jumpTo('/monitor/resource')"><i class="fa-solid fa-server"></i> 主机详情</a>
-            </div>
+          <div class="aa-app-alerts" v-if="app.alertCount">
+            <i class="fa-solid fa-bell"></i> {{ app.alertCount }} 条告警关联
           </div>
         </div>
       </div>
+      <div v-else class="aa-empty-text" style="padding:24px">暂无需关注的应用</div>
+    </div>
 
-      <!-- Postmortem Tab -->
-      <div v-if="activeTab === 'postmortem'" class="aa-postmortem">
-        <a-empty description="暂无复盘报告" style="margin:60px 0" />
+    <!-- Row 5: Healing Records -->
+    <div class="aa-table-card">
+      <div class="aa-table-header">
+        <span class="aa-table-title"><i class="fa-solid fa-rotate"></i> 自动修复记录 · 近7天</span>
+        <router-link to="/alarm/current" class="aa-table-link">查看全部 <i class="fa-solid fa-arrow-right"></i></router-link>
       </div>
-    </template>
+      <a-table
+        :data-source="alarmHealingRecords"
+        :columns="alarmHealingColumns"
+        :pagination="false"
+        size="small"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'result'">
+            <a-tag :color="record.result === 'success' ? 'green' : record.result === 'pending' ? 'orange' : 'default'">
+              {{ { success: '✅ 成功', pending: '⏳ 等待审批', failed: '❌ 失败' }[record.result] || record.result }}
+            </a-tag>
+          </template>
+        </template>
+      </a-table>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Chart } from '@antv/g2'
 
-const route = useRoute()
 const router = useRouter()
-const incidentId = route.params.id
+const alarmLoading = ref(false)
+const alarmHeroStats = ref({ closedCount: 0, reductionRate: 0, autoRate: 0, savedHours: 0 })
+const alarmFunnel = ref({ raw: 0, dedup: 0, agg: 0, rate: 0 })
+const alarmCategoryStats = ref([])
+const alarmIncidents = ref([])
+const alarmStatusFilter = ref(null)
+const alarmSearchText = ref('')
+const alarmApps = ref([])
+const alarmAppCounts = ref({ critical: 0, warning: 0 })
+const alarmHealingRecords = ref([])
+const alarmTrendContainer = ref(null)
+let alarmTrendChart = null
 
-const loading = ref(true)
-const incident = ref(null)
-const relatedAlerts = ref([])
-const categoryBreakdown = ref([])
-const activeTab = ref('analysis')
-
-const alertDetailColumns = [
-  { title: '#', dataIndex: 'id', key: 'id', width: 40 },
-  { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
-  { title: '资源', dataIndex: 'resource', key: 'resource', ellipsis: true, width: 160 },
-  { title: '级别', key: 'level', width: 70 },
-  { title: '当前值', dataIndex: 'current_value', key: 'current_value', width: 100 },
+const alarmIncidentColumns = [
+  { title: '事件ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
+  { title: '根因摘要', dataIndex: 'title', key: 'title', ellipsis: true },
+  { title: '关联', dataIndex: 'affected_count', key: 'affected_count', width: 50 },
+  { title: '级别', key: 'level', width: 80 },
+  { title: '分类', key: 'category', width: 80 },
   { title: '状态', key: 'status', width: 80 },
-  { title: '触发时间', dataIndex: 'trigger_time', key: 'trigger_time', width: 160 },
+  { title: '处理人', key: 'handler', width: 90 },
+  { title: '操作', key: 'action', width: 80, fixed: 'right' },
 ]
 
-const levelColor = computed(() => {
-  const l = incident.value?.level
-  return l === 'critical' ? 'red' : l === 'warning' ? 'orange' : 'blue'
-})
-const levelText = computed(() => {
-  const l = incident.value?.level
-  return { critical: 'P1 紧急', warning: 'P2 重要', info: 'P3 提示' }[l] || l
-})
-const statusText = computed(() => {
-  const s = incident.value?.status
-  return { investigating: '进行中', resolved: '已闭环', suppressed: '已屏蔽' }[s] || s
-})
-const statusTagColor = computed(() => {
-  const s = incident.value?.status
-  return { investigating: 'processing', resolved: 'green', suppressed: 'default' }[s] || 'default'
-})
-const canHeal = computed(() => incident.value?.category === '容量类')
-
-function goBack() { router.push('/overview') }
-
-function jumpTo(path) { router.push(path) }
-
-function continueInAI() {
-  const text = `请分析这条告警：\n- 事件: ${incident.value?.incident_no}\n- 根因: ${incident.value?.root_cause}\n- 级别: ${levelText.value}\n- 关联告警: ${relatedAlerts.value.length} 条\n- 涉及资源: ${relatedAlerts.value.map(a => a.resource).join(', ')}`
-  if (window.__openAIAssistant) window.__openAIAssistant(text)
-}
-
-function triggerHeal() {
-  if (!confirm('确认执行自愈操作？\n将自动清理临时文件并扩容云盘 20%。')) return
-  // Mock: mark as resolved after delay
-  setTimeout(() => {
-    message.success('自愈成功！磁盘使用率已降至 68%')
-  }, 1500)
-}
+const alarmHealingColumns = [
+  { title: '时间', dataIndex: 'time', key: 'time', width: 140 },
+  { title: '告警名称', dataIndex: 'alert', key: 'alert', ellipsis: true },
+  { title: '资源', dataIndex: 'resource', key: 'resource', ellipsis: true },
+  { title: '修复动作', dataIndex: 'action', key: 'action', ellipsis: true },
+  { title: '结果', key: 'result', width: 100 },
+  { title: '耗时', dataIndex: 'duration', key: 'duration', width: 80 },
+]
 
 function catColor(cat) {
   const map = { '容量类': '#007DFF', '阈值类': '#FA8C16', '证书类': '#722ED1', '网络类': '#13C2C2', '服务类': '#F5222D', '硬件类': '#EB2F96', '合规类': '#8C8C8C' }
   return map[cat] || '#BFBFBF'
 }
 
-onMounted(async () => {
+async function fetchAlarmData() {
+  alarmLoading.value = true
   try {
-    const res = await fetch('/api/alarm/incidents/' + incidentId)
-    const json = await res.json()
-    if (json.success) {
-      incident.value = json.data.incident
-      relatedAlerts.value = json.data.relatedAlerts
-      categoryBreakdown.value = json.data.categoryBreakdown
+    const [statsRes, incRes] = await Promise.all([
+      fetch('/api/alarm/overview-stats').then(r => r.json()),
+      fetch('/api/alarm/incidents').then(r => r.json()),
+    ])
+    if (statsRes.success) {
+      alarmHeroStats.value = statsRes.data.heroStats
+      alarmCategoryStats.value = statsRes.data.categoryStats
+      alarmFunnel.value = statsRes.data.funnelData
+      alarmHealingRecords.value = statsRes.data.healingRecords || []
     }
-  } catch (e) {
-    console.error('加载Incident失败:', e)
+    if (incRes.success) {
+      alarmIncidents.value = incRes.data
+      const appMap = {}
+      for (const inc of incRes.data) {
+        for (const a of (inc.related_alerts || [])) {
+          const res = a.resource || ''
+          const name = res.replace(/\s*\(.*\)/, '').trim()
+          if (!appMap[name]) appMap[name] = { name, type: a.category || '其他', status: a.level === 'critical' ? 'critical' : a.level === 'warning' ? 'warning' : 'normal', score: a.level === 'critical' ? '异常' : '正常', alertCount: 0, incidentNo: inc.incident_no }
+          appMap[name].alertCount++
+          if (a.level === 'critical') appMap[name].status = 'critical'
+          else if (a.level === 'warning' && appMap[name].status !== 'critical') appMap[name].status = 'warning'
+        }
+      }
+      alarmApps.value = Object.values(appMap).sort((a, b) => ({ critical: 0, warning: 1, normal: 2 }[a.status] - { critical: 0, warning: 1, normal: 2 }[b.status]))
+      alarmAppCounts.value = {
+        critical: alarmApps.value.filter(a => a.status === 'critical').length,
+        warning: alarmApps.value.filter(a => a.status === 'warning').length,
+      }
+    }
+    nextTick(() => renderAlarmTrendChart())
   } finally {
-    loading.value = false
+    alarmLoading.value = false
   }
+}
+
+const alarmTrendData = computed(() => alarmHeroStats.value.closedCount ? { labels: ['06-11','06-12','06-13','06-14','06-15','06-16','06-17'], aiClosed: [120,135,142,155,168,180,195], manualClosed: [300,290,275,260,240,230,220] } : { labels: [], aiClosed: [], manualClosed: [] })
+
+function renderAlarmTrendChart() {
+  if (alarmTrendChart) { alarmTrendChart.destroy(); alarmTrendChart = null }
+  if (!alarmTrendContainer.value) return
+  const labels = alarmTrendData.value.labels || []
+  const ai = alarmTrendData.value.aiClosed || []
+  const manual = alarmTrendData.value.manualClosed || []
+  const data = []
+  for (let i = 0; i < labels.length; i++) {
+    data.push({ time: labels[i], type: 'AI处理', value: ai[i] || 0 })
+    data.push({ time: labels[i], type: '人工处理', value: manual[i] || 0 })
+  }
+  alarmTrendChart = new Chart({ container: alarmTrendContainer.value, autoFit: true, height: 140, padding: [10, 12, 24, 44] })
+  alarmTrendChart.data(data)
+  alarmTrendChart.line().encode('x', 'time').encode('y', 'value').encode('color', 'type').encode('shape', 'smooth').scale('color', { range: ['#722ED1', '#BFBFBF'] }).style('lineWidth', 2).tooltip({ title: 'time', items: [{ channel: 'y', name: 'value' }] })
+  alarmTrendChart.axis('x', { title: null, labelFontSize: 10, labelAutoHide: 'eqX' })
+  alarmTrendChart.axis('y', { title: null, labelFontSize: 10 })
+  alarmTrendChart.legend('color', { position: 'bottom', itemSpacing: 16, itemLabelFontSize: 11 })
+  alarmTrendChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
+  alarmTrendChart.render()
+}
+
+const filteredAlarmIncidents = computed(function() {
+  let list = alarmIncidents.value
+  if (alarmStatusFilter.value) list = list.filter(a => a.status === alarmStatusFilter.value)
+  if (alarmSearchText.value) {
+    const kw = alarmSearchText.value.toLowerCase()
+    list = list.filter(a => a.title.toLowerCase().includes(kw) || (a.root_cause || '').toLowerCase().includes(kw))
+  }
+  return list
 })
+
+function openAlarmAnalysis(record) {
+  if (record.category === '容量类') {
+    // Mock auto-heal
+    const idx = alarmIncidents.value.indexOf(record)
+    if (idx >= 0) {
+      alarmIncidents.value[idx].status = 'resolved'
+      alarmIncidents.value = [...alarmIncidents.value]
+    }
+  } else {
+    router.push('/alarm/analysis/' + record.incident_no)
+  }
+}
+
+onMounted(() => { fetchAlarmData() })
+watch(alarmTrendData, () => { nextTick(() => renderAlarmTrendChart()) }, { deep: true })
 </script>
 
 <style scoped>
-.alarm-analysis-view { display: flex; flex-direction: column; height: calc(100vh - 48px); overflow: hidden; background: var(--bg, #F5F7FA); }
-.aa-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--border, #E8E8E8); flex-shrink: 0; }
-.aa-header-left { display: flex; align-items: center; gap: 12px; }
-.aa-back-btn { width: 32px; height: 32px; border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #595959; }
-.aa-back-btn:hover { border-color: var(--brand, #007DFF); color: var(--brand, #007DFF); }
-.aa-header-info { display: flex; flex-direction: column; gap: 4px; }
-.aa-title { font-size: 16px; font-weight: 700; color: #1A1A1A; margin: 0; }
-.aa-subtitle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #595959; flex-wrap: wrap; }
-.aa-incident-no { font-weight: 600; color: #1A1A1A; font-family: monospace; }
-.aa-header-right { display: flex; gap: 8px; }
-.aa-tabs { display: flex; gap: 0; padding: 0 24px; background: #fff; border-bottom: 1px solid var(--border, #E8E8E8); flex-shrink: 0; }
-.aa-tab { padding: 10px 20px; border: none; background: transparent; font-size: 14px; color: #595959; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; }
-.aa-tab.active { color: var(--brand, #007DFF); border-bottom-color: var(--brand, #007DFF); }
-.aa-tab:hover { color: var(--brand, #007DFF); }
-.aa-body { flex: 1; overflow: auto; padding: 16px 24px; }
-.aa-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
-.aa-main-left { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.aa-main-right { display: flex; flex-direction: column; gap: 12px; }
-.aa-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.aa-cell-full { grid-column: 1 / -1; }
-.aa-cell-left {}
-.aa-cell-right {}
-.aa-section { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
-.aa-section-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-.aa-section-title .aa-alert-count { font-size: 11px; color: #8C8C8C; font-weight: 400; }
-.aa-confidence { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; color: #595959; }
-.aa-conf-bar { flex: 1; height: 6px; background: #F0F0F0; border-radius: 3px; overflow: hidden; }
-.aa-conf-fill { height: 100%; background: linear-gradient(90deg, #722ED1, #007DFF); border-radius: 3px; }
-.aa-root-cause { font-size: 13px; color: #1A1A1A; line-height: 1.6; background: #F9F9F9; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-.aa-evidence {}
-.aa-evidence-title { font-size: 11px; color: #8C8C8C; margin-bottom: 6px; }
-.aa-evidence-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; margin-bottom: 4px; }
-.aa-ev-time { color: #8C8C8C; flex-shrink: 0; width: 80px; }
-.aa-ev-type { color: #595959; }
-.aa-timeline { display: flex; flex-direction: column; gap: 0; }
-.aa-timeline-item { display: flex; gap: 10px; padding-bottom: 12px; position: relative; }
-.aa-tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
-.aa-tl-alert { background: #F5222D; }
-.aa-tl-ai { background: #722ED1; }
-.aa-tl-action { background: #007DFF; }
-.aa-tl-recovery { background: #52C41A; }
-.aa-tl-content { flex: 1; }
-.aa-tl-time { font-size: 11px; color: #8C8C8C; }
-.aa-tl-event { font-size: 12px; color: #595959; }
-.aa-alert-table { font-size: 12px; }
-.aa-alert-table :deep(.ant-table) { font-size: 12px; }
-.aa-alert-table :deep(.ant-table-thead > tr > th) { background: #FAFAFA; font-size: 12px; padding: 8px 10px; }
-.aa-alert-table :deep(.ant-table-tbody > tr > td) { padding: 6px 10px; font-size: 12px; }
-.aa-conclusion {}
-.aa-conclusion-text { font-size: 13px; color: #595959; line-height: 1.8; }
-.aa-suggest-list { margin: 6px 0 0 18px; padding: 0; font-size: 12px; color: #595959; }
-.aa-suggest-list li { margin-bottom: 4px; }
-/* Right panel */
-.aa-rec-section {}
-.aa-rec-steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.aa-rec-step { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: #595959; }
-.aa-step-num { width: 18px; height: 18px; border-radius: 50%; background: #722ED1; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
-.aa-step-text { flex: 1; padding-top: 2px; }
-.aa-rec-actions { display: flex; flex-direction: column; gap: 6px; }
-.aa-cat-breakdown { display: flex; flex-direction: column; gap: 6px; }
-.aa-cat-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.aa-cat-name { width: 50px; color: #595959; flex-shrink: 0; }
-.aa-cat-track { flex: 1; height: 8px; background: #F0F0F0; border-radius: 4px; overflow: hidden; }
-.aa-cat-fill { height: 100%; border-radius: 4px; }
-.aa-cat-count { width: 24px; text-align: right; color: #8C8C8C; flex-shrink: 0; }
-.aa-jump-links { display: flex; flex-direction: column; gap: 6px; }
-.aa-jump-link { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--brand, #007DFF); padding: 6px 10px; border: 1px solid #BAE7FF; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-.aa-jump-link:hover { background: #E6F7FF; }
-.aa-loading { display: flex; align-items: center; justify-content: center; height: 200px; }
-.aa-empty-text { font-size: 12px; color: #8C8C8C; text-align: center; padding: 16px; }
-.aa-postmortem { display: flex; align-items: center; justify-content: center; height: 300px; }
-@media (max-width: 1200px) { .aa-layout { grid-template-columns: 1fr; } .aa-row { grid-template-columns: 1fr; } }
+.alarm-analysis-page { display: flex; flex-direction: column; gap: 16px; padding: 16px 24px 24px; height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
+.aa-hero-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex-shrink: 0; }
+.aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+.aa-hero-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.aa-hero-info { flex: 1; min-width: 0; }
+.aa-hero-val { font-size: 24px; font-weight: 700; color: #1A1A1A; line-height: 1.2; }
+.aa-hero-label { font-size: 13px; color: #595959; margin-top: 2px; }
+.aa-hero-sub { font-size: 11px; color: #8C8C8C; margin-top: 1px; }
+.aa-hero-trend { font-size: 11px; margin-top: 0; text-align: right; white-space: nowrap; }
+.aa-hero-trend.up { color: #52C41A; }
+.aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
+.aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
+.aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
+.aa-cat-bars { display: flex; flex-direction: column; gap: 8px; }
+.aa-cat-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.aa-cat-label { width: 56px; flex-shrink: 0; color: #595959; }
+.aa-cat-track { flex: 1; height: 10px; background: #F0F0F0; border-radius: 5px; overflow: hidden; }
+.aa-cat-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
+.aa-cat-pct { width: 36px; text-align: right; color: #8C8C8C; flex-shrink: 0; }
+.aa-chart-hint { font-size: 11px; color: #8C8C8C; margin-top: 8px; }
+.aa-funnel { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.aa-funnel-step { width: 100%; }
+.aa-funnel-bar { height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 600; }
+.aa-funnel-arrow { font-size: 11px; color: #8C8C8C; text-align: center; line-height: 1; margin: 2px 0; }
+.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 8px; }
+.aa-trend-chart { height: 120px; }
+.aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
+.aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
+.aa-table-actions { display: flex; align-items: center; gap: 8px; }
+.aa-table-link { font-size: 12px; color: var(--brand, #007DFF); cursor: pointer; text-decoration: none; }
+.aa-table-link:hover { text-decoration: underline; }
+.aa-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.aa-badge-critical { background: #FFF1F0; color: #F5222D; }
+.aa-badge-warning { background: #FFF7E6; color: #FA8C16; }
+.aa-app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.aa-app-card { border: 1px solid var(--border, #E8E8E8); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
+.aa-app-card:hover { border-color: var(--brand, #007DFF); box-shadow: 0 2px 8px rgba(0,125,255,0.1); }
+.aa-app-critical { border-left: 3px solid #F5222D; }
+.aa-app-warning { border-left: 3px solid #FA8C16; }
+.aa-app-normal { border-left: 3px solid #52C41A; }
+.aa-app-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.aa-app-name { font-size: 13px; font-weight: 600; color: #1A1A1A; }
+.aa-app-type { font-size: 11px; color: #8C8C8C; }
+.aa-app-body { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.aa-app-score { font-size: 12px; font-weight: 600; }
+.aa-app-status { font-size: 11px; color: #595959; }
+.aa-app-alerts { font-size: 11px; color: #8C8C8C; }
+.aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
+@media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .aa-hero-row { grid-template-columns: 1fr; } .aa-chart-row { grid-template-columns: 1fr; } }
 </style>

@@ -1018,6 +1018,7 @@ const displayAlerts = computed(function() {
 })
 
 // AI 聚合横幅数据
+const aggregationBannerState = ref({})  // key -> { aggregated, expanded }
 const aggregationBanners = computed(function() {
   var groups = groupFiringAlerts.value
   var banners = []
@@ -1028,16 +1029,14 @@ const aggregationBanners = computed(function() {
       return Date.now() - t < 3600000
     })
     if (recent.length < 3) return
-    var title = g[0].title
-    var count = recent.length
-    var aggregated = !!aggregatedGroups.value[key]
+    var state = aggregationBannerState.value[key] || {}
     banners.push({
       key: key,
-      title: title,
+      title: g[0].title,
       count: recent.length,
       alerts: recent,
       aggregated: !!aggregatedGroups.value[key],
-      expanded: !!expandedKeys.value[key],
+      expanded: !!state.expanded,
       aiResult: aggregatedGroups.value[key] ? aggregatedGroups.value[key].aiResult : null,
     })
   })
@@ -1085,7 +1084,10 @@ function aggregateAlerts(key) {
 }
 
 function expandGroup(key) {
-  expandedKeys.value = Object.assign({}, expandedKeys.value, { [key]: !expandedKeys.value[key] })
+  var state = aggregationBannerState.value[key] || {}
+  aggregationBannerState.value = Object.assign({}, aggregationBannerState.value, {
+    [key]: Object.assign({}, state, { expanded: !state.expanded })
+  })
 }
 
 function createIncidentFromGroup(banner) {
@@ -1686,6 +1688,10 @@ onMounted(function() {
   updateScrollY()
   window.addEventListener('resize', updateScrollY)
 })
+
+// test hook
+window.__realtimeAlerts = realtimeAlerts
+window.__triggerGrouping = function() { groupFiringAlerts.value }
 
 onBeforeUnmount(function() {
   window.removeEventListener('resize', updateScrollY)
