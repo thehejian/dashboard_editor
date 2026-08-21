@@ -14,6 +14,7 @@ const routes = [
     component: () => import('../views/alarm/AlarmManageView.vue'),
     children: [
       { path: '', redirect: '/alarm/current' },
+      { path: 'analysis/:id', name: 'alarm-analysis', component: () => import('../views/alarm/AlarmAnalysisView.vue') },
       { path: 'current', component: () => import('../views/alarm/RealtimeView.vue') },
       { path: 'events', component: () => import('../views/alarm/EventsView.vue') },
       {

@@ -62,6 +62,10 @@ export default defineConfig({
       '/api/sre': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/api/alarm': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   },

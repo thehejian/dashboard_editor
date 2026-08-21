@@ -2087,6 +2087,134 @@ app.get('/api/sre/rca-reports', (req, res) => {
   res.json({ success: true, data: MOCK_RCA_REPORTS })
 })
 
+// ==================== AI 告警分析接口 ====================
+
+// GET /api/alarm/incidents — 告警聚合事件列表
+app.get('/api/alarm/incidents', (req, res) => {
+  const alerts = getTable('alerts') || []
+  const groupMap = {}
+  for (const a of alerts) {
+    const key = a.incident_id || 'UNLINKED-' + a.id
+    if (!groupMap[key]) {
+      groupMap[key] = {
+        incident_no: key,
+        title: a.title,
+        root_cause: a.title,
+        level: a.level,
+        category: a.category || '其他',
+        status: a.status === 'firing' ? 'investigating' : a.status === 'resolved' ? 'resolved' : 'suppressed',
+        affected_count: 1,
+        handler: a.incident_id ? 'ai' : 'manual',
+        created_at: a.trigger_time,
+        related_alerts: [a],
+      }
+    } else {
+      groupMap[key].affected_count++
+      groupMap[key].related_alerts.push(a)
+      if (a.level === 'critical') groupMap[key].level = 'critical'
+    }
+  }
+  const data = Object.values(groupMap)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+  res.json({ success: true, data })
+})
+
+// GET /api/alarm/incidents/:id — 单个 Incident 完整分析数据
+app.get('/api/alarm/incidents/:id', (req, res) => {
+  const alerts = getTable('alerts') || []
+  const incId = req.params.id
+  const relatedAlerts = alerts.filter(a => a.incident_id === incId || String(a.id) === incId)
+  if (!relatedAlerts.length) return res.status(404).json({ success: false, message: '未找到该Incident' })
+
+  const sreIncident = MOCK_INCIDENTS.find(i => i.id === incId)
+  const firstAlert = relatedAlerts[0]
+
+  const categoryCounts = {}
+  relatedAlerts.forEach(a => {
+    const cat = a.category || '其他'
+    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
+  })
+  const categoryBreakdown = Object.entries(categoryCounts)
+    .map(([cat, count]) => ({ category: cat, count }))
+    .sort((a, b) => b.count - a.count)
+
+  res.json({
+    success: true,
+    data: {
+      incident: {
+        incident_no: incId,
+        title: firstAlert.title,
+        root_cause: sreIncident?.description || 'AI 正在分析根因，请稍候...',
+        level: relatedAlerts.some(a => a.level === 'critical') ? 'critical' : 'warning',
+        severity: relatedAlerts.some(a => a.level === 'critical') ? 'P1' : 'P2',
+        category: firstAlert.category || '其他',
+        status: sreIncident?.status || 'investigating',
+        affected_count: relatedAlerts.length,
+        handler: sreIncident ? 'ai' : 'manual',
+        evidence: sreIncident?.timeline || relatedAlerts.map(a => ({
+          time: a.trigger_time, type: 'alert', detail: a.title + ' — ' + a.resource,
+        })),
+        ai_confidence: sreIncident ? 87 : 72,
+        suggestions: sreIncident
+          ? ['检查相关服务状态', '查看应用日志定位异常', '必要时执行回滚']
+          : relatedAlerts[0].suggestion ? relatedAlerts[0].suggestion.split('\n') : ['请人工排查处理'],
+        can_heal: firstAlert.category === '容量类',
+      },
+      relatedAlerts,
+      categoryBreakdown,
+    }
+  })
+})
+
+// GET /api/alarm/overview-stats — Hero Metric 概览数据
+app.get('/api/alarm/overview-stats', (req, res) => {
+  const alerts = getTable('alerts') || []
+  const firing = alerts.filter(a => a.status === 'firing')
+
+  const byCategory = {}
+  firing.forEach(a => {
+    const cat = a.category || '其他'
+    byCategory[cat] = (byCategory[cat] || 0) + 1
+  })
+  const categoryStats = Object.entries(byCategory)
+    .map(([cat, count]) => ({
+      category: cat,
+      count,
+      pct: firing.length ? Math.round(count / firing.length * 100) : 0,
+    }))
+    .sort((a, b) => b.count - a.count)
+
+  const resolved = alerts.filter(a => a.status === 'resolved')
+  const totalHistorical = 3452
+
+  res.json({
+    success: true,
+    data: {
+      heroStats: {
+        closedCount: totalHistorical + resolved.length,
+        reductionRate: 91.5,
+        autoRate: 78.3,
+        savedHours: 280,
+      },
+      categoryStats,
+      funnelData: {
+        raw: 100000, dedup: 85000, agg: 8500, rate: 91.5,
+      },
+      trendData: {
+        labels: ['06-11', '06-12', '06-13', '06-14', '06-15', '06-16', '06-17'],
+        aiClosed: [120, 135, 142, 155, 168, 180, 195],
+        manualClosed: [300, 290, 275, 260, 240, 230, 220],
+      },
+      healingRecords: [
+        { id: 1, time: '06-17 09:15', alert: 'K8s Pod频繁重启', resource: 'payment-service', action: '平滑重启+拨测', result: 'success', duration: '45s' },
+        { id: 2, time: '06-17 08:30', alert: '磁盘空间不足', resource: 'db-primary', action: '清理日志+扩容20%', result: 'success', duration: '1m20s' },
+        { id: 3, time: '06-16 23:00', alert: 'NTP偏移过大', resource: 'ntp-server', action: '重启NTP服务', result: 'success', duration: '30s' },
+        { id: 4, time: '06-16 18:00', alert: '证书即将过期', resource: 'cdn-domain', action: '申请新证书(待审批)', result: 'pending', duration: '—' },
+      ],
+    }
+  })
+})
+
 // ==================== Start Server ====================
 
 app.listen(PORT, () => {

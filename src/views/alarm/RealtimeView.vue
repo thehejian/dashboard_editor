@@ -37,9 +37,72 @@
             <a-button type="primary"><i class="fa-solid fa-volume-off"></i></a-button>
           </div>
 
+          <!-- AI 聚合推荐横幅 -->
+          <div v-if="aggregationBanners.length" class="ai-aggregation-banners">
+            <div v-for="banner in aggregationBanners" :key="banner.key" class="ai-agg-banner" :class="{ aggregated: banner.aggregated }">
+              <div class="agg-banner-left">
+                <i class="fa-solid fa-robot agg-icon"></i>
+                <div class="agg-banner-info">
+                  <span class="agg-banner-title">{{ banner.title }}</span>
+                  <span class="agg-banner-meta">同类 {{ banner.count }} 条 · 近1小时内触发</span>
+                </div>
+                <div class="agg-banner-resources">
+                  <span v-for="ra in banner.alerts.slice(0, 4)" :key="ra.id" class="agg-res-tag" @click="openDetail(ra)">
+                    <a-tag :color="getLevelColor(ra.level)" size="small">{{ getLevelText(ra.level) }}</a-tag>
+                    {{ ra.resource.length > 14 ? ra.resource.slice(0, 14) + '…' : ra.resource }}
+                  </span>
+                  <span v-if="banner.count > 4" class="agg-more">+{{ banner.count - 4 }}</span>
+                </div>
+              </div>
+              <div class="agg-banner-right">
+                <a-button v-if="!banner.aggregated" size="small" type="primary" :loading="aggregatingKeys[banner.key]" @click="aggregateAlerts(banner.key)">
+                  <i class="fa-solid fa-filter"></i> AI 聚合降噪
+                </a-button>
+                <a-button v-else size="small" type="default" @click="expandGroup(banner.key)">
+                  <i class="fa-solid" :class="banner.expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                  {{ banner.expanded ? '收起' : '展开' }} ({{ banner.count }})
+                </a-button>
+              </div>
+              <!-- 聚合详情面板 -->
+              <div v-if="banner.aggregated && banner.expanded" class="agg-detail-panel">
+                <div class="agg-detail-content">
+                  <div v-if="banner.aiResult" class="agg-ai-result">
+                    <div class="agg-ai-header">
+                      <i class="fa-solid fa-robot"></i>
+                      <span>AI 聚合分析结果</span>
+                    </div>
+                    <div class="agg-ai-section">
+                      <strong>推测根因：</strong>{{ banner.aiResult.rootCause }}
+                    </div>
+                    <div class="agg-ai-section">
+                      <strong>处置建议：</strong>
+                      <ol><li v-for="(s, i) in banner.aiResult.suggestions" :key="i">{{ s }}</li></ol>
+                    </div>
+                  </div>
+                  <div class="agg-alert-list">
+                    <div v-for="ra in banner.alerts" :key="ra.id" class="agg-alert-row" :class="'level-' + ra.level" @click="openDetail(ra)">
+                      <a-tag :color="getLevelColor(ra.level)" size="small">{{ getLevelText(ra.level) }}</a-tag>
+                      <span class="agg-alert-resource">{{ ra.resource }}</span>
+                      <span class="agg-alert-metric">{{ ra.metric }} {{ ra.currentValue }} / {{ ra.threshold }}</span>
+                      <span class="agg-alert-time">{{ ra.triggerTime }}</span>
+                    </div>
+                  </div>
+                  <div class="agg-detail-actions">
+                    <a-button size="small" type="primary" @click.stop="createIncidentFromGroup(banner)">
+                      <i class="fa-solid fa-file-circle-plus"></i> 一键生成故障单
+                    </a-button>
+                    <a-button size="small" @click.stop="muteGroup(banner)">
+                      <i class="fa-solid fa-volume-off"></i> 屏蔽本组
+                    </a-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <a-table
             :columns="columns"
-            :data-source="filteredAlerts"
+            :data-source="displayAlerts"
             :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: function(t) { return '共 ' + t + ' 条' } }"
             :row-selection="{ selectedRowKeys: selectedKeys, onChange: function(keys) { selectedKeys = keys } }"
             row-key="id"
@@ -52,7 +115,37 @@
                 <a-tag :color="getLevelColor(record.level)">{{ getLevelText(record.level) }}</a-tag>
               </template>
               <template v-if="column.key === 'title'">
-                <a class="alert-link" @click="openDetail(record)">{{ record.title }}</a>
+                <template v-if="record.aiSuggest">
+                  <div class="ai-title-cell">
+                    <a-tooltip placement="right" :overlay-style="{ maxWidth: '480px' }">
+                      <template #title>
+                        <div class="ai-tip-content">
+                          <div class="ai-tip-header"><i class="fa-solid fa-robot"></i> AI 智能聚合推荐</div>
+                          <div class="ai-tip-count">近1小时内同类告警触发 <b>{{ record.aiSuggest.count }}</b> 次</div>
+                          <div class="ai-tip-resources">
+                            <div class="ai-tip-res-label">涉及资源：</div>
+                            <div v-for="ra in record.aiSuggest.alerts" :key="ra.id" class="ai-tip-res-row" :class="'level-' + ra.level" @click.stop="openDetail(ra)">
+                              <a-tag :color="getLevelColor(ra.level)" size="small">{{ getLevelText(ra.level) }}</a-tag>
+                              <span class="ai-tip-res-name">{{ ra.resource }}</span>
+                              <span class="ai-tip-res-metric">{{ ra.metric }} {{ ra.currentValue }} / {{ ra.threshold }}</span>
+                            </div>
+                          </div>
+                          <div class="ai-tip-tip">点击聚合组中任意资源可查看详情</div>
+                          <div class="ai-tip-action">
+                            <a-button size="small" type="primary" :loading="aggregatingKeys[record.aiSuggest.key]" @click.stop="aggregateAlerts(record.aiSuggest.key)">
+                              <i class="fa-solid fa-filter"></i> 执行 AI 聚合分析
+                            </a-button>
+                          </div>
+                        </div>
+                      </template>
+                      <span class="alert-link ai-title-link"><i class="fa-solid fa-fire-flame-curved ai-badge-icon"></i>{{ record.title }}</span>
+                      <span class="ai-badge">{{ record.aiSuggest.count }}</span>
+                    </a-tooltip>
+                  </div>
+                </template>
+                <template v-else>
+                  <a class="alert-link" @click="openDetail(record)">{{ record.title }}</a>
+                </template>
               </template>
               <template v-if="column.key === 'status'">
                 <a-tag :color="record.status === 'firing' ? 'red' : record.status === 'resolved' ? 'green' : 'default'">
@@ -575,6 +668,11 @@ const aiResult = ref(null)
 let aiAnalyzedAlertId = null
 let aiTimer = null
 
+// AI 聚合相关
+const aggregatedGroups = ref({})   // key -> { alerts, rootCause, suggestions, incident }
+const aggregatingKeys = ref({})   // key -> boolean loading state
+const expandedKeys = ref({})      // key -> boolean expanded state
+
 const detailScrollRef = ref(null)
 const detailTabsWrapRef = ref(null)
 
@@ -792,6 +890,8 @@ onMounted(async () => {
   renderBarChart()
   renderDurationChart()
   renderTopnChart()
+  // 标记高频告警
+  groupFiringAlerts.value
 })
 
 watch(function() { return route.query.alertId }, function(id) {
@@ -880,6 +980,148 @@ const filteredAlerts = computed(function() {
   }
   return list
 })
+
+// 对 firing 告警按 title+metric 分组，标记高频告警
+const groupFiringAlerts = computed(function() {
+  var groups = {}
+  var now = Date.now()
+  realtimeAlerts.value.forEach(function(a) {
+    if (a.status !== 'firing') return
+    var key = (a.title || '') + '|' + (a.metric || '')
+    if (!groups[key]) groups[key] = []
+    groups[key].push(a)
+  })
+  Object.keys(groups).forEach(function(key) {
+    var g = groups[key]
+    var recent = g.filter(function(a) {
+      var t = parseTime(a.triggerTime).getTime()
+      return now - t < 3600000
+    })
+    g.forEach(function(a) {
+      a.aiSuggest = recent.length >= 3 ? { key: key, count: recent.length, alerts: recent } : null
+      a._groupKey = key
+      a._isGroupFirst = recent.indexOf(a) === 0
+    })
+  })
+  return groups
+})
+
+const displayAlerts = computed(function() {
+  var list = filteredAlerts.value
+  var seen = {}
+  return list.filter(function(a) {
+    var key = a._groupKey
+    if (!key) return true
+    if (!seen[key]) { seen[key] = true; return true }
+    return false
+  })
+})
+
+// AI 聚合横幅数据
+const aggregationBanners = computed(function() {
+  var groups = groupFiringAlerts.value
+  var banners = []
+  Object.keys(groups).forEach(function(key) {
+    var g = groups[key]
+    var recent = g.filter(function(a) {
+      var t = parseTime(a.triggerTime).getTime()
+      return Date.now() - t < 3600000
+    })
+    if (recent.length < 3) return
+    var title = g[0].title
+    var count = recent.length
+    var aggregated = !!aggregatedGroups.value[key]
+    banners.push({
+      key: key,
+      title: title,
+      count: recent.length,
+      alerts: recent,
+      aggregated: !!aggregatedGroups.value[key],
+      expanded: !!expandedKeys.value[key],
+      aiResult: aggregatedGroups.value[key] ? aggregatedGroups.value[key].aiResult : null,
+    })
+  })
+  banners.sort(function(a, b) { return b.count - a.count })
+  return banners
+})
+
+function aggregateAlerts(key) {
+  var banner = aggregationBanners.value.find(function(b) { return b.key === key })
+  if (!banner || banner.aggregated) return
+  aggregatingKeys.value[key] = true
+  var alerts = banner.alerts.map(function(a) {
+    return { id: a.id, title: a.title, metric: a.metric, resource: a.resource, level: a.level, currentValue: a.currentValue, threshold: a.threshold, triggerTime: a.triggerTime }
+  })
+  fetch('/api/alarm/ai-aggregate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alerts: alerts, groupKey: key }),
+  })
+    .then(function(res) { return res.json() })
+    .then(function(json) {
+      if (json.success) {
+        var result = json.data || json
+        aggregatedGroups.value[key] = { alerts: alerts, aiResult: result }
+        // 将同组 firing 告警标记为已聚合（相当于静默）
+        var alertIds = new Set(alerts.map(function(a) { return a.id }))
+        realtimeAlerts.value = realtimeAlerts.value.map(function(a) {
+          if (alertIds.has(a.id) && a.status === 'firing') {
+            return Object.assign({}, a, { status: 'suppressed', muteReason: 'AI聚合降噪', mutedAt: new Date().toISOString() })
+          }
+          return a
+        })
+        message.success('AI 聚合分析完成，已生成 ' + (result.incidentId ? '故障单 ' + result.incidentId : '聚合组'))
+      } else {
+        message.error(json.message || 'AI 聚合分析失败')
+      }
+    })
+    .catch(function(e) {
+      console.error('AI 聚合失败:', e)
+      message.error('AI 聚合分析失败，请稍后重试')
+    })
+    .finally(function() {
+      aggregatingKeys.value[key] = false
+    })
+}
+
+function expandGroup(key) {
+  expandedKeys.value = Object.assign({}, expandedKeys.value, { [key]: !expandedKeys.value[key] })
+}
+
+function createIncidentFromGroup(banner) {
+  if (!banner || !banner.aggregated) return
+  var alertIds = banner.alerts.map(function(a) { return a.id })
+  fetch('/api/sre/incidents/aggregate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alertIds: alertIds }),
+  })
+    .then(function(res) { return res.json() })
+    .then(function(json) {
+      if (json.success) {
+        message.success('故障单已创建：' + json.data.incident.id)
+        router.push({ path: '/ops/incident/' + json.data.incident.id, query: { from: 'alarm-aggregate' } })
+      } else {
+        message.error(json.message || '创建故障单失败')
+      }
+    })
+    .catch(function(e) {
+      console.error('创建故障单失败:', e)
+      message.error('创建故障单失败')
+    })
+}
+
+function muteGroup(banner) {
+  if (!banner) return
+  var ids = banner.alerts.map(function(a) { return a.id })
+  realtimeAlerts.value = realtimeAlerts.value.map(function(a) {
+    if (ids.indexOf(a.id) >= 0 && a.status === 'firing') {
+      return Object.assign({}, a, { status: 'suppressed', muteReason: 'AI聚合屏蔽', mutedAt: new Date().toISOString() })
+    }
+    return a
+  })
+  message.success('已屏蔽 ' + banner.count + ' 条同类告警')
+}
 
 const historyFilteredData = computed(function() {
   var list = historyData.value
@@ -1497,6 +1739,117 @@ onBeforeUnmount(function() {
 .incident-tag { cursor: pointer; }
 .incident-tag:hover { opacity: 0.8; }
 .create-incident-btn { padding: 0 2px; }
+
+/* AI 聚合横幅 */
+.ai-aggregation-banners { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; flex-shrink: 0; }
+.ai-agg-banner {
+  background: #f9f0ff;
+  border: 1px solid #d3adf7;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+.ai-agg-banner.aggregated { background: #f0f5ff; border-color: #91caff; }
+.agg-icon { font-size: 18px; color: #722ed1; flex-shrink: 0; margin-top: 2px; }
+.agg-banner-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.agg-banner-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.agg-banner-title { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+.agg-banner-meta { font-size: 12px; color: #8c8c8c; }
+.agg-banner-resources { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.agg-res-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #595959;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 1px 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.agg-res-tag:hover { border-color: var(--brand); color: var(--brand); background: #e6f7ff; }
+.agg-more { font-size: 11px; color: #8c8c8c; }
+.agg-banner-right { flex-shrink: 0; }
+
+.agg-detail-panel { flex: 1; min-width: 0; }
+.agg-detail-content { padding-top: 10px; border-top: 1px dashed #d3adf7; margin-top: 8px; }
+.ai-agg-banner.aggregated .agg-detail-content { border-top-color: #91caff; }
+.agg-ai-result { background: #fff; border: 1px solid #f0f0f0; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+.agg-ai-header { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #722ed1; margin-bottom: 8px; }
+.agg-ai-section { font-size: 12px; color: #595959; line-height: 1.8; margin-bottom: 6px; }
+.agg-ai-section ol { margin: 4px 0 0 18px; padding: 0; }
+.agg-alert-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.agg-alert-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.agg-alert-row:hover { border-color: var(--brand); background: #e6f7ff; }
+.agg-alert-row.level-critical { border-left: 3px solid #f5222d; }
+.agg-alert-row.level-warning { border-left: 3px solid #fa8c16; }
+.agg-alert-row.level-info { border-left: 3px solid #1890ff; }
+.agg-alert-resource { flex: 1; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.agg-alert-metric { color: #8c8c8c; flex-shrink: 0; }
+.agg-alert-time { color: #8c8c8c; flex-shrink: 0; font-size: 11px; }
+.agg-detail-actions { display: flex; gap: 8px; }
+
+/* AI 提示 badge + tooltip */
+.ai-title-cell { display: flex; align-items: center; gap: 4px; }
+.ai-title-link { color: var(--brand); cursor: pointer; }
+.ai-title-link:hover { text-decoration: underline; }
+.ai-badge-icon { color: #fa8c16; font-size: 11px; margin-right: 2px; }
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #ff4d4f;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.ai-tip-content { padding: 2px 0; }
+.ai-tip-header { font-size: 13px; font-weight: 600; color: #722ed1; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.ai-tip-count { font-size: 12px; color: #595959; margin-bottom: 8px; }
+.ai-tip-count b { color: #ff4d4f; }
+.ai-tip-resources { margin-bottom: 10px; }
+.ai-tip-res-label { font-size: 11px; color: #8c8c8c; margin-bottom: 4px; }
+.ai-tip-res-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ai-tip-res-row:hover { background: #f5f5f5; }
+.ai-tip-res-row.level-critical { background: #fff1f0; }
+.ai-tip-res-row.level-critical:hover { background: #ffccc7; }
+.ai-tip-res-row.level-warning { background: #fff7e6; }
+.ai-tip-res-row.level-warning:hover { background: #ffe7ba; }
+.ai-tip-res-name { flex: 1; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ai-tip-res-metric { color: #8c8c8c; font-size: 11px; flex-shrink: 0; }
+.ai-tip-tip { font-size: 11px; color: #8c8c8c; margin-bottom: 8px; }
+.ai-tip-action { border-top: 1px solid #f0f0f0; padding-top: 8px; }
 
 .history-alerts { display: flex; flex-direction: column; height: 100%; }
 .history-alerts .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
