@@ -25,6 +25,12 @@
     <div class="table-toolbar">
       <a-button type="primary" @click="createModalOpen = true">+ 新建告警转换规则</a-button>
     </div>
+    <a-input-search
+      v-model:value="searchKeyword"
+      placeholder="搜索..."
+      style="width:100%;margin-bottom:12px"
+      allow-clear
+    />
     <a-table :columns="columns" :data-source="filteredData" :pagination="pagination" row-key="id" @change="onTableChange" :scroll="{ x: 1000 }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'alarmName'"><a @click="showDetail(record)">{{ record.alarmName }}</a></template>
@@ -83,6 +89,7 @@ const rules = MOCK_RULES
 const filters = reactive({ severity: '', enabled: '', source: '' })
 const pagination = reactive({ current: 1, pageSize: 10, total: 0, showTotal: t => `共 ${t} 条` })
 const rawData = ref([...MOCK_ALERTS])
+const searchKeyword = ref("")
 
 const filteredData = computed(() => {
   let data = [...rawData.value]

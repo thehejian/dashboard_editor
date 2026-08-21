@@ -46,6 +46,12 @@
         <a-button @click="handleExport">导出</a-button>
       </div>
     </div>
+    <a-input-search
+      v-model:value="searchKeyword"
+      placeholder="搜索..."
+      style="width:100%;margin-bottom:12px"
+      allow-clear
+    />
     <a-table :columns="columns" :data-source="filteredData" :pagination="pagination" row-key="id" :row-selection="{ selectedRowKeys, onChange: onSelectChange }" :scroll="{ x: 1200 }" @change="onTableChange">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'level'">
@@ -100,7 +106,13 @@
         <div class="detail-section"><h4>原始日志内容</h4><pre class="log-block">{{ detailEvent.rawLog }}</pre></div>
         <div class="detail-section"><h4>关联追踪任务</h4>
           <div v-if="relatedTasks.length" style="margin-top:8px">
-            <a-table :columns="traceCols" :data-source="relatedTasks" row-key="id" :pagination="false" size="small">
+            <a-input-search
+      v-model:value="searchKeyword"
+      placeholder="搜索..."
+      style="width:100%;margin-bottom:12px"
+      allow-clear
+    />
+    <a-table :columns="traceCols" :data-source="relatedTasks" row-key="id" :pagination="false" size="small">
               <template #bodyCell="{ column: col, record: r }">
                 <template v-if="col.key === 'status'"><a-tag :color="TASK_STATUS_COLORS[r.status]">{{ TASK_STATUS[r.status] }}</a-tag></template>
                 <template v-if="col.key === 'action'"><a @click="goTraceResult(r)">查看结果</a></template>
@@ -160,6 +172,7 @@ const breadcrumbTitle = computed(() => {
 
 const filters = reactive({ sourceType: '', level: '', status: '', ciType: '', keyword: '', timeRange: '' })
 const selectedRowKeys = ref([])
+const searchKeyword = ref("")
 const pagination = reactive({ current: 1, pageSize: 6, total: 0, showTotal: t => `显示 ${Math.min((pagination.current - 1) * pagination.pageSize + 1, t)}-${Math.min(pagination.current * pagination.pageSize, t)} 条，共 ${t} 条` })
 
 const rawData = ref([...MOCK_EVENTS])

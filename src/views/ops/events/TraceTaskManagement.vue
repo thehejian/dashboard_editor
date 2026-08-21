@@ -27,8 +27,14 @@
     </div>
     <div class="table-toolbar">
       <a-button type="primary" @click="openCreate('realtime')">+ 创建实时追踪</a-button>
-      <a-button type="primary" @click="openCreate('event')">+ 创建事件追踪</a-button>
+      <a-button type="primary" @click="openCreate('event')">创建事件追踪</a-button>
     </div>
+    <a-input-search
+      v-model:value="searchKeyword"
+      placeholder="搜索..."
+      style="width:100%;margin-bottom:12px"
+      allow-clear
+    />
     <a-table :columns="columns" :data-source="filteredData" :pagination="pagination" row-key="id" :row-selection="{ selectedRowKeys, onChange: onSelectChange }" :scroll="{ x: 1100 }" @change="onTableChange">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'traceType'"><a-tag :color="record.traceType === 'event' ? '#1890ff' : '#52c41a'">{{ record.traceType === 'event' ? '事件追踪' : '实时追踪' }}</a-tag></template>
@@ -70,6 +76,7 @@ const CI_TYPE_MAP = { SYS_DeployComponent: '微服务', CLOUD_VM: '虚拟机', C
 
 const filters = reactive({ traceType: '', status: '', timeRange: '' })
 const selectedRowKeys = ref([])
+const searchKeyword = ref("")
 const pagination = reactive({ current: 1, pageSize: 10, total: 0, showTotal: t => `共 ${t} 条` })
 const rawData = ref([...MOCK_TRACE_TASKS])
 
