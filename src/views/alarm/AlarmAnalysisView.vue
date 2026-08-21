@@ -74,10 +74,10 @@
       <a-table
         :columns="alarmIncidentColumns"
         :data-source="filteredAlarmIncidents"
-        :pagination="{ pageSize: 5, showTotal: t => '共 ' + t + ' 条' }"
+        :pagination="{ pageSize: 5, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
         row-key="incident_no"
         size="small"
-        :scroll="{ y: 360 }"
+        :scroll="{ x: 700, y: 360 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'title'">
@@ -356,5 +356,28 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-table-link:hover { text-decoration: underline; }
 .aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
 @media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 768px) { .aa-hero-row { grid-template-columns: 1fr; } .aa-chart-row { grid-template-columns: 1fr; } }
+@media (max-width: 768px) {
+  .alarm-analysis-page { padding: 12px; gap: 12px; }
+  .aa-hero-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .aa-hero-card { padding: 12px; gap: 8px; }
+  .aa-hero-icon { width: 36px; height: 36px; font-size: 16px; }
+  .aa-hero-val { font-size: 20px; }
+  .aa-hero-label { font-size: 12px; }
+  .aa-hero-sub { font-size: 10px; }
+  .aa-hero-trend { font-size: 10px; }
+  .aa-chart-row { grid-template-columns: 1fr; gap: 8px; }
+  .aa-chart-card { padding: 12px; }
+  .aa-chart-title { font-size: 12px; }
+  .aa-table-card { padding: 12px; }
+  .aa-table-header { flex-direction: column; align-items: stretch; gap: 8px; }
+  .aa-table-title { font-size: 13px; }
+  .aa-table-actions { flex-wrap: wrap; gap: 6px; }
+  .aa-table-actions .ant-input-search { width: 100% !important; }
+}
+@media (max-width: 480px) {
+  .alarm-analysis-page { padding: 8px; gap: 8px; }
+  .aa-hero-row { grid-template-columns: 1fr; }
+  .aa-hero-card { padding: 10px; }
+  .aa-hero-val { font-size: 18px; }
+}
 </style>
