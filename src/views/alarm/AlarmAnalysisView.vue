@@ -220,7 +220,7 @@ function renderAlarmTrendChart() {
     data.push({ time: labels[i], type: 'AI处理', value: ai[i] || 0 })
     data.push({ time: labels[i], type: '人工处理', value: manual[i] || 0 })
   }
-  alarmTrendChart = new Chart({ container: alarmTrendContainer.value, autoFit: true, height: 140, padding: [10, 12, 24, 44] })
+  alarmTrendChart = new Chart({ container: alarmTrendContainer.value, autoFit: true, height: 160, padding: [10, 12, 24, 50] })
   alarmTrendChart.data(data)
   alarmTrendChart.line().encode('x', 'time').encode('y', 'value').encode('color', 'type').encode('shape', 'smooth').scale('color', { range: ['#722ED1', '#BFBFBF'] }).style('lineWidth', 2).tooltip({ title: 'time', items: [{ channel: 'y', name: 'value' }] })
   alarmTrendChart.axis('x', { title: null, labelFontSize: 10, labelAutoHide: 'eqX' })
@@ -235,7 +235,7 @@ function renderTopNChart() {
   if (!topnContainer.value) return
   const data = alarmCategoryStats.value.slice(0, 7)
   if (!data.length) return
-  topnChart = new Chart({ container: topnContainer.value, autoFit: true, height: 180, padding: [4, 48, 4, 56] })
+  topnChart = new Chart({ container: topnContainer.value, autoFit: true, height: 180, padding: [4, 48, 4, 80] })
   topnChart.data(data)
   topnChart.coordinate({ transform: [{ type: 'transpose' }] })
   topnChart.interval()
@@ -245,8 +245,8 @@ function renderTopNChart() {
     .scale('color', { range: ['#007DFF', '#FA8C16', '#13C2C2', '#722ED1', '#F5222D', '#EB2F96', '#8C8C8C'] })
     .style('maxWidth', 14)
     .style('radius', [2, 2, 0, 0])
-    .axis('x', { title: null, labelFontSize: 10, line: null, tick: null })
-    .axis('y', { title: null, labelFontSize: 10, line: null, tick: null })
+    .axis('x', { title: null, labelFontSize: 9, line: null, tick: null })
+    .axis('y', { title: null, labelFontSize: 9, line: null, tick: null })
     .label({ text: 'pct', formatter: v => v + '%', position: 'right', fontSize: 10, fill: '#8C8C8C' })
     .tooltip({ title: 'category', items: [{ field: 'pct', name: '占比', formatter: v => v + '%' }] })
   topnChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
@@ -264,7 +264,7 @@ function renderFunnelChart() {
     { step: '拓扑聚合', count: f.agg },
     { step: '有效事件', count: f.agg },
   ]
-  funnelChart = new Chart({ container: funnelContainer.value, autoFit: true, height: 160, padding: [4, 48, 4, 8] })
+  funnelChart = new Chart({ container: funnelContainer.value, autoFit: true, height: 160, padding: [4, 48, 4, 100] })
   funnelChart.coordinate({ transform: [{ type: 'transpose' }] })
   funnelChart.data(data)
   funnelChart.interval()
@@ -274,7 +274,7 @@ function renderFunnelChart() {
     .scale('color', { range: ['#007DFF', '#597EF7', '#722ED1', '#07C160'] })
     .style('maxWidth', 20)
     .style('radius', [2, 2, 0, 0])
-    .axis('x', { title: null, labelFontSize: 10, line: null, tick: null })
+    .axis('x', { title: null, labelFontSize: 9, line: null, tick: null })
     .axis('y', { title: null, label: false, line: null, tick: null })
     .label({ text: 'count', formatter: v => v.toLocaleString(), position: 'right', fontSize: 10, fill: '#595959' })
     .tooltip({ title: 'step', items: [{ field: 'count', name: '数量', formatter: v => v.toLocaleString() }] })
@@ -345,7 +345,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-inner { height: 160px; }
 .aa-chart-hint { font-size: 11px; color: #8C8C8C; margin-top: 8px; }
 .aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 4px; }
-.aa-trend-chart { height: 120px; }
+.aa-trend-chart { height: 160px; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
