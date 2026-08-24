@@ -2095,11 +2095,12 @@ app.get('/api/alarm/incidents', (req, res) => {
   const groupMap = {}
   for (const a of alerts) {
     const key = a.incident_id || 'UNLINKED-' + a.id
+    const sreIncident = a.incident_id ? MOCK_INCIDENTS.find(i => i.id === a.incident_id) : null
     if (!groupMap[key]) {
       groupMap[key] = {
         incident_no: key,
-        title: a.title,
-        root_cause: a.title,
+        title: sreIncident?.title || a.title,
+        root_cause: sreIncident?.description || a.title,
         level: a.level,
         category: a.category || '其他',
         status: a.status === 'firing' ? 'investigating' : a.status === 'resolved' ? 'resolved' : 'suppressed',
@@ -2115,6 +2116,7 @@ app.get('/api/alarm/incidents', (req, res) => {
     }
   }
   const data = Object.values(groupMap)
+    .filter(g => MOCK_INCIDENTS.some(i => i.id === g.incident_no))
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
   res.json({ success: true, data })
 })
@@ -2143,7 +2145,7 @@ app.get('/api/alarm/incidents/:id', (req, res) => {
     data: {
       incident: {
         incident_no: incId,
-        title: firstAlert.title,
+        title: sreIncident?.title || firstAlert.title,
         root_cause: sreIncident?.description || 'AI 正在分析根因，请稍候...',
         level: relatedAlerts.some(a => a.level === 'critical') ? 'critical' : 'warning',
         severity: relatedAlerts.some(a => a.level === 'critical') ? 'P1' : 'P2',

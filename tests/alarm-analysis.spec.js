@@ -140,12 +140,12 @@ test.describe('告警分析 — 页面5行布局', () => {
     await expect(rows.first()).toBeVisible()
   })
 
-  test('Row3: 表格列包含事件ID、根因摘要、级别、分类、状态、处理人、操作', async ({ page }) => {
+  test('Row3: 表格列包含故障名称、故障ID、级别、分类、状态、处理人、操作', async ({ page }) => {
     const headers = page.locator('.ant-table-thead th')
     const headerTexts = await headers.allTextContents()
     const joined = headerTexts.join(' ')
-    expect(joined).toContain('事件ID')
-    expect(joined).toContain('根因摘要')
+    expect(joined).toContain('故障名称')
+    expect(joined).toContain('故障ID')
     expect(joined).toContain('级别')
     expect(joined).toContain('分类')
     expect(joined).toContain('状态')
@@ -194,7 +194,7 @@ test.describe('告警分析 — 表格交互', () => {
     expect(count).toBeLessThanOrEqual(6)
   })
 
-  test('根因摘要是蓝色链接，点击跳转到故障详情', async ({ page }) => {
+  test('故障名称是蓝色链接，点击跳转到故障详情', async ({ page }) => {
     const link = page.locator('.aa-root-cause-link').first()
     await expect(link).toBeVisible()
     await expect(link).toHaveCSS('color', 'rgb(0, 125, 255)')

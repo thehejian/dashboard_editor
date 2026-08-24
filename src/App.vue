@@ -434,4 +434,9 @@ body { font-family: var(--font); background: var(--bg-sec); color: var(--text); 
 @media (max-width: 420px) { .canvas-toolbar { padding: 10px 12px; } .canvas { height: calc(100dvh - 40px); } .canvas-scroll { flex: 1; min-height: 0; padding: 0 12px 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; } .chart-card { min-height: 140px; border-radius: var(--rm); } .chart-body svg { min-height: 120px; } .header { height: 40px; padding: 0 8px; } .header-logo { font-size: 13px; } .header-logo span.badge { display: none; } .header-btn { height: 28px; padding: 0 8px; font-size: 11px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .canvas-controls { width: 100%; } .time-pills { width: 100%; } .time-pill { flex: 1; text-align: center; } .chart-card-action { width: 30px; height: 30px; } .fab-add { bottom: 16px; right: 16px; width: 44px; height: 44px; font-size: 16px; } }
 
 .ant-dropdown { z-index: 1100 !important; }
+
+/* Ant Design Drawer 关闭按钮靠右 */
+.ant-drawer-header { display: flex !important; justify-content: flex-end !important; }
+.ant-drawer-header-title { display: flex !important; justify-content: flex-end !important; width: 100% !important; }
+.ant-drawer-close { order: 99 !important; margin-left: auto !important; }
 </style>

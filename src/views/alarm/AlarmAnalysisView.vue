@@ -67,7 +67,7 @@
             <a-select-option value="investigating">进行中</a-select-option>
             <a-select-option value="resolved">已闭环</a-select-option>
           </a-select>
-          <a-input-search v-model:value="alarmSearchText" size="small" placeholder="搜索事件、根因" style="width:220px" />
+          <a-input-search v-model:value="alarmSearchText" size="small" placeholder="搜索故障名称、ID" style="width:220px" />
           <a-button size="small" @click="fetchAlarmData"><i class="fa-solid fa-rotate-right"></i></a-button>
         </div>
       </div>
@@ -210,8 +210,8 @@ const relatedAlertColumns = [
 ]
 
 const alarmIncidentColumns = [
-  { title: '事件ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
-  { title: '根因摘要', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
+  { title: '故障名称', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
+  { title: '故障ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
   { title: '关联告警', dataIndex: 'affected_count', key: 'affected_count', width: 70 },
   { title: '级别', key: 'level', width: 80 },
   { title: '分类', key: 'category', width: 80, filters: [{ text: '容量类', value: '容量类' }, { text: '阈值类', value: '阈值类' }, { text: '网络类', value: '网络类' }, { text: '证书类', value: '证书类' }, { text: '服务类', value: '服务类' }, { text: '硬件类', value: '硬件类' }], onFilter: (val, rec) => rec.category === val },
@@ -272,7 +272,7 @@ function renderTopNChart() {
   topnChart = new Chart({ container: topnContainer.value, autoFit: true })
   topnChart.data(data)
   topnChart.coordinate({ transform: [{ type: 'transpose' }] })
-  topnChart.interval().encode('x', 'category').encode('y', 'pct')
+  topnChart.interval().encode('x', 'category').encode('y', 'pct').encode('size', 16)
   topnChart.axis('x', { title: false }).axis('y', { title: false })
   topnChart.render()
 }
@@ -291,7 +291,7 @@ function renderFunnelChart() {
   funnelChart = new Chart({ container: funnelContainer.value, autoFit: true })
   funnelChart.data(data)
   funnelChart.coordinate({ transform: [{ type: 'transpose' }] })
-  funnelChart.interval().encode('x', 'step').encode('y', 'count')
+  funnelChart.interval().encode('x', 'step').encode('y', 'count').encode('size', 16)
   funnelChart.axis('x', { title: false, label: { autoRotate: false } }).axis('y', { title: false, tickCount: 3, label: { autoRotate: false, formatter: d => d + '%' } })
   funnelChart.render()
 }
@@ -319,7 +319,7 @@ const filteredAlarmIncidents = computed(function() {
   if (alarmStatusFilter.value) list = list.filter(a => a.status === alarmStatusFilter.value)
   if (alarmSearchText.value) {
     const kw = alarmSearchText.value.toLowerCase()
-    list = list.filter(a => a.title.toLowerCase().includes(kw) || (a.root_cause || '').toLowerCase().includes(kw))
+    list = list.filter(a => a.title.toLowerCase().includes(kw) || (a.incident_no || '').toLowerCase().includes(kw) || (a.root_cause || '').toLowerCase().includes(kw))
   }
   return list
 })

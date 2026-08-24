@@ -6,6 +6,7 @@
         <button class="aa-back-btn" @click="goBack"><i class="fa-solid fa-arrow-left"></i></button>
         <div class="aa-header-info">
           <h1 class="aa-title">智能告警分析</h1>
+          <div class="aa-fault-name">{{ incident?.title }}</div>
           <div class="aa-subtitle">
             <span class="aa-incident-no">{{ incident?.incident_no }}</span>
             <a-tag :color="levelColor">{{ levelText }}</a-tag>
@@ -272,6 +273,7 @@ onMounted(async () => {
 .aa-back-btn:hover { border-color: var(--brand, #007DFF); color: var(--brand, #007DFF); }
 .aa-header-info { display: flex; flex-direction: column; gap: 4px; }
 .aa-title { font-size: 16px; font-weight: 700; color: #1A1A1A; margin: 0; }
+.aa-fault-name { font-size: 14px; font-weight: 600; color: #007DFF; margin: 2px 0; }
 .aa-subtitle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #595959; flex-wrap: wrap; }
 .aa-incident-no { font-weight: 600; color: #1A1A1A; font-family: monospace; }
 .aa-header-right { display: flex; gap: 8px; }
