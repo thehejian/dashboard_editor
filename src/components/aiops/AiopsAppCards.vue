@@ -38,7 +38,9 @@ defineEmits(['app-click'])
 </script>
 
 <style>
-.aiops-app-cards .aa-table-header { margin-bottom: 16px; }
+.aiops-app-cards .aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.aiops-app-cards .aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
+.aiops-app-cards .aa-table-actions { display: flex; align-items: center; gap: 8px; }
 .app-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
 .app-card { border: 1px solid #E8E8E8; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
 .app-card:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); transform: translateY(-2px); }

@@ -32,7 +32,8 @@ defineEmits(['record-click'])
 </script>
 
 <style>
-.aiops-healing-records .aa-table-header { margin-bottom: 16px; }
+.aiops-healing-records .aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.aiops-healing-records .aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
 .smart-remed-list { display: flex; flex-direction: column; gap: 8px; }
 .smart-remed-item { display: flex; gap: 8px; align-items: flex-start; background: #fff; border: 1px solid #F0F0F0; border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.2s; }
 .smart-remed-item:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); }
