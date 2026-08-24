@@ -208,11 +208,11 @@ test.describe('告警分析 — 表格交互', () => {
     await expect(links.first()).toBeVisible()
   })
 
-  test('点击查看链接跳转到详情页', async ({ page }) => {
+  test('点击查看链接跳转到故障详情页', async ({ page }) => {
     const viewLink = page.locator('.ant-table-tbody tr.ant-table-row').first().locator('.aa-table-link', { hasText: '查看' })
     await viewLink.click()
     await page.waitForTimeout(500)
-    expect(page.url()).toContain('/alarm-analysis/')
+    expect(page.url()).toContain('/ops/incident/')
   })
 
   test('容量类告警操作列显示「自愈」文字链接', async ({ page }) => {

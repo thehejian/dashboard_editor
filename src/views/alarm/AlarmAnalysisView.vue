@@ -106,7 +106,7 @@
               <template v-else>
                 <a class="aa-table-link" @click.stop="openAlarmAnalysis(record)"><i class="fa-solid fa-robot"></i> AI分析</a>
               </template>
-              <a class="aa-table-link" @click.stop="router.push('/alarm-analysis/' + record.incident_no)"><i class="fa-solid fa-eye"></i> 查看</a>
+              <a class="aa-table-link" @click.stop="router.push('/ops/incident/' + record.incident_no)"><i class="fa-solid fa-eye"></i> 查看</a>
             </div>
           </template>
         </template>
@@ -283,7 +283,7 @@ function openAlarmAnalysis(record) {
       alarmIncidents.value = [...alarmIncidents.value]
     }
   } else {
-    router.push('/alarm-analysis/' + record.incident_no)
+    router.push('/ops/incident/' + record.incident_no)
   }
 }
 
@@ -312,13 +312,13 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
-.aa-chart-inner { flex: 1; min-height: 0; }
+.aa-chart-inner { height: 90px; }
 .aa-chart-hint { font-size: 11px; color: #8C8C8C; text-align: center; flex-shrink: 0; }
 .aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; flex-shrink: 0; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
-.aa-table-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
 .aa-table-actions { display: flex; align-items: center; gap: 8px; }
 .aa-table-link { font-size: 12px; color: var(--brand, #007DFF); cursor: pointer; text-decoration: none; }
