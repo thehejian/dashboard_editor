@@ -24,7 +24,7 @@ const MOCK_INCIDENTS = {
   ],
 }
 
-test.describe('SVG 图表渲染检测', () => {
+test.describe('G2 图表渲染检测', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/alarm/overview-stats**', async route => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_OVERVIEW_STATS) })
@@ -33,84 +33,82 @@ test.describe('SVG 图表渲染检测', () => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_INCIDENTS) })
     })
     await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
+    await page.waitForSelector('.aa-chart-inner', { timeout: 15000 })
     await page.waitForTimeout(2000)
   })
 
-  test('3个图表卡片各有1个SVG元素', async ({ page }) => {
+  test('3个图表容器各有1个canvas元素', async ({ page }) => {
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
     for (let i = 0; i < 3; i++) {
-      await expect(chartCards.nth(i).locator('svg')).toHaveCount(1)
+      await expect(chartCards.nth(i).locator('canvas')).toHaveCount(1)
     }
   })
 
-  test('TopN 图 SVG 包含分类标签', async ({ page }) => {
-    const svg = page.locator('.aa-chart-card').nth(0).locator('svg')
-    const text = await svg.textContent()
-    expect(text).toContain('容量类')
-    expect(text).toContain('阈值类')
-    expect(text).toContain('网络类')
-    expect(text).toContain('证书类')
-    expect(text).toContain('服务类')
-    expect(text).toContain('硬件类')
+  test('TopN图表canvas有实际像素内容', async ({ page }) => {
+    const canvas = page.locator('.aa-chart-card').nth(0).locator('canvas')
+    const hasContent = await canvas.evaluate(el => {
+      const ctx = el.getContext('2d')
+      if (!ctx) return false
+      const w = el.width, h = el.height
+      if (w === 0 || h === 0) return false
+      const imageData = ctx.getImageData(0, 0, w, h)
+      for (let i = 3; i < imageData.data.length; i += 4) {
+        if (imageData.data[i] > 0) return true
+      }
+      return false
+    })
+    expect(hasContent).toBe(true)
   })
 
-  test('TopN 图 SVG 包含百分比数值', async ({ page }) => {
-    const svg = page.locator('.aa-chart-card').nth(0).locator('svg')
-    const text = await svg.textContent()
-    expect(text).toContain('32%')
-    expect(text).toContain('28%')
-    expect(text).toContain('18%')
+  test('漏斗图表canvas有实际像素内容', async ({ page }) => {
+    const canvas = page.locator('.aa-chart-card').nth(1).locator('canvas')
+    const hasContent = await canvas.evaluate(el => {
+      const ctx = el.getContext('2d')
+      if (!ctx) return false
+      const w = el.width, h = el.height
+      if (w === 0 || h === 0) return false
+      const imageData = ctx.getImageData(0, 0, w, h)
+      for (let i = 3; i < imageData.data.length; i += 4) {
+        if (imageData.data[i] > 0) return true
+      }
+      return false
+    })
+    expect(hasContent).toBe(true)
   })
 
-  test('TopN 图 SVG 包含 rect 元素', async ({ page }) => {
-    const rects = page.locator('.aa-chart-card').nth(0).locator('svg rect')
-    await expect(rects.first()).toBeVisible()
+  test('趋势图表canvas有实际像素内容', async ({ page }) => {
+    const canvas = page.locator('.aa-chart-card').nth(2).locator('canvas')
+    const hasContent = await canvas.evaluate(el => {
+      const ctx = el.getContext('2d')
+      if (!ctx) return false
+      const w = el.width, h = el.height
+      if (w === 0 || h === 0) return false
+      const imageData = ctx.getImageData(0, 0, w, h)
+      for (let i = 3; i < imageData.data.length; i += 4) {
+        if (imageData.data[i] > 0) return true
+      }
+      return false
+    })
+    expect(hasContent).toBe(true)
   })
 
-  test('漏斗图 SVG 包含步骤名', async ({ page }) => {
-    const svg = page.locator('.aa-chart-card').nth(1).locator('svg')
-    const text = await svg.textContent()
-    expect(text).toContain('原始告警')
-    expect(text).toContain('频次去重')
-    expect(text).toContain('拓扑聚合')
-    expect(text).toContain('有效事件')
+  test('canvas尺寸合理（宽>100, 高>80）', async ({ page }) => {
+    const canvases = page.locator('.aa-chart-card canvas')
+    const count = await canvases.count()
+    for (let i = 0; i < count; i++) {
+      const box = await canvases.nth(i).boundingBox()
+      expect(box.width).toBeGreaterThan(100)
+      expect(box.height).toBeGreaterThan(80)
+    }
   })
 
-  test('漏斗图 SVG 包含数值', async ({ page }) => {
-    const svg = page.locator('.aa-chart-card').nth(1).locator('svg')
-    const text = await svg.textContent()
-    expect(text).toContain('1,200')
-    expect(text).toContain('1,020')
-    expect(text).toContain('504')
-  })
-
-  test('趋势图 SVG 包含日期标签', async ({ page }) => {
-    const svg = page.locator('.aa-chart-card').nth(2).locator('svg')
-    const text = await svg.textContent()
-    expect(text).toContain('06-11')
-    expect(text).toContain('06-17')
-  })
-
-  test('趋势图 SVG 包含图例', async ({ page }) => {
-    const svg = page.locator('.aa-chart-card').nth(2).locator('svg')
-    const text = await svg.textContent()
-    expect(text).toContain('AI处理')
-    expect(text).toContain('人工处理')
-  })
-
-  test('趋势图 SVG 包含 polyline 折线', async ({ page }) => {
-    const polylines = page.locator('.aa-chart-card').nth(2).locator('svg polyline')
-    await expect(polylines).toHaveCount(2)
-  })
-
-  test('页面无 JS 错误', async ({ page }) => {
+  test('图表渲染无JS错误', async ({ page }) => {
     const errors = []
     page.on('pageerror', err => errors.push(err.message))
     page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()) })
     await page.waitForTimeout(1000)
-    const svgErrors = errors.filter(e => e.includes('SVG') || e.includes('chart') || e.includes('render'))
-    expect(svgErrors).toEqual([])
+    const g2Errors = errors.filter(e => e.includes('G2') || e.includes('chart') || e.includes('Canvas'))
+    expect(g2Errors).toEqual([])
   })
 })

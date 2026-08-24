@@ -118,14 +118,14 @@ test.describe('告警分析 — 页面5行布局', () => {
     await expect(page.locator('.aa-hero-val').nth(3)).toContainText('96')
   })
 
-  test('Row2: 三个图表卡片（TopN、降噪漏斗、处理趋势）各有 SVG 图表', async ({ page }) => {
+  test('Row2: 三个图表卡片（TopN、降噪漏斗、处理趋势）各有 G2 图表', async ({ page }) => {
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
     await expect(chartCards.nth(0)).toContainText('TopN 告警分类分布')
     await expect(chartCards.nth(1)).toContainText('降噪漏斗')
     await expect(chartCards.nth(2)).toContainText('处理趋势')
-    const svgs = page.locator('.aa-chart-card svg')
-    await expect(svgs).toHaveCount(3)
+    const canvases = page.locator('.aa-chart-card canvas')
+    await expect(canvases).toHaveCount(3)
   })
 
   test('Row2: 降噪率数值显示', async ({ page }) => {
