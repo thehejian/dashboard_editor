@@ -44,24 +44,55 @@
     <div class="aa-chart-row">
       <div class="aa-chart-card">
         <div class="aa-chart-title">TopN 告警分类分布</div>
-        <div ref="topnContainer" class="aa-chart-inner"></div>
+        <svg class="aa-svg-chart" viewBox="0 0 350 160">
+          <g v-for="(item, i) in alarmCategoryStats.slice(0, 7)" :key="item.category" :transform="topnTransform(i)">
+            <text x="0" y="12" font-size="11" fill="#595959" dy="0.35em">{{ item.category }}</text>
+            <rect x="72" y="2" :width="Math.max(item.pct / 100 * 200, 2)" height="16" :fill="catColor(item.category)" rx="2" />
+            <text :x="72 + Math.max(item.pct / 100 * 200, 2) + 4" y="12" font-size="11" fill="#8C8C8C" dy="0.35em">{{ item.pct }}%</text>
+          </g>
+        </svg>
         <div class="aa-chart-hint">指导下一步基础设施优化方向</div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">降噪漏斗</div>
-        <div ref="funnelContainer" class="aa-chart-inner"></div>
+        <svg class="aa-svg-chart" viewBox="0 0 350 160">
+          <g v-if="alarmFunnel.raw">
+            <g v-for="(item, i) in funnelSteps" :key="item.step" :transform="funnelTransform(i)">
+              <text x="0" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.step }}</text>
+              <rect x="72" y="2" :width="Math.max(item.count / funnelMaxCount * 200, 2)" height="20" :fill="funnelColors[i]" rx="2" />
+              <text :x="72 + Math.max(item.count / funnelMaxCount * 200, 2) + 4" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.count.toLocaleString() }}</text>
+            </g>
+          </g>
+        </svg>
         <div class="aa-funnel-rate">降噪率: {{ alarmFunnel.rate }}%</div>
       </div>
       <div class="aa-chart-card aa-trend-card">
         <div class="aa-chart-title">处理趋势 · AI vs 人工（近30天）</div>
-        <div ref="alarmTrendContainer" class="aa-trend-chart"></div>
+        <svg class="aa-svg-chart" viewBox="0 0 350 160">
+          <g v-if="alarmTrendData.labels.length">
+            <!-- Y axis labels -->
+            <text v-for="(v, i) in [300,250,200,150,100]" :key="'y'+i" x="44" :y="10 + i * 30" font-size="10" fill="#8C8C8C" text-anchor="end" dy="0.35em">{{ v }}</text>
+            <!-- Grid lines -->
+            <line v-for="(v, i) in [300,250,200,150,100]" :key="'g'+i" x1="48" :y1="10 + i * 30" x2="335" :y2="10 + i * 30" stroke="#F0F0F0" stroke-width="1" />
+            <!-- Polylines -->
+            <polyline :points="trendAiPoints" fill="none" stroke="#722ED1" stroke-width="2" stroke-linejoin="round" />
+            <polyline :points="trendManualPoints" fill="none" stroke="#BFBFBF" stroke-width="2" stroke-linejoin="round" />
+            <!-- X axis labels -->
+            <text v-for="(label, i) in alarmTrendData.labels" :key="'x'+i" :x="48 + i * 287 / 6" y="145" font-size="10" fill="#8C8C8C" text-anchor="middle" dy="0.35em">{{ label }}</text>
+            <!-- Legend -->
+            <circle cx="130" cy="153" r="3" fill="#722ED1" />
+            <text x="138" y="153" font-size="10" fill="#595959" dy="0.35em">AI处理</text>
+            <circle cx="200" cy="153" r="3" fill="#BFBFBF" />
+            <text x="208" y="153" font-size="10" fill="#595959" dy="0.35em">人工处理</text>
+          </g>
+        </svg>
       </div>
     </div>
 
     <!-- Row 3: Incident List -->
     <div class="aa-table-card">
       <div class="aa-table-header">
-        <span class="aa-table-title"><i class="fa-solid fa-bell"></i> 告警分析列表 · 待处理</span>
+        <span class="aa-table-title">告警分析列表 · 待处理</span>
         <div class="aa-table-actions">
           <a-select v-model:value="alarmStatusFilter" size="small" style="width:120px" placeholder="状态筛选" allow-clear>
             <a-select-option value="investigating">进行中</a-select-option>
@@ -125,9 +156,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Chart } from '@antv/g2'
 import AiopsAppCards from '../../components/aiops/AiopsAppCards.vue'
 import AiopsHealingRecords from '../../components/aiops/AiopsHealingRecords.vue'
 
@@ -142,12 +172,6 @@ const alarmSearchText = ref('')
 const alarmApps = ref([])
 const alarmAppCounts = ref({ critical: 0, warning: 0 })
 const alarmHealingRecords = ref([])
-const alarmTrendContainer = ref(null)
-const topnContainer = ref(null)
-const funnelContainer = ref(null)
-let alarmTrendChart = null
-let topnChart = null
-let funnelChart = null
 
 const alarmIncidentColumns = [
   { title: '事件ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
@@ -164,6 +188,8 @@ function catColor(cat) {
   const map = { '容量类': '#007DFF', '阈值类': '#FA8C16', '证书类': '#722ED1', '网络类': '#13C2C2', '服务类': '#F5222D', '硬件类': '#EB2F96', '合规类': '#8C8C8C' }
   return map[cat] || '#BFBFBF'
 }
+function topnTransform(i) { return 'translate(0,' + (8 + i * 22) + ')' }
+function funnelTransform(i) { return 'translate(0,' + (8 + i * 38) + ')' }
 
 async function fetchAlarmData() {
   alarmLoading.value = true
@@ -197,11 +223,6 @@ async function fetchAlarmData() {
         warning: alarmApps.value.filter(a => a.status === 'warning').length,
       }
     }
-    nextTick(() => {
-      renderTopNChart()
-      renderFunnelChart()
-      renderAlarmTrendChart()
-    })
   } finally {
     alarmLoading.value = false
   }
@@ -209,78 +230,24 @@ async function fetchAlarmData() {
 
 const alarmTrendData = computed(() => alarmHeroStats.value.closedCount ? { labels: ['06-11','06-12','06-13','06-14','06-15','06-16','06-17'], aiClosed: [120,135,142,155,168,180,195], manualClosed: [300,290,275,260,240,230,220] } : { labels: [], aiClosed: [], manualClosed: [] })
 
-function renderAlarmTrendChart() {
-  if (alarmTrendChart) { alarmTrendChart.destroy(); alarmTrendChart = null }
-  if (!alarmTrendContainer.value) return
-  const labels = alarmTrendData.value.labels || []
-  const ai = alarmTrendData.value.aiClosed || []
-  const manual = alarmTrendData.value.manualClosed || []
-  const data = []
-  for (let i = 0; i < labels.length; i++) {
-    data.push({ time: labels[i], type: 'AI处理', value: ai[i] || 0 })
-    data.push({ time: labels[i], type: '人工处理', value: manual[i] || 0 })
-  }
-  alarmTrendChart = new Chart({ container: alarmTrendContainer.value, autoFit: true, height: 160, padding: [10, 12, 24, 50] })
-  alarmTrendChart.data(data)
-  alarmTrendChart.line().encode('x', 'time').encode('y', 'value').encode('color', 'type').encode('shape', 'smooth').scale('color', { range: ['#722ED1', '#BFBFBF'] }).style('lineWidth', 2).tooltip({ title: 'time', items: [{ channel: 'y', name: 'value' }] })
-  alarmTrendChart.axis('x', { title: null, labelFontSize: 10, labelAutoHide: 'eqX' })
-  alarmTrendChart.axis('y', { title: null, labelFontSize: 10 })
-  alarmTrendChart.legend('color', { position: 'bottom', itemSpacing: 16, itemLabelFontSize: 11 })
-  alarmTrendChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
-  alarmTrendChart.render()
-}
-
-function renderTopNChart() {
-  if (topnChart) { topnChart.destroy(); topnChart = null }
-  if (!topnContainer.value) return
-  const data = alarmCategoryStats.value.slice(0, 7)
-  if (!data.length) return
-  topnChart = new Chart({ container: topnContainer.value, autoFit: true, height: 180, padding: [4, 48, 4, 80] })
-  topnChart.data(data)
-  topnChart.coordinate({ transform: [{ type: 'transpose' }] })
-  topnChart.interval()
-    .encode('x', 'category')
-    .encode('y', 'pct')
-    .encode('color', 'category')
-    .scale('color', { range: ['#007DFF', '#FA8C16', '#13C2C2', '#722ED1', '#F5222D', '#EB2F96', '#8C8C8C'] })
-    .style('maxWidth', 14)
-    .style('radius', [2, 2, 0, 0])
-    .axis('x', { title: null, labelFontSize: 9, line: null, tick: null })
-    .axis('y', { title: null, labelFontSize: 9, line: null, tick: null })
-    .label({ text: 'pct', formatter: v => v + '%', position: 'right', fontSize: 10, fill: '#8C8C8C' })
-    .tooltip({ title: 'category', items: [{ field: 'pct', name: '占比', formatter: v => v + '%' }] })
-  topnChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
-  topnChart.render()
-}
-
-function renderFunnelChart() {
-  if (funnelChart) { funnelChart.destroy(); funnelChart = null }
-  if (!funnelContainer.value) return
+const trendAiPoints = computed(() => {
+  return alarmTrendData.value.aiClosed.map((v, i) => (48 + i * 287 / 6) + ',' + (135 - (v / 350) * 125)).join(' ')
+})
+const trendManualPoints = computed(() => {
+  return alarmTrendData.value.manualClosed.map((v, i) => (48 + i * 287 / 6) + ',' + (135 - (v / 350) * 125)).join(' ')
+})
+const funnelSteps = computed(() => {
   const f = alarmFunnel.value
-  if (!f.raw) return
-  const data = [
+  if (!f.raw) return []
+  return [
     { step: '原始告警', count: f.raw },
     { step: '频次去重', count: f.dedup },
     { step: '拓扑聚合', count: f.agg },
     { step: '有效事件', count: f.agg },
   ]
-  funnelChart = new Chart({ container: funnelContainer.value, autoFit: true, height: 160, padding: [4, 48, 4, 100] })
-  funnelChart.coordinate({ transform: [{ type: 'transpose' }] })
-  funnelChart.data(data)
-  funnelChart.interval()
-    .encode('x', 'step')
-    .encode('y', 'count')
-    .encode('color', 'step')
-    .scale('color', { range: ['#007DFF', '#597EF7', '#722ED1', '#07C160'] })
-    .style('maxWidth', 20)
-    .style('radius', [2, 2, 0, 0])
-    .axis('x', { title: null, labelFontSize: 9, line: null, tick: null })
-    .axis('y', { title: null, label: false, line: null, tick: null })
-    .label({ text: 'count', formatter: v => v.toLocaleString(), position: 'right', fontSize: 10, fill: '#595959' })
-    .tooltip({ title: 'step', items: [{ field: 'count', name: '数量', formatter: v => v.toLocaleString() }] })
-  funnelChart.interaction('tooltip', { mount: 'body', css: { '.g2-tooltip': { 'z-index': '9999' } } })
-  funnelChart.render()
-}
+})
+const funnelMaxCount = computed(() => funnelSteps.value[0]?.count || 1)
+const funnelColors = ['#007DFF', '#597EF7', '#722ED1', '#07C160']
 
 const filteredAlarmIncidents = computed(function() {
   let list = alarmIncidents.value
@@ -318,18 +285,10 @@ function openAlarmAnalysis(record) {
 }
 
 onMounted(() => { fetchAlarmData() })
-onBeforeUnmount(() => {
-  if (topnChart) topnChart.destroy()
-  if (funnelChart) funnelChart.destroy()
-  if (alarmTrendChart) alarmTrendChart.destroy()
-})
-watch(alarmTrendData, () => { nextTick(() => renderAlarmTrendChart()) }, { deep: true })
-watch(alarmCategoryStats, () => { nextTick(() => renderTopNChart()) }, { deep: true })
-watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true })
 </script>
 
 <style scoped>
-.alarm-analysis-page { display: flex; flex-direction: column; gap: 16px; padding: 16px 24px 24px; height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
+.alarm-analysis-page { display: flex; flex-direction: column; gap: 16px; padding: 0; height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
 .aa-hero-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex-shrink: 0; }
 .aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; }
 .aa-hero-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
@@ -342,14 +301,13 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
-.aa-chart-inner { height: 160px; }
+.aa-svg-chart { width: 100%; height: 160px; display: block; }
 .aa-chart-hint { font-size: 11px; color: #8C8C8C; margin-top: 8px; }
 .aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 4px; }
-.aa-trend-chart { height: 160px; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
-.aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
 .aa-table-actions { display: flex; align-items: center; gap: 8px; }
 .aa-table-link { font-size: 12px; color: var(--brand, #007DFF); cursor: pointer; text-decoration: none; }
@@ -357,7 +315,6 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
 @media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) {
-  .alarm-analysis-page { padding: 12px; gap: 12px; }
   .aa-hero-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .aa-hero-card { padding: 12px; gap: 8px; }
   .aa-hero-icon { width: 36px; height: 36px; font-size: 16px; }
@@ -375,7 +332,6 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
   .aa-table-actions .ant-input-search { width: 100% !important; }
 }
 @media (max-width: 480px) {
-  .alarm-analysis-page { padding: 8px; gap: 8px; }
   .aa-hero-row { grid-template-columns: 1fr; }
   .aa-hero-card { padding: 10px; }
   .aa-hero-val { font-size: 18px; }

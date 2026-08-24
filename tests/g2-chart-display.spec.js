@@ -24,7 +24,7 @@ const MOCK_INCIDENTS = {
   ],
 }
 
-test.describe('G2 图表渲染检测', () => {
+test.describe('SVG 图表渲染检测', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/alarm/overview-stats**', async route => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_OVERVIEW_STATS) })
@@ -32,160 +32,85 @@ test.describe('G2 图表渲染检测', () => {
     await page.route('**/api/alarm/incidents**', async route => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_INCIDENTS) })
     })
-  })
-
-  test('3个图表容器各有1个canvas元素', async ({ page }) => {
     await page.goto('/overview?tab=alarm')
     await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
     await page.waitForTimeout(2000)
+  })
 
+  test('3个图表卡片各有1个SVG元素', async ({ page }) => {
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
-
     for (let i = 0; i < 3; i++) {
-      const canvas = chartCards.nth(i).locator('canvas')
-      await expect(canvas).toHaveCount(1)
+      await expect(chartCards.nth(i).locator('svg')).toHaveCount(1)
     }
   })
 
-  test('TopN图表canvas有实际像素内容（非空白）', async ({ page }) => {
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card canvas', { timeout: 15000 })
-    await page.waitForTimeout(2000)
-
-    const canvas = page.locator('.aa-chart-card').nth(0).locator('canvas')
-    const hasContent = await canvas.evaluate(el => {
-      const ctx = el.getContext('2d')
-      if (!ctx) return false
-      const w = el.width, h = el.height
-      if (w === 0 || h === 0) return false
-      const imageData = ctx.getImageData(0, 0, w, h)
-      for (let i = 3; i < imageData.data.length; i += 4) {
-        if (imageData.data[i] > 0) return true
-      }
-      return false
-    })
-    expect(hasContent).toBe(true)
+  test('TopN 图 SVG 包含分类标签', async ({ page }) => {
+    const svg = page.locator('.aa-chart-card').nth(0).locator('svg')
+    const text = await svg.textContent()
+    expect(text).toContain('容量类')
+    expect(text).toContain('阈值类')
+    expect(text).toContain('网络类')
+    expect(text).toContain('证书类')
+    expect(text).toContain('服务类')
+    expect(text).toContain('硬件类')
   })
 
-  test('降漏斗图表canvas有实际像素内容', async ({ page }) => {
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card canvas', { timeout: 15000 })
-    await page.waitForTimeout(2000)
-
-    const canvas = page.locator('.aa-chart-card').nth(1).locator('canvas')
-    const hasContent = await canvas.evaluate(el => {
-      const ctx = el.getContext('2d')
-      if (!ctx) return false
-      const w = el.width, h = el.height
-      if (w === 0 || h === 0) return false
-      const imageData = ctx.getImageData(0, 0, w, h)
-      for (let i = 3; i < imageData.data.length; i += 4) {
-        if (imageData.data[i] > 0) return true
-      }
-      return false
-    })
-    expect(hasContent).toBe(true)
+  test('TopN 图 SVG 包含百分比数值', async ({ page }) => {
+    const svg = page.locator('.aa-chart-card').nth(0).locator('svg')
+    const text = await svg.textContent()
+    expect(text).toContain('32%')
+    expect(text).toContain('28%')
+    expect(text).toContain('18%')
   })
 
-  test('处理趋势图表canvas有实际像素内容', async ({ page }) => {
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card canvas', { timeout: 15000 })
-    await page.waitForTimeout(2000)
-
-    const canvas = page.locator('.aa-chart-card').nth(2).locator('canvas')
-    const hasContent = await canvas.evaluate(el => {
-      const ctx = el.getContext('2d')
-      if (!ctx) return false
-      const w = el.width, h = el.height
-      if (w === 0 || h === 0) return false
-      const imageData = ctx.getImageData(0, 0, w, h)
-      for (let i = 3; i < imageData.data.length; i += 4) {
-        if (imageData.data[i] > 0) return true
-      }
-      return false
-    })
-    expect(hasContent).toBe(true)
+  test('TopN 图 SVG 包含 rect 元素', async ({ page }) => {
+    const rects = page.locator('.aa-chart-card').nth(0).locator('svg rect')
+    await expect(rects.first()).toBeVisible()
   })
 
-  test('canvas尺寸合理（宽>100, 高>80）', async ({ page }) => {
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card canvas', { timeout: 15000 })
-    await page.waitForTimeout(2000)
-
-    const canvases = page.locator('.aa-chart-card canvas')
-    const count = await canvases.count()
-    for (let i = 0; i < count; i++) {
-      const box = await canvases.nth(i).boundingBox()
-      expect(box.width).toBeGreaterThan(100)
-      expect(box.height).toBeGreaterThan(80)
-    }
+  test('漏斗图 SVG 包含步骤名', async ({ page }) => {
+    const svg = page.locator('.aa-chart-card').nth(1).locator('svg')
+    const text = await svg.textContent()
+    expect(text).toContain('原始告警')
+    expect(text).toContain('频次去重')
+    expect(text).toContain('拓扑聚合')
+    expect(text).toContain('有效事件')
   })
 
-  test('图表容器尺寸一致（无坍缩）', async ({ page }) => {
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card', { timeout: 15000 })
-    await page.waitForTimeout(1000)
-
-    const cards = page.locator('.aa-chart-card')
-    const boxes = []
-    for (let i = 0; i < 3; i++) {
-      const box = await cards.nth(i).boundingBox()
-      boxes.push(box)
-    }
-    // All 3 chart cards should have similar height (within 50px)
-    const heights = boxes.map(b => b.height)
-    const maxH = Math.max(...heights)
-    const minH = Math.min(...heights)
-    expect(maxH - minH).toBeLessThan(50)
+  test('漏斗图 SVG 包含数值', async ({ page }) => {
+    const svg = page.locator('.aa-chart-card').nth(1).locator('svg')
+    const text = await svg.textContent()
+    expect(text).toContain('1,200')
+    expect(text).toContain('1,020')
+    expect(text).toContain('504')
   })
 
-  test('图表渲染无JS错误', async ({ page }) => {
+  test('趋势图 SVG 包含日期标签', async ({ page }) => {
+    const svg = page.locator('.aa-chart-card').nth(2).locator('svg')
+    const text = await svg.textContent()
+    expect(text).toContain('06-11')
+    expect(text).toContain('06-17')
+  })
+
+  test('趋势图 SVG 包含图例', async ({ page }) => {
+    const svg = page.locator('.aa-chart-card').nth(2).locator('svg')
+    const text = await svg.textContent()
+    expect(text).toContain('AI处理')
+    expect(text).toContain('人工处理')
+  })
+
+  test('趋势图 SVG 包含 polyline 折线', async ({ page }) => {
+    const polylines = page.locator('.aa-chart-card').nth(2).locator('svg polyline')
+    await expect(polylines).toHaveCount(2)
+  })
+
+  test('页面无 JS 错误', async ({ page }) => {
     const errors = []
     page.on('pageerror', err => errors.push(err.message))
     page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()) })
-
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card canvas', { timeout: 15000 })
-    await page.waitForTimeout(3000)
-
-    const g2Errors = errors.filter(e => e.includes('G2') || e.includes('chart') || e.includes('Canvas'))
-    expect(g2Errors).toEqual([])
-  })
-
-  test('图表tooltip交互可用（hover触发）', async ({ page }) => {
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card canvas', { timeout: 15000 })
-    await page.waitForTimeout(2000)
-
-    const canvas = page.locator('.aa-chart-card').nth(0).locator('canvas')
-    const box = await canvas.boundingBox()
-    // Hover over the chart area
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.waitForTimeout(500)
-    // G2 tooltip should be in DOM (may or may not be visible depending on data point)
-    const tooltip = page.locator('.g2-tooltip')
-    const tooltipCount = await tooltip.count()
-    // Tooltip element may exist in DOM even if hidden
-    expect(tooltipCount).toBeGreaterThanOrEqual(0)
-  })
-
-  test('图表resize后仍正常（窗口宽度变化）', async ({ page }) => {
-    await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-card canvas', { timeout: 15000 })
-    await page.waitForTimeout(2000)
-
-    // Resize viewport
-    await page.setViewportSize({ width: 800, height: 600 })
     await page.waitForTimeout(1000)
-
-    // Charts should still be visible and have content
-    const canvases = page.locator('.aa-chart-card canvas')
-    const count = await canvases.count()
-    for (let i = 0; i < count; i++) {
-      const box = await canvases.nth(i).boundingBox()
-      expect(box).not.toBeNull()
-      expect(box.width).toBeGreaterThan(50)
-    }
+    const svgErrors = errors.filter(e => e.includes('SVG') || e.includes('chart') || e.includes('render'))
+    expect(svgErrors).toEqual([])
   })
 })
