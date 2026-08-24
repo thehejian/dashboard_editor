@@ -155,6 +155,12 @@
                 {{ record.status === 'firing' ? '告警中' : record.status === 'resolved' ? '已恢复' : '已屏蔽' }}
               </a-tag>
             </template>
+            <template v-if="column.key === 'action'">
+              <a class="aa-table-link" @click="router.push('/ops/incident/' + record.incident_id || relatedDrawerRecord.incident_no)">AI分析</a>
+            </template>
+            <template v-if="column.key === 'detail'">
+              <a class="aa-table-link" @click="router.push('/alarm-analysis/' + (record.incident_id || relatedDrawerRecord.incident_no))">查看详情</a>
+            </template>
           </template>
         </a-table>
         <div class="related-drawer-footer">
@@ -196,9 +202,11 @@ function onDrawerResize() { drawerWidth.value = Math.min(window.innerWidth * 0.9
 const relatedAlertColumns = [
   { title: '级别', key: 'level', width: 60 },
   { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
-  { title: '资源', dataIndex: 'resource', key: 'resource', width: 80, ellipsis: true },
+  { title: '资源', dataIndex: 'resource', key: 'resource', width: 100, ellipsis: true },
   { title: '状态', key: 'status', width: 60 },
-  { title: '触发时间', dataIndex: 'trigger_time', key: 'trigger_time', width: 130 },
+  { title: '触发时间', dataIndex: 'trigger_time', key: 'trigger_time', width: 120 },
+  { title: '操作', key: 'action', width: 60 },
+  { title: '查看详情', key: 'detail', width: 70 },
 ]
 
 const alarmIncidentColumns = [
