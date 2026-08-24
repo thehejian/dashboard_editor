@@ -214,7 +214,7 @@ function renderTopNChart() {
   topnChart.data(data)
   topnChart.coordinate({ transform: [{ type: 'transpose' }] })
   topnChart.interval().encode('x', 'category').encode('y', 'pct')
-  topnChart.axis('x', { title: false }).axis('y', { title: false })
+  topnChart.axis('x', { title: false, label: { autoRotate: false } }).axis('y', { title: false, label: { autoRotate: false } })
   topnChart.render()
 }
 
@@ -233,7 +233,7 @@ function renderFunnelChart() {
   funnelChart.data(data)
   funnelChart.coordinate({ transform: [{ type: 'transpose' }] })
   funnelChart.interval().encode('x', 'step').encode('y', 'count')
-  funnelChart.axis('x', { title: false, labelAutoRotate: false }).axis('y', { title: false, tickCount: 3 })
+  funnelChart.axis('x', { title: false, label: { autoRotate: false, autoHide: true } }).axis('y', { title: false, tickCount: 3, label: { autoRotate: false } })
   funnelChart.render()
 }
 
