@@ -38,6 +38,7 @@ defineEmits(['app-click'])
 </script>
 
 <style>
+.aiops-app-cards .aa-table-header { margin-bottom: 16px; }
 .app-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
 .app-card { border: 1px solid #E8E8E8; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
 .app-card:hover { border-color: #007DFF; box-shadow: 0 4px 12px rgba(0,125,255,0.12); transform: translateY(-2px); }

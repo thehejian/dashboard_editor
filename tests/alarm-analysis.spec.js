@@ -203,23 +203,22 @@ test.describe('告警分析 — 表格交互', () => {
     expect(page.url()).toContain('/ops/incident/')
   })
 
-  test('操作列按钮可见（AI分析/查看详情）', async ({ page }) => {
-    const actionBtns = page.locator('.ant-table-tbody tr.ant-table-row').first().locator('.icon-btn')
-    await expect(actionBtns.first()).toBeVisible()
+  test('操作列可见文字链接（AI分析/查看或自愈/查看）', async ({ page }) => {
+    const links = page.locator('.ant-table-tbody tr.ant-table-row').first().locator('.aa-table-link')
+    await expect(links.first()).toBeVisible()
   })
 
-  test('点击查看详情按钮跳转到详情页', async ({ page }) => {
-    const viewBtn = page.locator('.ant-table-tbody tr.ant-table-row').first().locator('.icon-btn').last()
-    await viewBtn.click()
+  test('点击查看链接跳转到详情页', async ({ page }) => {
+    const viewLink = page.locator('.ant-table-tbody tr.ant-table-row').first().locator('.aa-table-link', { hasText: '查看' })
+    await viewLink.click()
     await page.waitForTimeout(500)
     expect(page.url()).toContain('/alarm-analysis/')
   })
 
-  test('容量类告警操作列显示自愈按钮（⚡图标）', async ({ page }) => {
+  test('容量类告警操作列显示「自愈」文字链接', async ({ page }) => {
     const capacityRow = page.locator('.ant-table-tbody tr.ant-table-row', { hasText: '容量类' })
     await expect(capacityRow).toBeVisible()
-    const boltBtn = capacityRow.locator('.icon-btn').first()
-    await expect(boltBtn).toBeVisible()
+    await expect(capacityRow.locator('.aa-table-link', { hasText: '自愈' })).toBeVisible()
   })
 
   test('级别标签正确渲染（P1紧急/P2重要/P3提示）', async ({ page }) => {

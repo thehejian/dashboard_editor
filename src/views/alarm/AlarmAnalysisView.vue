@@ -47,8 +47,8 @@
         <svg class="aa-svg-chart" viewBox="0 0 350 160">
           <g v-for="(item, i) in alarmCategoryStats.slice(0, 7)" :key="item.category" :transform="topnTransform(i)">
             <text x="0" y="12" font-size="11" fill="#595959" dy="0.35em">{{ item.category }}</text>
-            <rect x="72" y="2" :width="Math.max(item.pct / 100 * 200, 2)" height="16" :fill="catColor(item.category)" rx="2" />
-            <text :x="72 + Math.max(item.pct / 100 * 200, 2) + 4" y="12" font-size="11" fill="#8C8C8C" dy="0.35em">{{ item.pct }}%</text>
+            <rect x="72" y="2" :width="Math.max(item.pct / 100 * 280, 2)" height="16" :fill="catColor(item.category)" rx="2" />
+            <text :x="72 + Math.max(item.pct / 100 * 280, 2) + 4" y="12" font-size="11" fill="#8C8C8C" dy="0.35em">{{ item.pct }}%</text>
           </g>
         </svg>
         <div class="aa-chart-hint">指导下一步基础设施优化方向</div>
@@ -59,8 +59,8 @@
           <g v-if="alarmFunnel.raw">
             <g v-for="(item, i) in funnelSteps" :key="item.step" :transform="funnelTransform(i)">
               <text x="0" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.step }}</text>
-              <rect x="72" y="2" :width="Math.max(item.count / funnelMaxCount * 200, 2)" height="20" :fill="funnelColors[i]" rx="2" />
-              <text :x="72 + Math.max(item.count / funnelMaxCount * 200, 2) + 4" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.count.toLocaleString() }}</text>
+              <rect x="72" y="2" :width="Math.max(item.count / funnelMaxCount * 280, 2)" height="20" :fill="funnelColors[i]" rx="2" />
+              <text :x="72 + Math.max(item.count / funnelMaxCount * 280, 2) + 4" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.count.toLocaleString() }}</text>
             </g>
           </g>
         </svg>
@@ -108,7 +108,7 @@
         :pagination="{ pageSize: 5, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
         row-key="incident_no"
         size="small"
-        :scroll="{ x: 700, y: 360 }"
+        :scroll="{ x: 780, y: 360 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'title'">
@@ -130,13 +130,14 @@
             <span v-else>{{ record.handler || '—' }}</span>
           </template>
           <template v-if="column.key === 'action'">
-            <div class="action-btns">
-              <a-tooltip :title="record.category === '容量类' ? '一键自愈' : 'AI分析'">
-                <button class="icon-btn" :class="{ 'ai-btn': record.category !== '容量类' }" @click.stop="openAlarmAnalysis(record)">
-                  <i :class="record.category === '容量类' ? 'fa-solid fa-bolt' : 'fa-solid fa-robot'"></i>
-                </button>
-              </a-tooltip>
-              <a-tooltip title="查看详情"><button class="icon-btn" @click.stop="router.push('/alarm-analysis/' + record.incident_no)"><i class="fa-solid fa-eye"></i></button></a-tooltip>
+            <div class="action-text-links">
+              <template v-if="record.category === '容量类'">
+                <a class="aa-table-link" @click.stop="openAlarmAnalysis(record)"><i class="fa-solid fa-bolt"></i> 自愈</a>
+              </template>
+              <template v-else>
+                <a class="aa-table-link" @click.stop="openAlarmAnalysis(record)"><i class="fa-solid fa-robot"></i> AI分析</a>
+              </template>
+              <a class="aa-table-link" @click.stop="router.push('/alarm-analysis/' + record.incident_no)"><i class="fa-solid fa-eye"></i> 查看</a>
             </div>
           </template>
         </template>
@@ -175,7 +176,7 @@ const alarmHealingRecords = ref([])
 
 const alarmIncidentColumns = [
   { title: '事件ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
-  { title: '根因摘要', dataIndex: 'title', key: 'title', ellipsis: true },
+  { title: '根因摘要', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
   { title: '关联', dataIndex: 'affected_count', key: 'affected_count', width: 50 },
   { title: '级别', key: 'level', width: 80 },
   { title: '分类', key: 'category', width: 80 },
@@ -300,10 +301,10 @@ onMounted(() => { fetchAlarmData() })
 .aa-hero-trend.up { color: #52C41A; }
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
-.aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
-.aa-svg-chart { width: 100%; height: 160px; display: block; }
-.aa-chart-hint { font-size: 11px; color: #8C8C8C; margin-top: 8px; }
-.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 4px; }
+.aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 4px; }
+.aa-svg-chart { width: 100%; height: 180px; display: block; }
+.aa-chart-hint { font-size: 11px; color: #8C8C8C; margin-top: 4px; }
+.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 2px; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
@@ -312,6 +313,7 @@ onMounted(() => { fetchAlarmData() })
 .aa-table-actions { display: flex; align-items: center; gap: 8px; }
 .aa-table-link { font-size: 12px; color: var(--brand, #007DFF); cursor: pointer; text-decoration: none; }
 .aa-table-link:hover { text-decoration: underline; }
+.action-text-links { display: flex; gap: 10px; white-space: nowrap; }
 .aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
 @media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) {
