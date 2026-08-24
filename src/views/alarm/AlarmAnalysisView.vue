@@ -104,12 +104,12 @@
           <template v-if="column.key === 'action'">
             <div class="action-text-links">
               <template v-if="record.category === '容量类'">
-                <a class="aa-table-link" @click.stop="openAlarmAnalysis(record)"><i class="fa-solid fa-bolt"></i> 自愈</a>
+                <a class="aa-table-link" @click.stop="openAlarmAnalysis(record)"><i class="fa-solid fa-bolt"></i> 故障自愈</a>
               </template>
               <template v-else>
                 <a class="aa-table-link" @click.stop="openAlarmAnalysis(record)"><i class="fa-solid fa-robot"></i> AI分析</a>
               </template>
-              <a class="aa-table-link" @click.stop="router.push('/ops/incident/' + record.incident_no)"><i class="fa-solid fa-eye"></i> 查看</a>
+              <a class="aa-table-link" @click.stop="router.push('/ops/incident/' + record.incident_no)"><i class="fa-solid fa-eye"></i> 查看详情</a>
             </div>
           </template>
         </template>
@@ -159,7 +159,7 @@
               <a class="aa-table-link" @click="router.push('/ops/incident/' + record.incident_id || relatedDrawerRecord.incident_no)">AI分析</a>
             </template>
             <template v-if="column.key === 'detail'">
-              <a class="aa-table-link" @click="router.push('/alarm-analysis/' + (record.incident_id || relatedDrawerRecord.incident_no))">查看详情</a>
+              <a class="aa-table-link" @click="router.push('/alarm-analysis/' + record.id)">查看详情</a>
             </template>
           </template>
         </a-table>
