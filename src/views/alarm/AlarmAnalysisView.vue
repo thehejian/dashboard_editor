@@ -77,11 +77,14 @@
         :pagination="{ pageSize: 5, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
         row-key="incident_no"
         size="small"
-        :scroll="{ x: 780, y: 360 }"
+        :scroll="{ x: 800, y: 360 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'title'">
             <span class="aa-root-cause-link" @click="goToFaultDetail(record)">{{ record.title }}</span>
+          </template>
+          <template v-if="column.key === 'affected_count'">
+            <span class="aa-related-link" @click="openRelatedDrawer(record)">{{ record.affected_count }}</span>
           </template>
           <template v-if="column.key === 'level'">
             <a-tag :color="record.level === 'critical' ? 'red' : 'orange'">{{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[record.level] || record.level }}</a-tag>
@@ -122,6 +125,34 @@
     <div class="aa-table-card">
       <AiopsHealingRecords :records="alarmHealingRecords" @record-click="onHealingRecordClick" />
     </div>
+
+    <!-- Related Alerts Drawer -->
+    <a-drawer
+      :open="relatedDrawerVisible"
+      title="关联告警"
+      :width="380"
+      placement="right"
+      @close="relatedDrawerVisible = false"
+    >
+      <template v-if="relatedDrawerRecord">
+        <div class="related-drawer-incident">{{ relatedDrawerRecord.incident_no }}</div>
+        <div class="related-drawer-list">
+          <div v-for="(alert, idx) in (relatedDrawerRecord.related_alerts || [])" :key="idx" class="related-drawer-item">
+            <div class="related-drawer-item-title">{{ alert.title }}</div>
+            <div class="related-drawer-item-meta">
+              <a-tag :color="alert.level === 'critical' ? 'red' : alert.level === 'warning' ? 'orange' : 'default'" size="small">
+                {{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[alert.level] || alert.level }}
+              </a-tag>
+              <span class="related-drawer-item-time">{{ alert.trigger_time || '—' }}</span>
+            </div>
+          </div>
+          <div v-if="!relatedDrawerRecord.related_alerts?.length" class="aa-empty-text">暂无关联告警</div>
+        </div>
+        <div class="related-drawer-footer">
+          <a-button type="primary" size="small" @click="router.push('/ops/incident/' + relatedDrawerRecord.incident_no); relatedDrawerVisible = false">查看详情</a-button>
+        </div>
+      </template>
+    </a-drawer>
   </div>
 </template>
 
@@ -149,15 +180,17 @@ const alarmTrendContainer = ref(null)
 let topnChart = null
 let funnelChart = null
 let alarmTrendChart = null
+const relatedDrawerVisible = ref(false)
+const relatedDrawerRecord = ref(null)
 
 const alarmIncidentColumns = [
   { title: '事件ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
   { title: '根因摘要', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
-  { title: '关联', dataIndex: 'affected_count', key: 'affected_count', width: 50 },
+  { title: '关联告警', dataIndex: 'affected_count', key: 'affected_count', width: 70 },
   { title: '级别', key: 'level', width: 80 },
-  { title: '分类', key: 'category', width: 80 },
-  { title: '状态', key: 'status', width: 80 },
-  { title: '处理人', key: 'handler', width: 90 },
+  { title: '分类', key: 'category', width: 80, filters: [{ text: '容量类', value: '容量类' }, { text: '阈值类', value: '阈值类' }, { text: '网络类', value: '网络类' }, { text: '证书类', value: '证书类' }, { text: '服务类', value: '服务类' }, { text: '硬件类', value: '硬件类' }], onFilter: (val, rec) => rec.category === val },
+  { title: '状态', key: 'status', width: 80, filters: [{ text: '进行中', value: 'investigating' }, { text: '已闭环', value: 'resolved' }, { text: '已屏蔽', value: 'suppressed' }], onFilter: (val, rec) => rec.status === val },
+  { title: '处理人', key: 'handler', width: 90, filters: [{ text: 'AI自动', value: 'ai' }, { text: '手动', value: 'manual' }], onFilter: (val, rec) => val === 'ai' ? rec.handler === 'ai' : rec.handler && rec.handler !== 'ai' },
   { title: '操作', key: 'action', width: 80, fixed: 'right' },
 ]
 
@@ -290,6 +323,11 @@ function openAlarmAnalysis(record) {
   }
 }
 
+function openRelatedDrawer(record) {
+  relatedDrawerRecord.value = record
+  relatedDrawerVisible.value = true
+}
+
 onMounted(() => { fetchAlarmData() })
 onBeforeUnmount(() => {
   if (topnChart) topnChart.destroy()
@@ -327,6 +365,15 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-table-link { font-size: 12px; color: var(--brand, #007DFF); cursor: pointer; text-decoration: none; }
 .aa-table-link:hover { text-decoration: underline; }
 .action-text-links { display: flex; gap: 10px; white-space: nowrap; }
+.aa-related-link { color: var(--brand, #007DFF); cursor: pointer; font-weight: 500; }
+.aa-related-link:hover { text-decoration: underline; }
+.related-drawer-incident { font-size: 13px; color: #595959; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+.related-drawer-item { padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+.related-drawer-item:last-child { border-bottom: none; }
+.related-drawer-item-title { font-size: 13px; color: #1A1A1A; line-height: 1.5; }
+.related-drawer-item-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.related-drawer-item-time { font-size: 11px; color: #8C8C8C; }
+.related-drawer-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; text-align: right; }
 .aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
 @media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) {
