@@ -214,7 +214,7 @@ function renderTopNChart() {
   topnChart.data(data)
   topnChart.coordinate({ transform: [{ type: 'transpose' }] })
   topnChart.interval().encode('x', 'category').encode('y', 'pct')
-  topnChart.axis('x', { title: false, label: { autoRotate: false } }).axis('y', { title: false, label: { autoRotate: false } })
+  topnChart.axis('x', { title: false }).axis('y', { title: false })
   topnChart.render()
 }
 
@@ -224,16 +224,16 @@ function renderFunnelChart() {
   const f = alarmFunnel.value
   if (!f.raw) return
   const data = [
-    { step: '原始告警', count: f.raw },
-    { step: '频次去重', count: f.dedup },
-    { step: '拓扑聚合', count: f.agg },
-    { step: '有效事件', count: f.agg },
+    { step: '原始告警', count: 100 },
+    { step: '频次去重', count: Math.round(f.dedup / f.raw * 100) },
+    { step: '拓扑聚合', count: Math.round(f.agg / f.raw * 100) },
+    { step: '有效事件', count: Math.round(f.rate / f.raw * 100) },
   ]
   funnelChart = new Chart({ container: funnelContainer.value, autoFit: true })
   funnelChart.data(data)
   funnelChart.coordinate({ transform: [{ type: 'transpose' }] })
   funnelChart.interval().encode('x', 'step').encode('y', 'count')
-  funnelChart.axis('x', { title: false, label: { autoRotate: false, autoHide: true } }).axis('y', { title: false, tickCount: 3, label: { autoRotate: false } })
+  funnelChart.axis('x', { title: false, label: { autoRotate: false } }).axis('y', { title: false, tickCount: 3, label: { autoRotate: false, formatter: d => d + '%' } })
   funnelChart.render()
 }
 
