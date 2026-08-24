@@ -136,20 +136,29 @@
     >
       <template v-if="relatedDrawerRecord">
         <div class="related-drawer-incident">{{ relatedDrawerRecord.incident_no }}</div>
-        <div class="related-drawer-list">
-          <div v-for="(alert, idx) in (relatedDrawerRecord.related_alerts || [])" :key="idx" class="related-drawer-item">
-            <div class="related-drawer-item-title">{{ alert.title }}</div>
-            <div class="related-drawer-item-meta">
-              <a-tag :color="alert.level === 'critical' ? 'red' : alert.level === 'warning' ? 'orange' : 'default'" size="small">
-                {{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[alert.level] || alert.level }}
+        <a-table
+          :columns="relatedAlertColumns"
+          :data-source="relatedDrawerRecord.related_alerts || []"
+          :pagination="false"
+          row-key="id"
+          size="small"
+          :scroll="{ x: 340, y: 300 }"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'level'">
+              <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'default'" size="small">
+                {{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[record.level] || record.level }}
               </a-tag>
-              <span class="related-drawer-item-time">{{ alert.trigger_time || '—' }}</span>
-            </div>
-          </div>
-          <div v-if="!relatedDrawerRecord.related_alerts?.length" class="aa-empty-text">暂无关联告警</div>
-        </div>
+            </template>
+            <template v-if="column.key === 'status'">
+              <a-tag :color="record.status === 'firing' ? 'red' : record.status === 'resolved' ? 'green' : 'default'" size="small">
+                {{ record.status === 'firing' ? '告警中' : record.status === 'resolved' ? '已恢复' : '已屏蔽' }}
+              </a-tag>
+            </template>
+          </template>
+        </a-table>
         <div class="related-drawer-footer">
-          <a-button type="primary" size="small" @click="router.push('/ops/incident/' + relatedDrawerRecord.incident_no); relatedDrawerVisible = false">查看详情</a-button>
+          <a-button type="primary" size="small" @click="router.push('/ops/incident/' + relatedDrawerRecord.incident_no); relatedDrawerVisible = false">查看告警根因</a-button>
         </div>
       </template>
     </a-drawer>
@@ -182,6 +191,13 @@ let funnelChart = null
 let alarmTrendChart = null
 const relatedDrawerVisible = ref(false)
 const relatedDrawerRecord = ref(null)
+const relatedAlertColumns = [
+  { title: '级别', key: 'level', width: 60 },
+  { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
+  { title: '资源', dataIndex: 'resource', key: 'resource', width: 80, ellipsis: true },
+  { title: '状态', key: 'status', width: 60 },
+  { title: '触发时间', dataIndex: 'trigger_time', key: 'trigger_time', width: 130 },
+]
 
 const alarmIncidentColumns = [
   { title: '事件ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
@@ -368,11 +384,6 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-related-link { color: var(--brand, #007DFF); cursor: pointer; font-weight: 500; }
 .aa-related-link:hover { text-decoration: underline; }
 .related-drawer-incident { font-size: 13px; color: #595959; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
-.related-drawer-item { padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
-.related-drawer-item:last-child { border-bottom: none; }
-.related-drawer-item-title { font-size: 13px; color: #1A1A1A; line-height: 1.5; }
-.related-drawer-item-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.related-drawer-item-time { font-size: 11px; color: #8C8C8C; }
 .related-drawer-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; text-align: right; }
 .aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
 @media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
