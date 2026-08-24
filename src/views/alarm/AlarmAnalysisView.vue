@@ -44,23 +44,23 @@
     <div class="aa-chart-row">
       <div class="aa-chart-card">
         <div class="aa-chart-title">TopN 告警分类分布</div>
-        <svg class="aa-svg-chart" viewBox="0 0 350 160">
+        <svg class="aa-svg-chart" viewBox="0 0 350 180">
           <g v-for="(item, i) in alarmCategoryStats.slice(0, 7)" :key="item.category" :transform="topnTransform(i)">
             <text x="0" y="12" font-size="11" fill="#595959" dy="0.35em">{{ item.category }}</text>
-            <rect x="72" y="2" :width="Math.max(item.pct / 100 * 280, 2)" height="16" :fill="catColor(item.category)" rx="2" />
-            <text :x="72 + Math.max(item.pct / 100 * 280, 2) + 4" y="12" font-size="11" fill="#8C8C8C" dy="0.35em">{{ item.pct }}%</text>
+            <rect x="60" y="2" :width="Math.max(item.pct / 100 * 290, 2)" height="16" :fill="catColor(item.category)" rx="2" />
+            <text :x="60 + Math.max(item.pct / 100 * 290, 2) + 4" y="12" font-size="11" fill="#8C8C8C" dy="0.35em">{{ item.pct }}%</text>
           </g>
         </svg>
         <div class="aa-chart-hint">指导下一步基础设施优化方向</div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">降噪漏斗</div>
-        <svg class="aa-svg-chart" viewBox="0 0 350 160">
+        <svg class="aa-svg-chart" viewBox="0 0 350 180">
           <g v-if="alarmFunnel.raw">
             <g v-for="(item, i) in funnelSteps" :key="item.step" :transform="funnelTransform(i)">
               <text x="0" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.step }}</text>
-              <rect x="72" y="2" :width="Math.max(item.count / funnelMaxCount * 280, 2)" height="20" :fill="funnelColors[i]" rx="2" />
-              <text :x="72 + Math.max(item.count / funnelMaxCount * 280, 2) + 4" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.count.toLocaleString() }}</text>
+              <rect x="60" y="2" :width="Math.max(item.count / funnelMaxCount * 290, 2)" height="20" :fill="funnelColors[i]" rx="2" />
+              <text :x="60 + Math.max(item.count / funnelMaxCount * 290, 2) + 4" y="14" font-size="11" fill="#595959" dy="0.35em">{{ item.count.toLocaleString() }}</text>
             </g>
           </g>
         </svg>
@@ -68,7 +68,7 @@
       </div>
       <div class="aa-chart-card aa-trend-card">
         <div class="aa-chart-title">处理趋势 · AI vs 人工（近30天）</div>
-        <svg class="aa-svg-chart" viewBox="0 0 350 160">
+        <svg class="aa-svg-chart" viewBox="0 0 350 180">
           <g v-if="alarmTrendData.labels.length">
             <!-- Y axis labels -->
             <text v-for="(v, i) in [300,250,200,150,100]" :key="'y'+i" x="44" :y="10 + i * 30" font-size="10" fill="#8C8C8C" text-anchor="end" dy="0.35em">{{ v }}</text>
@@ -78,12 +78,12 @@
             <polyline :points="trendAiPoints" fill="none" stroke="#722ED1" stroke-width="2" stroke-linejoin="round" />
             <polyline :points="trendManualPoints" fill="none" stroke="#BFBFBF" stroke-width="2" stroke-linejoin="round" />
             <!-- X axis labels -->
-            <text v-for="(label, i) in alarmTrendData.labels" :key="'x'+i" :x="48 + i * 287 / 6" y="145" font-size="10" fill="#8C8C8C" text-anchor="middle" dy="0.35em">{{ label }}</text>
+            <text v-for="(label, i) in alarmTrendData.labels" :key="'x'+i" :x="48 + i * 287 / 6" y="142" font-size="10" fill="#8C8C8C" text-anchor="middle" dy="0.35em">{{ label }}</text>
             <!-- Legend -->
-            <circle cx="130" cy="153" r="3" fill="#722ED1" />
-            <text x="138" y="153" font-size="10" fill="#595959" dy="0.35em">AI处理</text>
-            <circle cx="200" cy="153" r="3" fill="#BFBFBF" />
-            <text x="208" y="153" font-size="10" fill="#595959" dy="0.35em">人工处理</text>
+            <circle cx="130" cy="150" r="3" fill="#722ED1" />
+            <text x="138" y="150" font-size="10" fill="#595959" dy="0.35em">AI处理</text>
+            <circle cx="200" cy="150" r="3" fill="#BFBFBF" />
+            <text x="208" y="150" font-size="10" fill="#595959" dy="0.35em">人工处理</text>
           </g>
         </svg>
       </div>
@@ -189,8 +189,8 @@ function catColor(cat) {
   const map = { '容量类': '#007DFF', '阈值类': '#FA8C16', '证书类': '#722ED1', '网络类': '#13C2C2', '服务类': '#F5222D', '硬件类': '#EB2F96', '合规类': '#8C8C8C' }
   return map[cat] || '#BFBFBF'
 }
-function topnTransform(i) { return 'translate(0,' + (8 + i * 22) + ')' }
-function funnelTransform(i) { return 'translate(0,' + (8 + i * 38) + ')' }
+function topnTransform(i) { return 'translate(0,' + (6 + i * 24) + ')' }
+function funnelTransform(i) { return 'translate(0,' + (6 + i * 40) + ')' }
 
 async function fetchAlarmData() {
   alarmLoading.value = true
@@ -301,10 +301,10 @@ onMounted(() => { fetchAlarmData() })
 .aa-hero-trend.up { color: #52C41A; }
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
-.aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 4px; }
+.aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 0; }
 .aa-svg-chart { width: 100%; height: 180px; display: block; }
-.aa-chart-hint { font-size: 11px; color: #8C8C8C; margin-top: 4px; }
-.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 2px; }
+.aa-chart-hint { font-size: 11px; color: #8C8C8C; text-align: center; margin-top: 0; }
+.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; margin-top: 0; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
