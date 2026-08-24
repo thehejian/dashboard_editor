@@ -159,7 +159,7 @@
               <a class="aa-table-link" @click="router.push('/ops/incident/' + record.incident_id || relatedDrawerRecord.incident_no)">AI分析</a>
             </template>
             <template v-if="column.key === 'detail'">
-              <a class="aa-table-link" @click="router.push('/alarm-analysis/' + record.id)">查看详情</a>
+              <a class="aa-table-link" @click="router.push('/alarm/current?alertId=' + record.id)">查看详情</a>
             </template>
           </template>
         </a-table>

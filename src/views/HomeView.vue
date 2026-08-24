@@ -934,7 +934,7 @@ import AlarmAnalysisView from './alarm/AlarmAnalysisView.vue'
 const router = useRouter()
 const route = useRoute()
 
-const homeTab = ref(route.path === '/aiops' ? 'aiops' : route.query.tab === 'alarm' ? 'alarm' : 'home')
+const homeTab = ref(route.path === '/aiops' ? 'alarm' : route.query.tab === 'alarm' ? 'alarm' : 'home')
 
 function switchTab(tab) {
   homeTab.value = tab

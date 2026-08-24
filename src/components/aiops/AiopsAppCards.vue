@@ -48,8 +48,8 @@ defineEmits(['app-click'])
 .app-card-head-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .app-card-name { font-size: 13px; font-weight: 600; color: #1A1A1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .app-card-type { font-size: 10px; color: #6B7280; background: #F5F5F5; padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
-.app-card-main { display: flex; align-items: baseline; gap: 8px; }
-.app-card-score { font-size: 22px; font-weight: 700; line-height: 1; }
+.app-card-main { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+.app-card-score { font-size: 14px; font-weight: 700; line-height: 1; }
 .app-card-status { font-size: 11px; }
 .app-card-faults { display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
 .app-fault-chip { font-size: 10px; color: #F5222D; background: #FFF1F0; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
