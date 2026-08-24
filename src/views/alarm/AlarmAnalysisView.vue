@@ -380,7 +380,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
-.aa-chart-inner { height: 150px; }
+.aa-chart-inner { height: 180px; }
 .aa-chart-hint { font-size: 11px; color: #8C8C8C; text-align: center; flex-shrink: 0; }
 .aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; flex-shrink: 0; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
