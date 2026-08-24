@@ -2206,10 +2206,10 @@ app.get('/api/alarm/overview-stats', (req, res) => {
         manualClosed: [300, 290, 275, 260, 240, 230, 220],
       },
       healingRecords: [
-        { id: 1, time: '06-17 09:15', alert: 'K8s Pod频繁重启', resource: 'payment-service', action: '平滑重启+拨测', result: 'success', duration: '45s' },
-        { id: 2, time: '06-17 08:30', alert: '磁盘空间不足', resource: 'db-primary', action: '清理日志+扩容20%', result: 'success', duration: '1m20s' },
-        { id: 3, time: '06-16 23:00', alert: 'NTP偏移过大', resource: 'ntp-server', action: '重启NTP服务', result: 'success', duration: '30s' },
-        { id: 4, time: '06-16 18:00', alert: '证书即将过期', resource: 'cdn-domain', action: '申请新证书(待审批)', result: 'pending', duration: '—' },
+        { id: 1, time: '06-17 09:15', alert: 'K8s Pod频繁重启', resource: 'payment-service', action: '平滑重启+拨测', result: 'success', duration: '45s', incidentId: 'INC-2026-0720' },
+        { id: 2, time: '06-17 08:30', alert: '磁盘空间不足', resource: 'db-primary', action: '清理日志+扩容20%', result: 'success', duration: '1m20s', incidentId: 'INC-2026-0719' },
+        { id: 3, time: '06-16 23:00', alert: 'NTP偏移过大', resource: 'ntp-server', action: '重启NTP服务', result: 'success', duration: '30s', incidentId: 'INC-2026-0718' },
+        { id: 4, time: '06-16 18:00', alert: '证书即将过期', resource: 'cdn-domain', action: '申请新证书(待审批)', result: 'pending', duration: '—', incidentId: 'INC-2026-0717' },
       ],
     }
   })

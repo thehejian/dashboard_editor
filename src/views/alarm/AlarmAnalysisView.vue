@@ -333,7 +333,7 @@ function onAppClick(app) {
 }
 
 function onHealingRecordClick(record) {
-  if (record.nodeId) router.push('/ops/incident/' + record.nodeId)
+  if (record.incidentId) router.push('/ops/incident/' + record.incidentId + '?tab=postmortem')
 }
 
 function openAlarmAnalysis(record) {
