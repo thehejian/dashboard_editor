@@ -214,7 +214,6 @@ function renderTopNChart() {
   topnChart.data(data)
   topnChart.coordinate({ transform: [{ type: 'transpose' }] })
   topnChart.interval().encode('x', 'category').encode('y', 'pct')
-  topnChart.axis('x', false).axis('y', false)
   topnChart.render()
 }
 
@@ -233,7 +232,6 @@ function renderFunnelChart() {
   funnelChart.data(data)
   funnelChart.coordinate({ transform: [{ type: 'transpose' }] })
   funnelChart.interval().encode('x', 'step').encode('y', 'count')
-  funnelChart.axis('x', false).axis('y', false)
   funnelChart.render()
 }
 
@@ -251,7 +249,6 @@ function renderAlarmTrendChart() {
   alarmTrendChart = new Chart({ container: alarmTrendContainer.value, autoFit: true })
   alarmTrendChart.data(data)
   alarmTrendChart.line().encode('x', 'time').encode('y', 'value').encode('color', 'type')
-  alarmTrendChart.axis('x', false).axis('y', false)
   alarmTrendChart.render()
 }
 
