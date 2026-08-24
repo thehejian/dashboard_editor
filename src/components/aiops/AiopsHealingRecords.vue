@@ -1,7 +1,7 @@
 <template>
   <div class="aiops-healing-records">
     <div class="aa-table-header">
-      <span class="aa-table-title"><i class="fa-solid fa-rotate"></i> 自动修复记录 · 近7天</span>
+      <span class="aa-table-title">自动修复记录 · 近7天</span>
       <router-link to="/alarm/current" class="aa-table-link">查看全部 <i class="fa-solid fa-arrow-right"></i></router-link>
     </div>
     <div class="smart-remed-list" v-if="records.length">

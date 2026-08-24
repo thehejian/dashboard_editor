@@ -1,7 +1,7 @@
 <template>
   <div class="aiops-app-cards">
     <div class="aa-table-header">
-      <span class="aa-table-title"><i class="fa-solid fa-server"></i> 需关注的应用 / 云服务</span>
+      <span class="aa-table-title">需关注的应用 / 云服务</span>
       <div class="aa-table-actions">
         <span class="ab-badge ab-critical">严重 {{ counts.critical || 0 }}</span>
         <span class="ab-badge ab-warning">警告 {{ counts.warning || 0 }}</span>

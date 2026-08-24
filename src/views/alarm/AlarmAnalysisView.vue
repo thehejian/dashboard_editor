@@ -130,7 +130,7 @@
     <a-drawer
       :open="relatedDrawerVisible"
       title="关联告警"
-      :width="380"
+      :width="drawerWidth"
       placement="right"
       @close="relatedDrawerVisible = false"
     >
@@ -191,6 +191,8 @@ let funnelChart = null
 let alarmTrendChart = null
 const relatedDrawerVisible = ref(false)
 const relatedDrawerRecord = ref(null)
+const drawerWidth = ref(Math.min(window.innerWidth * 0.9, 1200))
+function onDrawerResize() { drawerWidth.value = Math.min(window.innerWidth * 0.9, 1200) }
 const relatedAlertColumns = [
   { title: '级别', key: 'level', width: 60 },
   { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
@@ -344,11 +346,12 @@ function openRelatedDrawer(record) {
   relatedDrawerVisible.value = true
 }
 
-onMounted(() => { fetchAlarmData() })
+onMounted(() => { fetchAlarmData(); window.addEventListener('resize', onDrawerResize) })
 onBeforeUnmount(() => {
   if (topnChart) topnChart.destroy()
   if (funnelChart) funnelChart.destroy()
   if (alarmTrendChart) alarmTrendChart.destroy()
+  window.removeEventListener('resize', onDrawerResize)
 })
 watch(alarmTrendData, () => { nextTick(() => renderAlarmTrendChart()) }, { deep: true })
 watch(alarmCategoryStats, () => { nextTick(() => renderTopNChart()) }, { deep: true })
