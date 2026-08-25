@@ -487,3 +487,289 @@ const relatedAlerts = alerts.filter(a => a.incident_id === incId || String(a.id)
 6. `AGENTS.md` — 1 处新增（L15-16）
 7. 重启后端：`lsof -i :3001 -t | xargs kill -9 && nohup node server/server.js &`
 8. 运行测试：`npx playwright test tests/alarm-analysis.spec.js`（28 passed）
+
+---
+
+## 附录B：完整还原参考数据
+
+> 以下数据供从零搭建或迁移到其他页面时参考。所有 mock 数据均硬编码在 `server/server.js` 和 `server/db/mockData.js` 中。
+
+### B.1 路由配置（`src/router/index.js`）
+
+```js
+// L7: 重定向 — 旧路径自动跳转
+{ path: '/alarm-analysis', redirect: '/overview?tab=alarm' },
+
+// L8: 详情页 — 独立路由，不嵌套
+{ path: '/alarm-analysis/:id', name: 'alarm-analysis-detail', component: () => import('../views/alarm/AlarmDetailView.vue') },
+```
+
+**要点：**
+- `/alarm-analysis` 重定向到 `/overview?tab=alarm`（首页 tab 模式）
+- `/alarm-analysis/:id` 是独立路由，`AlarmDetailView.vue` 单独渲染（不在 HomeView 内）
+- `:id` = `incident_no`（如 `INC-2026-0720`），详情页通过 `route.params.id` 取值
+
+### B.2 App.vue 导航高亮规则（L7, L11）
+
+```js
+// L7: 首页 tab — 覆盖 /、/overview、/aiops、/alarm-analysis*
+{
+  path: '/' || path === '/overview' || path === '/aiops' || path.startsWith('/alarm-analysis')
+}
+
+// L11: 告警 tab — 覆盖 /alarm* 但排除 /alarm-analysis*
+{
+  path.startsWith('/alarm') && !path.startsWith('/alarm-analysis')
+}
+```
+
+**要点：**
+- `/alarm-analysis` 和 `/alarm-analysis/:id` 都高亮"首页"菜单
+- `/alarm/current`、`/alarm/realtime` 等高亮"告警"菜单
+- 如果新页面需要高亮某个菜单，在 App.vue 对应 `nav-item` 的 `:class` 中添加路径判断
+
+### B.3 MOCK_INCIDENTS 完整数据（`server/server.js` L1100-1283）
+
+```js
+const MOCK_INCIDENTS = [
+  {
+    id: 'INC-2026-0720',
+    title: '购物车核心交易链路数据库连接耗尽',
+    description: '受大促极速加购业务流冲击，微服务实例瞬间耗尽其数据库连接资源，引发全链级联雪崩。',
+    status: 'healing',
+    severity: 'P1',
+    appName: '订单服务',
+    appNodeId: 'prod-order-01',
+    service: 'cart-service',
+    startTime: '2026-07-20 08:58:00',
+    endTime: null,
+    duration: '12min',
+    metrics: {
+      p99: { current: 3500, baseline: 20, unit: 'ms', multiplier: '175x 突增' },
+      failureRate: { current: 85.4, unit: '%', label: '大量 HTTP 504 熔断' },
+      affectedUsers: { current: 2300, label: '受影响用户' },
+      affectedSessions: { current: 2500, label: '受影响会话' },
+    },
+    healingProgress: 15,
+    relatedAlertIds: [1, 3, 4, 5],
+    topologyNodeIds: ['lb-api', 'prod-order-01', 'redis-cache', 'mysql-master', 'mysql-slave'],
+    impactScope: '影响 2 个下游服务: redis-cache(缓存命中率↓45%), mysql-master(连接数↑120%)',
+    timeline: [
+      { time: '08:58', event: '告警触发', type: 'alert', detail: 'P99 响应时间 3500ms 触发阈值告警' },
+      { time: '09:00', event: 'AI 检测', type: 'detection', detail: '根因定位: 数据库连接池耗尽' },
+      { time: '09:02', event: '流量隔离', type: 'action', detail: 'cart-service-v1 切至稳定容器组' },
+      { time: '09:05', event: '扩容连接池', type: 'action', detail: 'HikariCP 50 → 250' },
+      { time: '09:15', event: '指标恢复', type: 'recovery', detail: '错误率 0%, P99 22ms' },
+    ],
+  },
+  {
+    id: 'INC-2026-0718',
+    title: '用户服务登录鉴权超时',
+    description: '用户服务因 Redis 缓存击穿导致大量请求穿透至数据库，登录接口超时率飙升。',
+    status: 'resolved',
+    severity: 'P2',
+    appName: '用户服务',
+    appNodeId: 'prod-user-01',
+    service: 'user-service',
+    startTime: '2026-07-18 10:15:00',
+    endTime: '2026-07-18 10:28:00',
+    duration: '13min',
+    metrics: {
+      p99: { current: 2800, baseline: 40, unit: 'ms', multiplier: '70x 突增' },
+      failureRate: { current: 62.1, unit: '%', label: '大量 HTTP 503 超时' },
+      affectedUsers: { current: 1200, label: '受影响用户' },
+      affectedSessions: { current: 1350, label: '受影响会话' },
+    },
+    healingProgress: 100,
+    relatedAlertIds: [7],
+    topologyNodeIds: ['lb-api', 'prod-user-01', 'redis-cache', 'mysql-master'],
+  },
+  {
+    id: 'INC-2026-0715',
+    title: '支付回调链路 MQ 消息堆积',
+    description: '支付回调消息消费线程池耗尽，导致 MQ 队列堆积，回调延迟增大。',
+    status: 'resolved',
+    severity: 'P2',
+    appName: '支付服务',
+    appNodeId: 'prod-pay-01',
+    service: 'pay-service',
+    startTime: '2026-07-15 14:30:00',
+    endTime: '2026-07-15 14:45:00',
+    duration: '15min',
+    metrics: {
+      p99: { current: 5200, baseline: 100, unit: 'ms', multiplier: '52x 突增' },
+      failureRate: { current: 45.3, unit: '%', label: '回调超时' },
+      affectedUsers: { current: 890, label: '受影响用户' },
+      affectedSessions: { current: 1020, label: '受影响会话' },
+    },
+    healingProgress: 100,
+    relatedAlertIds: [9],
+    topologyNodeIds: ['lb-api', 'prod-pay-01', 'mq-order', 'redis-cache'],
+  },
+  {
+    id: 'INC-2026-0722',
+    title: '库存服务扣减接口超时告警',
+    description: '库存服务在秒杀场景下扣减接口 P99 显著升高，疑似数据库行锁竞争加剧。',
+    status: 'investigating',
+    severity: 'P2',
+    appName: '库存服务',
+    appNodeId: 'prod-inventory-01',
+    service: 'inventory-service',
+    startTime: '2026-07-22 14:20:00',
+    endTime: null,
+    duration: '8min',
+    metrics: {
+      p99: { current: 1800, baseline: 60, unit: 'ms', multiplier: '30x 突增' },
+      failureRate: { current: 32.5, unit: '%', label: '扣减请求超时' },
+      affectedUsers: { current: 640, label: '受影响用户' },
+      affectedSessions: { current: 720, label: '受影响会话' },
+    },
+    healingProgress: 30,
+    relatedAlertIds: [6],
+    topologyNodeIds: ['lb-api', 'prod-inventory-01', 'mysql-master', 'mq-order'],
+    impactScope: '影响 1 个下游服务: mysql-master(行锁竞争↑)',
+    timeline: [
+      { time: '14:20', event: '告警触发', type: 'alert', detail: '扣减接口 P99 1800ms 触发阈值告警' },
+      { time: '14:22', event: 'AI 检测', type: 'detection', detail: '根因定位: 数据库行锁竞争' },
+    ],
+  },
+  {
+    id: 'INC-2026-0719',
+    title: '消息网关 WebSocket 连接数异常飙升',
+    description: '消息推送网关 WebSocket 长连接数异常增长，疑似客户端重连风暴。',
+    status: 'investigating',
+    severity: 'P2',
+    appName: '消息服务',
+    appNodeId: 'prod-user-02',
+    service: 'msg-gateway',
+    startTime: '2026-07-19 20:05:00',
+    endTime: null,
+    duration: '20min',
+    metrics: {
+      p99: { current: 1200, baseline: 80, unit: 'ms', multiplier: '15x 突增' },
+      failureRate: { current: 28.4, unit: '%', label: '连接建立失败' },
+      affectedUsers: { current: 560, label: '受影响用户' },
+      affectedSessions: { current: 580, label: '受影响会话' },
+    },
+    healingProgress: 50,
+    relatedAlertIds: [10],
+    topologyNodeIds: ['lb-api', 'prod-user-02', 'redis-cache'],
+    impactScope: '影响 1 个下游服务: redis-cache(连接数↑)',
+    timeline: [
+      { time: '20:05', event: '告警触发', type: 'alert', detail: 'WebSocket 连接数异常飙升' },
+      { time: '20:10', event: 'AI 检测', type: 'detection', detail: '根因定位: 客户端重连风暴' },
+    ],
+  },
+  // ⚠️ 以下 2 条无 relatedAlertIds，表格中不显示（被 filter 过滤）
+  {
+    id: 'INC-2026-0721',
+    title: '推荐服务模型推理延迟升高',
+    relatedAlertIds: [],  // ← 空，不显示在表格
+  },
+  {
+    id: 'INC-2026-0717',
+    title: '日志采集 Agent 批量丢失',
+    relatedAlertIds: [],  // ← 空，不显示在表格
+  },
+]
+```
+
+### B.4 alerts 表完整数据（`server/db/mockData.js` L130-143）
+
+```js
+alerts: [
+  // === 关联到 INC-2026-0720 的 4 条告警 ===
+  { id: 1,  level: 'critical', title: 'CPU使用率超过90%',       resource: 'server-001 (华北区域)',   category: '阈值类', incident_id: 'INC-2026-0720', status: 'firing',    trigger_time: '2026-06-17 10:32:00+08' },
+  { id: 3,  level: 'critical', title: '数据库主从延迟',         resource: 'db-replica-02 (华东区域)', category: '服务类', incident_id: 'INC-2026-0720', status: 'firing',    trigger_time: '2026-06-17 09:55:00+08' },
+  { id: 4,  level: 'warning',  title: '内存使用率偏高',         resource: 'app-server-03 (华南区域)', category: '阈值类', incident_id: 'INC-2026-0720', status: 'firing',    trigger_time: '2026-06-17 10:15:00+08' },
+  { id: 5,  level: 'warning',  title: '响应时间超时',           resource: 'api-gateway (华北区域)',   category: '阈值类', incident_id: 'INC-2026-0720', status: 'firing',    trigger_time: '2026-06-17 09:45:00+08' },
+
+  // === 关联到其他 INC 的告警 ===
+  { id: 6,  level: 'warning',  title: 'HTTP 5xx错误率上升',    resource: 'nginx-ingress (华北区域)', category: '服务类', incident_id: 'INC-2026-0722', status: 'suppressed', trigger_time: '2026-06-17 09:30:00+08' },
+  { id: 7,  level: 'info',     title: '连接数接近上限',         resource: 'redis-cluster (华东区域)', category: '容量类', incident_id: 'INC-2026-0718', status: 'firing',    trigger_time: '2026-06-17 09:20:00+08' },
+  { id: 9,  level: 'critical', title: 'K8s Pod频繁重启',       resource: 'payment-service (prod)',   category: '服务类', incident_id: 'INC-2026-0715', status: 'resolved',  trigger_time: '2026-06-17 08:45:00+08' },
+  { id: 10, level: 'warning',  title: '消息队列积压',           resource: 'kafka-consumer-group order', category: '容量类', incident_id: 'INC-2026-0719', status: 'resolved', trigger_time: '2026-06-17 07:30:00+08' },
+
+  // === UNLINKED（无 incident_id，表格中不显示）===
+  { id: 2,  level: 'critical', title: '磁盘空间不足',           resource: 'db-primary (华东区域)',    category: '容量类', incident_id: null, status: 'firing',    trigger_time: '2026-06-17 10:28:00+08' },
+  { id: 8,  level: 'info',     title: '证书即将过期',           resource: 'cdn-domain.example.com',   category: '证书类', incident_id: null, status: 'firing',    trigger_time: '2026-06-17 08:00:00+08' },
+  { id: 11, level: 'warning',  title: '网络丢包率过高',         resource: 'switch-01 (华北区域)',      category: '网络类', incident_id: null, status: 'firing',    trigger_time: '2026-06-17 06:30:00+08' },
+  { id: 12, level: 'info',     title: 'NTP同步偏移过大',       resource: 'ntp-server',                category: '阈值类', incident_id: null, status: 'resolved',  trigger_time: '2026-06-16 23:00:00+08' },
+]
+```
+
+### B.5 alerts → MOCK_INCIDENTS 关联映射表
+
+| alert# | title | incident_id | MOCK_INCIDENTS.title | 表格显示 |
+|---|---|---|---|---|
+| 1 | CPU使用率超过90% | INC-2026-0720 | 购物车核心交易链路数据库连接耗尽 | ✅ |
+| 2 | 磁盘空间不足 | null | — | ❌ UNLINKED |
+| 3 | 数据库主从延迟 | INC-2026-0720 | 购物车核心交易链路数据库连接耗尽 | ✅ |
+| 4 | 内存使用率偏高 | INC-2026-0720 | 购物车核心交易链路数据库连接耗尽 | ✅ |
+| 5 | 响应时间超时 | INC-2026-0720 | 购物车核心交易链路数据库连接耗尽 | ✅ |
+| 6 | HTTP 5xx错误率上升 | INC-2026-0722 | 库存服务扣减接口超时告警 | ✅ |
+| 7 | 连接数接近上限 | INC-2026-0718 | 用户服务登录鉴权超时 | ✅ |
+| 8 | 证书即将过期 | null | — | ❌ UNLINKED |
+| 9 | K8s Pod频繁重启 | INC-2026-0715 | 支付回调链路 MQ 消息堆积 | ✅ |
+| 10 | 消息队列积压 | INC-2026-0719 | 消息网关 WebSocket 连接数异常飙升 | ✅ |
+| 11 | 网络丢包率过高 | null | — | ❌ UNLINKED |
+| 12 | NTP同步偏移过大 | null | — | ❌ UNLINKED |
+
+**关键规则：**
+- 表格中"故障名称"列显示的是 MOCK_INCIDENTS.title（业务影响描述），不是 alert.title（原始告警标题）
+- "关联告警"数 = 同一 `incident_id` 下的 alert 数量（如 INC-2026-0720 有 4 条）
+- `incident_id = null` 的告警被过滤，不出现在表格中
+
+### B.6 `/api/alarm/overview-stats` 硬编码数据
+
+```js
+heroStats: {
+  closedCount: 3452,    // 硬编码基数 + resolved 告警数
+  reductionRate: 91.5,  // 硬编码
+  autoRate: 78.3,       // 硬编码
+  savedHours: 280,      // 硬编码
+},
+funnelData: { raw: 100000, dedup: 85000, agg: 8500, rate: 91.5 }, // 硬编码
+trendData: {
+  labels: ['06-11', '06-12', '06-13', '06-14', '06-15', '06-16', '06-17'],
+  aiClosed: [120, 135, 142, 155, 168, 180, 195],
+  manualClosed: [300, 290, 275, 260, 240, 230, 220],
+},
+healingRecords: [
+  { id: 1, time: '06-17 09:15', alert: 'K8s Pod频繁重启', resource: 'payment-service', action: '平滑重启+拨测', result: 'success', duration: '45s', incidentId: 'INC-2026-0720' },
+  { id: 2, time: '06-17 08:30', alert: '磁盘空间不足', resource: 'db-primary', action: '清理日志+扩容20%', result: 'success', duration: '1m20s', incidentId: 'INC-2026-0719' },
+  { id: 3, time: '06-16 23:00', alert: 'NTP偏移过大', resource: 'ntp-server', action: '重启NTP服务', result: 'success', duration: '30s', incidentId: 'INC-2026-0718' },
+  { id: 4, time: '06-16 18:00', alert: '证书即将过期', resource: 'cdn-domain', action: '申请新证书(待审批)', result: 'pending', duration: '—', incidentId: 'INC-2026-0717' },
+],
+```
+
+### B.7 前端文件完整清单
+
+| 文件 | 关键内容 | 行数 |
+|---|---|---|
+| `src/views/alarm/AlarmAnalysisView.vue` | 主页面：5行布局、G2图表、表格、搜索、筛选、drawer | ~350行 |
+| `src/views/alarm/AlarmDetailView.vue` | 详情页：故障名称header、证据链、AI建议、处理记录 | ~290行 |
+| `src/components/aiops/AiopsAppCards.vue` | 首页应用卡片（无icon、14px分数） | ~80行 |
+| `src/components/aiops/AiopsHealingRecords.vue` | 首页自愈记录（无icon、查看全部链接） | ~70行 |
+| `src/router/index.js` | 路由：重定向 + 详情页 | 2行 |
+| `src/App.vue` | 导航高亮 + Drawer CSS修复 | 3行 |
+| `server/server.js` | 3个API + MOCK_INCIDENTS(7条) + 过滤逻辑 | ~140行 |
+| `server/db/mockData.js` | alerts表(12条，8条有incident_id) | 14行 |
+| `tests/alarm-analysis.spec.js` | 28个Playwright测试 | ~310行 |
+
+### B.8 新页面搭建检查清单
+
+如果要搭建类似的新模块，按以下顺序：
+
+1. **路由** — `src/router/index.js` 添加路由（重定向 + 详情页）
+2. **导航高亮** — `src/App.vue` 的 `nav-item :class` 添加路径判断
+3. **后端 API** — `server/server.js` 添加端点（在 `app.use('/api/cmdb')` 之前）
+4. **Mock 数据** — `server/db/mockData.js` 添加数据表，或在 `server.js` 中硬编码
+5. **主页面** — `src/views/xxx/XXXView.vue`（5行布局：Hero→图表→操作栏→筛选→表格）
+6. **详情页** — `src/views/xxx/XXXDetailView.vue`（header→证据→建议→处理记录）
+7. **组件** — 首页卡片/记录组件（如需要嵌入首页）
+8. **Vite proxy** — `vite.config.js` 添加 API 代理（如新路径）
+9. **测试** — `tests/xxx.spec.js`（Playwright，用 `page.locator` 断言）
+10. **重启后端** — `lsof -i :3001 -t | xargs kill -9 && nohup node server/server.js &`
+11. **运行测试** — `npx playwright test tests/xxx.spec.js`
+12. **记录变更** — 写入 `docs/alarm-analysis-session-log-YYYYMMDD.md`
