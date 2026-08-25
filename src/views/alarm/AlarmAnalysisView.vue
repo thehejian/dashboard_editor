@@ -45,12 +45,10 @@
       <div class="aa-chart-card">
         <div class="aa-chart-title">TopN 告警分类分布</div>
         <div ref="topnContainer" class="aa-chart-inner"></div>
-        <div class="aa-chart-hint">指导下一步基础设施优化方向</div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">降噪漏斗</div>
         <div ref="funnelContainer" class="aa-chart-inner"></div>
-        <div class="aa-funnel-rate">降噪率: {{ alarmFunnel.rate }}%</div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">处理趋势 · AI vs 人工（近30天）</div>
@@ -503,8 +501,6 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
 .aa-chart-inner { height: 180px; }
-.aa-chart-hint { font-size: 11px; color: #8C8C8C; text-align: center; flex-shrink: 0; }
-.aa-funnel-rate { font-size: 12px; color: #595959; text-align: center; flex-shrink: 0; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }

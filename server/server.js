@@ -2254,8 +2254,13 @@ app.get('/api/alarm/incidents', (req, res) => {
 
   const data = Object.values(groupMap)
     .filter(g => MOCK_INCIDENTS.some(i => i.id === g.incident_no))
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .sort((a, b) => {
+      if (a.incident_no === 'INC-2026-0720') return -1
+      if (b.incident_no === 'INC-2026-0720') return 1
+      return b.created_at.localeCompare(a.created_at)
+    })
 
+  const catOrder = ['阈值类', '硬件类', '容量类', '服务类', '证书类', '配置类', '网络类']
   const categoryStats = {}
   for (const d of data) {
     const cat = d.category
@@ -2266,7 +2271,7 @@ app.get('/api/alarm/incidents', (req, res) => {
     categoryStats[cat].count++
   }
 
-  res.json({ success: true, data, categoryStats: Object.values(categoryStats) })
+  res.json({ success: true, data, categoryStats: catOrder.filter(c => categoryStats[c]).map(c => categoryStats[c]) })
 })
 
 // GET /api/alarm/incidents/:id — 单个 Incident 完整分析数据

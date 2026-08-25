@@ -249,22 +249,24 @@ test.describe('告警分析 — 分类视图', () => {
         body: JSON.stringify({
           success: true,
           data: [
-            { incident_no: 'INC-001', title: 'CPU负载过高触发自动扩容', level: 'critical', category: '阈值类', status: 'investigating', handler: 'ai', affected_count: 3, related_alerts: [{ resource: 'server-01', level: 'critical', category: '计算' }] },
-            { incident_no: 'INC-002', title: '数据库连接池耗尽', level: 'warning', category: '容量类', status: 'resolved', handler: 'manual', affected_count: 5, related_alerts: [{ resource: 'db-01', level: 'warning', category: '数据库' }] },
-            { incident_no: 'INC-003', title: '证书即将过期', level: 'warning', category: '证书类', status: 'suppressed', handler: 'ai', affected_count: 2, related_alerts: [] },
-            { incident_no: 'INC-004', title: '网络延迟超阈值', level: 'critical', category: '网络类', status: 'investigating', handler: null, affected_count: 8, related_alerts: [{ resource: 'switch-01', level: 'critical', category: '网络' }] },
-            { incident_no: 'INC-005', title: '磁盘IO等待过高', level: 'info', category: '硬件类', status: 'resolved', handler: 'ai', affected_count: 1, related_alerts: [] },
-            { incident_no: 'INC-006', title: '内存泄漏检测', level: 'warning', category: '服务类', status: 'investigating', handler: 'manual', affected_count: 4, related_alerts: [{ resource: 'app-01', level: 'warning', category: '应用' }] },
-            { incident_no: 'INC-007', title: '安全组规则违规', level: 'warning', category: '配置类', status: 'investigating', handler: 'ai', affected_count: 2, related_alerts: [] },
+            { incident_no: 'INC-2026-0725', title: '物理机CPU温度过高触发保护', level: 'critical', category: '硬件类', status: 'investigating', handler: 'ai', affected_count: 2, related_alerts: [{ resource: 'server-003', level: 'critical', category: '硬件类' }] },
+            { incident_no: 'INC-2026-0720', title: '购物车核心交易链路数据库连接耗尽', level: 'critical', category: '阈值类', status: 'healing', handler: 'ai', affected_count: 4, related_alerts: [{ resource: 'server-01', level: 'critical', category: '阈值类' }] },
+            { incident_no: 'INC-2026-0718', title: '用户服务登录鉴权超时', level: 'warning', category: '容量类', status: 'resolved', handler: 'ai', affected_count: 2, related_alerts: [{ resource: 'redis-cache', level: 'warning', category: '容量类' }] },
+            { incident_no: 'INC-2026-0722', title: '库存服务扣减接口超时告警', level: 'warning', category: '服务类', status: 'investigating', handler: 'ai', affected_count: 1, related_alerts: [{ resource: 'inventory-service', level: 'warning', category: '服务类' }] },
+            { incident_no: 'INC-2026-0715', title: '支付回调链路MQ消息堆积', level: 'critical', category: '服务类', status: 'resolved', handler: 'ai', affected_count: 1, related_alerts: [{ resource: 'pay-service', level: 'critical', category: '服务类' }] },
+            { incident_no: 'INC-2026-0723', title: 'CDN域名SSL证书即将过期', level: 'info', category: '证书类', status: 'investigating', handler: 'ai', affected_count: 1, related_alerts: [{ resource: 'cdn-domain', level: 'info', category: '证书类' }] },
+            { incident_no: 'INC-2026-0726', title: '安全组规则对外开放高危端口', level: 'warning', category: '配置类', status: 'investigating', handler: 'ai', affected_count: 1, related_alerts: [{ resource: 'sg-001', level: 'warning', category: '配置类' }] },
+            { incident_no: 'INC-2026-0719', title: '消息网关WebSocket连接数异常飙升', level: 'warning', category: '容量类', status: 'investigating', handler: 'ai', affected_count: 1, related_alerts: [{ resource: 'msg-gateway', level: 'warning', category: '容量类' }] },
+            { incident_no: 'INC-2026-0724', title: '华北区域核心交换机丢包率过高', level: 'critical', category: '网络类', status: 'investigating', handler: 'ai', affected_count: 2, related_alerts: [{ resource: 'switch-01', level: 'critical', category: '网络类' }] },
           ],
           categoryStats: [
-            { category: '阈值类', count: 1, heal: 'assist', color: 'orange', desc: '性能指标越限' },
-            { category: '容量类', count: 1, heal: 'auto', color: 'green', desc: 'CPU/时延/IOPS瓶颈' },
-            { category: '证书类', count: 1, heal: 'auto', color: 'green', desc: 'SSL/AK-SK泄露' },
-            { category: '网络类', count: 1, heal: 'assist', color: 'orange', desc: '专线/BGP/南北向' },
             { category: '硬件类', count: 1, heal: 'auto', color: 'green', desc: '物理机/交换机' },
-            { category: '服务类', count: 1, heal: 'auto', color: 'green', desc: '进程退出/主备切换' },
+            { category: '阈值类', count: 1, heal: 'assist', color: 'orange', desc: '性能指标越限' },
+            { category: '容量类', count: 2, heal: 'auto', color: 'green', desc: 'CPU/时延/IOPS瓶颈' },
+            { category: '服务类', count: 2, heal: 'auto', color: 'green', desc: '进程退出/主备切换' },
+            { category: '证书类', count: 1, heal: 'auto', color: 'green', desc: 'SSL/AK-SK泄露' },
             { category: '配置类', count: 1, heal: 'auto', color: 'green', desc: '暴露端口/策略违规' },
+            { category: '网络类', count: 1, heal: 'assist', color: 'orange', desc: '专线/BGP/南北向' },
           ]
         })
       })
@@ -297,10 +299,9 @@ test.describe('告警分析 — 分类视图', () => {
     expect(titles.some(t => t.includes('阈值类'))).toBeTruthy()
     expect(titles.some(t => t.includes('容量类'))).toBeTruthy()
     expect(titles.some(t => t.includes('硬件类'))).toBeTruthy()
-    // 每个分类各1条
-    for (const t of titles) {
-      expect(t).toContain('(1条)')
-    }
+    // 容量类和服务类各有2条
+    expect(titles.some(t => t.includes('容量类') && t.includes('2'))).toBeTruthy()
+    expect(titles.some(t => t.includes('服务类') && t.includes('2'))).toBeTruthy()
   })
 
   test('点击分类标签筛选该分类的告警', async ({ page }) => {
