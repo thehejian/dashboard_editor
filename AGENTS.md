@@ -159,3 +159,26 @@ Dashboard 特殊：`/dashboard/:slug` → `EmptyRoute.vue`，由 `App.vue` `v-if
 - 跨层抽屉跳转（SCDetail → PoolDetail → NodeDetail）依赖模板正确引用组件，否则静默失败
 - 测试中建议用 `.dii-label`（详情信息标签）做导航成功的断言，比 `h3` 标题文本更可靠（标题可能与其他层级混淆）
 - 测试顺序敏感：前一个测试未关闭侧滑会影响下一个；建议在测试末尾统一关闭侧滑或使用独立 fixture
+
+## 告警分析页面经验教训
+
+### 后端数据
+- **MOCK_INCIDENTS 位置**：硬编码在 `server.js` 中（约 L1100-1283），不在 `mockData.js`
+- **alerts 表**：`server/db/mockData.js` L130-143，12 条告警，8 条有 `incident_id`，4 条 UNLINKED
+- **incident_id 关联键**：alerts.incident_id 必须和 MOCK_INCIDENTS.id 完全一致，改任一侧关联会断
+- **UNLINKED 过滤**：`/api/alarm/incidents` 过滤掉无 incident_id 的告警，如需显示移除 `.filter()`
+- **handler 字段**：incident_id 有值 → 'ai'，无值 → 'manual'，前端用来区分标签颜色
+- **can_heal 逻辑**：只有 `category === '容量类'` 返回 true，控制"故障自愈"按钮显示
+- **重启后端**：修改 server.js 后必须 `lsof -i :3001 -t | xargs kill -9` 后重启，前端 HMR 自动更新后端没有
+
+### 前端组件
+- **表格列 dataIndex**：`'title'` 对应 MOCK_INCIDENTS.title（故障名称），`'incident_no'` 对应 INC-xxx
+- **列表和详情标题一致**：两端都从 MOCK_INCIDENTS.title 取值，改一边要同步另一边
+- **G2 v5 柱子粗细**：用 `encode('size', 16)` 精确控制，`style('maxHeight')` 不精确
+- **Ant Design Drawer 关闭按钮**：默认在左侧，需全局 CSS 覆盖（`!important`，同时改 header-title 和 close）
+- **搜索逻辑**：支持 title + incident_no + root_cause 三个字段匹配
+
+### 导航和路由
+- **高亮规则**：`/alarm-analysis*` 高亮"首页"菜单，`/alarm*`（排除 alarm-analysis）高亮"告警"菜单
+- **重定向**：`/alarm-analysis` → `/overview?tab=alarm`，详情页 `/alarm-analysis/:id` 独立路由
+- **详情页 `:id`**：= incident_no（如 `INC-2026-0720`），通过 `route.params.id` 取值
