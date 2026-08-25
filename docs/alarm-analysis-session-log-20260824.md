@@ -339,7 +339,145 @@ Received string: "事件ID 根因摘要 ..."
 
 ---
 
-## 五、还原步骤
+## 附录A：上一次会话（8/21-8/24 下午）的后台变动与注意要点
+
+> 上一次会话从零搭建了告警分析页面的后端 API，以下是对这些 API 的完整说明。  
+> 这些 API 在 8/24 下午的会话中被进一步修改（见第二节），两者是叠加关系。
+
+### A.1 三个 API 端点总览
+
+| 端点 | 行号 | 用途 | 调用方 |
+|---|---|---|---|
+| `GET /api/alarm/incidents` | L2093-2122 | 告警聚合事件列表（主表格） | AlarmAnalysisView |
+| `GET /api/alarm/incidents/:id` | L2125-2169 | 单个 Incident 完整分析数据（详情页） | AlarmDetailView |
+| `GET /api/alarm/overview-stats` | L2172-2218 | Hero Metric 概览数据（图表+自愈记录） | AlarmAnalysisView |
+
+### A.2 数据源：alerts 表与 MOCK_INCIDENTS
+
+**`server/db/mockData.js` 中的 alerts 表**（告警原始数据）：
+
+```js
+// alerts = getTable('alerts')  — PostgreSQL 白名单表，通过 getTable() 读取
+// 每条 alert 的关键字段：
+{
+  id: 'alert#1',
+  title: 'CPU使用率超过90%',           // 原始告警标题
+  level: 'critical',                    // critical / warning
+  status: 'firing',                     // firing / resolved / suppressed
+  resource: 'payment-service',          // 告警资源
+  category: '容量类',                    // 告警分类
+  trigger_time: '2026-06-17T09:10:00Z', // 触发时间
+  incident_id: 'INC-2026-0720',         // ← 关键！关联到 MOCK_INCIDENTS
+  suggestion: '建议扩容...',             // AI 建议
+}
+```
+
+**`MOCK_INCIDENTS`**（SRE 故障中心 mock 数据，硬编码在 `server.js` 中）：
+
+```js
+const MOCK_INCIDENTS = [
+  { id: 'INC-2026-0720', title: '购物车核心交易链路数据库连接耗尽', description: '...', status: 'investigating', ... },
+  { id: 'INC-2026-0722', title: '库存服务扣减接口超时告警', ... },
+  { id: 'INC-2026-0718', title: '用户服务登录鉴权超时', ... },
+  { id: 'INC-2026-0715', title: '支付回调链路 MQ 消息堆积', ... },
+  { id: 'INC-2026-0719', title: '消息网关 WebSocket 连接数异常飙升', ... },
+]
+```
+
+### A.3 聚合逻辑（`/api/alarm/incidents`）
+
+```
+alerts 表
+  ↓ 按 incident_id 分组
+  ↓ incident_id 有值 → MOCK_INCIDENTS.find(i => i.id === incident_id)
+  ↓ incident_id 无值 → key = 'UNLINKED-' + alert.id
+  ↓ 过滤：只保留 MOCK_INCIDENTS 中存在的 key
+  ↓ 排序：created_at 倒序
+  → 返回 data[]
+```
+
+**每条 data 的字段映射：**
+```js
+{
+  incident_no: 'INC-2026-0720',     // key = alert.incident_id
+  title: MOCK_INCIDENTS.title,       // ← 8/24 下午改：优先取 MOCK_INCIDENTS
+  root_cause: MOCK_INCIDENTS.description, // ← 8/24 下午改
+  level: 'critical',                 // 取关联告警中最高级别
+  category: '容量类',                 // 取第一条告警的分类
+  status: 'investigating',           // firing → investigating
+  affected_count: 4,                 // 关联告警数
+  handler: 'ai',                     // 有 incident_id → 'ai'，否则 'manual'
+  related_alerts: [alert1, alert2, ...], // 关联的原始告警列表
+}
+```
+
+### A.4 详情接口（`/api/alarm/incidents/:id`）
+
+**URL 参数：** `:id` = `incident_no`（如 `INC-2026-0720`）
+
+**匹配逻辑：**
+```js
+const relatedAlerts = alerts.filter(a => a.incident_id === incId || String(a.id) === incId)
+// 先按 incident_id 匹配，再按 alert id 匹配（兼容两种情况）
+```
+
+**返回结构：**
+```js
+{
+  incident: {
+    incident_no: 'INC-2026-0720',
+    title: MOCK_INCIDENTS.title,        // ← 8/24 下午改：优先取 MOCK_INCIDENTS
+    root_cause: MOCK_INCIDENTS.description,
+    level: 'critical',
+    severity: 'P1',                      // 有 critical → P1，否则 P2
+    category: '容量类',
+    status: 'investigating',
+    affected_count: 4,
+    handler: 'ai',
+    evidence: MOCK_INCIDENTS.timeline,   // 时间线证据
+    ai_confidence: 87,                   // 有 MOCK_INCIDENTS → 87，否则 72
+    suggestions: ['检查相关服务状态', '查看应用日志定位异常', '必要时执行回滚'],
+    can_heal: true,                      // category === '容量类'
+  },
+  relatedAlerts: [...],                  // 原始告警列表
+  categoryBreakdown: [{ category: '容量类', count: 2 }], // 分类统计
+}
+```
+
+### A.5 概览统计（`/api/alarm/overview-stats`）
+
+**返回结构：**
+```js
+{
+  heroStats: {
+    closedCount: 3452,       // 硬编码 + resolved 告警数
+    reductionRate: 91.5,     // 硬编码
+    autoRate: 78.3,          // 硬编码
+    savedHours: 280,         // 硬编码
+  },
+  categoryStats: [{ category: '容量类', count: 3, pct: 50 }, ...], // 动态计算
+  funnelData: { raw: 100000, dedup: 85000, agg: 8500, rate: 91.5 }, // 硬编码
+  trendData: { labels: [...], aiClosed: [...], manualClosed: [...] }, // 硬编码
+  healingRecords: [...],   // 硬编码 4 条自愈记录
+}
+```
+
+### A.6 上一次会话的踩坑要点
+
+| # | 坑 | 详情 |
+|---|---|---|
+| 1 | **`MOCK_INCIDENTS` 位置** | 硬编码在 `server.js` 中（约 L2070-2090），不在 `mockData.js`。因为它是临时 mock，非正式数据源 |
+| 2 | **`getTable('alerts')` 读的是 PostgreSQL** | `alerts` 是白名单表（见 `server/routes/cmdb.js`），不是前端 mock。如果 PostgreSQL 中 alerts 表为空，API 返回空数组 |
+| 3 | **`incident_id` 是关联键** | alerts 表中的 `incident_id` 字段必须和 `MOCK_INCIDENTS.id` 完全匹配。如果改了任一侧的 ID，关联会断 |
+| 4 | **UNLINKED 逻辑** | 无 `incident_id` 的告警生成 `UNLINKED-{alert.id}` 作为 key，8/24 下午被过滤掉了。如果需要显示所有告警，移除 `.filter()` |
+| 5 | **`handler` 字段** | `incident_id` 有值 → `'ai'`，无值 → `'manual'`。前端用来区分"AI 分析"和"人工处理"的标签颜色 |
+| 6 | **`can_heal` 逻辑** | 只有 `category === '容量类'` 才返回 `true`。前端用来决定是否显示"故障自愈"按钮 |
+| 7 | **`ai_confidence` 硬编码** | 有 MOCK_INCIDENTS → 87，无 → 72。纯展示用，不影响逻辑 |
+| 8 | **重启后端** | 修改 `server.js` 后必须重启：`lsof -i :3001 -t \| xargs kill -9` → `nohup node server/server.js &`。前端 Vite HMR 自动热更新，后端没有 |
+
+---
+
+## 六、还原步骤
 
 1. `server/server.js` — 3 处修改（L2098, L2118, L2145）
 2. `src/views/alarm/AlarmAnalysisView.vue` — 5 处修改（L70, L213-214, L275, L294, L322）
