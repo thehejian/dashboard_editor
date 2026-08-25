@@ -63,6 +63,10 @@
       <div class="aa-table-header">
         <span class="aa-table-title">告警分析列表 · 待处理</span>
         <div class="aa-table-actions">
+          <a-button-group size="small">
+            <a-button :type="alarmViewMode === 'list' ? 'primary' : 'default'" @click="alarmViewMode = 'list'">列表</a-button>
+            <a-button :type="alarmViewMode === 'category' ? 'primary' : 'default'" @click="alarmViewMode = 'category'">分类视图</a-button>
+          </a-button-group>
           <a-select v-model:value="alarmStatusFilter" size="small" style="width:120px" placeholder="状态筛选" allow-clear>
             <a-select-option value="investigating">进行中</a-select-option>
             <a-select-option value="resolved">已闭环</a-select-option>
@@ -71,13 +75,29 @@
           <a-button size="small" @click="fetchAlarmData"><i class="fa-solid fa-rotate-right"></i></a-button>
         </div>
       </div>
+      <!-- Category Stats Bar -->
+      <div class="aa-category-stats" v-if="alarmIncidentCategoryStats.length">
+        <span
+          v-for="cs in alarmIncidentCategoryStats"
+          :key="cs.category"
+          class="aa-cat-tag"
+          :class="{ active: alarmCategoryFilter === cs.category }"
+          @click="alarmCategoryFilter = alarmCategoryFilter === cs.category ? '' : cs.category"
+        >
+          <span class="aa-cat-dot" :style="{ background: cs.heal_color === 'green' ? '#52c41a' : '#faad14' }"></span>
+          {{ cs.category }} {{ cs.count }}
+        </span>
+        <span class="aa-cat-summary">可自动修复 {{ autoHealCount }} 类 · 需人工配合 {{ manualHealCount }} 类</span>
+      </div>
+      <!-- List View -->
       <a-table
+        v-if="alarmViewMode === 'list'"
         :columns="alarmIncidentColumns"
         :data-source="filteredAlarmIncidents"
         :pagination="{ pageSize: 5, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
         row-key="incident_no"
         size="small"
-        :scroll="{ x: 800, y: 360 }"
+        :scroll="{ x: 900, y: 360 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'title'">
@@ -90,7 +110,9 @@
             <a-tag :color="record.level === 'critical' ? 'red' : 'orange'">{{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[record.level] || record.level }}</a-tag>
           </template>
           <template v-if="column.key === 'category'">
-            <a-tag>{{ record.category }}</a-tag>
+            <a-tag :color="record.heal_color === 'green' ? 'green' : 'orange'" style="cursor:pointer">
+              {{ record.category_label || record.category }}
+            </a-tag>
           </template>
           <template v-if="column.key === 'status'">
             <a-tag :color="{ investigating: 'processing', resolved: 'green', suppressed: 'default' }[record.status] || 'default'">
@@ -100,6 +122,14 @@
           <template v-if="column.key === 'handler'">
             <span v-if="record.handler === 'ai'" style="color:#722ED1"><i class="fa-solid fa-robot"></i> AI自动</span>
             <span v-else>{{ record.handler || '—' }}</span>
+          </template>
+          <template v-if="column.key === 'noise_reduction'">
+            <div class="noise-reduction-cell" @click.stop="openNoiseReductionDrawer(record)" style="cursor:pointer">
+              <div class="noise-reduction-bar">
+                <div class="noise-reduction-fill" :class="record.noise_reduction >= 80 ? 'high' : record.noise_reduction >= 50 ? 'medium' : 'low'" :style="{ width: record.noise_reduction + '%' }"></div>
+              </div>
+              <span class="noise-reduction-value" style="color:#1890ff;text-decoration:underline">{{ record.noise_reduction }}%</span>
+            </div>
           </template>
           <template v-if="column.key === 'action'">
             <div class="action-text-links">
@@ -114,6 +144,27 @@
           </template>
         </template>
       </a-table>
+      <!-- Category View -->
+      <div v-if="alarmViewMode === 'category'" class="aa-category-view">
+        <div v-for="cs in alarmIncidentCategoryStats" :key="cs.category" class="aa-cat-group">
+          <div class="aa-cat-group-header">
+            <span class="aa-cat-dot" :style="{ background: cs.heal_color === 'green' ? '#52c41a' : '#faad14' }"></span>
+            <span class="aa-cat-group-title">{{ cs.category }} ({{ cs.count }}条)</span>
+            <a-tag :color="cs.heal_color === 'green' ? 'green' : 'orange'" size="small">{{ cs.heal === 'auto' ? '可自动修复' : '需人工配合' }}</a-tag>
+            <span class="aa-cat-group-desc">{{ cs.desc }}</span>
+          </div>
+          <div class="aa-cat-group-list">
+            <div v-for="inc in filteredAlarmIncidents.filter(i => i.category === cs.category)" :key="inc.incident_no" class="aa-cat-item">
+              <span class="aa-cat-item-title" @click="goToFaultDetail(inc)">{{ inc.title }}</span>
+              <span class="aa-cat-item-id">{{ inc.incident_no }}</span>
+              <a-tag :color="{ investigating: 'processing', resolved: 'green', suppressed: 'default' }[inc.status]" size="small">
+                {{ { investigating: '进行中', resolved: '已闭环', suppressed: '已屏蔽' }[inc.status] || inc.status }}
+              </a-tag>
+            </div>
+            <div v-if="filteredAlarmIncidents.filter(i => i.category === cs.category).length === 0" class="aa-cat-empty">该分类暂无告警</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Row 4: Apps to watch -->
@@ -168,6 +219,60 @@
         </div>
       </template>
     </a-drawer>
+
+    <!-- Noise Reduction Detail Drawer -->
+    <a-drawer
+      :open="noiseDrawerVisible"
+      title="降噪处理详情"
+      :width="480"
+      placement="right"
+      @close="noiseDrawerVisible = false"
+    >
+      <template v-if="noiseDrawerRecord">
+        <div class="noise-drawer-overview">
+          <div class="noise-drawer-stat">
+            <div class="noise-drawer-stat-label">原始告警</div>
+            <div class="noise-drawer-stat-val">{{ noiseDrawerRecord.raw_count }}</div>
+          </div>
+          <div class="noise-drawer-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="noise-drawer-stat">
+            <div class="noise-drawer-stat-label">聚合后</div>
+            <div class="noise-drawer-stat-val">{{ noiseDrawerRecord.affected_count }}</div>
+          </div>
+          <div class="noise-drawer-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+          <div class="noise-drawer-stat">
+            <div class="noise-drawer-stat-label">降噪率</div>
+            <div class="noise-drawer-stat-val" :style="{ color: noiseDrawerRecord.noise_reduction >= 80 ? '#52c41a' : noiseDrawerRecord.noise_reduction >= 50 ? '#1890ff' : '#8c8c8c' }">{{ noiseDrawerRecord.noise_reduction }}%</div>
+          </div>
+        </div>
+
+        <div class="noise-drawer-section">
+          <div class="noise-drawer-section-title"><i class="fa-solid fa-gears"></i> 处理规则</div>
+          <div class="noise-drawer-rules">
+            <div class="noise-drawer-rule">同 title + metric 告警聚合为一组</div>
+            <div class="noise-drawer-rule">1 小时内触发 ≥ 3 次触发聚合</div>
+            <div class="noise-drawer-rule">聚合后仅保留首条告警，其余标记为已屏蔽</div>
+          </div>
+        </div>
+
+        <div class="noise-drawer-section">
+          <div class="noise-drawer-section-title"><i class="fa-solid fa-list-check"></i> 被聚合的告警 ({{ noiseDrawerRecord.raw_count - noiseDrawerRecord.affected_count }}条)</div>
+          <div class="noise-drawer-alert-list">
+            <div v-for="(alert, idx) in (noiseDrawerRecord.related_alerts || []).slice(0, noiseDrawerRecord.affected_count)" :key="alert.id || idx" class="noise-drawer-alert-item suppressed">
+              <a-tag :color="alert.level === 'critical' ? 'red' : alert.level === 'warning' ? 'orange' : 'default'" size="small">
+                {{ { critical: 'P1', warning: 'P2', info: 'P3' }[alert.level] || alert.level }}
+              </a-tag>
+              <span class="noise-drawer-alert-title">{{ alert.title }}</span>
+              <span class="noise-drawer-alert-resource">{{ alert.resource }}</span>
+              <a-tag color="default" size="small">已屏蔽</a-tag>
+            </div>
+            <div v-if="noiseDrawerRecord.raw_count - noiseDrawerRecord.affected_count > noiseDrawerRecord.affected_count" class="noise-drawer-alert-more">
+              + {{ noiseDrawerRecord.raw_count - noiseDrawerRecord.affected_count - noiseDrawerRecord.affected_count }} 条更多告警已屏蔽...
+            </div>
+          </div>
+        </div>
+      </template>
+    </a-drawer>
   </div>
 </template>
 
@@ -186,6 +291,9 @@ const alarmCategoryStats = ref([])
 const alarmIncidents = ref([])
 const alarmStatusFilter = ref(null)
 const alarmSearchText = ref('')
+const alarmViewMode = ref('list')
+const alarmCategoryFilter = ref('')
+const alarmIncidentCategoryStats = ref([])
 const alarmApps = ref([])
 const alarmAppCounts = ref({ critical: 0, warning: 0 })
 const alarmHealingRecords = ref([])
@@ -199,6 +307,14 @@ const relatedDrawerVisible = ref(false)
 const relatedDrawerRecord = ref(null)
 const drawerWidth = ref(Math.min(window.innerWidth * 0.9, 1200))
 function onDrawerResize() { drawerWidth.value = Math.min(window.innerWidth * 0.9, 1200) }
+
+// Noise Reduction Drawer
+const noiseDrawerVisible = ref(false)
+const noiseDrawerRecord = ref(null)
+function openNoiseReductionDrawer(record) {
+  noiseDrawerRecord.value = record
+  noiseDrawerVisible.value = true
+}
 const relatedAlertColumns = [
   { title: '级别', key: 'level', width: 60 },
   { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
@@ -214,9 +330,10 @@ const alarmIncidentColumns = [
   { title: '故障ID', dataIndex: 'incident_no', key: 'incident_no', width: 120, ellipsis: true },
   { title: '关联告警', dataIndex: 'affected_count', key: 'affected_count', width: 70 },
   { title: '级别', key: 'level', width: 80 },
-  { title: '分类', key: 'category', width: 80, filters: [{ text: '容量类', value: '容量类' }, { text: '阈值类', value: '阈值类' }, { text: '网络类', value: '网络类' }, { text: '证书类', value: '证书类' }, { text: '服务类', value: '服务类' }, { text: '硬件类', value: '硬件类' }], onFilter: (val, rec) => rec.category === val },
+  { title: '分类策略', key: 'category', width: 120, filters: [{ text: '容量类', value: '容量类' }, { text: '阈值类', value: '阈值类' }, { text: '网络类', value: '网络类' }, { text: '证书类', value: '证书类' }, { text: '服务类', value: '服务类' }, { text: '硬件类', value: '硬件类' }, { text: '配置类', value: '配置类' }], onFilter: (val, rec) => rec.category === val },
   { title: '状态', key: 'status', width: 80, filters: [{ text: '进行中', value: 'investigating' }, { text: '已闭环', value: 'resolved' }, { text: '已屏蔽', value: 'suppressed' }], onFilter: (val, rec) => rec.status === val },
   { title: '处理人', key: 'handler', width: 90, filters: [{ text: 'AI自动', value: 'ai' }, { text: '手动', value: 'manual' }], onFilter: (val, rec) => val === 'ai' ? rec.handler === 'ai' : rec.handler && rec.handler !== 'ai' },
+  { title: '降噪效果', key: 'noise_reduction', width: 120 },
   { title: '操作', key: 'action', width: 80, fixed: 'right' },
 ]
 
@@ -235,6 +352,7 @@ async function fetchAlarmData() {
     }
     if (incRes.success) {
       alarmIncidents.value = incRes.data
+      alarmIncidentCategoryStats.value = incRes.categoryStats || []
       const appMap = {}
       for (const inc of incRes.data) {
         for (const a of (inc.related_alerts || [])) {
@@ -317,12 +435,16 @@ function renderAlarmTrendChart() {
 const filteredAlarmIncidents = computed(function() {
   let list = alarmIncidents.value
   if (alarmStatusFilter.value) list = list.filter(a => a.status === alarmStatusFilter.value)
+  if (alarmCategoryFilter.value) list = list.filter(a => a.category === alarmCategoryFilter.value)
   if (alarmSearchText.value) {
     const kw = alarmSearchText.value.toLowerCase()
     list = list.filter(a => a.title.toLowerCase().includes(kw) || (a.incident_no || '').toLowerCase().includes(kw) || (a.root_cause || '').toLowerCase().includes(kw))
   }
   return list
 })
+
+const autoHealCount = computed(() => alarmIncidentCategoryStats.value.filter(s => s.heal === 'auto').length)
+const manualHealCount = computed(() => alarmIncidentCategoryStats.value.filter(s => s.heal !== 'auto').length)
 
 function goToFaultDetail(record) {
   router.push('/ops/incident/' + (record.incident_no || record.id))
@@ -397,6 +519,24 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .related-drawer-incident { font-size: 13px; color: #595959; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
 .related-drawer-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; text-align: right; }
 .aa-empty-text { font-size: 13px; color: #8C8C8C; text-align: center; padding: 24px; }
+.aa-category-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.aa-cat-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 12px; color: #595959; cursor: pointer; transition: all 0.2s; border: 1px solid #e8e8e8; }
+.aa-cat-tag:hover { border-color: var(--brand, #007DFF); color: var(--brand, #007DFF); }
+.aa-cat-tag.active { background: var(--brand, #007DFF); color: #fff; border-color: var(--brand, #007DFF); }
+.aa-cat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.aa-cat-summary { font-size: 11px; color: #8C8C8C; margin-left: 8px; }
+.aa-category-view { display: flex; flex-direction: column; gap: 12px; padding: 12px 0; }
+.aa-cat-group { border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden; }
+.aa-cat-group-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #fafafa; border-bottom: 1px solid #f0f0f0; }
+.aa-cat-group-title { font-size: 13px; font-weight: 600; color: #1A1A1A; }
+.aa-cat-group-desc { font-size: 11px; color: #8C8C8C; }
+.aa-cat-group-list { padding: 8px 14px; }
+.aa-cat-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f5f5f5; }
+.aa-cat-item:last-child { border-bottom: none; }
+.aa-cat-item-title { color: var(--brand, #007DFF); cursor: pointer; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aa-cat-item-title:hover { text-decoration: underline; }
+.aa-cat-item-id { font-size: 11px; color: #8C8C8C; flex-shrink: 0; }
+.aa-cat-empty { font-size: 12px; color: #8C8C8C; padding: 12px; text-align: center; }
 @media (max-width: 1200px) { .aa-hero-row { grid-template-columns: repeat(2, 1fr); } .aa-chart-row { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) {
   .aa-hero-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -420,4 +560,31 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
   .aa-hero-card { padding: 10px; }
   .aa-hero-val { font-size: 18px; }
 }
+
+/* 降噪效果列 */
+.noise-reduction-cell { display: flex; align-items: center; gap: 6px; }
+.noise-reduction-bar { width: 60px; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.noise-reduction-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.noise-reduction-fill.high { background: #52c41a; }
+.noise-reduction-fill.medium { background: #1890ff; }
+.noise-reduction-fill.low { background: #d9d9d9; }
+.noise-reduction-value { font-size: 12px; font-weight: 500; color: #1a1a1a; }
+
+/* 降噪详情 Drawer */
+.noise-drawer-overview { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 20px; background: #fafafa; border-radius: 8px; margin-bottom: 24px; }
+.noise-drawer-stat { text-align: center; }
+.noise-drawer-stat-label { font-size: 12px; color: #8c8c8c; margin-bottom: 4px; }
+.noise-drawer-stat-val { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+.noise-drawer-arrow { color: #d9d9d9; font-size: 14px; }
+.noise-drawer-section { margin-bottom: 20px; }
+.noise-drawer-section-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.noise-drawer-rules { background: #f6f8fa; border-radius: 6px; padding: 12px; }
+.noise-drawer-rule { font-size: 12px; color: #595959; padding: 4px 0; display: flex; align-items: center; gap: 6px; }
+.noise-drawer-rule::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: #1890ff; flex-shrink: 0; }
+.noise-drawer-alert-list { display: flex; flex-direction: column; gap: 6px; }
+.noise-drawer-alert-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border: 1px solid #f0f0f0; border-radius: 6px; font-size: 12px; }
+.noise-drawer-alert-item.suppressed { background: #fafafa; opacity: 0.7; }
+.noise-drawer-alert-title { flex: 1; color: #1a1a1a; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.noise-drawer-alert-resource { color: #8c8c8c; font-size: 11px; flex-shrink: 0; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.noise-drawer-alert-more { font-size: 11px; color: #8c8c8c; text-align: center; padding: 8px; }
 </style>

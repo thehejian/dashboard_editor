@@ -140,7 +140,7 @@ test.describe('告警分析 — 页面5行布局', () => {
     await expect(rows.first()).toBeVisible()
   })
 
-  test('Row3: 表格列包含故障名称、故障ID、级别、分类、状态、处理人、操作', async ({ page }) => {
+  test('Row3: 表格列包含故障名称、故障ID、级别、分类策略、状态、处理人、操作', async ({ page }) => {
     const headers = page.locator('.ant-table-thead th')
     const headerTexts = await headers.allTextContents()
     const joined = headerTexts.join(' ')
@@ -235,6 +235,79 @@ test.describe('告警分析 — 表格交互', () => {
   test('处理人显示：AI自动带机器人图标，手动显示人名', async ({ page }) => {
     const aiHandler = page.locator('.ant-table-tbody', { hasText: 'AI自动' })
     await expect(aiHandler).toBeVisible()
+  })
+})
+
+test.describe('告警分析 — 分类视图', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/alarm/overview-stats**', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_OVERVIEW_STATS) })
+    })
+    await page.route('**/api/alarm/incidents**', async route => {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [
+            { incident_no: 'INC-001', title: 'CPU负载过高触发自动扩容', level: 'critical', category: '阈值类', status: 'investigating', handler: 'ai', affected_count: 3, related_alerts: [{ resource: 'server-01', level: 'critical', category: '计算' }] },
+            { incident_no: 'INC-002', title: '数据库连接池耗尽', level: 'warning', category: '容量类', status: 'resolved', handler: 'manual', affected_count: 5, related_alerts: [{ resource: 'db-01', level: 'warning', category: '数据库' }] },
+            { incident_no: 'INC-003', title: '证书即将过期', level: 'warning', category: '证书类', status: 'suppressed', handler: 'ai', affected_count: 2, related_alerts: [] },
+            { incident_no: 'INC-004', title: '网络延迟超阈值', level: 'critical', category: '网络类', status: 'investigating', handler: null, affected_count: 8, related_alerts: [{ resource: 'switch-01', level: 'critical', category: '网络' }] },
+            { incident_no: 'INC-005', title: '磁盘IO等待过高', level: 'info', category: '硬件类', status: 'resolved', handler: 'ai', affected_count: 1, related_alerts: [] },
+            { incident_no: 'INC-006', title: '内存泄漏检测', level: 'warning', category: '服务类', status: 'investigating', handler: 'manual', affected_count: 4, related_alerts: [{ resource: 'app-01', level: 'warning', category: '应用' }] },
+            { incident_no: 'INC-007', title: '安全组规则违规', level: 'warning', category: '配置类', status: 'investigating', handler: 'ai', affected_count: 2, related_alerts: [] },
+          ],
+          categoryStats: [
+            { category: '阈值类', count: 1, heal: 'assist', color: 'orange', desc: '性能指标越限' },
+            { category: '容量类', count: 1, heal: 'auto', color: 'green', desc: 'CPU/时延/IOPS瓶颈' },
+            { category: '证书类', count: 1, heal: 'auto', color: 'green', desc: 'SSL/AK-SK泄露' },
+            { category: '网络类', count: 1, heal: 'assist', color: 'orange', desc: '专线/BGP/南北向' },
+            { category: '硬件类', count: 1, heal: 'auto', color: 'green', desc: '物理机/交换机' },
+            { category: '服务类', count: 1, heal: 'auto', color: 'green', desc: '进程退出/主备切换' },
+            { category: '配置类', count: 1, heal: 'auto', color: 'green', desc: '暴露端口/策略违规' },
+          ]
+        })
+      })
+    })
+    await page.goto('http://admin:745544752@localhost:5173/overview?tab=alarm')
+    await page.waitForSelector('.aa-table-card', { timeout: 15000 })
+  })
+
+  test('分类统计条显示7个分类标签', async ({ page }) => {
+    const catTags = page.locator('.aa-cat-tag')
+    await expect(catTags.first()).toBeVisible()
+    const count = await catTags.count()
+    expect(count).toBe(7)
+  })
+
+  test('点击分类视图按钮切换到分类视图', async ({ page }) => {
+    await page.click('button:has-text("分类视图")')
+    await page.waitForTimeout(300)
+    const catView = page.locator('.aa-category-view')
+    await expect(catView).toBeVisible()
+    const groups = page.locator('.aa-cat-group')
+    const count = await groups.count()
+    expect(count).toBe(7)
+  })
+
+  test('分类视图显示各分类的告警数量', async ({ page }) => {
+    await page.click('button:has-text("分类视图")')
+    await page.waitForTimeout(300)
+    const titles = await page.locator('.aa-cat-group-title').allTextContents()
+    expect(titles.some(t => t.includes('阈值类'))).toBeTruthy()
+    expect(titles.some(t => t.includes('容量类'))).toBeTruthy()
+    expect(titles.some(t => t.includes('硬件类'))).toBeTruthy()
+    // 每个分类各1条
+    for (const t of titles) {
+      expect(t).toContain('(1条)')
+    }
+  })
+
+  test('点击分类标签筛选该分类的告警', async ({ page }) => {
+    await page.click('.aa-cat-tag:first-child')
+    await page.waitForTimeout(300)
+    const activeTag = page.locator('.aa-cat-tag.active')
+    await expect(activeTag).toBeVisible()
   })
 })
 

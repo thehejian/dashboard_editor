@@ -1280,6 +1280,114 @@ const MOCK_INCIDENTS = [
       { time: '11:35', event: 'AI 检测', type: 'detection', detail: '根因定位: Agent 异常停止' },
     ],
   },
+  {
+    id: 'INC-2026-0723',
+    title: 'CDN域名SSL证书即将过期',
+    description: 'cdn-domain.example.com 的SSL证书剩余15天到期，需及时续期否则将影响HTTPS访问。',
+    status: 'investigating',
+    severity: 'P2',
+    appName: 'CDN服务',
+    appNodeId: 'cdn-edge-01',
+    service: 'ssl-cert',
+    startTime: '2026-06-17 08:00:00',
+    endTime: null,
+    duration: '持续',
+    metrics: {
+      p99: { current: 0, baseline: 0, unit: 'ms', multiplier: '' },
+      failureRate: { current: 0, unit: '%', label: '证书即将失效' },
+      affectedUsers: { current: 0, label: '受影响用户' },
+      affectedSessions: { current: 0, label: '受影响会话' },
+    },
+    healingProgress: 20,
+    relatedAlertIds: [8],
+    topologyNodeIds: ['cdn-edge-01', 'lb-api'],
+    impactScope: '证书过期后所有HTTPS访问将出现安全警告',
+    timeline: [
+      { time: '08:00', event: '告警触发', type: 'alert', detail: 'SSL证书剩余15天' },
+      { time: '08:05', event: 'AI 检测', type: 'detection', detail: '建议自动续期证书' },
+    ],
+  },
+  {
+    id: 'INC-2026-0724',
+    title: '华北区域核心交换机丢包率过高',
+    description: 'switch-01 交换机端口错误帧激增，导致华北区域核心链路丢包率超过阈值。',
+    status: 'investigating',
+    severity: 'P2',
+    appName: '网络基础设施',
+    appNodeId: 'switch-01',
+    service: 'network-core',
+    startTime: '2026-06-17 06:30:00',
+    endTime: null,
+    duration: '45min',
+    metrics: {
+      p99: { current: 0, baseline: 0, unit: 'ms', multiplier: '' },
+      failureRate: { current: 2.1, unit: '%', label: '丢包率' },
+      affectedUsers: { current: 0, label: '受影响用户' },
+      affectedSessions: { current: 0, label: '受影响会话' },
+    },
+    healingProgress: 30,
+    relatedAlertIds: [11, 16],
+    topologyNodeIds: ['switch-01', 'router-01'],
+    impactScope: '华北区域所有业务受影响，延迟升高',
+    timeline: [
+      { time: '06:30', event: '告警触发', type: 'alert', detail: '丢包率2.1%超过阈值1%' },
+      { time: '06:35', event: 'AI 检测', type: 'detection', detail: '根因定位: 交换机端口错误帧' },
+    ],
+  },
+  {
+    id: 'INC-2026-0725',
+    title: '物理机CPU温度过高触发保护',
+    description: 'server-003 CPU温度持续升高至92°C，已触发硬件过温保护，需人工介入检查散热。',
+    status: 'investigating',
+    severity: 'P1',
+    appName: '物理服务器',
+    appNodeId: 'server-003',
+    service: 'hw-monitor',
+    startTime: '2026-06-17 11:00:00',
+    endTime: null,
+    duration: '10min',
+    metrics: {
+      p99: { current: 92, baseline: 65, unit: '°C', multiplier: '1.4x 升高' },
+      failureRate: { current: 0, unit: '%', label: '过温保护触发' },
+      affectedUsers: { current: 0, label: '受影响用户' },
+      affectedSessions: { current: 0, label: '受影响会话' },
+    },
+    healingProgress: 10,
+    relatedAlertIds: [13, 14],
+    topologyNodeIds: ['server-003', 'switch-02'],
+    impactScope: 'server-003 已触发过温保护，需迁移工作负载',
+    timeline: [
+      { time: '11:00', event: '告警触发', type: 'alert', detail: 'CPU温度92°C超过阈值85°C' },
+      { time: '11:02', event: 'AI 检测', type: 'detection', detail: '建议迁移至备用节点' },
+    ],
+  },
+  {
+    id: 'INC-2026-0726',
+    title: '安全组规则对外开放高危端口',
+    description: 'sg-001 安全组存在0.0.0.0/0全开规则，暴露高危端口，需立即收紧。',
+    status: 'investigating',
+    severity: 'P2',
+    appName: '云安全',
+    appNodeId: 'sg-001',
+    service: 'security-group',
+    startTime: '2026-06-17 08:00:00',
+    endTime: null,
+    duration: '持续',
+    metrics: {
+      p99: { current: 0, baseline: 0, unit: 'ms', multiplier: '' },
+      failureRate: { current: 0, unit: '%', label: '合规风险' },
+      affectedUsers: { current: 0, label: '受影响用户' },
+      affectedSessions: { current: 0, label: '受影响会话' },
+    },
+    healingProgress: 0,
+    relatedAlertIds: [15],
+    topologyNodeIds: ['sg-001'],
+    impactScope: '存在未授权访问风险，需立即处理',
+    timeline: [
+      { time: '08:00', event: '告警触发', type: 'alert', detail: '安全组规则0.0.0.0/0全开' },
+      { time: '08:05', event: 'AI 检测', type: 'detection', detail: '建议自动拦截并收紧规则' },
+    ],
+  },
 ]
 
 // Snapshot of initial incident IDs so tests can reset aggregate-created incidents
@@ -2089,6 +2197,16 @@ app.get('/api/sre/rca-reports', (req, res) => {
 
 // ==================== AI 告警分析接口 ====================
 
+const CATEGORY_STRATEGY = {
+  '容量类': { label: '容量·AI自愈', heal: 'auto', color: 'green', desc: 'CPU/时延/IOPS瓶颈 · 极易AI自动修复' },
+  '阈值类': { label: '阈值·人工诊断', heal: 'assist', color: 'orange', desc: '性能指标越限 · QA根因诊断辅助' },
+  '证书类': { label: '证书·自动续期', heal: 'auto', color: 'green', desc: 'SSL/AK-SK泄露 · 可自动展期修复' },
+  '硬件类': { label: '硬件·自动重启', heal: 'auto', color: 'green', desc: '物理机/交换机 · 自动重启拉起' },
+  '网络类': { label: '网络·拓扑分析', heal: 'assist', color: 'orange', desc: '专线/BGP/南北向 · 拓扑聚合关键' },
+  '服务类': { label: '服务·自动拉起', heal: 'auto', color: 'green', desc: '进程退出/主备切换 · 自动重启拉起' },
+  '配置类': { label: '配置·自动拦截', heal: 'auto', color: 'green', desc: '暴露端口/策略违规 · 自动执行拦截/隔离' },
+}
+
 // GET /api/alarm/incidents — 告警聚合事件列表
 app.get('/api/alarm/incidents', (req, res) => {
   const alerts = getTable('alerts') || []
@@ -2097,14 +2215,22 @@ app.get('/api/alarm/incidents', (req, res) => {
     const key = a.incident_id || 'UNLINKED-' + a.id
     const sreIncident = a.incident_id ? MOCK_INCIDENTS.find(i => i.id === a.incident_id) : null
     if (!groupMap[key]) {
+      const cat = a.category || '其他'
+      const strategy = CATEGORY_STRATEGY[cat] || { label: cat, heal: 'manual', color: 'default', desc: '' }
       groupMap[key] = {
         incident_no: key,
         title: sreIncident?.title || a.title,
         root_cause: sreIncident?.description || a.title,
         level: a.level,
-        category: a.category || '其他',
+        category: cat,
+        category_label: strategy.label,
+        heal_strategy: strategy.heal,
+        heal_color: strategy.color,
+        heal_desc: strategy.desc,
         status: a.status === 'firing' ? 'investigating' : a.status === 'resolved' ? 'resolved' : 'suppressed',
         affected_count: 1,
+        raw_count: 0,
+        noise_reduction: 0,
         handler: a.incident_id ? 'ai' : 'manual',
         created_at: a.trigger_time,
         related_alerts: [a],
@@ -2115,10 +2241,32 @@ app.get('/api/alarm/incidents', (req, res) => {
       if (a.level === 'critical') groupMap[key].level = 'critical'
     }
   }
+
+  // 计算降噪率：raw_count 模拟聚合前告警数
+  for (const key of Object.keys(groupMap)) {
+    const g = groupMap[key]
+    const count = g.affected_count
+    // 模拟：聚合前告警数 = 当前数 × (2~4倍)，降噪率 = (1 - count/raw) × 100%
+    const multiplier = count <= 2 ? 3 : count <= 4 ? 2.5 : 2
+    g.raw_count = Math.round(count * multiplier)
+    g.noise_reduction = Math.round((1 - count / g.raw_count) * 100)
+  }
+
   const data = Object.values(groupMap)
     .filter(g => MOCK_INCIDENTS.some(i => i.id === g.incident_no))
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
-  res.json({ success: true, data })
+
+  const categoryStats = {}
+  for (const d of data) {
+    const cat = d.category
+    if (!categoryStats[cat]) {
+      const strategy = CATEGORY_STRATEGY[cat] || { label: cat, heal: 'manual', color: 'default', desc: '' }
+      categoryStats[cat] = { category: cat, count: 0, ...strategy }
+    }
+    categoryStats[cat].count++
+  }
+
+  res.json({ success: true, data, categoryStats: Object.values(categoryStats) })
 })
 
 // GET /api/alarm/incidents/:id — 单个 Incident 完整分析数据
@@ -2213,6 +2361,42 @@ app.get('/api/alarm/overview-stats', (req, res) => {
         { id: 3, time: '06-16 23:00', alert: 'NTP偏移过大', resource: 'ntp-server', action: '重启NTP服务', result: 'success', duration: '30s', incidentId: 'INC-2026-0718' },
         { id: 4, time: '06-16 18:00', alert: '证书即将过期', resource: 'cdn-domain', action: '申请新证书(待审批)', result: 'pending', duration: '—', incidentId: 'INC-2026-0717' },
       ],
+    }
+  })
+})
+
+// AI 智能聚合降噪
+app.post('/api/alarm/ai-aggregate', (req, res) => {
+  const { alerts, groupKey } = req.body || {}
+  if (!alerts || !Array.isArray(alerts) || alerts.length === 0) {
+    return res.json({ success: false, message: 'alerts 不能为空' })
+  }
+
+  const count = alerts.length
+  const suppressWindow = Math.min(count * 5, 60)
+  const noiseReduction = Math.round((count - 1) / count * 100)
+
+  const rootCauseMap = {
+    'CPU使用率': '多台服务器同时出现 CPU 飙升，推测为统一调度任务或流量突增导致',
+    '磁盘使用率': '多节点磁盘使用率同步升高，可能存在日志暴涨或批处理任务写入',
+  }
+  const metric = alerts[0] ? alerts[0].metric : ''
+  const rootCause = rootCauseMap[metric] || '同类告警高频触发，建议聚合处理'
+
+  const suggestionsMap = {
+    'CPU使用率': ['检查定时任务是否有异常调度', '查看应用层慢请求日志', '确认是否有批处理作业集中执行'],
+    '磁盘使用率': ['清理过期日志和临时文件', '检查大表归档任务', '评估是否需要扩容'],
+  }
+  const suggestions = suggestionsMap[metric] || ['确认告警根因', '检查关联资源', '评估影响范围']
+
+  res.json({
+    success: true,
+    data: {
+      rootCause,
+      suggestions,
+      suppressWindow: suppressWindow + '分钟',
+      noiseReduction: noiseReduction + '%',
+      incidentId: null,
     }
   })
 })

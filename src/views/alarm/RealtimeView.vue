@@ -117,28 +117,51 @@
               <template v-if="column.key === 'title'">
                 <template v-if="record.aiSuggest">
                   <div class="ai-title-cell">
-                    <a-tooltip placement="right" :overlay-style="{ maxWidth: '480px' }">
+                    <a-tooltip placement="right" :overlay-style="{ maxWidth: '520px' }">
                       <template #title>
                         <div class="ai-tip-content">
-                          <div class="ai-tip-header"><i class="fa-solid fa-robot"></i> AI 智能聚合推荐</div>
-                          <div class="ai-tip-count">近1小时内同类告警触发 <b>{{ record.aiSuggest.count }}</b> 次</div>
-                          <div class="ai-tip-resources">
-                            <div class="ai-tip-res-label">涉及资源：</div>
-                            <div v-for="ra in record.aiSuggest.alerts" :key="ra.id" class="ai-tip-res-row" :class="'level-' + ra.level" @click.stop="openDetail(ra)">
-                              <a-tag :color="getLevelColor(ra.level)" size="small">{{ getLevelText(ra.level) }}</a-tag>
-                              <span class="ai-tip-res-name">{{ ra.resource }}</span>
-                              <span class="ai-tip-res-metric">{{ ra.metric }} {{ ra.currentValue }} / {{ ra.threshold }}</span>
+                          <div class="ai-tip-header">
+                            <i class="fa-solid fa-star ai-star-icon"></i>
+                            发现重复告警模式
+                          </div>
+                          <div class="ai-tip-summary">
+                            "<b>{{ record.title }}</b>" 在过去24小时里重复触发 <b>{{ record.aiSuggest.count }}</b> 次。
+                          </div>
+                          <div class="ai-tip-stats">
+                            <div class="ai-tip-stat-item">
+                              <span class="ai-tip-stat-label">建议抑制窗口</span>
+                              <span class="ai-tip-stat-value">{{ Math.min(record.aiSuggest.count * 5, 60) }}分钟</span>
+                            </div>
+                            <div class="ai-tip-stat-item">
+                              <span class="ai-tip-stat-label">预估降噪效果</span>
+                              <span class="ai-tip-stat-value">{{ Math.round((record.aiSuggest.count - 1) / record.aiSuggest.count * 100) }}%</span>
                             </div>
                           </div>
-                          <div class="ai-tip-tip">点击聚合组中任意资源可查看详情</div>
-                          <div class="ai-tip-action">
-                            <a-button size="small" type="primary" :loading="aggregatingKeys[record.aiSuggest.key]" @click.stop="aggregateAlerts(record.aiSuggest.key)">
-                              <i class="fa-solid fa-filter"></i> 执行 AI 聚合分析
+                          <div class="ai-tip-divider"></div>
+                          <div class="ai-tip-resources">
+                            <div class="ai-tip-res-label">关联资源 ({{ record.aiSuggest.alerts.length }}个):</div>
+                            <div v-for="ra in record.aiSuggest.alerts.slice(0, 3)" :key="ra.id" class="ai-tip-res-row" :class="'level-' + ra.level" @click.stop="openDetail(ra)">
+                              <a-tag :color="getLevelColor(ra.level)" size="small">{{ getLevelText(ra.level) }}</a-tag>
+                              <span class="ai-tip-res-name">{{ ra.resource }}</span>
+                              <span class="ai-tip-res-metric">{{ ra.metric }} {{ ra.currentValue }}</span>
+                              <span class="ai-tip-res-time">{{ ra.displayDuration }}前</span>
+                            </div>
+                            <div v-if="record.aiSuggest.alerts.length > 3" class="ai-tip-res-more">+ {{ record.aiSuggest.alerts.length - 3 }} more...</div>
+                          </div>
+                          <div class="ai-tip-actions">
+                            <a-button size="small" type="primary" class="ai-action-btn" :loading="aggregatingKeys[record.aiSuggest.key]" @click.stop="aggregateAlerts(record.aiSuggest.key)">
+                              应用推荐规则
+                            </a-button>
+                            <a-button size="small" class="ai-action-btn" @click.stop="openCustomAdjust(record)">
+                              自定义调整
+                            </a-button>
+                            <a-button type="link" size="small" class="ai-detail-link" @click.stop="openDetail(record)">
+                              查看详情
                             </a-button>
                           </div>
                         </div>
                       </template>
-                      <span class="alert-link ai-title-link"><i class="fa-solid fa-fire-flame-curved ai-badge-icon"></i>{{ record.title }}</span>
+                      <span class="alert-link ai-title-link"><i class="fa-solid fa-star ai-badge-icon"></i>{{ record.title }}</span>
                       <span class="ai-badge">{{ record.aiSuggest.count }}</span>
                     </a-tooltip>
                   </div>
@@ -1079,20 +1102,15 @@ function aggregateAlerts(key) {
     .then(function(json) {
       if (json.success) {
         var result = json.data || json
-        console.log('[AI-Agg] success, key:', key, 'alerts count:', alerts.length)
         aggregatedGroups.value[key] = { alerts: alerts, aiResult: result }
-        console.log('[AI-Agg] aggregatedGroups set, keys:', Object.keys(aggregatedGroups.value))
         // 将同组 firing 告警标记为已聚合（相当于静默）
         var alertIds = new Set(alerts.map(function(a) { return a.id }))
-        var oldLen = realtimeAlerts.value.length
         realtimeAlerts.value = realtimeAlerts.value.map(function(a) {
           if (alertIds.has(a.id) && a.status === 'firing') {
             return Object.assign({}, a, { status: 'suppressed', muteReason: 'AI聚合降噪', mutedAt: new Date().toISOString() })
           }
           return a
         })
-        console.log('[AI-Agg] realtimeAlerts updated, old:', oldLen, 'new:', realtimeAlerts.value.length)
-        console.log('[AI-Agg] groupFiringAlerts keys:', Object.keys(groupFiringAlerts.value))
         message.success('AI 聚合分析完成，已生成 ' + (result.incidentId ? '故障单 ' + result.incidentId : '聚合组'))
       } else {
         message.error(json.message || 'AI 聚合分析失败')
@@ -1111,6 +1129,16 @@ function expandGroup(key) {
   var state = aggregationBannerState.value[key] || {}
   aggregationBannerState.value = Object.assign({}, aggregationBannerState.value, {
     [key]: Object.assign({}, state, { expanded: !state.expanded })
+  })
+}
+
+function openCustomAdjust(record) {
+  if (!record || !record.aiSuggest) return
+  Modal.confirm({
+    title: '自定义抑制窗口',
+    content: '请设置抑制时长（分钟）',
+    okText: '确认',
+    cancelText: '取消',
   })
 }
 
@@ -1838,9 +1866,9 @@ onBeforeUnmount(function() {
 
 /* AI 提示 badge + tooltip */
 .ai-title-cell { display: flex; align-items: center; gap: 4px; }
-.ai-title-link { color: var(--brand); cursor: pointer; }
+.ai-title-link { color: var(--brand); cursor: pointer; margin-right: 4px; }
 .ai-title-link:hover { text-decoration: underline; }
-.ai-badge-icon { color: #fa8c16; font-size: 11px; margin-right: 2px; }
+.ai-badge-icon { color: #1890ff; font-size: 11px; margin-right: 2px; }
 .ai-badge {
   display: inline-flex;
   align-items: center;
@@ -1854,11 +1882,19 @@ onBeforeUnmount(function() {
   font-size: 11px;
   font-weight: 600;
   flex-shrink: 0;
+  margin-left: 0;
 }
-.ai-tip-content { padding: 2px 0; }
-.ai-tip-header { font-size: 13px; font-weight: 600; color: #722ed1; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.ai-tip-count { font-size: 12px; color: #595959; margin-bottom: 8px; }
-.ai-tip-count b { color: #ff4d4f; }
+
+.ai-tip-content { padding: 4px 0; }
+.ai-tip-header { font-size: 14px; font-weight: 600; color: #1890ff; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.ai-star-icon { color: #1890ff; font-size: 14px; }
+.ai-tip-summary { font-size: 13px; color: #1a1a1a; margin-bottom: 14px; line-height: 1.5; }
+.ai-tip-summary b { color: #1a1a1a; }
+.ai-tip-stats { display: flex; gap: 20px; margin-bottom: 12px; }
+.ai-tip-stat-item { display: flex; flex-direction: column; gap: 2px; }
+.ai-tip-stat-label { font-size: 11px; color: #8c8c8c; }
+.ai-tip-stat-value { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+.ai-tip-divider { height: 1px; background: #f0f0f0; margin: 10px 0; }
 .ai-tip-resources { margin-bottom: 10px; }
 .ai-tip-res-label { font-size: 11px; color: #8c8c8c; margin-bottom: 4px; }
 .ai-tip-res-row {
@@ -1878,8 +1914,11 @@ onBeforeUnmount(function() {
 .ai-tip-res-row.level-warning:hover { background: #ffe7ba; }
 .ai-tip-res-name { flex: 1; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .ai-tip-res-metric { color: #8c8c8c; font-size: 11px; flex-shrink: 0; }
-.ai-tip-tip { font-size: 11px; color: #8c8c8c; margin-bottom: 8px; }
-.ai-tip-action { border-top: 1px solid #f0f0f0; padding-top: 8px; }
+.ai-tip-res-time { color: #bfbfbf; font-size: 11px; flex-shrink: 0; }
+.ai-tip-res-more { font-size: 11px; color: #8c8c8c; padding: 4px 6px; }
+.ai-tip-actions { display: flex; align-items: center; gap: 8px; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+.ai-action-btn { border-radius: 4px; }
+.ai-detail-link { padding: 0; height: auto; }
 
 .history-alerts { display: flex; flex-direction: column; height: 100%; }
 .history-alerts .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-shrink: 0; align-items: center; }
@@ -2132,5 +2171,20 @@ onBeforeUnmount(function() {
   .detail-panel.open .detail-panel-content { right: 0; }
   .detail-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .info-cards, .impact-section { grid-template-columns: 1fr; }
+}
+</style>
+
+<style>
+/* Tooltip 白色背景覆盖（非 scoped，因 tooltip 渲染在 portal 中） */
+.ant-tooltip .ant-tooltip-inner {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid #f0f0f0 !important;
+  border-radius: 8px !important;
+}
+.ant-tooltip .ant-tooltip-arrow::before,
+.ant-tooltip .ant-tooltip-arrow::after {
+  background: #fff !important;
 }
 </style>

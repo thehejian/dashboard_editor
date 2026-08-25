@@ -182,3 +182,40 @@ Dashboard 特殊：`/dashboard/:slug` → `EmptyRoute.vue`，由 `App.vue` `v-if
 - **高亮规则**：`/alarm-analysis*` 高亮"首页"菜单，`/alarm*`（排除 alarm-analysis）高亮"告警"菜单
 - **重定向**：`/alarm-analysis` → `/overview?tab=alarm`，详情页 `/alarm-analysis/:id` 独立路由
 - **详情页 `:id`**：= incident_no（如 `INC-2026-0720`），通过 `route.params.id` 取值
+
+## Ant Design Tooltip 样式覆盖经验
+
+### 核心问题
+Ant Design Vue 的 Tooltip 组件渲染在 **portal**（`document.body` 下），不在组件 DOM 树内。`<style scoped>` 的 `data-v-xxx` 属性无法匹配到 portal 中的元素，导致 scoped 样式完全失效。
+
+### 解决方案
+必须在组件中添加**非 scoped** 的 `<style>` 块来覆盖 Tooltip 样式：
+
+```vue
+<style scoped>
+/* 组件内部样式 */
+</style>
+
+<style>
+/* Tooltip 样式覆盖（非 scoped，因 tooltip 渲染在 portal 中） */
+.ant-tooltip .ant-tooltip-inner {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid #f0f0f0 !important;
+  border-radius: 8px !important;
+}
+.ant-tooltip .ant-tooltip-arrow::before,
+.ant-tooltip .ant-tooltip-arrow::after {
+  background: #fff !important;
+}
+</style>
+```
+
+### 经验教训
+1. **`<style scoped>` 对 portal 组件无效**：Tooltip、Modal、Dropdown 等渲染在 `document.body` 的组件，scoped 样式无法穿透
+2. **`:deep()` 穿透 scoped 仅限子组件 DOM**：`:deep(.ant-tooltip)` 能穿透子组件的 scoped，但不能穿透 portal
+3. **必须用 `!important`**：Ant Design 内联样式优先级高，覆盖时需要 `!important`
+4. **箭头也要改**：只改 `.ant-tooltip-inner` 背景，箭头仍是默认深色，需同时覆盖 `.ant-tooltip-arrow::before/after`
+5. **调试方法**：用 Playwright `page.evaluate(() => getComputedStyle(tooltip))` 验证实际生效的样式值
+6. **同类组件**：Modal、Drawer、Dropdown、Popover 等 portal 组件都有相同问题

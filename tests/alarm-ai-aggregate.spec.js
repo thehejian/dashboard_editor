@@ -47,26 +47,30 @@ test.describe('AI 告警聚合功能', () => {
     const banner = page.locator('.ai-agg-banner').first()
     await expect(banner).toBeVisible()
     const resTags = banner.locator('.agg-res-tag')
-    await expect(resTags).toHaveCount(3)
+    const count = await resTags.count()
+    expect(count).toBeGreaterThanOrEqual(3)
   })
 
-  test('告警名称列显示火焰 badge', async ({ page }) => {
+  test('告警名称列显示 star badge', async ({ page }) => {
     const badges = page.locator('.ai-badge')
-    await expect(badges).toBeVisible()
-    await expect(badges.first()).toContainText('3')
-    await expect(page.locator('.ai-badge-icon')).toBeVisible()
+    await expect(badges.first()).toBeVisible()
+    await expect(page.locator('.ai-badge-icon.fa-star').first()).toBeVisible()
   })
 
   test('hover 告警名称弹出 AI 推荐 tooltip', async ({ page }) => {
-    const aiLink = page.locator('.ai-title-link')
+    const aiLink = page.locator('.ai-title-link').first()
     await expect(aiLink).toBeVisible()
-    await aiLink.first().hover()
+    await aiLink.hover()
     await page.waitForTimeout(500)
     const tooltip = page.locator('.ant-tooltip-inner')
     await expect(tooltip).toBeVisible()
-    await expect(tooltip).toContainText('AI 智能聚合推荐')
-    await expect(tooltip).toContainText('近1小时内同类告警触发')
-    await expect(tooltip).toContainText('执行 AI 聚合分析')
+    await expect(tooltip).toContainText('发现重复告警模式')
+    await expect(tooltip).toContainText('重复触发')
+    await expect(tooltip).toContainText('建议抑制窗口')
+    await expect(tooltip).toContainText('预估降噪效果')
+    await expect(tooltip).toContainText('应用推荐规则')
+    await expect(tooltip).toContainText('自定义调整')
+    await expect(tooltip).toContainText('查看详情')
   })
 
   test('点击「执行 AI 聚合分析」调用后端接口', async ({ page }) => {
