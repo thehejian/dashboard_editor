@@ -13,7 +13,8 @@ npx playwright test                        # E2E 测试
 ```
 
 **禁止直接用 Playwright 截图/evaluate 做视觉验证**，只用它跑 `tests/*.spec.js` 现有测试。  
-**修改后端数据/mock/API 后必须重启后端**：`lsof -i :3001 -t | xargs kill -9` → 重新 `nohup node server/server.js`，否则改动不生效。前端 Vite 有 HMR 自动热更新，后端没有。
+**修改后端数据/mock/API 后必须重启后端**：`lsof -i :3001 -t | xargs kill -9` → 重新 `nohup node server/server.js`，否则改动不生效。前端 Vite 有 HMR 自动热更新，后端没有。  
+**每日变更记录**：每天结束时将当日所有变更写入 `docs/alarm-analysis-session-log-YYYYMMDD.md`，必须包含：修改内容概述、涉及页面、涉及文件、具体修改内容（改前/改后代码）、可能出现的问题及解决方法。格式参考已有文档。
 
 Node/npm 不在 PATH → `export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"`。  
 Bash tool 超时会杀死前台进程 → 必须 `nohup` 或 `start.sh` 脱离进程组。  
