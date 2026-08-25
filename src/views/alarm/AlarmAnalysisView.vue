@@ -43,15 +43,15 @@
     <!-- Row 2: Charts -->
     <div class="aa-chart-row">
       <div class="aa-chart-card">
-        <div class="aa-chart-title">TopN 告警分类分布</div>
+        <div class="aa-chart-title">告警类别分布</div>
         <div ref="topnContainer" class="aa-chart-inner"></div>
       </div>
       <div class="aa-chart-card">
-        <div class="aa-chart-title">降噪漏斗</div>
+        <div class="aa-chart-title">告警降噪过滤</div>
         <div ref="funnelContainer" class="aa-chart-inner"></div>
       </div>
       <div class="aa-chart-card">
-        <div class="aa-chart-title">处理趋势 · AI vs 人工（近30天）</div>
+        <div class="aa-chart-title">告警AI处理趋势</div>
         <div ref="alarmTrendContainer" class="aa-chart-inner"></div>
       </div>
     </div>
@@ -331,7 +331,7 @@ const alarmIncidentColumns = [
   { title: '分类策略', key: 'category', width: 120, filters: [{ text: '容量类', value: '容量类' }, { text: '阈值类', value: '阈值类' }, { text: '网络类', value: '网络类' }, { text: '证书类', value: '证书类' }, { text: '服务类', value: '服务类' }, { text: '硬件类', value: '硬件类' }, { text: '配置类', value: '配置类' }], onFilter: (val, rec) => rec.category === val },
   { title: '状态', key: 'status', width: 80, filters: [{ text: '进行中', value: 'investigating' }, { text: '已闭环', value: 'resolved' }, { text: '已屏蔽', value: 'suppressed' }], onFilter: (val, rec) => rec.status === val },
   { title: '处理人', key: 'handler', width: 90, filters: [{ text: 'AI自动', value: 'ai' }, { text: '手动', value: 'manual' }], onFilter: (val, rec) => val === 'ai' ? rec.handler === 'ai' : rec.handler && rec.handler !== 'ai' },
-  { title: '降噪效果', key: 'noise_reduction', width: 120 },
+  { title: '告警降噪率', key: 'noise_reduction', width: 120 },
   { title: '操作', key: 'action', width: 80, fixed: 'right' },
 ]
 
@@ -400,9 +400,9 @@ function renderFunnelChart() {
   if (!f.raw) return
   const data = [
     { step: '原始告警', count: 100 },
-    { step: '频次去重', count: Math.round(f.dedup / f.raw * 100) },
-    { step: '拓扑聚合', count: Math.round(f.agg / f.raw * 100) },
-    { step: '有效事件', count: Math.round(f.rate / f.raw * 100) },
+    { step: '时间频次聚合', count: Math.round(f.dedup / f.raw * 100) },
+    { step: '拓扑血缘聚合', count: Math.round(f.agg / f.raw * 100) },
+    { step: 'AI语义关联', count: Math.round(f.rate / f.raw * 100) },
   ]
   funnelChart = new Chart({ container: funnelContainer.value, autoFit: true })
   funnelChart.data(data)
