@@ -96,12 +96,12 @@
                   <template #bodyCell="{ column, record }">
                     <template v-if="column.key === 'level'">
                       <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'blue'" size="small">
-                        {{ { critical: '紧急', warning: '重要', info: '提示' }[record.level] }}
+                        {{ { critical: '紧急', warning: '重要', info: '次要' }[record.level] }}
                       </a-tag>
                     </template>
                     <template v-if="column.key === 'status'">
                       <a-tag :color="record.status === 'firing' ? 'red' : record.status === 'resolved' ? 'green' : 'default'" size="small">
-                        {{ { firing: '告警中', resolved: '已恢复', suppressed: '已屏蔽' }[record.status] }}
+                        {{ { firing: '待处理', resolved: '已恢复', suppressed: '已屏蔽' }[record.status] }}
                       </a-tag>
                     </template>
                   </template>
@@ -214,7 +214,7 @@ const levelColor = computed(() => {
 })
 const levelText = computed(() => {
   const l = incident.value?.level
-  return { critical: 'P1 紧急', warning: 'P2 重要', info: 'P3 提示' }[l] || l
+  return { critical: '紧急', warning: '重要', info: '次要' }[l] || l
 })
 const statusText = computed(() => {
   const s = incident.value?.status

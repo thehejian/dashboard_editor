@@ -178,6 +178,31 @@ router.get('/dashboard/overview', async (req, res) => {
   }
 })
 
+// ============ AI Aggregation Test Alerts (dynamic timestamps) ============
+const AI_TEST_IDS = new Set([17, 18, 19, 20, 21, 22])
+const AI_TEST_OFFSETS = { 17: 25, 18: 40, 19: 15, 20: 30, 21: 55, 22: 20 }
+function freshTriggerTime(id) {
+  if (!AI_TEST_IDS.has(id)) return null
+  var mins = AI_TEST_OFFSETS[id] || 30
+  var d = new Date(Date.now() - mins * 60000)
+  var pad = function(v) { return v < 10 ? '0' + v : '' + v }
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+    pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '+08'
+}
+
+// GET /api/cmdb/alerts — overrides generic route to inject dynamic timestamps
+router.get('/alerts', async (req, res) => {
+  try {
+    const rows = getTable('alerts').map(function(a) {
+      var ts = freshTriggerTime(a.id)
+      return ts ? Object.assign({}, a, { trigger_time: ts }) : a
+    })
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ============ Generic CRUD (must be after special endpoints) ============
 
 // GET /api/cmdb/:table

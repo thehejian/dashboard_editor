@@ -584,3 +584,207 @@ path.startsWith('/alarm') && !path.startsWith('/alarm-analysis')
 | 8 | MOCK_INCIDENTS 位置 | 不在 mockData.js | 硬编码在 server.js 中 |
 | 9 | incident_id 不匹配 | 关联断裂 | alerts.incident_id 必须和 MOCK_INCIDENTS.id 一致 |
 | 10 | can_heal 逻辑 | "故障自愈"按钮不显示 | 只有 category === '容量类' 才返回 true |
+
+---
+
+## 变更14：关联告警 Drawer 降噪概览
+
+### 涉及页面
+- 告警分析主页（关联告警 Drawer）
+
+### 涉及文件
+- `src/views/alarm/AlarmAnalysisView.vue`
+
+### 具体修改内容
+
+**改前（L178-219）：**
+```html
+<a-drawer :open="relatedDrawerVisible" title="关联告警" ...>
+  <div class="related-drawer-incident">{{ relatedDrawerRecord.incident_no }}</div>
+  <a-table :columns="relatedAlertColumns" ... />
+  <div class="related-drawer-footer">...</div>
+</a-drawer>
+```
+
+**改后：**
+```html
+<a-drawer :open="relatedDrawerVisible" title="关联告警" ...>
+  <div class="related-drawer-incident">{{ relatedDrawerRecord.incident_no }} · {{ relatedDrawerRecord.title }}</div>
+
+  <!-- 降噪概览卡片 -->
+  <div class="rd-overview">
+    <div class="rd-overview-title"><i class="fa-solid fa-chart-line"></i> 降噪概览</div>
+    <div class="rd-overview-flow">
+      <div class="rd-overview-step">
+        <div class="rd-overview-step-val">{{ relatedDrawerRecord.raw_count || relatedDrawerRecord.affected_count }}</div>
+        <div class="rd-overview-step-label">原始告警</div>
+      </div>
+      <div class="rd-overview-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="rd-overview-step">
+        <div class="rd-overview-step-val">{{ relatedDrawerRecord.affected_count }}</div>
+        <div class="rd-overview-step-label">关联告警</div>
+      </div>
+      <div class="rd-overview-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="rd-overview-step">
+        <div class="rd-overview-step-val" :style="{ color: (relatedDrawerRecord.noise_reduction || 0) >= 80 ? '#52c41a' : (relatedDrawerRecord.noise_reduction || 0) >= 50 ? '#1890ff' : '#faad14' }">
+          {{ relatedDrawerRecord.noise_reduction || 0 }}%
+        </div>
+        <div class="rd-overview-step-label">降噪率</div>
+      </div>
+    </div>
+    <div class="rd-overview-filtered" v-if="(relatedDrawerRecord.raw_count || 0) > relatedDrawerRecord.affected_count">
+      已过滤 {{ (relatedDrawerRecord.raw_count || relatedDrawerRecord.affected_count) - relatedDrawerRecord.affected_count }} 条重复/低优告警
+    </div>
+  </div>
+
+  <!-- 关联告警表格 -->
+  <a-table ... />
+
+  <!-- 已过滤告警折叠区 -->
+  <div class="rd-filtered-section" v-if="(relatedDrawerRecord.raw_count || 0) > relatedDrawerRecord.affected_count">
+    <div class="rd-filtered-toggle" @click="filteredAlertVisible = !filteredAlertVisible">
+      <i class="fa-solid" :class="filteredAlertVisible ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+      已过滤告警 ({{ (relatedDrawerRecord.raw_count || relatedDrawerRecord.affected_count) - relatedDrawerRecord.affected_count }}条)
+    </div>
+    <div v-if="filteredAlertVisible" class="rd-filtered-list">
+      <div v-for="(alert, idx) in generateFilteredAlerts(relatedDrawerRecord)" :key="idx" class="rd-filtered-item">
+        <a-tag ...>{{ alert.level }}</a-tag>
+        <span class="rd-filtered-title">{{ alert.title }}</span>
+        <span class="rd-filtered-reason">{{ alert.reason }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="related-drawer-footer">...</div>
+</a-drawer>
+```
+
+**新增 JS（L351-370）：**
+```js
+const filteredAlertVisible = ref(false)
+
+function generateFilteredAlerts(record) {
+  const raw = record.raw_count || record.affected_count
+  const kept = record.affected_count
+  const filteredCount = raw - kept
+  if (filteredCount <= 0) return []
+  const reasons = ['同metric去重', '1h内未达聚合阈值', '已屏蔽告警', '重复触发过滤']
+  const alerts = []
+  const relatedTitles = (record.related_alerts || []).map(a => a.title)
+  for (let i = 0; i < Math.min(filteredCount, 6); i++) {
+    alerts.push({
+      level: i % 3 === 0 ? 'critical' : i % 3 === 1 ? 'warning' : 'info',
+      title: relatedTitles[i % relatedTitles.length] || '告警 #' + (kept + i + 1),
+      reason: reasons[i % reasons.length],
+    })
+  }
+  return alerts
+}
+```
+
+**新增 CSS（L653-675）：**
+```css
+.rd-overview { background: #f6f8fa; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+.rd-overview-title { font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.rd-overview-flow { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.rd-overview-step { text-align: center; }
+.rd-overview-step-val { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+.rd-overview-step-label { font-size: 11px; color: #8c8c8c; margin-top: 2px; }
+.rd-overview-arrow { color: #d9d9d9; font-size: 12px; }
+.rd-overview-filtered { font-size: 11px; color: #8c8c8c; text-align: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e8e8e8; }
+.rd-filtered-section { margin-top: 16px; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden; }
+.rd-filtered-toggle { padding: 10px 14px; font-size: 12px; font-weight: 500; color: #595959; cursor: pointer; display: flex; align-items: center; gap: 6px; background: #fafafa; }
+.rd-filtered-toggle:hover { background: #f0f0f0; }
+.rd-filtered-list { padding: 8px 14px; display: flex; flex-direction: column; gap: 6px; }
+.rd-filtered-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
+.rd-filtered-item:last-child { border-bottom: none; }
+.rd-filtered-title { flex: 1; color: #1a1a1a; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-filtered-reason { color: #8c8c8c; font-size: 11px; flex-shrink: 0; }
+```
+
+### 可能出现的问题及解决方法
+
+| 问题 | 表现 | 解决 |
+|---|---|---|
+| 降噪概览不显示 | Drawer 打开但无概览卡片 | 确认 `relatedDrawerRecord` 有 `raw_count` 和 `affected_count` 字段 |
+| 已过滤告警区不显示 | 无折叠区 | `raw_count` 必须 > `affected_count` 才显示 |
+| generateFilteredAlerts 报错 | 控制台 JS 错误 | 确保函数在 `<script setup>` 中定义 |
+| CSS 样式无效 | 概览卡片无背景色 | 确认 CSS 在 `<style>` 块中（非 scoped） |
+
+---
+
+## 变更15：测试修复
+
+### 涉及文件
+- `tests/alarm-analysis.spec.js`
+
+### 具体修改内容
+
+1. **图表标题断言**（L124-126）：`TopN 告警分类分布` → `告警类别分布`，`降噪漏斗` → `告警降噪过滤`，`处理趋势` → `告警AI处理趋势`
+2. **降噪率数值**（L132）：`.aa-funnel-rate` → `.aa-hero-val`，`58%` → `76%`（匹配 mock 数据）
+
+### 测试结果
+- 39/39 全部通过
+
+---
+
+## 变更16：统一 Drawer（降噪详情 + 关联告警）
+
+### 涉及页面
+- 告警分析主页（关联告警 Drawer + 降噪详情 Drawer）
+
+### 涉及文件
+- `src/views/alarm/AlarmAnalysisView.vue`
+
+### 具体修改内容
+
+**改前：两个独立 Drawer**
+- `relatedDrawerVisible` — 点击"关联告警"数字打开，标题"关联告警"
+- `noiseDrawerVisible` — 点击"降噪率"数字打开，标题"降噪处理详情"
+- 两者数据同源但各自为政，重复展示降噪信息
+
+**改后：统一为一个 Drawer**
+- 删除 `noiseDrawerVisible`/`noiseDrawerRecord`/`openNoiseReductionDrawer`
+- `relatedDrawerVisible` 统一承载，标题改为"告警降噪详情"
+- 降噪率数字点击也调用 `openRelatedDrawer(record)`
+
+**统一 Drawer 结构：**
+```
+标题: 告警降噪详情
+├── 故障编号 + 故障名称
+├── 降噪概览卡片
+│   ├── 原始告警 → 关联告警 → 降噪率（流程图）
+│   └── 处理规则（3个 tag：同title+metric聚合 / 1h内≥3次触发 / 保留首条其余屏蔽）
+├── 关联告警表格（级别/告警名称/资源/状态/触发时间/AI分析/查看详情）
+├── 已过滤告警折叠区（默认折叠，展开显示过滤原因）
+└── 查看告警根因按钮
+```
+
+**删除的旧样式：**
+```css
+/* 以下全部删除 */
+.noise-drawer-overview, .noise-drawer-stat, .noise-drawer-stat-label,
+.noise-drawer-stat-val, .noise-drawer-arrow, .noise-drawer-section,
+.noise-drawer-section-title, .noise-drawer-rules, .noise-drawer-rule,
+.noise-drawer-alert-list, .noise-drawer-alert-item, .noise-drawer-alert-title,
+.noise-drawer-alert-resource, .noise-drawer-alert-more
+```
+
+**新增样式：**
+```css
+.rd-overview-rules { display: flex; ... }      /* 处理规则行 */
+.rd-overview-rules-label { font-weight: 500; }
+.rd-overview-rule { background: #fff; border: 1px solid #e8e8e8; ... }
+.rd-section-title { ... }                      /* 关联告警标题 */
+```
+
+### 可能出现的问题及解决方法
+
+| 问题 | 表现 | 解决 |
+|---|---|---|
+| 点击降噪率数字无反应 | Drawer 不打开 | 确认模板中 `openNoiseReductionDrawer` 已改为 `openRelatedDrawer` |
+| noiseDrawerVisible 报错 | 控制台 JS 错误 | 确认已删除所有 `noiseDrawerVisible`/`noiseDrawerRecord` 引用 |
+| 旧样式残留 | 页面有无用 CSS | 删除所有 `.noise-drawer-*` 样式 |
+
+### 测试结果
+- 39/39 全部通过

@@ -179,7 +179,7 @@ const columnSettings = ref([
   { key: 'metric', title: '告警指标', desc: '显示触发的指标名称', visible: true },
   { key: 'currentValue', title: '当前值', desc: '显示指标当前值', visible: true },
   { key: 'threshold', title: '阈值', desc: '显示触发阈值', visible: true },
-  { key: 'status', title: '告警状态', desc: '显示告警中/已恢复/已屏蔽', visible: true },
+  { key: 'status', title: '告警状态', desc: '显示待处理/已恢复/已屏蔽', visible: true },
   { key: 'duration', title: '持续时间', desc: '显示告警持续时间', visible: true },
   { key: 'triggerTime', title: '触发时间', desc: '显示告警触发时间', visible: true },
   { key: 'recoveryTime', title: '恢复时间', desc: '显示告警恢复时间', visible: false },

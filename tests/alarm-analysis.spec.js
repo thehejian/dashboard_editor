@@ -121,15 +121,15 @@ test.describe('告警分析 — 页面5行布局', () => {
   test('Row2: 三个图表卡片（TopN、降噪漏斗、处理趋势）各有 G2 图表', async ({ page }) => {
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
-    await expect(chartCards.nth(0)).toContainText('TopN 告警分类分布')
-    await expect(chartCards.nth(1)).toContainText('降噪漏斗')
-    await expect(chartCards.nth(2)).toContainText('处理趋势')
+    await expect(chartCards.nth(0)).toContainText('告警类别分布')
+    await expect(chartCards.nth(1)).toContainText('告警降噪过滤')
+    await expect(chartCards.nth(2)).toContainText('告警AI处理趋势')
     const canvases = page.locator('.aa-chart-card canvas')
     await expect(canvases).toHaveCount(3)
   })
 
   test('Row2: 降噪率数值显示', async ({ page }) => {
-    await expect(page.locator('.aa-funnel-rate')).toContainText('58%')
+    await expect(page.locator('.aa-hero-val').nth(1)).toContainText('76%')
   })
 
   test('Row3: 告警分析列表表格渲染，含操作列', async ({ page }) => {
@@ -221,10 +221,10 @@ test.describe('告警分析 — 表格交互', () => {
     await expect(capacityRow.locator('.aa-table-link', { hasText: '自愈' })).toBeVisible()
   })
 
-  test('级别标签正确渲染（P1紧急/P2重要/P3提示）', async ({ page }) => {
-    const criticalTag = page.locator('.ant-table-tbody .ant-tag', { hasText: 'P1紧急' })
+  test('级别标签正确渲染（紧急/重要/次要）', async ({ page }) => {
+    const criticalTag = page.locator('.ant-table-tbody .ant-tag', { hasText: '紧急' })
     await expect(criticalTag.first()).toBeVisible()
-    const warningTag = page.locator('.ant-table-tbody .ant-tag', { hasText: 'P2重要' })
+    const warningTag = page.locator('.ant-table-tbody .ant-tag', { hasText: '重要' })
     await expect(warningTag.first()).toBeVisible()
   })
 

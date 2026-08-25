@@ -105,7 +105,7 @@
             <span class="aa-related-link" @click="openRelatedDrawer(record)">{{ record.affected_count }}</span>
           </template>
           <template v-if="column.key === 'level'">
-            <a-tag :color="record.level === 'critical' ? 'red' : 'orange'">{{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[record.level] || record.level }}</a-tag>
+            <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'blue'">{{ { critical: '紧急', warning: '重要', info: '次要' }[record.level] || record.level }}</a-tag>
           </template>
           <template v-if="column.key === 'category'">
             <a-tag :color="record.heal_color === 'green' ? 'green' : 'orange'" style="cursor:pointer">
@@ -122,7 +122,7 @@
             <span v-else>{{ record.handler || '—' }}</span>
           </template>
           <template v-if="column.key === 'noise_reduction'">
-            <div class="noise-reduction-cell" @click.stop="openNoiseReductionDrawer(record)" style="cursor:pointer">
+            <div class="noise-reduction-cell" @click.stop="openRelatedDrawer(record)" style="cursor:pointer">
               <div class="noise-reduction-bar">
                 <div class="noise-reduction-fill" :class="record.noise_reduction >= 80 ? 'high' : record.noise_reduction >= 50 ? 'medium' : 'low'" :style="{ width: record.noise_reduction + '%' }"></div>
               </div>
@@ -175,99 +175,80 @@
       <AiopsHealingRecords :records="alarmHealingRecords" @record-click="onHealingRecordClick" />
     </div>
 
-    <!-- Related Alerts Drawer -->
+    <!-- Unified Drawer: 告警详情 -->
     <a-drawer
       :open="relatedDrawerVisible"
-      title="关联告警"
+      title="告警详情"
       :width="drawerWidth"
       placement="right"
       @close="relatedDrawerVisible = false"
     >
       <template v-if="relatedDrawerRecord">
-        <div class="related-drawer-incident">{{ relatedDrawerRecord.incident_no }}</div>
+        <div class="related-drawer-incident">{{ relatedDrawerRecord.incident_no }} · {{ relatedDrawerRecord.title }}</div>
+
+        <!-- 降噪概览（紧凑一行式） -->
+        <div class="rd-overview">
+          <div class="rd-overview-main">
+            <span class="rd-overview-label">降噪</span>
+            <span class="rd-overview-flow-text">{{ relatedDrawerRecord.raw_count || relatedDrawerRecord.affected_count }} → {{ relatedDrawerRecord.affected_count }}</span>
+            <span class="rd-overview-sep">|</span>
+            <span class="rd-overview-label">降噪率</span>
+            <span class="rd-overview-rate" :style="{ color: (relatedDrawerRecord.noise_reduction || 0) >= 80 ? '#52c41a' : (relatedDrawerRecord.noise_reduction || 0) >= 50 ? '#1890ff' : '#faad14' }">{{ relatedDrawerRecord.noise_reduction || 0 }}%</span>
+          </div>
+          <div class="rd-overview-rules">
+            <span class="rd-overview-rules-label">规则</span>
+            <span class="rd-overview-rule">同metric聚合(5min)</span>
+            <span class="rd-overview-rule">重复触发过滤</span>
+          </div>
+        </div>
+
+        <!-- 关联告警表格 -->
+        <div class="rd-section-title"><i class="fa-solid fa-list-check"></i> 关联告警 ({{ relatedDrawerRecord.affected_count }}条)</div>
         <a-table
           :columns="relatedAlertColumns"
           :data-source="relatedDrawerRecord.related_alerts || []"
           :pagination="false"
           row-key="id"
           size="small"
-          :scroll="{ x: 340, y: 300 }"
+          :scroll="{ x: 490, y: 300 }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'level'">
-              <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'default'" size="small">
-                {{ { critical: 'P1紧急', warning: 'P2重要', info: 'P3提示' }[record.level] || record.level }}
+              <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'blue'" size="small">
+                {{ { critical: '紧急', warning: '重要', info: '次要' }[record.level] || record.level }}
               </a-tag>
             </template>
             <template v-if="column.key === 'status'">
               <a-tag :color="record.status === 'firing' ? 'red' : record.status === 'resolved' ? 'green' : 'default'" size="small">
-                {{ record.status === 'firing' ? '告警中' : record.status === 'resolved' ? '已恢复' : '已屏蔽' }}
+                {{ record.status === 'firing' ? '待处理' : record.status === 'resolved' ? '已恢复' : '已屏蔽' }}
               </a-tag>
             </template>
-            <template v-if="column.key === 'action'">
-              <a class="aa-table-link" @click="router.push('/ops/incident/' + record.incident_id || relatedDrawerRecord.incident_no)">AI分析</a>
-            </template>
-            <template v-if="column.key === 'detail'">
-              <a class="aa-table-link" @click="router.push('/alarm/current?alertId=' + record.id)">查看详情</a>
+            <template v-if="column.key === 'ops'">
+              <a class="aa-table-link" @click="router.push('/ops/incident/' + (record.incident_id || relatedDrawerRecord.incident_no))">AI分析</a>
+              <a class="aa-table-link" @click="router.push('/alarm/current?alertId=' + record.id)" style="margin-left:6px">详情</a>
             </template>
           </template>
         </a-table>
+
+        <!-- 已过滤告警折叠区 -->
+        <div class="rd-filtered-section" v-if="(relatedDrawerRecord.raw_count || 0) > relatedDrawerRecord.affected_count">
+          <div class="rd-filtered-toggle" @click="filteredAlertVisible = !filteredAlertVisible">
+            <i class="fa-solid" :class="filteredAlertVisible ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            已过滤告警 ({{ (relatedDrawerRecord.raw_count || relatedDrawerRecord.affected_count) - relatedDrawerRecord.affected_count }}条)
+          </div>
+          <div v-if="filteredAlertVisible" class="rd-filtered-list">
+            <div v-for="(alert, idx) in generateFilteredAlerts(relatedDrawerRecord)" :key="idx" class="rd-filtered-item">
+              <a-tag :color="alert.level === 'critical' ? 'red' : alert.level === 'warning' ? 'orange' : 'blue'" size="small">
+                {{ { critical: '紧急', warning: '重要', info: '次要' }[alert.level] || alert.level }}
+              </a-tag>
+              <span class="rd-filtered-title">{{ alert.title }}</span>
+              <span class="rd-filtered-reason">{{ alert.reason }}</span>
+            </div>
+          </div>
+        </div>
+
         <div class="related-drawer-footer">
           <a-button type="primary" size="small" @click="router.push('/ops/incident/' + relatedDrawerRecord.incident_no); relatedDrawerVisible = false">查看告警根因</a-button>
-        </div>
-      </template>
-    </a-drawer>
-
-    <!-- Noise Reduction Detail Drawer -->
-    <a-drawer
-      :open="noiseDrawerVisible"
-      title="降噪处理详情"
-      :width="480"
-      placement="right"
-      @close="noiseDrawerVisible = false"
-    >
-      <template v-if="noiseDrawerRecord">
-        <div class="noise-drawer-overview">
-          <div class="noise-drawer-stat">
-            <div class="noise-drawer-stat-label">原始告警</div>
-            <div class="noise-drawer-stat-val">{{ noiseDrawerRecord.raw_count }}</div>
-          </div>
-          <div class="noise-drawer-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-          <div class="noise-drawer-stat">
-            <div class="noise-drawer-stat-label">聚合后</div>
-            <div class="noise-drawer-stat-val">{{ noiseDrawerRecord.affected_count }}</div>
-          </div>
-          <div class="noise-drawer-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-          <div class="noise-drawer-stat">
-            <div class="noise-drawer-stat-label">降噪率</div>
-            <div class="noise-drawer-stat-val" :style="{ color: noiseDrawerRecord.noise_reduction >= 80 ? '#52c41a' : noiseDrawerRecord.noise_reduction >= 50 ? '#1890ff' : '#8c8c8c' }">{{ noiseDrawerRecord.noise_reduction }}%</div>
-          </div>
-        </div>
-
-        <div class="noise-drawer-section">
-          <div class="noise-drawer-section-title"><i class="fa-solid fa-gears"></i> 处理规则</div>
-          <div class="noise-drawer-rules">
-            <div class="noise-drawer-rule">同 title + metric 告警聚合为一组</div>
-            <div class="noise-drawer-rule">1 小时内触发 ≥ 3 次触发聚合</div>
-            <div class="noise-drawer-rule">聚合后仅保留首条告警，其余标记为已屏蔽</div>
-          </div>
-        </div>
-
-        <div class="noise-drawer-section">
-          <div class="noise-drawer-section-title"><i class="fa-solid fa-list-check"></i> 被聚合的告警 ({{ noiseDrawerRecord.raw_count - noiseDrawerRecord.affected_count }}条)</div>
-          <div class="noise-drawer-alert-list">
-            <div v-for="(alert, idx) in (noiseDrawerRecord.related_alerts || []).slice(0, noiseDrawerRecord.affected_count)" :key="alert.id || idx" class="noise-drawer-alert-item suppressed">
-              <a-tag :color="alert.level === 'critical' ? 'red' : alert.level === 'warning' ? 'orange' : 'default'" size="small">
-                {{ { critical: 'P1', warning: 'P2', info: 'P3' }[alert.level] || alert.level }}
-              </a-tag>
-              <span class="noise-drawer-alert-title">{{ alert.title }}</span>
-              <span class="noise-drawer-alert-resource">{{ alert.resource }}</span>
-              <a-tag color="default" size="small">已屏蔽</a-tag>
-            </div>
-            <div v-if="noiseDrawerRecord.raw_count - noiseDrawerRecord.affected_count > noiseDrawerRecord.affected_count" class="noise-drawer-alert-more">
-              + {{ noiseDrawerRecord.raw_count - noiseDrawerRecord.affected_count - noiseDrawerRecord.affected_count }} 条更多告警已屏蔽...
-            </div>
-          </div>
         </div>
       </template>
     </a-drawer>
@@ -303,24 +284,35 @@ let funnelChart = null
 let alarmTrendChart = null
 const relatedDrawerVisible = ref(false)
 const relatedDrawerRecord = ref(null)
+const filteredAlertVisible = ref(false)
 const drawerWidth = ref(Math.min(window.innerWidth * 0.9, 1200))
 function onDrawerResize() { drawerWidth.value = Math.min(window.innerWidth * 0.9, 1200) }
 
-// Noise Reduction Drawer
-const noiseDrawerVisible = ref(false)
-const noiseDrawerRecord = ref(null)
-function openNoiseReductionDrawer(record) {
-  noiseDrawerRecord.value = record
-  noiseDrawerVisible.value = true
+function generateFilteredAlerts(record) {
+  const raw = record.raw_count || record.affected_count
+  const kept = record.affected_count
+  const filteredCount = raw - kept
+  if (filteredCount <= 0) return []
+  const reasons = ['同metric去重', '1h内未达聚合阈值', '已屏蔽告警', '重复触发过滤']
+  const alerts = []
+  const relatedTitles = (record.related_alerts || []).map(a => a.title)
+  for (let i = 0; i < Math.min(filteredCount, 6); i++) {
+    alerts.push({
+      level: i % 3 === 0 ? 'critical' : i % 3 === 1 ? 'warning' : 'info',
+      title: relatedTitles[i % relatedTitles.length] || '告警 #' + (kept + i + 1),
+      reason: reasons[i % reasons.length],
+    })
+  }
+  return alerts
 }
+
 const relatedAlertColumns = [
-  { title: '级别', key: 'level', width: 60 },
-  { title: '告警名称', dataIndex: 'title', key: 'title', ellipsis: true },
-  { title: '资源', dataIndex: 'resource', key: 'resource', width: 100, ellipsis: true },
-  { title: '状态', key: 'status', width: 60 },
-  { title: '触发时间', dataIndex: 'trigger_time', key: 'trigger_time', width: 120 },
-  { title: '操作', key: 'action', width: 60 },
-  { title: '查看详情', key: 'detail', width: 70 },
+  { title: '级别', key: 'level', width: 50 },
+  { title: '告警名称', dataIndex: 'title', key: 'title', width: 150, ellipsis: true },
+  { title: '资源', dataIndex: 'resource', key: 'resource', width: 80, ellipsis: true },
+  { title: '状态', key: 'status', width: 50 },
+  { title: '触发时间', dataIndex: 'trigger_time', key: 'trigger_time', width: 90 },
+  { title: '操作', key: 'ops', width: 70, fixed: 'right' },
 ]
 
 const alarmIncidentColumns = [
@@ -471,6 +463,7 @@ function openAlarmAnalysis(record) {
 
 function openRelatedDrawer(record) {
   relatedDrawerRecord.value = record
+  filteredAlertVisible.value = false
   relatedDrawerVisible.value = true
 }
 
@@ -566,21 +559,23 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .noise-reduction-fill.low { background: #d9d9d9; }
 .noise-reduction-value { font-size: 12px; font-weight: 500; color: #1a1a1a; }
 
-/* 降噪详情 Drawer */
-.noise-drawer-overview { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 20px; background: #fafafa; border-radius: 8px; margin-bottom: 24px; }
-.noise-drawer-stat { text-align: center; }
-.noise-drawer-stat-label { font-size: 12px; color: #8c8c8c; margin-bottom: 4px; }
-.noise-drawer-stat-val { font-size: 24px; font-weight: 600; color: #1a1a1a; }
-.noise-drawer-arrow { color: #d9d9d9; font-size: 14px; }
-.noise-drawer-section { margin-bottom: 20px; }
-.noise-drawer-section-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-.noise-drawer-rules { background: #f6f8fa; border-radius: 6px; padding: 12px; }
-.noise-drawer-rule { font-size: 12px; color: #595959; padding: 4px 0; display: flex; align-items: center; gap: 6px; }
-.noise-drawer-rule::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: #1890ff; flex-shrink: 0; }
-.noise-drawer-alert-list { display: flex; flex-direction: column; gap: 6px; }
-.noise-drawer-alert-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border: 1px solid #f0f0f0; border-radius: 6px; font-size: 12px; }
-.noise-drawer-alert-item.suppressed { background: #fafafa; opacity: 0.7; }
-.noise-drawer-alert-title { flex: 1; color: #1a1a1a; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.noise-drawer-alert-resource { color: #8c8c8c; font-size: 11px; flex-shrink: 0; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.noise-drawer-alert-more { font-size: 11px; color: #8c8c8c; text-align: center; padding: 8px; }
+/* 统一 Drawer 样式 */
+.rd-overview { background: #f6f8fa; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+.rd-overview-main { display: flex; align-items: center; gap: 8px; font-size: 15px; color: #1a1a1a; }
+.rd-overview-label { color: #8c8c8c; font-size: 13px; }
+.rd-overview-flow-text { font-weight: 600; font-size: 16px; }
+.rd-overview-sep { color: #d9d9d9; margin: 0 4px; }
+.rd-overview-rate { font-weight: 700; font-size: 18px; }
+.rd-overview-rules { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e8e8e8; font-size: 13px; color: #8c8c8c; }
+.rd-overview-rules-label { color: #595959; font-weight: 500; }
+.rd-overview-rule { background: #fff; border: 1px solid #e8e8e8; border-radius: 4px; padding: 2px 8px; font-size: 12px; }
+.rd-section-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.rd-filtered-section { margin-top: 16px; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden; }
+.rd-filtered-toggle { padding: 10px 14px; font-size: 12px; font-weight: 500; color: #595959; cursor: pointer; display: flex; align-items: center; gap: 6px; background: #fafafa; transition: background 0.2s; }
+.rd-filtered-toggle:hover { background: #f0f0f0; }
+.rd-filtered-list { padding: 8px 14px; display: flex; flex-direction: column; gap: 6px; }
+.rd-filtered-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
+.rd-filtered-item:last-child { border-bottom: none; }
+.rd-filtered-title { flex: 1; color: #1a1a1a; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-filtered-reason { color: #8c8c8c; font-size: 11px; flex-shrink: 0; }
 </style>

@@ -172,7 +172,7 @@
               </template>
               <template v-if="column.key === 'status'">
                 <a-tag :color="record.status === 'firing' ? 'red' : record.status === 'resolved' ? 'green' : 'default'">
-                  {{ record.status === 'firing' ? '告警中' : record.status === 'resolved' ? '已恢复' : '已屏蔽' }}
+                  {{ record.status === 'firing' ? '待处理' : record.status === 'resolved' ? '已恢复' : '已屏蔽' }}
                 </a-tag>
               </template>
               <template v-if="column.key === 'incident'">
@@ -353,7 +353,7 @@
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'level'">
                 <a-tag :color="record.level === 'critical' ? 'red' : record.level === 'warning' ? 'orange' : 'blue'">
-                  {{ { critical: '严重', warning: '警告', info: '提示' }[record.level] || record.level }}
+                  {{ { critical: '紧急', warning: '重要', info: '次要' }[record.level] || record.level }}
                 </a-tag>
               </template>
               <template v-if="column.key === 'score'">
@@ -432,7 +432,7 @@
               <div class="info-list">
                 <div class="info-item"><span class="info-label">告警源</span><span class="info-value clickable" title="点击筛选该资源" @click="filterByResource(currentAlert.resource)">{{ currentAlert.resource }}</span></div>
                 <div class="info-item"><span class="info-label">IP地址</span><span class="info-value clickable" title="点击复制" @click="copyText(currentAlert.ip)">{{ currentAlert.ip || '-' }}</span></div>
-                <div class="info-item"><span class="info-label">状态</span><span class="info-value">{{ currentAlert.status === 'firing' ? '告警中' : currentAlert.status === 'resolved' ? '已恢复' : '已屏蔽' }}</span></div>
+                <div class="info-item"><span class="info-label">状态</span><span class="info-value">{{ currentAlert.status === 'firing' ? '待处理' : currentAlert.status === 'resolved' ? '已恢复' : '已屏蔽' }}</span></div>
               </div>
             </div>
           </div>
@@ -472,7 +472,7 @@
                     <div class="kpi-label">告警状态</div>
                     <div class="kpi-value">
                       <a-tag :color="currentAlert.status === 'firing' ? 'red' : 'green'">
-                        {{ currentAlert.status === 'firing' ? '告警中' : '已恢复' }}
+                        {{ currentAlert.status === 'firing' ? '待处理' : '已恢复' }}
                       </a-tag>
                     </div>
                   </div>
@@ -1410,7 +1410,7 @@ function buildAiAnalysis(alert) {
     '从趋势看，该指标在触发前持续' + (isLess ? '下行' : '抬升') + '，结合「' + category + '」类历史案例 ' + expTitle +
     '，初步推断为' + causeMap[category] + '，建议按上述经验逐项排查确认。'
 
-  var impact = '当前告警' + (alert.status === 'firing' ? '处于告警中状态' : '已恢复') + '，影响范围主要集中在该资源承载的业务链路；' +
+  var impact = '当前告警' + (alert.status === 'firing' ? '处于待处理状态' : '已恢复') + '，影响范围主要集中在该资源承载的业务链路；' +
     (alert.level === 'critical' ? '级别为紧急，可能造成服务不可用或数据不一致，建议立即处理。' :
       alert.level === 'warning' ? '级别为重要，存在服务质量下降风险，建议尽快处理。' :
         '级别为提示，暂不影响核心功能，建议持续关注趋势变化。')
@@ -1450,7 +1450,7 @@ const continueInAssistant = function() {
     '- 指标：' + alert.metric + '\n' +
     '- 当前值：' + alert.currentValue + '，阈值：' + alert.threshold + '\n' +
     '- 触发时间：' + formatTime(alert.triggerTime) + '\n' +
-    '- 状态：' + (alert.status === 'firing' ? '告警中' : '已恢复') + '\n' +
+    '- 状态：' + (alert.status === 'firing' ? '待处理' : '已恢复') + '\n' +
     '- 系统建议：' + (alert.suggestion || '-')
   if (window.__openAIAssistant) {
     window.__openAIAssistant(text)
@@ -1639,7 +1639,7 @@ function renderBarChart() {
 
   var list = realtimeAlerts.value
   var statuses = ['firing', 'resolved', 'suppressed']
-  var labels = { firing: '告警中', resolved: '已恢复', suppressed: '已屏蔽' }
+  var labels = { firing: '待处理', resolved: '已恢复', suppressed: '已屏蔽' }
   var colors = { firing: '#F5222D', resolved: '#52C41A', suppressed: '#BFBFBF' }
   var data = statuses.map(function(s) {
     return { name: labels[s], value: Math.max(list.filter(function(a) { return a.status === s }).length, 1) }
