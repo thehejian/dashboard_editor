@@ -1,5 +1,10 @@
 <template>
-  <aside class="site-sidebar">
+  <aside
+    class="site-sidebar"
+    :class="{ expanded }"
+    @mouseenter="onEnter"
+    @mouseleave="onLeave"
+  >
     <div class="s-icons">
       <div v-for="item in quickItems" :key="item.key" class="s-icon" :title="item.label">
         <i :class="item.icon"></i>
@@ -31,11 +36,34 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
+
+const expanded = ref(false)
+let enterTimer = null
+let leaveTimer = null
+
+function onEnter() {
+  clearTimeout(leaveTimer)
+  leaveTimer = null
+  if (!expanded.value) {
+    enterTimer = setTimeout(() => { expanded.value = true }, 2000)
+  }
+}
+
+function onLeave() {
+  clearTimeout(enterTimer)
+  enterTimer = null
+  leaveTimer = setTimeout(() => { expanded.value = false }, 300)
+}
+
+onBeforeUnmount(() => {
+  clearTimeout(enterTimer)
+  clearTimeout(leaveTimer)
+})
 
 const quickItems = [
   { key: 'scene', icon: 'fa-solid fa-bars', label: '场景菜单', arrow: false },
@@ -76,7 +104,7 @@ function handleCatClick(cat) {
   overflow: hidden;
   transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.site-sidebar:hover {
+.site-sidebar.expanded {
   width: 280px;
   box-shadow: 4px 0 16px rgba(0, 0, 0, 0.04);
 }
@@ -118,7 +146,7 @@ function handleCatClick(cat) {
   transform: translateX(-8px);
   transition: opacity 0.18s 0.05s, transform 0.18s 0.05s;
 }
-.site-sidebar:hover .s-panel {
+.site-sidebar.expanded .s-panel {
   opacity: 1;
   pointer-events: auto;
   transform: none;
@@ -186,6 +214,7 @@ function handleCatClick(cat) {
     width: 44px;
   }
   .site-sidebar:hover,
+  .site-sidebar.expanded,
   .site-sidebar:focus-within {
     width: 44px;
     box-shadow: none;
@@ -206,7 +235,8 @@ function handleCatClick(cat) {
     pointer-events: none;
     box-shadow: 4px 0 16px rgba(0, 0, 0, 0.08);
   }
-  .site-sidebar:hover .s-panel {
+  .site-sidebar:hover .s-panel,
+  .site-sidebar.expanded .s-panel {
     pointer-events: auto;
   }
 }
