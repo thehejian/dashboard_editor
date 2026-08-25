@@ -23,6 +23,10 @@
             <span class="stc-label">{{ s.label }}</span>
           </span>
         </div>
+        <a-button size="large" class="sre-tracking-btn" @click="trackingDrawerVisible = true" v-if="incident">
+          <i class="fa-solid fa-clipboard-list"></i>
+          工单跟踪
+        </a-button>
         <a-button type="primary" size="large" class="sre-postmortem-btn" @click="activeTab = 'postmortem'" v-if="incident">
           <i class="fa-solid fa-lightbulb"></i>
           一键智能分析
@@ -98,6 +102,7 @@
         <a-empty v-else description="暂无复盘报告" style="margin: 60px 0" />
       </div>
     </template>
+    <TrackingDrawer :visible="trackingDrawerVisible" :incident-id="incident?.id" @close="trackingDrawerVisible = false" />
   </div>
 </template>
 
@@ -114,6 +119,7 @@ import CallTracePanel from '../../components/sre/CallTracePanel.vue'
 import LinkedLogsPanel from '../../components/sre/LinkedLogsPanel.vue'
 import RCAEvidencePanel from '../../components/sre/RCAEvidencePanel.vue'
 import RelatedAlertsPanel from '../../components/sre/RelatedAlertsPanel.vue'
+import TrackingDrawer from '../../components/sre/TrackingDrawer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -127,6 +133,7 @@ const rcaEvidence = ref(null)
 const relatedAlerts = ref([])
 const errorRateTrend = ref([])
 const logs = ref([])
+const trackingDrawerVisible = ref(false)
 const traces = ref([])
 const callTrace = ref([])
 const linkedLogs = ref([])
@@ -494,6 +501,21 @@ watch(() => route.params.id, fetchData)
   background: linear-gradient(135deg, #9254de, #b37feb);
 }
 .sre-postmortem-btn i { margin-right: 4px; font-size: 11px; }
+
+.sre-tracking-btn {
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-weight: 500;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: #1890ff;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+.sre-tracking-btn:hover { border-color: #1890ff; color: #1890ff; }
+.sre-tracking-btn i { margin-right: 4px; font-size: 11px; }
 
 /* ===== Mobile ===== */
 @media (max-width: 768px) {

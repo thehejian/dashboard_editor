@@ -1120,6 +1120,26 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [1, 3, 4, 5],
     topologyNodeIds: ['lb-api', 'prod-order-01', 'redis-cache', 'mysql-master', 'mysql-slave'],
     impactScope: '影响 2 个下游服务: redis-cache(缓存命中率↓45%), mysql-master(连接数↑120%)',
+    assignee: 'AI系统',
+    sla_deadline: '2026-07-20 09:30:00',
+    sla_status: 'normal',
+    checklist: [
+      { step: 1, title: '检测异常', handler: '系统', status: 'done', started_at: '08:58', finished_at: '08:59' },
+      { step: 2, title: '定位根因', handler: 'AI系统', status: 'done', started_at: '09:00', finished_at: '09:01' },
+      { step: 3, title: '流量隔离', handler: 'AI系统', status: 'done', started_at: '09:02', finished_at: '09:03' },
+      { step: 4, title: '扩容连接池', handler: 'AI系统', status: 'done', started_at: '09:05', finished_at: '09:06' },
+      { step: 5, title: '验证恢复', handler: '系统', status: 'running', started_at: '09:10', finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '08:58', phase: '检测告警', actor: '系统', action: 'P99响应时间3500ms触发告警' },
+      { time: '09:00', phase: 'AI诊断', actor: 'AI系统', action: '根因: 数据库连接池耗尽' },
+      { time: '09:02', phase: '执行修复', actor: 'AI系统', action: 'cart-service切至稳定容器组' },
+      { time: '09:05', phase: '执行修复', actor: 'AI系统', action: 'HikariCP 50→250' },
+    ],
+    tracking_comments: [
+      { time: '09:05', actor: 'AI系统', content: '连接池已扩容，正在验证恢复' },
+      { time: '09:00', actor: 'AI系统', content: '根因确认: 数据库连接池耗尽' },
+    ],
     timeline: [
       { time: '08:58', event: '告警触发', type: 'alert', detail: 'P99 响应时间 3500ms 触发阈值告警' },
       { time: '09:00', event: 'AI 检测', type: 'detection', detail: '根因定位: 数据库连接池耗尽' },
@@ -1149,6 +1169,43 @@ const MOCK_INCIDENTS = [
     healingProgress: 100,
     relatedAlertIds: [7],
     topologyNodeIds: ['lb-api', 'prod-user-01', 'redis-cache', 'mysql-master'],
+    assignee: 'AI系统',
+    sla_deadline: '2026-07-18 10:30:00',
+    sla_status: 'normal',
+    checklist: [
+      { step: 1, title: '检测异常', handler: '系统', status: 'done', started_at: '10:15', finished_at: '10:16' },
+      { step: 2, title: 'AI诊断', handler: 'AI系统', status: 'done', started_at: '10:16', finished_at: '10:17' },
+      { step: 3, title: '自动修复', handler: 'AI系统', status: 'done', started_at: '10:18', finished_at: '10:25' },
+      { step: 4, title: '验证恢复', handler: '系统', status: 'done', started_at: '10:25', finished_at: '10:28' },
+    ],
+    tracking_timeline: [
+      { time: '10:15', phase: '检测告警', actor: '系统', action: '登录超时率飙升' },
+      { time: '10:17', phase: 'AI诊断', actor: 'AI系统', action: '根因: Redis缓存击穿' },
+      { time: '10:18', phase: '执行修复', actor: 'AI系统', action: '重建缓存热点key' },
+      { time: '10:28', phase: '验证恢复', actor: '系统', action: 'P99恢复正常' },
+    ],
+    tracking_comments: [
+      { time: '10:28', actor: 'AI系统', content: '已自动修复，P99恢复正常' },
+    ],
+    title: '支付回调链路 MQ 消息堆积',
+    description: '支付回调消息消费线程池耗尽，导致 MQ 队列堆积，回调延迟增大。',
+    status: 'resolved',
+    severity: 'P2',
+    appName: '支付服务',
+    appNodeId: 'prod-pay-01',
+    service: 'pay-service',
+    startTime: '2026-07-15 14:30:00',
+    endTime: '2026-07-15 14:45:00',
+    duration: '15min',
+    metrics: {
+      p99: { current: 5200, baseline: 100, unit: 'ms', multiplier: '52x 突增' },
+      failureRate: { current: 45.3, unit: '%', label: '回调超时' },
+      affectedUsers: { current: 890, label: '受影响用户' },
+      affectedSessions: { current: 1020, label: '受影响会话' },
+    },
+    healingProgress: 100,
+    relatedAlertIds: [9],
+    topologyNodeIds: ['lb-api', 'prod-pay-01', 'mq-order', 'redis-cache'],
   },
   {
     id: 'INC-2026-0715',
@@ -1171,6 +1228,24 @@ const MOCK_INCIDENTS = [
     healingProgress: 100,
     relatedAlertIds: [9],
     topologyNodeIds: ['lb-api', 'prod-pay-01', 'mq-order', 'redis-cache'],
+    assignee: 'AI系统',
+    sla_deadline: '2026-07-15 15:00:00',
+    sla_status: 'normal',
+    checklist: [
+      { step: 1, title: '检测异常', handler: '系统', status: 'done', started_at: '14:30', finished_at: '14:31' },
+      { step: 2, title: 'AI诊断', handler: 'AI系统', status: 'done', started_at: '14:31', finished_at: '14:32' },
+      { step: 3, title: '扩容线程池', handler: 'AI系统', status: 'done', started_at: '14:33', finished_at: '14:35' },
+      { step: 4, title: '验证恢复', handler: '系统', status: 'done', started_at: '14:35', finished_at: '14:45' },
+    ],
+    tracking_timeline: [
+      { time: '14:30', phase: '检测告警', actor: '系统', action: 'MQ消息堆积触发告警' },
+      { time: '14:32', phase: 'AI诊断', actor: 'AI系统', action: '根因: 消费线程池耗尽' },
+      { time: '14:33', phase: '执行修复', actor: 'AI系统', action: '线程池扩容+消息重平衡' },
+      { time: '14:45', phase: '验证恢复', actor: '系统', action: '堆积清零，回调恢复' },
+    ],
+    tracking_comments: [
+      { time: '14:45', actor: 'AI系统', content: '已自动修复，MQ堆积清零' },
+    ],
   },
   {
     id: 'INC-2026-0722',
@@ -1194,6 +1269,23 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [6],
     topologyNodeIds: ['lb-api', 'prod-inventory-01', 'mysql-master', 'mq-order'],
     impactScope: '影响 1 个下游服务: mysql-master(行锁竞争↑)',
+    assignee: '李工',
+    sla_deadline: '2026-07-22 15:00:00',
+    sla_status: 'normal',
+    checklist: [
+      { step: 1, title: '分析锁竞争', handler: 'AI系统', status: 'done', started_at: '14:22', finished_at: '14:23' },
+      { step: 2, title: '优化慢SQL', handler: '李工', status: 'running', started_at: '14:25', finished_at: null },
+      { step: 3, title: '验证恢复', handler: '系统', status: 'pending', started_at: null, finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '14:20', phase: '检测告警', actor: '系统', action: 'P99 1800ms触发告警' },
+      { time: '14:22', phase: 'AI诊断', actor: 'AI系统', action: '根因: 数据库行锁竞争' },
+      { time: '14:25', phase: '分配处理', actor: 'SRE组长', action: '指派 → 李工' },
+    ],
+    tracking_comments: [
+      { time: '14:25', actor: 'SRE组长', content: '指派给李工优化慢SQL' },
+      { time: '14:22', actor: 'AI系统', content: '根因确认: 行锁竞争加剧' },
+    ],
     timeline: [
       { time: '14:20', event: '告警触发', type: 'alert', detail: '扣减接口 P99 1800ms 触发阈值告警' },
       { time: '14:22', event: 'AI 检测', type: 'detection', detail: '根因定位: 数据库行锁竞争' },
@@ -1221,6 +1313,25 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [],
     topologyNodeIds: ['lb-api', 'prod-order-02', 'es-cluster'],
     impactScope: '影响 1 个下游服务: es-cluster(查询延迟↑)',
+    assignee: '王工',
+    sla_deadline: '2026-07-21 10:30:00',
+    sla_status: 'warning',
+    checklist: [
+      { step: 1, title: '分析GPU占用', handler: 'AI系统', status: 'done', started_at: '09:45', finished_at: '09:46' },
+      { step: 2, title: '排查热点请求', handler: '王工', status: 'done', started_at: '09:50', finished_at: '10:00' },
+      { step: 3, title: '调整GPU分配', handler: '王工', status: 'running', started_at: '10:00', finished_at: null },
+      { step: 4, title: '验证恢复', handler: '系统', status: 'pending', started_at: null, finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '09:40', phase: '检测告警', actor: '系统', action: '推理延迟950ms触发告警' },
+      { time: '09:45', phase: 'AI诊断', actor: 'AI系统', action: '根因: GPU资源抢占' },
+      { time: '09:50', phase: '分配处理', actor: 'SRE组长', action: '指派 → 王工' },
+      { time: '10:00', phase: '排查中', actor: '王工', action: '已定位热点请求，调整GPU分配' },
+    ],
+    tracking_comments: [
+      { time: '10:00', actor: '王工', content: '已定位热点请求，正在调整GPU分配' },
+      { time: '09:50', actor: 'SRE组长', content: '指派给王工处理' },
+    ],
     timeline: [
       { time: '09:40', event: '告警触发', type: 'alert', detail: '推理延迟 950ms 触发阈值告警' },
       { time: '09:45', event: 'AI 检测', type: 'detection', detail: '根因定位: GPU 资源抢占' },
@@ -1248,6 +1359,23 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [10],
     topologyNodeIds: ['lb-api', 'prod-user-02', 'redis-cache'],
     impactScope: '影响 1 个下游服务: redis-cache(连接数↑)',
+    assignee: '赵工',
+    sla_deadline: '2026-07-19 21:00:00',
+    sla_status: 'warning',
+    checklist: [
+      { step: 1, title: '分析连接来源', handler: 'AI系统', status: 'done', started_at: '20:10', finished_at: '20:11' },
+      { step: 2, title: '排查客户端行为', handler: '赵工', status: 'done', started_at: '20:15', finished_at: '20:30' },
+      { step: 3, title: '修复重连策略', handler: '赵工', status: 'running', started_at: '20:30', finished_at: null },
+      { step: 4, title: '验证恢复', handler: '系统', status: 'pending', started_at: null, finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '20:05', phase: '检测告警', actor: '系统', action: 'WebSocket连接数异常飙升' },
+      { time: '20:10', phase: 'AI诊断', actor: 'AI系统', action: '根因: 客户端重连风暴' },
+      { time: '20:15', phase: '分配处理', actor: 'SRE组长', action: '指派 → 赵工' },
+    ],
+    tracking_comments: [
+      { time: '20:15', actor: 'SRE组长', content: '指派给赵工排查客户端' },
+    ],
     timeline: [
       { time: '20:05', event: '告警触发', type: 'alert', detail: 'WebSocket 连接数异常飙升' },
       { time: '20:10', event: 'AI 检测', type: 'detection', detail: '根因定位: 客户端重连风暴' },
@@ -1275,6 +1403,23 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [],
     topologyNodeIds: ['lb-api', 'prod-pay-02', 'es-cluster'],
     impactScope: '影响 1 个下游服务: es-cluster(日志写入缺失)',
+    assignee: '刘工',
+    sla_deadline: '2026-07-17 12:30:00',
+    sla_status: 'normal',
+    checklist: [
+      { step: 1, title: '排查Agent状态', handler: 'AI系统', status: 'done', started_at: '11:35', finished_at: '11:36' },
+      { step: 2, title: '重启Agent进程', handler: '刘工', status: 'done', started_at: '11:40', finished_at: '11:45' },
+      { step: 3, title: '验证采集恢复', handler: '系统', status: 'running', started_at: '11:45', finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '11:30', phase: '检测告警', actor: '系统', action: '日志采集Agent批量丢失' },
+      { time: '11:35', phase: 'AI诊断', actor: 'AI系统', action: '根因: Agent异常停止' },
+      { time: '11:40', phase: '分配处理', actor: 'SRE组长', action: '指派 → 刘工' },
+      { time: '11:45', phase: '执行修复', actor: '刘工', action: '已重启Agent进程' },
+    ],
+    tracking_comments: [
+      { time: '11:45', actor: '刘工', content: '已重启Agent，等待采集恢复' },
+    ],
     timeline: [
       { time: '11:30', event: '告警触发', type: 'alert', detail: '日志采集 Agent 批量丢失' },
       { time: '11:35', event: 'AI 检测', type: 'detection', detail: '根因定位: Agent 异常停止' },
@@ -1302,6 +1447,33 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [8],
     topologyNodeIds: ['cdn-edge-01', 'lb-api'],
     impactScope: '证书过期后所有HTTPS访问将出现安全警告',
+    assignee: '张工',
+    sla_deadline: '2026-06-17 12:00:00',
+    sla_status: 'warning',
+    checklist: [
+      { step: 1, title: '登录证书管理平台', handler: '张工', status: 'done', started_at: '08:05', finished_at: '08:10' },
+      { step: 2, title: '提交证书申请', handler: '张工', status: 'done', started_at: '08:10', finished_at: '08:15' },
+      { step: 3, title: '等待审批通过', handler: '运维主管', status: 'done', started_at: '08:15', finished_at: '09:00' },
+      { step: 4, title: '下载新证书', handler: '张工', status: 'running', started_at: '09:05', finished_at: null },
+      { step: 5, title: '部署到CDN节点', handler: '张工', status: 'pending', started_at: null, finished_at: null },
+      { step: 6, title: '验证HTTPS访问', handler: '张工', status: 'pending', started_at: null, finished_at: null },
+      { step: 7, title: '吊销旧证书', handler: '张工', status: 'pending', started_at: null, finished_at: null },
+      { step: 8, title: '关闭工单', handler: '系统', status: 'pending', started_at: null, finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '08:00', phase: '检测告警', actor: '系统', action: '证书剩余15天，触发告警' },
+      { time: '08:03', phase: '创建工单', actor: '系统', action: '生成 INC-2026-0723' },
+      { time: '08:05', phase: '分配处理', actor: 'SRE组长', action: '指派 → 张工' },
+      { time: '08:10', phase: '申请证书', actor: '张工', action: '登录证书平台，提交申请' },
+      { time: '08:15', phase: '申请证书', actor: '张工', action: '已提交，等待审批' },
+      { time: '09:00', phase: '审批通过', actor: '运维主管', action: '审批通过，可下载新证书' },
+    ],
+    tracking_comments: [
+      { time: '09:05', actor: '张工', content: '审批已通过，正在下载新证书' },
+      { time: '08:15', actor: '张工', content: '已提交证书申请，等待审批' },
+      { time: '08:05', actor: 'SRE组长', content: '已指派给张工处理' },
+      { time: '08:03', actor: '系统', content: '工单已创建，关联1条告警' },
+    ],
     timeline: [
       { time: '08:00', event: '告警触发', type: 'alert', detail: 'SSL证书剩余15天' },
       { time: '08:05', event: 'AI 检测', type: 'detection', detail: '建议自动续期证书' },
@@ -1329,6 +1501,25 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [11, 16],
     topologyNodeIds: ['switch-01', 'router-01'],
     impactScope: '华北区域所有业务受影响，延迟升高',
+    assignee: '孙工',
+    sla_deadline: '2026-06-17 08:00:00',
+    sla_status: 'overdue',
+    checklist: [
+      { step: 1, title: '远程登录交换机', handler: '孙工', status: 'done', started_at: '06:40', finished_at: '06:45' },
+      { step: 2, title: '检查端口状态', handler: '孙工', status: 'done', started_at: '06:45', finished_at: '06:55' },
+      { step: 3, title: '更换故障网线', handler: '孙工', status: 'running', started_at: '07:00', finished_at: null },
+      { step: 4, title: '验证丢包恢复', handler: '系统', status: 'pending', started_at: null, finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '06:30', phase: '检测告警', actor: '系统', action: '丢包率2.1%超过阈值1%' },
+      { time: '06:35', phase: 'AI诊断', actor: 'AI系统', action: '根因: 交换机端口错误帧' },
+      { time: '06:40', phase: '分配处理', actor: 'SRE组长', action: '指派 → 孙工' },
+      { time: '06:55', phase: '排查中', actor: '孙工', action: '定位到端口网线接触不良' },
+    ],
+    tracking_comments: [
+      { time: '06:55', actor: '孙工', content: '已定位端口网线接触不良，准备更换' },
+      { time: '06:40', actor: 'SRE组长', content: '指派给孙工现场处理' },
+    ],
     timeline: [
       { time: '06:30', event: '告警触发', type: 'alert', detail: '丢包率2.1%超过阈值1%' },
       { time: '06:35', event: 'AI 检测', type: 'detection', detail: '根因定位: 交换机端口错误帧' },
@@ -1356,6 +1547,24 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [13, 14],
     topologyNodeIds: ['server-003', 'switch-02'],
     impactScope: 'server-003 已触发过温保护，需迁移工作负载',
+    assignee: '陈工',
+    sla_deadline: '2026-06-17 11:30:00',
+    sla_status: 'warning',
+    checklist: [
+      { step: 1, title: '远程登录BMC', handler: '陈工', status: 'done', started_at: '11:05', finished_at: '11:10' },
+      { step: 2, title: '检查风扇状态', handler: '陈工', status: 'done', started_at: '11:10', finished_at: '11:15' },
+      { step: 3, title: '清理风扇灰尘', handler: '陈工', status: 'running', started_at: '11:15', finished_at: null },
+      { step: 4, title: '验证温度下降', handler: '系统', status: 'pending', started_at: null, finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '11:00', phase: '检测告警', actor: '系统', action: 'CPU温度92°C超过阈值85°C' },
+      { time: '11:02', phase: 'AI诊断', actor: 'AI系统', action: '建议迁移至备用节点' },
+      { time: '11:05', phase: '分配处理', actor: 'SRE组长', action: '指派 → 陈工' },
+      { time: '11:15', phase: '排查中', actor: '陈工', action: '发现风扇积灰严重' },
+    ],
+    tracking_comments: [
+      { time: '11:15', actor: '陈工', content: '发现风扇积灰严重，正在清理' },
+    ],
     timeline: [
       { time: '11:00', event: '告警触发', type: 'alert', detail: 'CPU温度92°C超过阈值85°C' },
       { time: '11:02', event: 'AI 检测', type: 'detection', detail: '建议迁移至备用节点' },
@@ -1383,9 +1592,22 @@ const MOCK_INCIDENTS = [
     relatedAlertIds: [15],
     topologyNodeIds: ['sg-001'],
     impactScope: '存在未授权访问风险，需立即处理',
-    timeline: [
-      { time: '08:00', event: '告警触发', type: 'alert', detail: '安全组规则0.0.0.0/0全开' },
-      { time: '08:05', event: 'AI 检测', type: 'detection', detail: '建议自动拦截并收紧规则' },
+    assignee: '周工',
+    sla_deadline: '2026-06-17 08:30:00',
+    sla_status: 'overdue',
+    checklist: [
+      { step: 1, title: '登录云控制台', handler: '周工', status: 'done', started_at: '08:10', finished_at: '08:15' },
+      { step: 2, title: '审查安全组规则', handler: '周工', status: 'done', started_at: '08:15', finished_at: '08:25' },
+      { step: 3, title: '收紧高危端口', handler: '周工', status: 'running', started_at: '08:25', finished_at: null },
+      { step: 4, title: '验证规则生效', handler: '系统', status: 'pending', started_at: null, finished_at: null },
+    ],
+    tracking_timeline: [
+      { time: '08:00', phase: '检测告警', actor: '系统', action: '安全组规则0.0.0.0/0全开' },
+      { time: '08:05', phase: 'AI诊断', actor: 'AI系统', action: '建议自动拦截并收紧规则' },
+      { time: '08:10', phase: '分配处理', actor: 'SRE组长', action: '指派 → 周工' },
+    ],
+    tracking_comments: [
+      { time: '08:10', actor: 'SRE组长', content: '指派给周工处理' },
     ],
   },
 ]
@@ -2126,6 +2348,23 @@ app.get('/api/sre/incidents/:id/linked-logs', (req, res) => {
   res.json({ success: true, data: MOCK_LINKED_LOGS[req.params.id] || [] })
 })
 
+// GET /api/sre/incidents/:id/tracking
+app.get('/api/sre/incidents/:id/tracking', (req, res) => {
+  const incident = MOCK_INCIDENTS.find(i => i.id === req.params.id)
+  if (!incident) return res.status(404).json({ success: false, message: 'Incident not found' })
+  res.json({
+    success: true,
+    data: {
+      assignee: incident.assignee || '未分配',
+      sla_deadline: incident.sla_deadline || null,
+      sla_status: incident.sla_status || 'normal',
+      checklist: incident.checklist || [],
+      tracking_timeline: incident.tracking_timeline || [],
+      tracking_comments: incident.tracking_comments || [],
+    },
+  })
+})
+
 // POST /api/sre/incidents/:id/heal/:stepIndex
 app.post('/api/sre/incidents/:id/heal/:stepIndex', (req, res) => {
   const playbook = MOCK_HEALING_PLAYBOOK[req.params.id]
@@ -2200,11 +2439,11 @@ app.get('/api/sre/rca-reports', (req, res) => {
 const CATEGORY_STRATEGY = {
   '容量类': { label: '容量·AI自愈', heal: 'auto', color: 'green', desc: 'CPU/时延/IOPS瓶颈 · 极易AI自动修复' },
   '阈值类': { label: '阈值·人工诊断', heal: 'assist', color: 'orange', desc: '性能指标越限 · QA根因诊断辅助' },
-  '证书类': { label: '证书·自动续期', heal: 'auto', color: 'green', desc: 'SSL/AK-SK泄露 · 可自动展期修复' },
-  '硬件类': { label: '硬件·自动重启', heal: 'auto', color: 'green', desc: '物理机/交换机 · 自动重启拉起' },
+  '证书类': { label: '证书·人工续期', heal: 'assist', color: 'orange', desc: 'SSL/AK-SK泄露 · 需人工确认续期' },
+  '硬件类': { label: '硬件·现场处理', heal: 'assist', color: 'orange', desc: '物理机/交换机 · 需人工现场处理' },
   '网络类': { label: '网络·拓扑分析', heal: 'assist', color: 'orange', desc: '专线/BGP/南北向 · 拓扑聚合关键' },
   '服务类': { label: '服务·自动拉起', heal: 'auto', color: 'green', desc: '进程退出/主备切换 · 自动重启拉起' },
-  '配置类': { label: '配置·自动拦截', heal: 'auto', color: 'green', desc: '暴露端口/策略违规 · 自动执行拦截/隔离' },
+  '配置类': { label: '配置·人工审批', heal: 'assist', color: 'orange', desc: '暴露端口/策略违规 · 需人工审批变更' },
 }
 
 // GET /api/alarm/incidents — 告警聚合事件列表
