@@ -309,3 +309,154 @@ test.describe('告警分析 — 页面级异常检测', () => {
     expect(errors).toEqual([])
   })
 })
+
+test.describe('告警分析 — 完整故事线', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/alarm/overview-stats**', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_OVERVIEW_STATS) })
+    })
+    await page.route('**/api/alarm/incidents**', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_INCIDENTS) })
+    })
+  })
+
+  test('Step1: 进入告警分析页面，Hero/图表/表格均可见', async ({ page }) => {
+    await page.goto('/overview?tab=alarm')
+    await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
+
+    await expect(page.locator('.aa-hero-row')).toBeVisible()
+    await expect(page.locator('.aa-chart-row')).toBeVisible()
+    await expect(page.locator('.aa-table-card').first()).toBeVisible()
+
+    const rows = page.locator('.ant-table-row')
+    await expect(rows.first()).toBeVisible()
+  })
+
+  test('Step2: 搜索故障ID → 表格过滤 → 清空恢复', async ({ page }) => {
+    await page.goto('/overview?tab=alarm')
+    await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
+
+    const table = page.locator('.aa-table-card').first().locator('.ant-table')
+    const rows = table.locator('.ant-table-row')
+    const countBefore = await rows.count()
+    expect(countBefore).toBeGreaterThan(0)
+
+    const secondCell = await rows.first().locator('td').nth(1).textContent()
+    const incidentId = secondCell.trim()
+    expect(incidentId).toMatch(/^INC-/)
+
+    const searchInput = page.locator('input[placeholder="搜索故障名称、ID"]')
+    await searchInput.fill(incidentId)
+    await page.waitForTimeout(500)
+
+    const rowsAfterSearch = table.locator('.ant-table-row')
+    const countAfterSearch = await rowsAfterSearch.count()
+    expect(countAfterSearch).toBe(1)
+
+    await searchInput.clear()
+    await page.waitForTimeout(500)
+
+    const rowsAfterClear = table.locator('.ant-table-row')
+    const countAfterClear = await rowsAfterClear.count()
+    expect(countAfterClear).toBe(countBefore)
+  })
+
+  test('Step3: 点击故障名称蓝链接 → 跳转详情页', async ({ page }) => {
+    await page.goto('/overview?tab=alarm')
+    await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
+
+    const link = page.locator('.aa-root-cause-link').first()
+    await expect(link).toBeVisible()
+    await expect(link).toHaveCSS('color', 'rgb(0, 125, 255)')
+
+    await link.click()
+    await page.waitForTimeout(1000)
+
+    expect(page.url()).toContain('/ops/incident/')
+  })
+
+  test('Step3b: 详情页故障名称/证据链/AI建议可见', async ({ page }) => {
+    await page.route('**/api/alarm/incidents/**', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+        success: true,
+        data: {
+          incident: {
+            incident_no: 'INC-001',
+            title: 'CPU负载过高触发自动扩容',
+            root_cause: 'AI 正在分析根因',
+            level: 'critical',
+            severity: 'P1',
+            category: '容量类',
+            status: 'investigating',
+            affected_count: 3,
+            handler: 'ai',
+            evidence: [
+              { time: '08:58', event: '告警触发', type: 'alert', detail: 'P99 响应时间 3500ms' },
+              { time: '09:00', event: 'AI 检测', type: 'detection', detail: '根因定位: 数据库连接池耗尽' },
+            ],
+            ai_confidence: 87,
+            suggestions: ['检查相关服务状态', '查看应用日志定位异常'],
+            can_heal: true,
+          },
+          relatedAlerts: [],
+          categoryBreakdown: [],
+        }
+      })})
+    })
+    await page.goto('/alarm-analysis/INC-001')
+    await page.waitForSelector('.alarm-analysis-view', { timeout: 15000 })
+
+    await expect(page.locator('.aa-title')).toContainText('智能告警分析')
+    await expect(page.locator('.aa-back-btn')).toBeVisible()
+  })
+
+  test('Step4: 详情页点击返回 → 回到告警分析页面', async ({ page }) => {
+    await page.goto('/alarm-analysis/INC-001')
+    await page.waitForSelector('.alarm-analysis-view', { timeout: 15000 })
+
+    await page.locator('.aa-back-btn').click()
+    await page.waitForTimeout(1000)
+
+    expect(page.url()).toContain('/overview')
+    await expect(page.locator('.alarm-analysis-page')).toBeVisible()
+
+    const rows = page.locator('.ant-table-row')
+    await expect(rows.first()).toBeVisible()
+  })
+
+  test('Step5: 点击关联告警数字 → Drawer打开显示告警列表', async ({ page }) => {
+    await page.goto('/overview?tab=alarm')
+    await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
+
+    const link = page.locator('.aa-related-link').first()
+    await expect(link).toBeVisible()
+    await link.click()
+    await page.waitForTimeout(1000)
+
+    await expect(page.locator('.ant-drawer')).toBeVisible()
+    await expect(page.locator('.ant-drawer-body')).toBeVisible()
+
+    const drawerRows = page.locator('.ant-drawer-body .ant-table-row')
+    const drawerRowCount = await drawerRows.count()
+    expect(drawerRowCount).toBeGreaterThan(0)
+  })
+
+  test('Step6: 关闭Drawer → 回到表格', async ({ page }) => {
+    await page.goto('/overview?tab=alarm')
+    await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
+
+    await page.locator('.aa-related-link').first().click()
+    await page.waitForTimeout(1000)
+    await expect(page.locator('.ant-drawer')).toBeVisible()
+
+    await page.locator('.ant-drawer-close').click({ force: true })
+    await page.waitForTimeout(1500)
+
+    const drawerOpen = await page.evaluate(() => {
+      const drawer = document.querySelector('.ant-drawer')
+      return drawer ? drawer.classList.contains('ant-drawer-open') : false
+    })
+    expect(drawerOpen).toBe(false)
+    await expect(page.locator('.aa-table-card').first()).toBeVisible()
+  })
+})
