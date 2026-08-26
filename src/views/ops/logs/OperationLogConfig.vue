@@ -88,6 +88,16 @@ const forwardData = ref([
 ])
 const loading = ref(false)
 
+function parseForwardContent(raw) {
+  if (!raw) return '--'
+  try {
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.join(',') : String(arr)
+  } catch {
+    return String(raw).split(',').join(',')
+  }
+}
+
 onMounted(async () => {
   loading.value = true
   try {
@@ -97,7 +107,7 @@ onMounted(async () => {
       forwardData.value = json.data.map(function(item) {
         return {
           id: item.id,
-          logType: item.forward_content ? JSON.parse(item.forward_content).join(',') : '--',
+          logType: parseForwardContent(item.forward_content),
           ip: (item.target_addr || '').split(':')[0],
           port: (item.target_addr || '').split(':')[1],
           serverType: item.target_type,

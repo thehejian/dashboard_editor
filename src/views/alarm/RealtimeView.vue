@@ -33,8 +33,8 @@
               <a-select-option :value="60">60秒刷新</a-select-option>
               <a-select-option :value="0">不刷新</a-select-option>
             </a-select>
-            <a-input-search v-model:value="searchText" placeholder="搜索告警名称、资源" class="search-input" />
             <a-button type="primary"><i class="fa-solid fa-volume-off"></i></a-button>
+            <a-input-search v-model:value="searchText" placeholder="搜索告警名称、资源" class="search-input" />
           </div>
 
           <!-- AI 聚合推荐横幅 -->

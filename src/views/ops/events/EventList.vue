@@ -29,7 +29,6 @@
         <a-select-option value="CLOUD_VM">虚拟机</a-select-option>
         <a-select-option value="CLOUD_GAUSSDB_INSTANCE">GaussDB 实例</a-select-option>
       </a-select>
-      <a-input v-model:value="filters.keyword" placeholder="关键词搜索" style="width:200px" allowClear />
       <a-select v-model:value="filters.timeRange" style="width:130px" placeholder="时间范围" allowClear>
         <a-select-option value="1h">近 1 小时</a-select-option>
         <a-select-option value="6h">近 6 小时</a-select-option>
@@ -39,6 +38,7 @@
       </a-select>
       <a-button type="primary" style="margin-left:auto" @click="handleSearch">查询</a-button>
       <a-button @click="handleReset">重置</a-button>
+      <a-input v-model:value="filters.keyword" placeholder="关键词搜索" style="flex:1;min-width:200px" allowClear />
     </div>
     <div class="table-toolbar">
       <div class="table-toolbar-right">
@@ -46,12 +46,6 @@
         <a-button @click="handleExport">导出</a-button>
       </div>
     </div>
-    <a-input-search
-      v-model:value="searchKeyword"
-      placeholder="搜索..."
-      style="width:100%;margin-bottom:12px"
-      allow-clear
-    />
     <a-table :columns="columns" :data-source="filteredData" :pagination="pagination" row-key="id" :row-selection="{ selectedRowKeys, onChange: onSelectChange }" :scroll="{ x: 1200 }" @change="onTableChange">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'level'">
@@ -106,12 +100,6 @@
         <div class="detail-section"><h4>原始日志内容</h4><pre class="log-block">{{ detailEvent.rawLog }}</pre></div>
         <div class="detail-section"><h4>关联追踪任务</h4>
           <div v-if="relatedTasks.length" style="margin-top:8px">
-            <a-input-search
-      v-model:value="searchKeyword"
-      placeholder="搜索..."
-      style="width:100%;margin-bottom:12px"
-      allow-clear
-    />
     <a-table :columns="traceCols" :data-source="relatedTasks" row-key="id" :pagination="false" size="small">
               <template #bodyCell="{ column: col, record: r }">
                 <template v-if="col.key === 'status'"><a-tag :color="TASK_STATUS_COLORS[r.status]">{{ TASK_STATUS[r.status] }}</a-tag></template>
@@ -172,7 +160,6 @@ const breadcrumbTitle = computed(() => {
 
 const filters = reactive({ sourceType: '', level: '', status: '', ciType: '', keyword: '', timeRange: '' })
 const selectedRowKeys = ref([])
-const searchKeyword = ref("")
 const pagination = reactive({ current: 1, pageSize: 6, total: 0, showTotal: t => `显示 ${Math.min((pagination.current - 1) * pagination.pageSize + 1, t)}-${Math.min(pagination.current * pagination.pageSize, t)} 条，共 ${t} 条` })
 
 const rawData = ref([...MOCK_EVENTS])

@@ -1,6 +1,6 @@
 <template>
   <div class="page-view">
-    <div class="page-header"><h2>个性化</h2></div>
+    <div class="page-header"><h3>个性化</h3></div>
     <a-tabs v-model:activeKey="activeTab" class="content-tabs">
       <a-tab-pane key="display" tab="显示设置">
         <div class="setting-section">

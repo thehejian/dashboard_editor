@@ -1,7 +1,7 @@
 <template>
   <div class="page-view">
     <div class="page-header">
-      <h2>事件</h2>
+      <h3>事件</h3>
     </div>
     <div class="filter-actions-bar"><a-button type="primary"><i class="fa-solid fa-download"></i> 导出</a-button></div>
     <div class="filter-bar">

@@ -40,9 +40,9 @@
         <a-select-option value="测试">测试</a-select-option>
         <a-select-option value="开发">开发</a-select-option>
       </a-select>
-      <a-input-search v-model:value="search" placeholder="搜索 名称/IP/负责人" class="search-input" />
       <a-button type="primary" @click="doSearch"><i class="fa-solid fa-magnifying-glass"></i> 查询</a-button>
       <a-button @click="doReset"><i class="fa-solid fa-rotate-right"></i> 重置</a-button>
+      <a-input-search v-model:value="search" placeholder="搜索 名称/IP/负责人" class="search-input" />
     </div>
 
     <a-table :columns="dynamicColumns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }" row-key="id">

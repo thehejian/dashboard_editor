@@ -1,6 +1,6 @@
 <template>
   <div class="page-view">
-    <div class="page-header"><h2>监控配置</h2></div>
+    <div class="page-header"><h3>监控配置</h3></div>
     <div class="config-card">
       <h3>采集配置</h3>
       <a-form layout="vertical">

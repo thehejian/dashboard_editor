@@ -1,7 +1,7 @@
 <template>
   <div class="page-view">
     <div class="page-header">
-      <h2>告警规则</h2>
+      <h3>告警规则</h3>
     </div>
     <div class="filter-actions-bar"><a-button type="primary"><i class="fa-solid fa-plus"></i> 新建规则</a-button></div>
     <div class="filter-bar">

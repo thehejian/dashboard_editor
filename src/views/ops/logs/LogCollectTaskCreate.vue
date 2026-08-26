@@ -159,7 +159,7 @@
       <a-button type="primary" :loading="submitting" @click="handleSubmit">确定</a-button>
     </div>
 
-    <a-modal v-model:visible="showObjectModal" title="选择采集对象" width="1100px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
+    <a-modal v-model:open="showObjectModal" title="选择采集对象" width="1100px" :cancelText="'取消'" :okText="'确定'" @ok="confirmObjects" @cancel="showObjectModal = false">
       <div class="transfer-layout">
         <div class="transfer-panel">
           <div class="transfer-panel-header">可选对象</div>
@@ -196,7 +196,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:visible="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="1200px" :cancelText="'取消'" :okText="'确定'" @ok="confirmPaths" @cancel="showPathModal = false">
+    <a-modal v-model:open="showPathModal" :title="'配置日志路径 - ' + (currentPathObj?.title || '')" width="1200px" :cancelText="'取消'" :okText="'确定'" @ok="confirmPaths" @cancel="showPathModal = false">
       <div v-if="currentPathObj" class="path-transfer">
         <div class="transfer-layout">
           <div class="transfer-panel">
@@ -239,7 +239,7 @@
       </div>
     </a-modal>
 
-    <a-modal v-model:visible="showAddCustomPath" title="新增自定义路径" width="640px" :cancelText="'取消'" :okText="'确定'" @ok="saveCustomPath" @cancel="showAddCustomPath = false">
+    <a-modal v-model:open="showAddCustomPath" title="新增自定义路径" width="640px" :cancelText="'取消'" :okText="'确定'" @ok="saveCustomPath" @cancel="showAddCustomPath = false">
       <a-form layout="vertical">
         <a-form-item label="日志路径" required>
           <a-input v-model:value="customForm.path" placeholder="/var/log/..." />
@@ -256,7 +256,7 @@
       </a-form>
     </a-modal>
 
-    <a-modal v-model:visible="showPathDetailModal" title="路径详情" width="500px" :footer="null">
+    <a-modal v-model:open="showPathDetailModal" title="路径详情" width="500px" :footer="null">
       <a-descriptions v-if="detailPath" :column="1" bordered size="small">
         <a-descriptions-item label="日志路径">{{ detailPath.path }}</a-descriptions-item>
         <a-descriptions-item label="日志文件名称">{{ detailPath.fileName }}</a-descriptions-item>
@@ -265,7 +265,7 @@
       </a-descriptions>
     </a-modal>
 
-    <a-modal v-model:visible="showAddLogScope" title="新增日志范围" width="640px" :cancelText="'取消'" :okText="'确定'" @ok="saveLogScope" @cancel="showAddLogScope = false">
+    <a-modal v-model:open="showAddLogScope" title="新增日志范围" width="640px" :cancelText="'取消'" :okText="'确定'" @ok="saveLogScope" @cancel="showAddLogScope = false">
       <a-form layout="vertical">
         <a-form-item label="日志路径" required>
           <a-input v-model:value="logScopeForm.path" placeholder="/var/log/..." />

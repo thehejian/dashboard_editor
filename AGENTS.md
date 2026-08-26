@@ -80,6 +80,19 @@ Dashboard 特殊：`/dashboard/:slug` → `EmptyRoute.vue`，由 `App.vue` `v-if
 - 测试文件 `tests/*.spec.js`，需后端也运行（`start.sh` 或分别 nohup 启动）
 - G2 渲染到 Canvas 非 SVG → 用 `canvas.width`/`getImageData()` 验证而非 `querySelector('svg')`
 
+### 回归门禁（2026-08-26 起，任何改动必须先过）
+
+```bash
+npx playwright test tests/site-audit.spec.js --reporter=list   # 全站门禁：96 页渲染×样式规范 + 导航/重定向/大屏/左侧树跳转
+npx playwright test --reporter=list                            # 提交前全量（约 12 分钟）
+```
+
+- `tests/site-audit.spec.js` 是全站巡检入口（A 渲染/B 顶导航/C 重定向/D 大屏/E 左侧树菜单），报告写 `test-results/site-audit-report-*.json`
+- 巡检覆盖的样式规范：`.header` 48px、`#app padding-top:48px`、`--brand:#007DFF`、`.page-header>h3`、含表格页必须有筛选能力、筛选控件 32px（affix 输入框量 wrapper 层）、搜索框末位贴右（按内容盒算）
+- **antd Tree 有展开动画幽灵节点**（`.ant-tree-treenode[visibility:hidden]`），定位必须用 `:visible` 过滤
+- 后端 3001 未启动时 site-audit 会快速失败并提示 `bash start.sh`
+- 新增路由/导航项时同步更新 site-audit 的 `PAGES`/`REDIRECTS`/跳转清单
+
 ## NAS 监控
 
 位于远程 Windows 桌面 `C:\Users\hejian\Desktop\nas\`（跳板机入口 `8.147.132.193:52222`）。

@@ -1,7 +1,7 @@
 <template>
   <div class="page-view">
     <div class="page-header">
-      <h2>自动作业</h2>
+      <h3>自动作业</h3>
       <a-button type="primary">新建任务</a-button>
     </div>
     <a-tabs v-model:activeKey="activeKey" type="card">

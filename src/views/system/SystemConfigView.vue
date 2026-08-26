@@ -1,6 +1,6 @@
 <template>
   <div class="page-view">
-    <div class="page-header"><h2>系统配置</h2></div>
+    <div class="page-header"><h3>系统配置</h3></div>
     <div class="config-section">
       <h3>通知配置</h3>
       <a-form layout="vertical">

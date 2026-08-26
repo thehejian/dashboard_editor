@@ -1,7 +1,7 @@
 <template>
   <div class="page-view">
     <div class="page-header">
-      <h2>资产拓扑</h2>
+      <h3>资产拓扑</h3>
       <a-select v-model:value="topoType" style="width: 160px">
         <a-select-option value="physical">物理拓扑</a-select-option>
         <a-select-option value="service">服务拓扑</a-select-option>

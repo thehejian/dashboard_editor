@@ -1,6 +1,6 @@
 <template>
   <div class="page-view">
-    <div class="page-header"><h2>变更记录</h2></div>
+    <div class="page-header"><h3>变更记录</h3></div>
     <div class="filter-bar">
       <a-select v-model:value="changeType" placeholder="变更类型" style="width: 140px" allowClear>
         <a-select-option value="create">新增</a-select-option>

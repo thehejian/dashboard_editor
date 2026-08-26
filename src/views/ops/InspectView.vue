@@ -1,7 +1,7 @@
 <template>
   <div class="page-view">
     <div class="page-header">
-      <h2>巡检报告</h2>
+      <h3>巡检报告</h3>
       <a-button type="primary">新建巡检计划</a-button>
     </div>
     <div class="inspect-stats">
