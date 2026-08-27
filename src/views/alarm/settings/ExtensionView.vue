@@ -75,6 +75,36 @@
           </template>
         </a-table>
       </a-tab-pane>
+
+      <a-tab-pane key="aggregation" tab="汇聚规则">
+        <a-table
+          :columns="aggColumns"
+          :data-source="aggRules"
+          :pagination="{ pageSize: 10, showSizeChanger: true, showTotal: function(t) { return '共 ' + t + ' 条' } }"
+          row-key="id"
+          :scroll="{ y: scrollY, x: 1000 }"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'scope'">
+              <a-tag :color="record.scope === 'intra' ? 'blue' : 'green'">
+                {{ record.scope === 'intra' ? '网元内' : '网元间' }}
+              </a-tag>
+            </template>
+            <template v-if="column.key === 'trigger'">
+              <span>{{ record.triggerWindow }}秒内 {{ record.triggerOp }} {{ record.triggerThreshold }}条</span>
+            </template>
+            <template v-if="column.key === 'actionType'">
+              <a-tag>{{ record.actionType }}</a-tag>
+            </template>
+            <template v-if="column.key === 'enabled'">
+              <a-switch v-model:checked="record.enabled" />
+            </template>
+          </template>
+        </a-table>
+        <div style="margin-top:12px;text-align:center">
+          <a-button type="link" @click="$router.push('/alarm/settings/rules?tab=aggregation')">查看完整配置 →</a-button>
+        </div>
+      </a-tab-pane>
     </a-tabs>
   </div>
 </template>
@@ -138,6 +168,22 @@ const enrichColumns = [
   { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true, width: 200 },
   { title: '状态', key: 'enabled', width: 70 },
   { title: '操作', key: 'action', width: 80, fixed: 'right' },
+]
+
+const aggRules = ref([
+  { id: 1, name: 'CPU重复告警聚合', scope: 'intra', triggerWindow: 3600, triggerOp: '>=', triggerThreshold: 3, actionType: '生成一条汇聚告警', enabled: true },
+  { id: 2, name: '磁盘告警过滤', scope: 'inter', triggerWindow: 1800, triggerOp: '>=', triggerThreshold: 5, actionType: '汇聚+屏蔽', enabled: true },
+  { id: 3, name: '网络抖动去重', scope: 'intra', triggerWindow: 600, triggerOp: '>=', triggerThreshold: 10, actionType: '汇聚+丢弃', enabled: false },
+  { id: 4, name: '数据库慢查询聚合', scope: 'intra', triggerWindow: 3600, triggerOp: '>=', triggerThreshold: 3, actionType: '生成一条汇聚告警', enabled: true },
+  { id: 5, name: 'Pod重启风暴聚合', scope: 'intra', triggerWindow: 1800, triggerOp: '>=', triggerThreshold: 5, actionType: '生成一条汇聚告警', enabled: true },
+])
+
+const aggColumns = [
+  { title: '规则名称', dataIndex: 'name', key: 'name', ellipsis: true },
+  { title: '范围', key: 'scope', width: 80 },
+  { title: '触发条件', key: 'trigger', width: 180 },
+  { title: '动作', key: 'actionType', width: 150 },
+  { title: '状态', key: 'enabled', width: 70 },
 ]
 
 function updateScrollY() {

@@ -3,17 +3,13 @@ import { test, expect } from '@playwright/test'
 const MOCK_OVERVIEW_STATS = {
   success: true,
   data: {
-    heroStats: { closedCount: 128, reductionRate: 76, autoRate: 42, savedHours: 96 },
+    heroStats: { closedCount: 128, reductionRate: 76, autoRate: 42 },
     categoryStats: [
       { category: '容量类', pct: 32 }, { category: '阈值类', pct: 28 },
       { category: '网络类', pct: 18 }, { category: '证书类', pct: 12 },
       { category: '服务类', pct: 8 }, { category: '硬件类', pct: 2 },
     ],
-    funnelData: { raw: 1200, dedup: 1020, agg: 504, rate: 58 },
-    healingRecords: [
-      { id: 1, time: '2026-08-20 14:30', alert: 'CPU高负载', resource: 'server-01', action: '重启服务', result: 'success', duration: '45s', detail: '自动重启nginx服务成功', nodeLabel: 'server-01' },
-      { id: 2, time: '2026-08-20 13:20', alert: '内存不足', resource: 'server-02', action: '扩容', result: 'failed', duration: '60s', detail: '资源不足无法扩容', nodeLabel: 'server-02' },
-    ],
+    funnelData: { raw: 1200, dedup: 1020, agg: 504, rate: 58, filteredCritical: 12, filteredWarning: 45, filteredInfo: 180 },
   },
 }
 
@@ -102,30 +98,37 @@ test.describe('告警分析 — 页面5行布局', () => {
     await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
   })
 
-  test('Row1: Hero 指标卡显示4个指标（AI自动闭环数、降噪率、AI接管率、节省人工时）', async ({ page }) => {
+  test('Row1: Hero 指标卡显示3个指标（AI自动分析、降噪率、AI接管率）', async ({ page }) => {
     const heroCards = page.locator('.aa-hero-card')
-    await expect(heroCards).toHaveCount(4)
-    await expect(heroCards.nth(0)).toContainText('AI自动闭环数')
+    await expect(heroCards).toHaveCount(3)
+    await expect(heroCards.nth(0)).toContainText('AI自动分析')
     await expect(heroCards.nth(1)).toContainText('告警降噪率')
     await expect(heroCards.nth(2)).toContainText('AI接管率')
-    await expect(heroCards.nth(3)).toContainText('节省人工时')
   })
 
   test('Row1: Hero 指标数值正确渲染', async ({ page }) => {
     await expect(page.locator('.aa-hero-val').nth(0)).toContainText('128')
     await expect(page.locator('.aa-hero-val').nth(1)).toContainText('76%')
     await expect(page.locator('.aa-hero-val').nth(2)).toContainText('42%')
-    await expect(page.locator('.aa-hero-val').nth(3)).toContainText('96')
   })
 
-  test('Row2: 三个图表卡片（TopN、降噪漏斗、处理趋势）各有 G2 图表', async ({ page }) => {
+  test('Row2: 三个图表卡片（TopN、降噪过滤统计、处理趋势）各有 G2 图表', async ({ page }) => {
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
     await expect(chartCards.nth(0)).toContainText('告警类别分布')
-    await expect(chartCards.nth(1)).toContainText('告警降噪过滤')
+    await expect(chartCards.nth(1)).toContainText('告警降噪过滤统计')
     await expect(chartCards.nth(2)).toContainText('告警AI处理趋势')
     const canvases = page.locator('.aa-chart-card canvas')
     await expect(canvases).toHaveCount(3)
+  })
+
+  test('Row2: 降噪过滤统计卡片显示总过滤数和分级统计', async ({ page }) => {
+    const filterCard = page.locator('.aa-chart-card', { hasText: '告警降噪过滤统计' })
+    await expect(filterCard).toBeVisible()
+    await expect(filterCard).toContainText('总过滤')
+    await expect(filterCard).toContainText('紧急')
+    await expect(filterCard).toContainText('重要')
+    await expect(filterCard).toContainText('次要')
   })
 
   test('Row2: 降噪率数值显示', async ({ page }) => {
@@ -153,14 +156,12 @@ test.describe('告警分析 — 页面5行布局', () => {
     expect(joined).toContain('操作')
   })
 
-  test('Row4: 需关注应用卡片渲染', async ({ page }) => {
-    await expect(page.locator('.aiops-app-cards')).toBeVisible()
-    await expect(page.locator('.app-card').first()).toBeVisible()
+  test('Row4: 需关注应用卡片已移除', async ({ page }) => {
+    await expect(page.locator('.aiops-app-cards')).not.toBeVisible()
   })
 
-  test('Row5: 自动修复记录列表渲染', async ({ page }) => {
-    await expect(page.locator('.aiops-healing-records')).toBeVisible()
-    await expect(page.locator('.smart-remed-item').first()).toBeVisible()
+  test('Row5: 自动修复记录列表已移除', async ({ page }) => {
+    await expect(page.locator('.aiops-healing-records')).not.toBeVisible()
   })
 })
 

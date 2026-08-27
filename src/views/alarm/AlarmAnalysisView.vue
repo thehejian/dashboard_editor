@@ -6,7 +6,7 @@
         <div class="aa-hero-icon" style="background:#F0F5FF;color:#007DFF"><i class="fa-solid fa-robot"></i></div>
         <div class="aa-hero-info">
           <div class="aa-hero-val">{{ alarmHeroStats.closedCount }}</div>
-          <div class="aa-hero-label">AI自动闭环数</div>
+          <div class="aa-hero-label">AI自动分析</div>
           <div class="aa-hero-sub">次 / 近30天</div>
         </div>
         <div class="aa-hero-trend up">↑ 12% vs上月</div>
@@ -29,15 +29,6 @@
         </div>
         <div class="aa-hero-trend up">↑ 5.2pp vs上月</div>
       </div>
-      <div class="aa-hero-card">
-        <div class="aa-hero-icon" style="background:#FFF1F0;color:#F5222D"><i class="fa-solid fa-clock"></i></div>
-        <div class="aa-hero-info">
-          <div class="aa-hero-val">{{ alarmHeroStats.savedHours }}</div>
-          <div class="aa-hero-label">节省人工时</div>
-          <div class="aa-hero-sub">小时 / 近30天</div>
-        </div>
-        <div class="aa-hero-trend up">↑ 38h vs上月</div>
-      </div>
     </div>
 
     <!-- Row 2: Charts -->
@@ -47,7 +38,15 @@
         <div ref="topnContainer" class="aa-chart-inner"></div>
       </div>
       <div class="aa-chart-card">
-        <div class="aa-chart-title">告警降噪过滤</div>
+        <div class="aa-chart-title">告警降噪过滤统计</div>
+        <div class="aa-filter-stats">
+          <div class="aa-filter-total">总过滤: <strong>{{ (alarmFunnel.raw - alarmFunnel.agg).toLocaleString() }}</strong> 条告警</div>
+          <div class="aa-filter-breakdown">
+            <div class="aa-filter-item critical">紧急: <strong>{{ alarmFunnel.filteredCritical || 0 }}</strong> 条</div>
+            <div class="aa-filter-item warning">重要: <strong>{{ alarmFunnel.filteredWarning || 0 }}</strong> 条</div>
+            <div class="aa-filter-item info">次要: <strong>{{ alarmFunnel.filteredInfo || 0 }}</strong> 条</div>
+          </div>
+        </div>
         <div ref="funnelContainer" class="aa-chart-inner"></div>
       </div>
       <div class="aa-chart-card">
@@ -165,16 +164,6 @@
       </div>
     </div>
 
-    <!-- Row 4: Apps to watch -->
-    <div class="aa-table-card">
-      <AiopsAppCards :apps="alarmApps" :counts="alarmAppCounts" @app-click="onAppClick" />
-    </div>
-
-    <!-- Row 5: Healing Records -->
-    <div class="aa-table-card">
-      <AiopsHealingRecords :records="alarmHealingRecords" @record-click="onHealingRecordClick" />
-    </div>
-
     <!-- Unified Drawer: 告警详情 -->
     <a-drawer
       :open="relatedDrawerVisible"
@@ -197,8 +186,9 @@
           </div>
           <div class="rd-overview-rules">
             <span class="rd-overview-rules-label">规则</span>
-            <span class="rd-overview-rule">同metric聚合(5min)</span>
-            <span class="rd-overview-rule">重复触发过滤</span>
+            <a-tag class="rd-overview-rule" style="cursor:pointer" @click="$router.push('/alarm/settings/rules?tab=aggregation')">同metric聚合(5min)</a-tag>
+            <a-tag class="rd-overview-rule" style="cursor:pointer" @click="$router.push('/alarm/settings/rules?tab=aggregation')">重复触发过滤</a-tag>
+            <a style="font-size:12px;margin-left:4px" @click="$router.push('/alarm/settings/rules?tab=aggregation')">查看更多规则配置 →</a>
           </div>
         </div>
 
@@ -259,13 +249,11 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Chart } from '@antv/g2'
-import AiopsAppCards from '../../components/aiops/AiopsAppCards.vue'
-import AiopsHealingRecords from '../../components/aiops/AiopsHealingRecords.vue'
 
 const router = useRouter()
 const alarmLoading = ref(false)
-const alarmHeroStats = ref({ closedCount: 0, reductionRate: 0, autoRate: 0, savedHours: 0 })
-const alarmFunnel = ref({ raw: 0, dedup: 0, agg: 0, rate: 0 })
+const alarmHeroStats = ref({ closedCount: 0, reductionRate: 0, autoRate: 0 })
+const alarmFunnel = ref({ raw: 0, dedup: 0, agg: 0, rate: 0, filteredCritical: 0, filteredWarning: 0, filteredInfo: 0 })
 const alarmCategoryStats = ref([])
 const alarmIncidents = ref([])
 const alarmStatusFilter = ref(null)
@@ -273,9 +261,6 @@ const alarmSearchText = ref('')
 const alarmViewMode = ref('list')
 const alarmCategoryFilter = ref('')
 const alarmIncidentCategoryStats = ref([])
-const alarmApps = ref([])
-const alarmAppCounts = ref({ critical: 0, warning: 0 })
-const alarmHealingRecords = ref([])
 const topnContainer = ref(null)
 const funnelContainer = ref(null)
 const alarmTrendContainer = ref(null)
@@ -338,27 +323,10 @@ async function fetchAlarmData() {
       alarmHeroStats.value = statsRes.data.heroStats
       alarmCategoryStats.value = statsRes.data.categoryStats
       alarmFunnel.value = statsRes.data.funnelData
-      alarmHealingRecords.value = statsRes.data.healingRecords || []
     }
     if (incRes.success) {
       alarmIncidents.value = incRes.data
       alarmIncidentCategoryStats.value = incRes.categoryStats || []
-      const appMap = {}
-      for (const inc of incRes.data) {
-        for (const a of (inc.related_alerts || [])) {
-          const res = a.resource || ''
-          const name = res.replace(/\s*\(.*\)/, '').trim()
-          if (!appMap[name]) appMap[name] = { name, type: a.category || '其他', status: a.level === 'critical' ? 'critical' : a.level === 'warning' ? 'warning' : 'normal', score: a.level === 'critical' ? '异常' : '正常', alertCount: 0, incidentNo: inc.incident_no }
-          appMap[name].alertCount++
-          if (a.level === 'critical') appMap[name].status = 'critical'
-          else if (a.level === 'warning' && appMap[name].status !== 'critical') appMap[name].status = 'warning'
-        }
-      }
-      alarmApps.value = Object.values(appMap).sort((a, b) => ({ critical: 0, warning: 1, normal: 2 }[a.status] - { critical: 0, warning: 1, normal: 2 }[b.status]))
-      alarmAppCounts.value = {
-        critical: alarmApps.value.filter(a => a.status === 'critical').length,
-        warning: alarmApps.value.filter(a => a.status === 'warning').length,
-      }
     }
     nextTick(() => {
       renderTopNChart()
@@ -438,14 +406,6 @@ const manualHealCount = computed(() => alarmIncidentCategoryStats.value.filter(s
 
 function goToFaultDetail(record) {
   router.push('/ops/incident/' + (record.incident_no || record.id))
-}
-
-function onAppClick(app) {
-  if (app.incidentNo) router.push('/ops/incident/' + app.incidentNo)
-}
-
-function onHealingRecordClick(record) {
-  if (record.incidentId) router.push('/ops/incident/' + record.incidentId + '?tab=postmortem')
 }
 
 function openAlarmAnalysis(record) {
@@ -558,6 +518,20 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .noise-reduction-fill.medium { background: #1890ff; }
 .noise-reduction-fill.low { background: #d9d9d9; }
 .noise-reduction-value { font-size: 12px; font-weight: 500; color: #1a1a1a; }
+
+/* 告警降噪过滤统计卡片 */
+.aa-filter-stats { padding: 12px 16px; background: #f6f8fa; border-radius: 8px; margin: 8px 16px; }
+.aa-filter-total { font-size: 14px; color: #1a1a1a; margin-bottom: 12px; }
+.aa-filter-total strong { font-weight: 600; color: #007DFF; }
+.aa-filter-breakdown { display: flex; gap: 16px; }
+.aa-filter-item { font-size: 13px; color: #666; padding: 6px 12px; border-radius: 6px; background: #fff; border: 1px solid #e8e8e8; }
+.aa-filter-item strong { font-weight: 600; }
+.aa-filter-item.critical { border-color: #ff4d4f; color: #ff4d4f; }
+.aa-filter-item.critical strong { color: #ff4d4f; }
+.aa-filter-item.warning { border-color: #fa8c16; color: #fa8c16; }
+.aa-filter-item.warning strong { color: #fa8c16; }
+.aa-filter-item.info { border-color: #1890ff; color: #1890ff; }
+.aa-filter-item.info strong { color: #1890ff; }
 
 /* 统一 Drawer 样式 */
 .rd-overview { background: #f6f8fa; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }

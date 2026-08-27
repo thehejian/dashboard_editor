@@ -62,6 +62,9 @@
                   <i class="fa-solid" :class="banner.expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                   {{ banner.expanded ? '收起' : '展开' }} ({{ banner.count }})
                 </a-button>
+                <a-button size="small" @click="$router.push('/alarm/settings/rules?tab=aggregation')">
+                  <i class="fa-solid fa-gear"></i> 查看规则配置
+                </a-button>
               </div>
               <!-- 聚合详情面板 -->
               <div v-if="banner.aggregated && banner.expanded" class="agg-detail-panel">

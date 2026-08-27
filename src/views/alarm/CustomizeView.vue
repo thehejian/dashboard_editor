@@ -84,7 +84,10 @@
               <span>告警聚合</span>
               <span class="setting-desc">相同类型的告警合并为一条通知</span>
             </div>
-            <a-switch v-model:checked="settings.aggregation" />
+            <div style="display:flex;align-items:center;gap:8px;">
+              <a-switch v-model:checked="settings.aggregation" />
+              <a-button size="small" @click="$router.push('/alarm/settings/rules?tab=aggregation')">⚙️ 配置聚合规则</a-button>
+            </div>
           </div>
         </div>
       </a-tab-pane>

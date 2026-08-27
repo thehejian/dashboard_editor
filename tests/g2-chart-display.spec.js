@@ -3,16 +3,13 @@ import { test, expect } from '@playwright/test'
 const MOCK_OVERVIEW_STATS = {
   success: true,
   data: {
-    heroStats: { closedCount: 128, reductionRate: 76, autoRate: 42, savedHours: 96 },
+    heroStats: { closedCount: 128, reductionRate: 76, autoRate: 42 },
     categoryStats: [
       { category: '容量类', pct: 32 }, { category: '阈值类', pct: 28 },
       { category: '网络类', pct: 18 }, { category: '证书类', pct: 12 },
       { category: '服务类', pct: 8 }, { category: '硬件类', pct: 2 },
     ],
-    funnelData: { raw: 1200, dedup: 1020, agg: 504, rate: 58 },
-    healingRecords: [
-      { id: 1, time: '2026-08-20 14:30', alert: 'CPU高负载', resource: 'server-01', action: '重启服务', result: 'success', duration: '45s', detail: '自动重启nginx服务成功', nodeLabel: 'server-01' },
-    ],
+    funnelData: { raw: 1200, dedup: 1020, agg: 504, rate: 58, filteredCritical: 12, filteredWarning: 45, filteredInfo: 180 },
   },
 }
 

@@ -175,6 +175,12 @@ npx playwright test --reporter=list                            # 提交前全量
 
 ## 告警分析页面经验教训
 
+### 布局变更（2026-08-27）
+- **Hero 指标卡**：从 4 个精简为 3 个（AI自动分析、告警降噪率、AI接管率），移除"节省人工时"
+- **降噪过滤统计**：新增分级统计卡片，显示总过滤数 + 紧急/重要/次要告警数量
+- **底部卡片**：移除"需要关注的应用/云服务"（AiopsAppCards）和"自动修复记录"（AiopsHealingRecords）
+- **funnelData 字段**：需包含 `filteredCritical`、`filteredWarning`、`filteredInfo` 三个分级字段
+
 ### 后端数据
 - **MOCK_INCIDENTS 位置**：硬编码在 `server.js` 中（约 L1100-1283），不在 `mockData.js`
 - **alerts 表**：`server/db/mockData.js` L130-143，12 条告警，8 条有 `incident_id`，4 条 UNLINKED
