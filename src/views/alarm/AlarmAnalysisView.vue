@@ -442,7 +442,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 <style scoped>
 .alarm-analysis-page { display: flex; flex-direction: column; gap: 16px; padding: 0; height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
 .aa-hero-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
-.aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+.aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; width: 100%; }
 .aa-hero-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
 .aa-hero-info { flex: 1; min-width: 0; }
 .aa-hero-val { font-size: 24px; font-weight: 700; color: #1A1A1A; line-height: 1.2; }
@@ -453,7 +453,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; min-height: 0; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
-.aa-chart-container { flex: 1; min-height: 160px; }
+.aa-chart-container { flex: 1; min-height: 160px; overflow: hidden; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
