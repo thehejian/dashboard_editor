@@ -136,14 +136,18 @@ test.describe('告警分析 — 页面5行布局', () => {
     }
   })
 
-  test('Row2: 三个图表卡片（TopN、降噪过滤统计、处理趋势）各有 G2 图表', async ({ page }) => {
+  test('Row2: 两个图表卡片（TopN、处理趋势）各有 G2 图表，降噪过滤统计无canvas', async ({ page }) => {
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
     await expect(chartCards.nth(0)).toContainText('告警类别分布')
     await expect(chartCards.nth(1)).toContainText('告警降噪过滤统计')
     await expect(chartCards.nth(2)).toContainText('告警AI处理趋势')
-    const canvases = page.locator('.aa-chart-card canvas')
-    await expect(canvases).toHaveCount(3)
+    const topnCanvas = page.locator('.aa-chart-card').nth(0).locator('canvas')
+    await expect(topnCanvas).toHaveCount(1)
+    const trendCanvas = page.locator('.aa-chart-card').nth(2).locator('canvas')
+    await expect(trendCanvas).toHaveCount(1)
+    const funnelCanvas = page.locator('.aa-chart-card').nth(1).locator('canvas')
+    await expect(funnelCanvas).toHaveCount(0)
   })
 
   test('Row2: 降噪过滤统计卡片显示总过滤数和分级统计', async ({ page }) => {

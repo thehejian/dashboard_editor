@@ -2588,11 +2588,11 @@ app.get('/api/alarm/overview-stats', (req, res) => {
         closedCount: totalHistorical + resolved.length,
         reductionRate: 91.5,
         autoRate: 78.3,
-        savedHours: 280,
       },
       categoryStats,
       funnelData: {
         raw: 100000, dedup: 85000, agg: 8500, rate: 91.5,
+        filteredCritical: 12000, filteredWarning: 38000, filteredInfo: 41500,
       },
       trendData: {
         labels: ['06-11', '06-12', '06-13', '06-14', '06-15', '06-16', '06-17'],

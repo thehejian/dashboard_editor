@@ -34,12 +34,12 @@ test.describe('G2 图表渲染检测', () => {
     await page.waitForTimeout(2000)
   })
 
-  test('3个图表容器各有1个canvas元素', async ({ page }) => {
+  test('2个图表容器各有1个canvas元素', async ({ page }) => {
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
-    for (let i = 0; i < 3; i++) {
-      await expect(chartCards.nth(i).locator('canvas')).toHaveCount(1)
-    }
+    await expect(chartCards.nth(0).locator('canvas')).toHaveCount(1)
+    await expect(chartCards.nth(1).locator('canvas')).toHaveCount(0)
+    await expect(chartCards.nth(2).locator('canvas')).toHaveCount(1)
   })
 
   test('TopN图表canvas有实际像素内容', async ({ page }) => {
@@ -58,20 +58,13 @@ test.describe('G2 图表渲染检测', () => {
     expect(hasContent).toBe(true)
   })
 
-  test('漏斗图表canvas有实际像素内容', async ({ page }) => {
-    const canvas = page.locator('.aa-chart-card').nth(1).locator('canvas')
-    const hasContent = await canvas.evaluate(el => {
-      const ctx = el.getContext('2d')
-      if (!ctx) return false
-      const w = el.width, h = el.height
-      if (w === 0 || h === 0) return false
-      const imageData = ctx.getImageData(0, 0, w, h)
-      for (let i = 3; i < imageData.data.length; i += 4) {
-        if (imageData.data[i] > 0) return true
-      }
-      return false
-    })
-    expect(hasContent).toBe(true)
+  test('降噪过滤统计卡片无canvas，显示过滤统计文字', async ({ page }) => {
+    const card = page.locator('.aa-chart-card').nth(1)
+    await expect(card.locator('canvas')).toHaveCount(0)
+    await expect(card).toContainText('总过滤')
+    await expect(card).toContainText('紧急')
+    await expect(card).toContainText('重要')
+    await expect(card).toContainText('次要')
   })
 
   test('趋势图表canvas有实际像素内容', async ({ page }) => {

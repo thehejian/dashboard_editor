@@ -47,7 +47,6 @@
             <div class="aa-filter-item info">次要: <strong>{{ alarmFunnel.filteredInfo || 0 }}</strong> 条</div>
           </div>
         </div>
-        <div ref="funnelContainer" class="aa-chart-container"></div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">告警AI处理趋势</div>
@@ -354,7 +353,6 @@ function renderTopNChart() {
 }
 
 function renderFunnelChart() {
-  if (funnelChart) { funnelChart.destroy(); funnelChart = null }
   if (!funnelContainer.value) return
   const f = alarmFunnel.value
   if (!f.raw) return
@@ -450,7 +448,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-hero-sub { font-size: 11px; color: #8C8C8C; margin-top: 1px; }
 .aa-hero-trend { font-size: 11px; margin-top: 0; text-align: right; white-space: nowrap; }
 .aa-hero-trend.up { color: #52C41A; }
-.aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
+.aa-chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; min-height: 0; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
 .aa-chart-container { flex: 1; min-height: 160px; overflow: hidden; }
@@ -520,11 +518,11 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .noise-reduction-value { font-size: 12px; font-weight: 500; color: #1a1a1a; }
 
 /* 告警降噪过滤统计卡片 */
-.aa-filter-stats { padding: 12px 16px; background: #f6f8fa; border-radius: 8px; margin: 8px 16px; }
-.aa-filter-total { font-size: 14px; color: #1a1a1a; margin-bottom: 12px; }
+.aa-filter-stats { padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.aa-filter-total { font-size: 14px; color: #1a1a1a; }
 .aa-filter-total strong { font-weight: 600; color: #007DFF; }
-.aa-filter-breakdown { display: flex; gap: 16px; }
-.aa-filter-item { font-size: 13px; color: #666; padding: 6px 12px; border-radius: 6px; background: #fff; border: 1px solid #e8e8e8; }
+.aa-filter-breakdown { display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+.aa-filter-item { font-size: 13px; color: #666; padding: 8px 12px; border-radius: 6px; background: #fff; border: 1px solid #e8e8e8; flex: 1; display: flex; align-items: center; }
 .aa-filter-item strong { font-weight: 600; }
 .aa-filter-item.critical { border-color: #ff4d4f; color: #ff4d4f; }
 .aa-filter-item.critical strong { color: #ff4d4f; }
