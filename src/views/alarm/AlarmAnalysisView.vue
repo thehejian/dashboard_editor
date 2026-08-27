@@ -35,7 +35,7 @@
     <div class="aa-chart-row">
       <div class="aa-chart-card">
         <div class="aa-chart-title">告警类别分布</div>
-        <div ref="topnContainer" class="aa-chart-inner"></div>
+        <div ref="topnContainer" class="aa-chart-container"></div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">告警降噪过滤统计</div>
@@ -47,11 +47,11 @@
             <div class="aa-filter-item info">次要: <strong>{{ alarmFunnel.filteredInfo || 0 }}</strong> 条</div>
           </div>
         </div>
-        <div ref="funnelContainer" class="aa-chart-inner"></div>
+        <div ref="funnelContainer" class="aa-chart-container"></div>
       </div>
       <div class="aa-chart-card">
         <div class="aa-chart-title">告警AI处理趋势</div>
-        <div ref="alarmTrendContainer" class="aa-chart-inner"></div>
+        <div ref="alarmTrendContainer" class="aa-chart-container"></div>
       </div>
     </div>
 
@@ -441,7 +441,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 
 <style scoped>
 .alarm-analysis-page { display: flex; flex-direction: column; gap: 16px; padding: 0; height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
-.aa-hero-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex-shrink: 0; }
+.aa-hero-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
 .aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; }
 .aa-hero-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
 .aa-hero-info { flex: 1; min-width: 0; }
@@ -451,9 +451,9 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-hero-trend { font-size: 11px; margin-top: 0; text-align: right; white-space: nowrap; }
 .aa-hero-trend.up { color: #52C41A; }
 .aa-chart-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; flex-shrink: 0; }
-.aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; }
+.aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; min-height: 0; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
-.aa-chart-inner { height: 180px; }
+.aa-chart-container { flex: 1; min-height: 160px; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
 .aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }

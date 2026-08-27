@@ -98,6 +98,13 @@ test.describe('告警分析 — 页面5行布局', () => {
     await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
   })
 
+  test('Row1: Hero 指标卡铺满一行（3列grid）', async ({ page }) => {
+    const heroRow = page.locator('.aa-hero-row')
+    const gridStyle = await heroRow.evaluate(el => getComputedStyle(el).gridTemplateColumns)
+    const columns = gridStyle.split(' ')
+    expect(columns.length).toBe(3)
+  })
+
   test('Row1: Hero 指标卡显示3个指标（AI自动分析、降噪率、AI接管率）', async ({ page }) => {
     const heroCards = page.locator('.aa-hero-card')
     await expect(heroCards).toHaveCount(3)
@@ -110,6 +117,23 @@ test.describe('告警分析 — 页面5行布局', () => {
     await expect(page.locator('.aa-hero-val').nth(0)).toContainText('128')
     await expect(page.locator('.aa-hero-val').nth(1)).toContainText('76%')
     await expect(page.locator('.aa-hero-val').nth(2)).toContainText('42%')
+  })
+
+  test('Row2: 图表卡片无 aa-chart-inner 包裹层', async ({ page }) => {
+    const chartCards = page.locator('.aa-chart-card')
+    await expect(chartCards).toHaveCount(3)
+    for (let i = 0; i < 3; i++) {
+      const innerCount = await chartCards.nth(i).locator('.aa-chart-inner').count()
+      expect(innerCount).toBe(0)
+    }
+  })
+
+  test('Row2: 图表卡片使用 flex 布局自适应高度', async ({ page }) => {
+    const chartCards = page.locator('.aa-chart-card')
+    for (let i = 0; i < 3; i++) {
+      const display = await chartCards.nth(i).evaluate(el => getComputedStyle(el).display)
+      expect(display).toBe('flex')
+    }
   })
 
   test('Row2: 三个图表卡片（TopN、降噪过滤统计、处理趋势）各有 G2 图表', async ({ page }) => {

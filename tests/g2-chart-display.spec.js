@@ -30,7 +30,7 @@ test.describe('G2 图表渲染检测', () => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_INCIDENTS) })
     })
     await page.goto('/overview?tab=alarm')
-    await page.waitForSelector('.aa-chart-inner', { timeout: 15000 })
+    await page.waitForSelector('.aa-chart-container', { timeout: 15000 })
     await page.waitForTimeout(2000)
   })
 

@@ -20,12 +20,12 @@ test.describe('当前告警 - AI聚合横幅规则链接', () => {
       test.skip()
       return
     }
-    const link = page.locator('a, button', { hasText: '查看规则配置' })
+    const link = page.locator('button', { hasText: '查看规则配置' })
     await expect(link.first()).toBeAttached()
   })
 
   test('"查看规则配置"跳转到汇聚规则Tab', async ({ page }) => {
-    const link = page.locator('a, button', { hasText: '查看规则配置' })
+    const link = page.locator('button', { hasText: '查看规则配置' })
     const count = await link.count()
     if (count === 0) {
       test.skip()
@@ -37,25 +37,14 @@ test.describe('当前告警 - AI聚合横幅规则链接', () => {
     await expect(page).toHaveURL(/tab=aggregation/)
   })
 
-  test('AI横幅"应用推荐规则"按钮存在', async ({ page }) => {
+  test('AI横幅"AI聚合降噪"按钮存在', async ({ page }) => {
     const banners = page.locator('.ai-agg-banner')
     const count = await banners.count()
     if (count === 0) {
       test.skip()
       return
     }
-    const btn = page.locator('button', { hasText: '应用推荐规则' })
-    await expect(btn.first()).toBeAttached()
-  })
-
-  test('AI横幅"自定义调整"按钮存在', async ({ page }) => {
-    const banners = page.locator('.ai-agg-banner')
-    const count = await banners.count()
-    if (count === 0) {
-      test.skip()
-      return
-    }
-    const btn = page.locator('button', { hasText: '自定义调整' })
+    const btn = page.locator('button', { hasText: 'AI 聚合降噪' })
     await expect(btn.first()).toBeAttached()
   })
 })
