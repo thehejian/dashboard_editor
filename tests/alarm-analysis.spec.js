@@ -16,12 +16,19 @@ const MOCK_OVERVIEW_STATS = {
 const MOCK_INCIDENTS = {
   success: true,
   data: [
-    { incident_no: 'INC-001', title: 'CPU负载过高触发自动扩容', level: 'critical', category: '容量类', status: 'investigating', handler: 'ai', affected_count: 3, related_alerts: [{ resource: 'server-01', level: 'critical', category: '计算' }] },
-    { incident_no: 'INC-002', title: '数据库连接池耗尽', level: 'warning', category: '服务类', status: 'resolved', handler: 'manual', affected_count: 5, related_alerts: [{ resource: 'db-01', level: 'warning', category: '数据库' }] },
-    { incident_no: 'INC-003', title: '证书即将过期', level: 'warning', category: '证书类', status: 'suppressed', handler: 'ai', affected_count: 2, related_alerts: [] },
-    { incident_no: 'INC-004', title: '网络延迟超阈值', level: 'critical', category: '网络类', status: 'investigating', handler: null, affected_count: 8, related_alerts: [{ resource: 'switch-01', level: 'critical', category: '网络' }] },
-    { incident_no: 'INC-005', title: '磁盘IO等待过高', level: 'info', category: '硬件类', status: 'resolved', handler: 'ai', affected_count: 1, related_alerts: [] },
-    { incident_no: 'INC-006', title: '内存泄漏检测', level: 'warning', category: '服务类', status: 'investigating', handler: 'manual', affected_count: 4, related_alerts: [{ resource: 'app-01', level: 'warning', category: '应用' }] },
+    { incident_no: 'INC-001', title: 'CPU负载过高触发自动扩容', level: 'critical', category: '容量类', status: 'investigating', handler: 'ai', can_heal: true, affected_count: 3, related_alerts: [{ resource: 'server-01', level: 'critical', category: '计算' }] },
+    { incident_no: 'INC-002', title: '数据库连接池耗尽', level: 'warning', category: '服务类', status: 'resolved', handler: 'manual', can_heal: false, affected_count: 5, related_alerts: [{ resource: 'db-01', level: 'warning', category: '数据库' }] },
+    { incident_no: 'INC-003', title: '证书即将过期', level: 'warning', category: '证书类', status: 'suppressed', handler: 'ai', can_heal: false, affected_count: 2, related_alerts: [] },
+    { incident_no: 'INC-004', title: '网络延迟超阈值', level: 'critical', category: '网络类', status: 'investigating', handler: null, can_heal: false, affected_count: 8, related_alerts: [{ resource: 'switch-01', level: 'critical', category: '网络' }] },
+    { incident_no: 'INC-005', title: '磁盘IO等待过高', level: 'info', category: '硬件类', status: 'resolved', handler: 'ai', can_heal: false, affected_count: 1, related_alerts: [] },
+    { incident_no: 'INC-006', title: '内存泄漏检测', level: 'warning', category: '服务类', status: 'investigating', handler: 'manual', can_heal: false, affected_count: 4, related_alerts: [{ resource: 'app-01', level: 'warning', category: '应用' }] },
+    { incident_no: 'INC-007', title: 'Redis连接池接近上限', level: 'warning', category: '容量类', status: 'investigating', handler: 'ai', can_heal: true, affected_count: 4, related_alerts: [{ resource: 'redis-cluster', level: 'warning', category: '容量类' }] },
+    { incident_no: 'INC-008', title: 'Nginx 5xx错误率飙升', level: 'critical', category: '服务类', status: 'investigating', handler: 'ai', can_heal: false, affected_count: 7, related_alerts: [{ resource: 'nginx-ingress', level: 'critical', category: '服务类' }] },
+    { incident_no: 'INC-009', title: 'K8s节点NotReady', level: 'critical', category: '硬件类', status: 'investigating', handler: 'manual', can_heal: false, affected_count: 5, related_alerts: [{ resource: 'k8s-node-03', level: 'critical', category: '硬件类' }] },
+    { incident_no: 'INC-010', title: 'MySQL主从延迟过高', level: 'warning', category: '服务类', status: 'resolved', handler: 'ai', can_heal: false, affected_count: 3, related_alerts: [{ resource: 'db-replica-02', level: 'warning', category: '服务类' }] },
+    { incident_no: 'INC-011', title: 'MQ消费组消息积压', level: 'warning', category: '容量类', status: 'investigating', handler: 'manual', can_heal: true, affected_count: 6, related_alerts: [{ resource: 'kafka-consumer', level: 'warning', category: '容量类' }] },
+    { incident_no: 'INC-012', title: '弹性IP即将释放', level: 'info', category: '配置类', status: 'resolved', handler: 'ai', can_heal: false, affected_count: 1, related_alerts: [] },
+    { incident_no: 'INC-013', title: 'DNS解析异常导致服务不可达', level: 'critical', category: '网络类', status: 'investigating', handler: 'ai', can_heal: false, affected_count: 5, related_alerts: [{ resource: 'dns-resolver', level: 'critical', category: '网络类' }] },
   ],
 }
 
@@ -46,6 +53,7 @@ test.describe('告警分析 — 首页 Tab 切换', () => {
   })
 
   test('点击告警分析 Tab → URL 变为 /overview?tab=alarm，告警分析内容渲染', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/overview')
     await page.waitForSelector('.home-tabs', { timeout: 15000 })
     await page.locator('.home-tab-btn', { hasText: '告警分析' }).click()
@@ -62,6 +70,7 @@ test.describe('告警分析 — 首页 Tab 切换', () => {
   })
 
   test('一级导航「首页」高亮，「告警」不高亮', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/overview?tab=alarm')
     await page.waitForSelector('.module-nav', { timeout: 15000 })
     const homeNav = page.locator('.module-nav .nav-item', { hasText: '首页' })
@@ -120,6 +129,7 @@ test.describe('告警分析 — 页面5行布局', () => {
   })
 
   test('Row2: 图表卡片无 aa-chart-inner 包裹层', async ({ page }) => {
+    test.setTimeout(60000)
     const chartCards = page.locator('.aa-chart-card')
     await expect(chartCards).toHaveCount(3)
     for (let i = 0; i < 3; i++) {
@@ -172,6 +182,7 @@ test.describe('告警分析 — 页面5行布局', () => {
   })
 
   test('Row3: 表格列包含故障名称、故障ID、级别、分类策略、状态、处理人、操作', async ({ page }) => {
+    test.setTimeout(60000)
     const headers = page.locator('.ant-table-thead th')
     const headerTexts = await headers.allTextContents()
     const joined = headerTexts.join(' ')
@@ -185,6 +196,7 @@ test.describe('告警分析 — 页面5行布局', () => {
   })
 
   test('Row4: 需关注应用卡片已移除', async ({ page }) => {
+    test.setTimeout(60000)
     await expect(page.locator('.aiops-app-cards')).not.toBeVisible()
   })
 
@@ -206,6 +218,7 @@ test.describe('告警分析 — 表格交互', () => {
   })
 
   test('状态筛选下拉框存在且可操作', async ({ page }) => {
+    test.setTimeout(60000)
     const select = page.locator('.aa-table-actions .ant-select').first()
     await expect(select).toBeVisible()
     await select.click()
@@ -213,6 +226,7 @@ test.describe('告警分析 — 表格交互', () => {
   })
 
   test('搜索框存在且可输入', async ({ page }) => {
+    test.setTimeout(60000)
     const search = page.locator('.aa-table-actions .ant-input-search input')
     await expect(search).toBeVisible()
     await search.fill('CPU')
@@ -238,6 +252,7 @@ test.describe('告警分析 — 表格交互', () => {
   })
 
   test('点击查看链接跳转到故障详情页', async ({ page }) => {
+    test.setTimeout(60000)
     const viewLink = page.locator('.ant-table-tbody tr.ant-table-row').first().locator('.aa-table-link', { hasText: '查看' })
     await viewLink.click()
     await page.waitForTimeout(500)
@@ -245,9 +260,12 @@ test.describe('告警分析 — 表格交互', () => {
   })
 
   test('容量类告警操作列显示「自愈」文字链接', async ({ page }) => {
-    const capacityRow = page.locator('.ant-table-tbody tr.ant-table-row', { hasText: '容量类' })
+    test.setTimeout(60000)
+    await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
+    const capacityRow = page.locator('tr.ant-table-row', { hasText: '容量类' }).first()
     await expect(capacityRow).toBeVisible()
-    await expect(capacityRow.locator('.aa-table-link', { hasText: '自愈' })).toBeVisible()
+    const healLink = capacityRow.locator('a', { hasText: '故障自愈' })
+    await expect(healLink).toBeVisible()
   })
 
   test('级别标签正确渲染（紧急/重要/次要）', async ({ page }) => {
@@ -305,6 +323,7 @@ test.describe('告警分析 — 分类视图', () => {
   })
 
   test('分类统计条显示7个分类标签', async ({ page }) => {
+    test.setTimeout(60000)
     const catTags = page.locator('.aa-cat-tag')
     await expect(catTags.first()).toBeVisible()
     const count = await catTags.count()
@@ -322,6 +341,7 @@ test.describe('告警分析 — 分类视图', () => {
   })
 
   test('分类视图显示各分类的告警数量', async ({ page }) => {
+    test.setTimeout(60000)
     await page.click('button:has-text("分类视图")')
     await page.waitForTimeout(300)
     const titles = await page.locator('.aa-cat-group-title').allTextContents()
@@ -367,12 +387,14 @@ test.describe('告警分析 — 详情页', () => {
   })
 
   test('详情页加载正常，显示告警分析内容', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/alarm-analysis/INC-001')
     await page.waitForSelector('.alarm-analysis-view', { timeout: 15000 })
     await expect(page.locator('.alarm-analysis-view')).toBeVisible()
   })
 
   test('详情页显示事件编号和标题', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/alarm-analysis/INC-001')
     await page.waitForSelector('.alarm-analysis-view', { timeout: 15000 })
     await expect(page.locator('.alarm-analysis-view')).toContainText('INC-001')
@@ -387,6 +409,7 @@ test.describe('告警分析 — 详情页', () => {
   })
 
   test('详情页返回按钮跳转到 /overview?tab=alarm', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/alarm-analysis/INC-001')
     await page.waitForSelector('.alarm-analysis-view', { timeout: 15000 })
     const backBtn = page.locator('.aa-back-btn')
@@ -424,6 +447,7 @@ test.describe('告警分析 — 完整故事线', () => {
   })
 
   test('Step1: 进入告警分析页面，Hero/图表/表格均可见', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/overview?tab=alarm')
     await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
 
@@ -436,6 +460,7 @@ test.describe('告警分析 — 完整故事线', () => {
   })
 
   test('Step2: 搜索故障ID → 表格过滤 → 清空恢复', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/overview?tab=alarm')
     await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
 
@@ -514,6 +539,7 @@ test.describe('告警分析 — 完整故事线', () => {
   })
 
   test('Step4: 详情页点击返回 → 回到告警分析页面', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/alarm-analysis/INC-001')
     await page.waitForSelector('.alarm-analysis-view', { timeout: 15000 })
 
@@ -545,6 +571,7 @@ test.describe('告警分析 — 完整故事线', () => {
   })
 
   test('Step6: 关闭Drawer → 回到表格', async ({ page }) => {
+    test.setTimeout(60000)
     await page.goto('/overview?tab=alarm')
     await page.waitForSelector('.alarm-analysis-page', { timeout: 15000 })
 

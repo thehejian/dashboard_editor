@@ -90,7 +90,7 @@
         v-if="alarmViewMode === 'list'"
         :columns="alarmIncidentColumns"
         :data-source="filteredAlarmIncidents"
-        :pagination="{ pageSize: 5, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
+        :pagination="{ pageSize: 15, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
         row-key="incident_no"
         size="small"
         :scroll="{ x: 900, y: 360 }"
