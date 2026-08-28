@@ -160,13 +160,18 @@ test.describe('告警分析 — 页面5行布局', () => {
     await expect(funnelCanvas).toHaveCount(0)
   })
 
-  test('Row2: 降噪过滤统计卡片显示总过滤数和分级统计', async ({ page }) => {
+  test('Row2: 降噪过滤统计卡片显示漏斗三阶段和分级条形图', async ({ page }) => {
     const filterCard = page.locator('.aa-chart-card', { hasText: '告警降噪过滤统计' })
     await expect(filterCard).toBeVisible()
-    await expect(filterCard).toContainText('总过滤')
+    await expect(filterCard).toContainText('原始告警')
+    await expect(filterCard).toContainText('已过滤')
+    await expect(filterCard).toContainText('降噪率')
+    await expect(filterCard).toContainText('过滤分级明细')
+    await expect(filterCard.locator('.aa-filter-bar-row')).toHaveCount(3)
     await expect(filterCard).toContainText('紧急')
     await expect(filterCard).toContainText('重要')
     await expect(filterCard).toContainText('次要')
+    await expect(filterCard).toContainText('降噪率')
   })
 
   test('Row2: 降噪率数值显示', async ({ page }) => {

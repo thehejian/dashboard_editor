@@ -40,11 +40,42 @@
       <div class="aa-chart-card">
         <div class="aa-chart-title">告警降噪过滤统计</div>
         <div class="aa-filter-stats">
-          <div class="aa-filter-total">总过滤: <strong>{{ (alarmFunnel.raw - alarmFunnel.agg).toLocaleString() }}</strong> 条告警</div>
+          <div class="aa-funnel-bar">
+            <div class="aa-funnel-stage">
+              <span class="aa-funnel-num">{{ alarmFunnel.raw.toLocaleString() }}</span>
+              <span class="aa-funnel-label">原始告警</span>
+            </div>
+            <span class="aa-funnel-arrow">→</span>
+            <div class="aa-funnel-stage">
+              <span class="aa-funnel-num aa-funnel-filtered">{{ (alarmFunnel.raw - alarmFunnel.agg).toLocaleString() }}</span>
+              <span class="aa-funnel-label">已过滤</span>
+            </div>
+            <span class="aa-funnel-arrow">→</span>
+            <div class="aa-funnel-stage">
+              <span class="aa-funnel-num aa-funnel-rate">{{ alarmFunnel.rate }}% ↓</span>
+              <span class="aa-funnel-label">降噪率</span>
+            </div>
+          </div>
+          <div class="aa-filter-section-label">过滤分级明细</div>
           <div class="aa-filter-breakdown">
-            <div class="aa-filter-item critical">紧急: <strong>{{ alarmFunnel.filteredCritical || 0 }}</strong> 条</div>
-            <div class="aa-filter-item warning">重要: <strong>{{ alarmFunnel.filteredWarning || 0 }}</strong> 条</div>
-            <div class="aa-filter-item info">次要: <strong>{{ alarmFunnel.filteredInfo || 0 }}</strong> 条</div>
+            <div class="aa-filter-bar-row">
+              <span class="aa-filter-bar-label critical">紧急</span>
+              <div class="aa-filter-bar-track"><div class="aa-filter-bar-fill critical" :style="{ width: filterPct(alarmFunnel.filteredCritical) }"></div></div>
+              <span class="aa-filter-bar-val">{{ (alarmFunnel.filteredCritical || 0).toLocaleString() }}</span>
+              <span class="aa-filter-bar-pct">{{ filterPct(alarmFunnel.filteredCritical) }}</span>
+            </div>
+            <div class="aa-filter-bar-row">
+              <span class="aa-filter-bar-label warning">重要</span>
+              <div class="aa-filter-bar-track"><div class="aa-filter-bar-fill warning" :style="{ width: filterPct(alarmFunnel.filteredWarning) }"></div></div>
+              <span class="aa-filter-bar-val">{{ (alarmFunnel.filteredWarning || 0).toLocaleString() }}</span>
+              <span class="aa-filter-bar-pct">{{ filterPct(alarmFunnel.filteredWarning) }}</span>
+            </div>
+            <div class="aa-filter-bar-row">
+              <span class="aa-filter-bar-label info">次要</span>
+              <div class="aa-filter-bar-track"><div class="aa-filter-bar-fill info" :style="{ width: filterPct(alarmFunnel.filteredInfo) }"></div></div>
+              <span class="aa-filter-bar-val">{{ (alarmFunnel.filteredInfo || 0).toLocaleString() }}</span>
+              <span class="aa-filter-bar-pct">{{ filterPct(alarmFunnel.filteredInfo) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -253,6 +284,12 @@ const router = useRouter()
 const alarmLoading = ref(false)
 const alarmHeroStats = ref({ closedCount: 0, reductionRate: 0, autoRate: 0 })
 const alarmFunnel = ref({ raw: 0, dedup: 0, agg: 0, rate: 0, filteredCritical: 0, filteredWarning: 0, filteredInfo: 0 })
+
+function filterPct(val) {
+  const total = (alarmFunnel.value.filteredCritical || 0) + (alarmFunnel.value.filteredWarning || 0) + (alarmFunnel.value.filteredInfo || 0)
+  if (!total) return '0%'
+  return Math.round((val || 0) / total * 100) + '%'
+}
 const alarmCategoryStats = ref([])
 const alarmIncidents = ref([])
 const alarmStatusFilter = ref(null)
@@ -451,6 +488,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
 .aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; min-height: 0; }
 .aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
+.aa-funnel-rate { color: #52c41a; }
 .aa-chart-container { flex: 1; min-height: 160px; overflow: hidden; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
@@ -518,18 +556,28 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .noise-reduction-value { font-size: 12px; font-weight: 500; color: #1a1a1a; }
 
 /* 告警降噪过滤统计卡片 */
-.aa-filter-stats { padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
-.aa-filter-total { font-size: 14px; color: #1a1a1a; }
-.aa-filter-total strong { font-weight: 600; color: #007DFF; }
-.aa-filter-breakdown { display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
-.aa-filter-item { font-size: 13px; color: #666; padding: 8px 12px; border-radius: 6px; background: #fff; border: 1px solid #e8e8e8; flex: 1; display: flex; align-items: center; }
-.aa-filter-item strong { font-weight: 600; }
-.aa-filter-item.critical { border-color: #ff4d4f; color: #ff4d4f; }
-.aa-filter-item.critical strong { color: #ff4d4f; }
-.aa-filter-item.warning { border-color: #fa8c16; color: #fa8c16; }
-.aa-filter-item.warning strong { color: #fa8c16; }
-.aa-filter-item.info { border-color: #1890ff; color: #1890ff; }
-.aa-filter-item.info strong { color: #1890ff; }
+.aa-filter-stats { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; margin-top: 16px; }
+.aa-funnel-bar { display: flex; align-items: center; gap: 6px; background: #fafafa; border-radius: 8px; padding: 10px 8px; border: 1px solid #f0f0f0; }
+.aa-funnel-stage { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.aa-funnel-num { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.aa-funnel-num.aa-funnel-filtered { color: #fa8c16; }
+.aa-funnel-num.aa-funnel-kept { color: #52c41a; }
+.aa-funnel-label { font-size: 11px; color: #8c8c8c; margin-top: 2px; }
+.aa-funnel-arrow { font-size: 14px; color: #d9d9d9; flex-shrink: 0; }
+.aa-filter-section-label { font-size: 12px; font-weight: 500; color: #8c8c8c; margin-top: 2px; }
+.aa-filter-breakdown { display: flex; flex-direction: column; gap: 4px; }
+.aa-filter-bar-row { display: flex; align-items: center; gap: 6px; height: 20px; }
+.aa-filter-bar-label { font-size: 12px; width: 28px; flex-shrink: 0; text-align: right; }
+.aa-filter-bar-label.critical { color: #ff4d4f; }
+.aa-filter-bar-label.warning { color: #fa8c16; }
+.aa-filter-bar-label.info { color: #1890ff; }
+.aa-filter-bar-track { flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.aa-filter-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.aa-filter-bar-fill.critical { background: #ff4d4f; }
+.aa-filter-bar-fill.warning { background: #fa8c16; }
+.aa-filter-bar-fill.info { background: #1890ff; }
+.aa-filter-bar-val { font-size: 12px; font-weight: 600; color: #1a1a1a; width: 48px; text-align: right; flex-shrink: 0; }
+.aa-filter-bar-pct { font-size: 11px; color: #8c8c8c; width: 30px; text-align: right; flex-shrink: 0; }
 
 /* 统一 Drawer 样式 */
 .rd-overview { background: #f6f8fa; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }

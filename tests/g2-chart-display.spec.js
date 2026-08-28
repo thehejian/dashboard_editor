@@ -58,10 +58,13 @@ test.describe('G2 图表渲染检测', () => {
     expect(hasContent).toBe(true)
   })
 
-  test('降噪过滤统计卡片无canvas，显示过滤统计文字', async ({ page }) => {
+  test('降噪过滤统计卡片无canvas，显示漏斗三阶段和分级条形图', async ({ page }) => {
     const card = page.locator('.aa-chart-card').nth(1)
     await expect(card.locator('canvas')).toHaveCount(0)
-    await expect(card).toContainText('总过滤')
+    await expect(card).toContainText('原始告警')
+    await expect(card).toContainText('已过滤')
+    await expect(card).toContainText('降噪率')
+    await expect(card).toContainText('过滤分级明细')
     await expect(card).toContainText('紧急')
     await expect(card).toContainText('重要')
     await expect(card).toContainText('次要')
