@@ -121,8 +121,7 @@
         v-if="alarmViewMode === 'list'"
         :columns="alarmIncidentColumns"
         :data-source="filteredAlarmIncidents"
-        :pagination="{ pageSize: 16, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
-        :scroll="{ y: 370 }"
+        :pagination="{ pageSize: 15, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
         row-key="incident_no"
         size="small"
       >
@@ -475,29 +474,25 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 </script>
 
 <style scoped>
-.alarm-analysis-page { display: flex; flex-direction: column; gap: 12px; padding: 0; height: calc(100vh - 48px); overflow: hidden; box-sizing: border-box; }
-.aa-hero-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
-.aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 12px; width: 100%; }
-.aa-hero-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.alarm-analysis-page { display: flex; flex-direction: column; gap: 8px; padding: 0; height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
+.aa-hero-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; width: 100%; }
+.aa-hero-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .aa-hero-info { flex: 1; min-width: 0; }
-.aa-hero-val { font-size: 24px; font-weight: 700; color: #1A1A1A; line-height: 1.2; }
-.aa-hero-label { font-size: 13px; color: #595959; margin-top: 2px; }
-.aa-hero-sub { font-size: 11px; color: #8C8C8C; margin-top: 1px; }
-.aa-hero-trend { font-size: 11px; margin-top: 0; text-align: right; white-space: nowrap; }
+.aa-hero-val { font-size: 20px; font-weight: 700; color: #1A1A1A; line-height: 1.2; }
+.aa-hero-label { font-size: 12px; color: #595959; margin-top: 1px; }
+.aa-hero-sub { font-size: 10px; color: #8C8C8C; }
+.aa-hero-trend { font-size: 10px; margin-top: 0; text-align: right; white-space: nowrap; }
 .aa-hero-trend.up { color: #52C41A; }
-.aa-chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
-.aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; min-height: 0; }
-.aa-chart-title { font-size: 13px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
+.aa-chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; min-height: 0; }
+.aa-chart-title { font-size: 12px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; margin-bottom: 4px; }
 .aa-funnel-rate { color: #52c41a; }
-.aa-chart-container { flex: 1; min-height: 160px; overflow: hidden; }
+.aa-chart-container { flex: 1; min-height: 100px; overflow: hidden; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
-.aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.aa-table-card :deep(.ant-table-wrapper) { flex: 1 1 0% !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
-.aa-table-card :deep(.ant-spin-nested-loading) { flex: 1 1 0% !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
-.aa-table-card :deep(.ant-spin-container) { flex: 1 1 0% !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
-.aa-table-card :deep(.ant-table) { flex: 1 1 0% !important; min-height: 0 !important; overflow: hidden !important; }
-.aa-table-card :deep(.ant-pagination) { flex-shrink: 0 !important; margin-top: 8px !important; }
+.aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
+.aa-table-card :deep(.ant-pagination) { margin-top: 8px !important; }
 .aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
 .aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
 .aa-table-actions { display: flex; align-items: center; gap: 8px; }
@@ -561,7 +556,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .noise-reduction-value { font-size: 12px; font-weight: 500; color: #1a1a1a; }
 
 /* 告警降噪过滤统计卡片 */
-.aa-filter-stats { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; margin-top: 16px; }
+.aa-filter-stats { flex: 1; display: flex; flex-direction: column; gap: 4px; min-height: 0; margin-top: 8px; }
 .aa-funnel-bar { display: flex; align-items: center; gap: 6px; background: #fafafa; border-radius: 8px; padding: 10px 8px; border: 1px solid #f0f0f0; }
 .aa-funnel-stage { display: flex; flex-direction: column; align-items: center; flex: 1; }
 .aa-funnel-num { font-size: 16px; font-weight: 700; color: #1a1a1a; }
@@ -571,7 +566,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-funnel-arrow { font-size: 14px; color: #d9d9d9; flex-shrink: 0; }
 .aa-filter-section-label { font-size: 12px; font-weight: 500; color: #8c8c8c; margin-top: 2px; }
 .aa-filter-breakdown { display: flex; flex-direction: column; gap: 4px; }
-.aa-filter-bar-row { display: flex; align-items: center; gap: 6px; height: 20px; }
+.aa-filter-bar-row { display: flex; align-items: center; gap: 6px; height: 16px; }
 .aa-filter-bar-label { font-size: 12px; width: 28px; flex-shrink: 0; text-align: right; }
 .aa-filter-bar-label.critical { color: #ff4d4f; }
 .aa-filter-bar-label.warning { color: #fa8c16; }
