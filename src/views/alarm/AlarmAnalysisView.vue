@@ -121,10 +121,10 @@
         v-if="alarmViewMode === 'list'"
         :columns="alarmIncidentColumns"
         :data-source="filteredAlarmIncidents"
-        :pagination="{ pageSize: 15, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
+        :pagination="{ pageSize: 16, showTotal: t => '共 ' + t + ' 条', size: 'small' }"
+        :scroll="{ y: 370 }"
         row-key="incident_no"
         size="small"
-        :scroll="{ x: 900, y: 360 }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'title'">
@@ -475,9 +475,9 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 </script>
 
 <style scoped>
-.alarm-analysis-page { display: flex; flex-direction: column; gap: 16px; padding: 0; height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box; }
+.alarm-analysis-page { display: flex; flex-direction: column; gap: 12px; padding: 0; height: calc(100vh - 48px); overflow: hidden; box-sizing: border-box; }
 .aa-hero-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
-.aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; width: 100%; }
+.aa-hero-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 12px; width: 100%; }
 .aa-hero-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
 .aa-hero-info { flex: 1; min-width: 0; }
 .aa-hero-val { font-size: 24px; font-weight: 700; color: #1A1A1A; line-height: 1.2; }
@@ -492,8 +492,13 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-chart-container { flex: 1; min-height: 160px; overflow: hidden; }
 .aa-root-cause-link { color: #007DFF; cursor: pointer; text-decoration: none; }
 .aa-root-cause-link:hover { text-decoration: underline; color: #0056b3; }
-.aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; }
-.aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.aa-table-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 10px; padding: 14px; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.aa-table-card :deep(.ant-table-wrapper) { flex: 1 1 0% !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+.aa-table-card :deep(.ant-spin-nested-loading) { flex: 1 1 0% !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+.aa-table-card :deep(.ant-spin-container) { flex: 1 1 0% !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+.aa-table-card :deep(.ant-table) { flex: 1 1 0% !important; min-height: 0 !important; overflow: hidden !important; }
+.aa-table-card :deep(.ant-pagination) { flex-shrink: 0 !important; margin-top: 8px !important; }
+.aa-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
 .aa-table-title { font-size: 14px; font-weight: 600; color: #1A1A1A; display: flex; align-items: center; gap: 6px; }
 .aa-table-actions { display: flex; align-items: center; gap: 8px; }
 .aa-table-link { font-size: 12px; color: var(--brand, #007DFF); cursor: pointer; text-decoration: none; }
