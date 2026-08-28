@@ -485,7 +485,7 @@ watch(alarmFunnel, () => { nextTick(() => renderFunnelChart()) }, { deep: true }
 .aa-hero-trend { font-size: 10px; margin-top: 0; text-align: right; white-space: nowrap; }
 .aa-hero-trend.up { color: #52C41A; }
 .aa-chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; min-height: 0; }
+.aa-chart-card { background: #fff; border: 1px solid var(--border, #E8E8E8); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; min-height: 0; }
 .aa-chart-title { font-size: 12px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; margin-bottom: 4px; }
 .aa-funnel-rate { color: #52c41a; }
 .aa-chart-container { flex: 1; min-height: 100px; overflow: hidden; }
