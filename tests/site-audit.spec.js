@@ -7,7 +7,7 @@ import fs from 'fs'
 // ─────────────────────────────────────────────────────────────
 
 const INCIDENT_ID = 'INC-2026-0720'
-const DASH_SLUGS = ['host', 'vm', 'nas', 'container', 'dev', 'test', 'bigdata', 'aimodel']
+const DASH_SLUGS = ['host', 'vm', 'nas', 'container', 'dev', 'test', 'bigdata', 'aimodel', 'ai-agent']
 
 const PAGES = [
   // 首页

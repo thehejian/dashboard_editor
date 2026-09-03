@@ -202,6 +202,24 @@ npx playwright test --reporter=list                            # 提交前全量
 - **重定向**：`/alarm-analysis` → `/overview?tab=alarm`，详情页 `/alarm-analysis/:id` 独立路由
 - **详情页 `:id`**：= incident_no（如 `INC-2026-0720`），通过 `route.params.id` 取值
 
+### Mock 时间戳过期问题（2026-08-28）
+- **根因**：`server/db/mockData.js` 的 `minsAgo()` 在服务器启动时一次性执行，所有 mock 告警的时间戳固定。超过 1 小时后，"1小时内"聚合条件永远不满足 → tooltip/banner 消失
+- **症状**：启动后 1h 内功能正常，1h 后 AI 聚合 tooltip 不再出现，banner 也不显示
+- **修复**：在 `server/routes/cmdb.js` 的 `/api/cmdb/alerts` 端点中，对测试告警（id 17-22）动态注入新鲜时间戳（`freshTriggerTime()`），每次请求重新生成，确保始终落在聚合窗口内
+- **教训**：mock 数据中使用相对时间（"5分钟前"、"1小时前"）时，必须考虑服务运行时长。静态 mock 适合一次性页面，动态接口需要动态时间戳
+
+### Playwright 并发超时（2026-08-28）
+- **症状**：全量跑 80+ 测试时，个别测试 `page.goto` 超时（30s），单跑或少量并发时正常
+- **根因**：Vite dev server 单线程处理 HMR + 测试请求，并发 4 个 worker 时请求排队导致超时
+- **解决**：`npx playwright test --workers=2` 降低并发，或增加 `timeout: 60000`
+- **注意**：超时是随机的（不同测试文件），重新跑通常通过，不影响功能正确性
+
+### AI 汇聚规则配置页（2026-08-28）
+- **设计决策**：检测规则（Prometheus/Grafana/Zabbix 负责）不应混入汇聚规则配置，最终只保留"汇聚规则 + AI优化建议"两个 Tab
+- **AI建议聚焦**：窗口调优、规则合并、新规则推荐、阈值优化（不涉及检测规则优化）
+- **Drawer 4面板**：基本信息（AI可辅助）→ 条件（AI可辅助）→ 汇聚参数（AI核心推荐）→ 汇聚动作 + AI影响预估
+- **联动入口**：当前告警 banner `查看规则配置` → 跳转 `/alarm/settings/rules?tab=aggregation`；告警分析 Drawer 规则标签可点击跳转；扩展页第4个 Tab "汇聚规则"；个性化页聚合开关旁 `[配置]` 按钮
+
 ## Ant Design Tooltip 样式覆盖经验
 
 ### 核心问题
@@ -238,3 +256,47 @@ Ant Design Vue 的 Tooltip 组件渲染在 **portal**（`document.body` 下）�
 4. **箭头也要改**：只改 `.ant-tooltip-inner` 背景，箭头仍是默认深色，需同时覆盖 `.ant-tooltip-arrow::before/after`
 5. **调试方法**：用 Playwright `page.evaluate(() => getComputedStyle(tooltip))` 验证实际生效的样式值
 6. **同类组件**：Modal、Drawer、Dropdown、Popover 等 portal 组件都有相同问题
+
+## Dashboard 新增自定义大屏经验（2026-09-03）
+
+### 新增自定义 Dashboard 流程
+1. `useEditorState.js` DASHBOARDS 数组加 `createDashboard(id, title, region, period, null, slug)`
+2. `App.vue` 加 `isXxxDashboard` computed + 加入 `isCustomDashboard` + 模板加 `<XxxDashboard v-else-if="isXxxDashboard" />` + import
+3. 新建 `src/components/XxxDashboard.vue`，参考 `BigDataDashboard.vue` 模式
+
+### G2 图表默认渲染
+- 不手动设置 `.scale('color', ...)`、`.label(...)`、`.style('stroke', ...)` 等，让 G2 用内置默认主题渲染
+- 手写图例（如 `.aad-donut-legend`、`.aad-legend-row`）应去掉，G2 自带 legend
+- 只保留 `data + encode`，去掉所有自定义配色/标签/样式覆盖
+
+### 环形图中心文字定位
+- G2 legend 占顶部空间（约 30-40px），把环形图往下挤
+- `.aad-donut-center` 用 `position: absolute; top: 40px` 补偿 legend 偏移，让文字对齐环洞视觉中心
+- 不要用 `top: 0; bottom: 0` 居中整个容器，会和环形图错位
+
+### canvas-scroll padding 影响范围
+- `App.vue` 的 `.canvas-scroll` padding 是所有大屏共享的，改了会影响全部 9 个大屏页
+- 自定义 Dashboard 应在组件内部控制自己的间距，不要依赖 canvas-scroll
+- 有自带 toolbar 的大屏（宿主机/大数据等）不需要额外 top padding
+- 无 toolbar 的大屏（如 AI Agent）在组件内加 `padding-top` 或自建 toolbar
+
+### 自定义 Dashboard Toolbar
+- 在组件内自建 toolbar（时间 pills + 自动刷新），比依赖 App.vue 的 canvas-toolbar 更灵活
+- `.isCustomDashboard` 为 true 时 App.vue 会隐藏 canvas-toolbar，需自行实现
+- toolbar padding 统一 `16px 0`，不用 margin，靠内容自然间距
+
+### 间距统一原则
+- 所有 gap/margin/padding 统一用同一个值（推荐 16px）
+- 不要混用 12px gap + 16px margin + 8px padding，视觉混乱
+- hero 区需要 `margin-bottom: 16px` 和下方内容分隔
+- charts-row 用 `gap: 16px` + `margin-bottom: 16px`
+
+### Agent 卡片网格
+- 横向滚动 flex 布局空间紧张，改为 `grid-template-columns: repeat(4, 1fr)` 4 列网格
+- 外层用大卡片（白色背景 + padding）包裹标题和所有子卡片
+- 子卡片用浅灰背景 `#f7f8fa` 区分层级
+- 响应式断点：1200px→3列，900px→2列，600px→1列
+
+### 测试注意
+- 新增大屏后需同步更新 `tests/site-audit.spec.js` 的 `DASH_SLUGS` 数组
+- `page.goto` 用 `waitUntil: 'load'` 而非 `'networkidle'`，避免 Prometheus 等外部请求超时
